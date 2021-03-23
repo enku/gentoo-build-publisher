@@ -14,6 +14,7 @@ DEFAULTS = {
 
 
 class GBPSettings:
+    """Pattern for app settings"""
     def __init__(self, user_settings=None, defaults=None):
         self.user_settings = user_settings or {}
         self.defaults = defaults or {}
@@ -32,7 +33,9 @@ class GBPSettings:
 
         return value
 
-    def validate_setting(self, attr, value):
+    def validate_setting(self, _attr, value):  # pylint: disable=no-self-use
+        """Validate a settings"""
+        # For now we don't do any special validation
         return value
 
 
