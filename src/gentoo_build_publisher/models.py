@@ -36,9 +36,6 @@ class Build(models.Model):
             )
         ]
 
-    repos_dir = f"{settings.WORK_DIR}/repos"
-    binpkgs_dir = f"{settings.WORK_DIR}/binpkgs"
-
     def __repr__(self) -> str:
         build_name = self.build_name
         build_number = self.build_number
@@ -57,6 +54,16 @@ class Build(models.Model):
             f"/artifact/{settings.JENKINS_ARTIFACT_NAME}"
         )
 
+    @property
+    def repos_dir(self) -> str:
+        """Return the path to the repos directory"""
+        return  f"{settings.WORK_DIR}/repos/{self}"
+
+    @property
+    def binpkgs_dir(self) -> str:
+        """Return the path to the binpkgs directory"""
+        return  f"{settings.WORK_DIR}/binpkgs/{self}"
+
     def publish(self):
         """Make this build 'active'"""
         repos_target = f"{settings.WORK_DIR}/repos/{self.build_name}"
@@ -71,8 +78,8 @@ class Build(models.Model):
     def download_artifact(self):
         """Download the artifact from Jenkins
 
-        * extract repos to WORKDIR/repos/<build_name>.<build_number>
-        * extract binpkgs to WORKDIR/binpkgs/<build_name>.<build_number>
+        * extract repos to self.repos_dir
+        * extract binpkgs to self.binpkgs_dir
         """
         auth = (settings.JENKINS_USER, settings.JENKINS_API_KEY)
         response = requests.get(self.url, auth=auth, stream=True)
@@ -88,12 +95,15 @@ class Build(models.Model):
 
         io.extract_tarfile(path, dirpath)
 
-        source = f"{dirpath}/repos"
-        target = f"{settings.WORK_DIR}/repos/{self}"
-        os.rename(source, target)
-
-        source = f"{dirpath}/binpkgs"
-        target = f"{settings.WORK_DIR}/binpkgs/{self}"
-        os.rename(source, target)
+        os.rename(f"{dirpath}/repos", self.repos_dir)
+        os.rename(f"{dirpath}/binpkgs", self.binpkgs_dir)
 
         shutil.rmtree(dirpath)
+
+    def delete(self, using=None, keep_parents=False):
+        # The reason to call super().delete() before removing the directories is if for
+        # some reason super().delete() fails we don't want to delete the directories.
+        super().delete(using=using, keep_parents=keep_parents)
+
+        shutil.rmtree(self.binpkgs_dir, ignore_errors=True)
+        shutil.rmtree(self.repos_dir, ignore_errors=True)
