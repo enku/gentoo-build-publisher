@@ -2,7 +2,7 @@
 Django models for Gentoo Build Publisher
 """
 import os
-import uuid
+import shutil
 
 import requests
 from django.db import models
@@ -47,7 +47,7 @@ class Build(models.Model):
         return f"{name}(build_name={build_name!r}, build_number={build_number})"
 
     def __str__(self) -> str:
-        return f"Build #{self.build_number} for {self.build_name}"
+        return f"{self.build_name}.{self.build_number}"
 
     @property
     def url(self) -> str:
@@ -57,34 +57,43 @@ class Build(models.Model):
             f"/artifact/{settings.JENKINS_ARTIFACT_NAME}"
         )
 
-    def publish(self) -> uuid.UUID:
-        """Queue the publish task and return the task id"""
-        if not os.path.exists(self.artifact_path):
+    def publish(self):
+        """Make this build 'active'"""
+        repos_target = f"{settings.WORK_DIR}/repos/{self.build_name}"
+        binpkgs_target = f"{settings.WORK_DIR}/binpkgs/{self.build_name}"
+
+        if not os.path.exists(repos_target) and not os.path.exists(binpkgs_target):
             self.download_artifact()
 
-        tmpdir = f"{settings.WORK_DIR}/tmp/{self.build_name}.{self.build_number}"
-        io.extract_tarfile(self.artifact_path, tmpdir)
-        io.replace(f"{self.binpkgs_dir}/{self.build_name}", f"{tmpdir}/binpkgs")
-        io.replace(f"{self.repos_dir}/{self.build_name}", f"{tmpdir}/repos")
-        os.rmdir(tmpdir)
+        io.symlink(str(self), f"{settings.WORK_DIR}/repos/{self.build_name}")
+        io.symlink(str(self), f"{settings.WORK_DIR}/binpkgs/{self.build_name}")
 
     def download_artifact(self):
-        """Download the artifact from Jenkins to self.artifact_path"""
+        """Download the artifact from Jenkins
+
+        * extract repos to WORKDIR/repos/<build_name>.<build_number>
+        * extract binpkgs to WORKDIR/binpkgs/<build_name>.<build_number>
+        """
         auth = (settings.JENKINS_USER, settings.JENKINS_API_KEY)
         response = requests.get(self.url, auth=auth, stream=True)
         response.raise_for_status()
 
-        os.makedirs(os.path.dirname(self.artifact_path))
+        path = f"{settings.WORK_DIR}/tmp/{self}/build.tar.gz"
+        dirpath = os.path.dirname(path)
+        os.makedirs(dirpath, exist_ok=True)
 
-        with open(self.artifact_path, "wb") as artifact_file:
+        with open(path, "wb") as artifact_file:
             for chunk in response.iter_content(chunk_size=2048, decode_unicode=False):
                 artifact_file.write(chunk)
 
-    @property
-    def artifact_path(self):
-        """Return artifact path for this build"""
+        io.extract_tarfile(path, dirpath)
 
-        return (
-            f"{settings.WORK_DIR}/artifacts/{self.build_name}/{self.build_number}"
-            f"/{settings.JENKINS_ARTIFACT_NAME}"
-        )
+        source = f"{dirpath}/repos"
+        target = f"{settings.WORK_DIR}/repos/{self}"
+        os.rename(source, target)
+
+        source = f"{dirpath}/binpkgs"
+        target = f"{settings.WORK_DIR}/binpkgs/{self}"
+        os.rename(source, target)
+
+        shutil.rmtree(dirpath)
