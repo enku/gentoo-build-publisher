@@ -66,10 +66,7 @@ class Build(models.Model):
 
     def publish(self):
         """Make this build 'active'"""
-        repos_target = f"{settings.WORK_DIR}/repos/{self.build_name}"
-        binpkgs_target = f"{settings.WORK_DIR}/binpkgs/{self.build_name}"
-
-        if not os.path.exists(repos_target) and not os.path.exists(binpkgs_target):
+        if not os.path.exists(self.repos_dir) and not os.path.exists(self.binpkgs_dir):
             self.download_artifact()
 
         io.symlink(str(self), f"{settings.WORK_DIR}/repos/{self.build_name}")
