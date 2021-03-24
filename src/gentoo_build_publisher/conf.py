@@ -9,7 +9,7 @@ DEFAULTS = {
     "JENKINS_API_KEY": "JENKINS_API_KEY_REQUIRED",
     "JENKINS_BASE_URL": "http://jenkins/Gentoo",
     "JENKINS_USER": "jenkins",
-    "WORK_DIR": "/var/lib/gentoo-build-publisher",
+    "HOME_DIR": "/var/lib/gentoo-build-publisher",
 }
 
 

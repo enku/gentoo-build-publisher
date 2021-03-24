@@ -57,20 +57,20 @@ class Build(models.Model):
     @property
     def repos_dir(self) -> str:
         """Return the path to the repos directory"""
-        return  f"{settings.WORK_DIR}/repos/{self}"
+        return  f"{settings.HOME_DIR}/repos/{self}"
 
     @property
     def binpkgs_dir(self) -> str:
         """Return the path to the binpkgs directory"""
-        return  f"{settings.WORK_DIR}/binpkgs/{self}"
+        return  f"{settings.HOME_DIR}/binpkgs/{self}"
 
     def publish(self):
         """Make this build 'active'"""
         if not os.path.exists(self.repos_dir) and not os.path.exists(self.binpkgs_dir):
             self.download_artifact()
 
-        io.symlink(str(self), f"{settings.WORK_DIR}/repos/{self.build_name}")
-        io.symlink(str(self), f"{settings.WORK_DIR}/binpkgs/{self.build_name}")
+        io.symlink(str(self), f"{settings.HOME_DIR}/repos/{self.build_name}")
+        io.symlink(str(self), f"{settings.HOME_DIR}/binpkgs/{self.build_name}")
 
     def download_artifact(self):
         """Download the artifact from Jenkins
@@ -82,7 +82,7 @@ class Build(models.Model):
         response = requests.get(self.url, auth=auth, stream=True)
         response.raise_for_status()
 
-        path = f"{settings.WORK_DIR}/tmp/{self}/build.tar.gz"
+        path = f"{settings.HOME_DIR}/tmp/{self}/build.tar.gz"
         dirpath = os.path.dirname(path)
         os.makedirs(dirpath, exist_ok=True)
 

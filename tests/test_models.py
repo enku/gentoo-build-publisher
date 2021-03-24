@@ -17,8 +17,8 @@ class BuildTestCase(TestCase):
         super().setUp()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
-        self.work_dir = self.temp_dir.name
-        patch = mock.patch.object(settings, "WORK_DIR", self.work_dir)
+        self.home_dir = self.temp_dir.name
+        patch = mock.patch.object(settings, "HOME_DIR", self.home_dir)
         patch.start()
         self.addCleanup(patch.stop)
 
@@ -44,8 +44,8 @@ class BuildTestCase(TestCase):
 
         # And creates the symlinks
         source = "babette.193"
-        mock_symlink.assert_any_call(source, f"{self.work_dir}/repos/babette")
-        mock_symlink.assert_any_call(source, f"{self.work_dir}/binpkgs/babette")
+        mock_symlink.assert_any_call(source, f"{self.home_dir}/repos/babette")
+        mock_symlink.assert_any_call(source, f"{self.home_dir}/binpkgs/babette")
 
     def test_downloads_archive_given_existing_symlinks(self):
         """Bug"""
@@ -53,10 +53,10 @@ class BuildTestCase(TestCase):
         build = self.build
 
         # given the existing symlinks
-        os.makedirs(f"{self.work_dir}/repos")
-        os.symlink(".", f"{self.work_dir}/repos/babette")
-        os.makedirs(f"{self.work_dir}/binpkgs")
-        os.symlink(".", f"{self.work_dir}/binpkgs/babette")
+        os.makedirs(f"{self.home_dir}/repos")
+        os.symlink(".", f"{self.home_dir}/repos/babette")
+        os.makedirs(f"{self.home_dir}/binpkgs")
+        os.symlink(".", f"{self.home_dir}/binpkgs/babette")
 
         # When we call its publish method
         with mock.patch.object(build, "download_artifact") as mock_download_artifact:
@@ -68,5 +68,5 @@ class BuildTestCase(TestCase):
 
         # And creates a symlink in the directory
         source = "babette.193"
-        target = f"{self.work_dir}/repos/babette"
+        target = f"{self.home_dir}/repos/babette"
         mock_symlink.assert_any_call(source, target)

@@ -4,7 +4,7 @@ import tarfile
 
 
 def extract_tarfile(name: str, target_dir: str):
-    """Extract gzipped-tarball into work_dir"""
+    """Extract gzipped-tarball into HOME_DIR"""
     with tarfile.open(name, mode="r") as tar_file:
         tar_file.extractall(target_dir)
 
