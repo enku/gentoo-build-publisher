@@ -9,6 +9,8 @@ from django.test import TestCase
 from gentoo_build_publisher.conf import settings
 from gentoo_build_publisher.models import Build
 
+from . import test_data
+
 
 class BuildTestCase(TestCase):
     """Unit tests for the Build model"""
@@ -70,3 +72,23 @@ class BuildTestCase(TestCase):
         source = "babette.193"
         target = f"{self.home_dir}/repos/babette"
         mock_symlink.assert_any_call(source, target)
+
+    def test_download_artifact_moves_repos_and_binpks(self):
+        """Should download artifacts and move to repos/ and binpkgs/"""
+        # Given the build
+        build = self.build
+
+        # Given the (fake) artifact
+        with mock.patch("gentoo_build_publisher.models.requests.get") as mock_get:
+            response = mock_get.return_value
+            response.iter_content.return_value = iter(
+                [
+                    test_data("build.tar.gz"),
+                ]
+            )
+            # When we download the artifact
+            build.download_artifact()
+
+        # Then it creates the repos and binpks directories
+        self.assertTrue(os.path.isdir(f"{self.home_dir}/repos/{build}"))
+        self.assertTrue(os.path.isdir(f"{self.home_dir}/binpkgs/{build}"))

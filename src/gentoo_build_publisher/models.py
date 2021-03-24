@@ -92,8 +92,8 @@ class Build(models.Model):
 
         io.extract_tarfile(path, dirpath)
 
-        os.rename(f"{dirpath}/repos", self.repos_dir)
-        os.rename(f"{dirpath}/binpkgs", self.binpkgs_dir)
+        os.renames(f"{dirpath}/repos", self.repos_dir)
+        os.renames(f"{dirpath}/binpkgs", self.binpkgs_dir)
 
         shutil.rmtree(dirpath)
 
