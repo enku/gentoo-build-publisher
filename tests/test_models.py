@@ -92,3 +92,34 @@ class BuildTestCase(TestCase):
         # Then it creates the repos and binpks directories
         self.assertTrue(os.path.isdir(f"{self.home_dir}/repos/{build}"))
         self.assertTrue(os.path.isdir(f"{self.home_dir}/binpkgs/{build}"))
+
+    def test_published_true(self):
+        """.publshed should return True when published"""
+        # Given the published build
+        build = self.build
+
+        with mock.patch("gentoo_build_publisher.models.requests.get") as mock_get:
+            response = mock_get.return_value
+            response.iter_content.return_value = iter(
+                [
+                    test_data("build.tar.gz"),
+                ]
+            )
+            build.publish()
+
+        # When we acess the `published` attribute
+        published = build.published
+
+        # Then it returns True
+        self.assertTrue(published)
+
+    def test_published_false(self):
+        """.publshed should return False when not published"""
+        # Given the unpublished build
+        build = self.build
+
+        # When we acess the `published` attribute
+        published = build.published
+
+        # Then it returns False
+        self.assertFalse(published)

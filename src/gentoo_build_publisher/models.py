@@ -104,3 +104,23 @@ class Build(models.Model):
 
         shutil.rmtree(self.binpkgs_dir, ignore_errors=True)
         shutil.rmtree(self.repos_dir, ignore_errors=True)
+
+    @property
+    def published(self):
+        """Return True if this build currently published.
+
+        By "published" we mean both repose and binpkgs symlinks point to this build
+        """
+        repo_symlink = f"{settings.HOME_DIR}/repos/{self.build_name}"
+        binpkg_symlink = f"{settings.HOME_DIR}/binpkgs/{self.build_name}"
+
+        if not os.path.exists(repo_symlink) or not os.path.exists(binpkg_symlink):
+            return False
+
+        if os.path.realpath(repo_symlink) != f"{settings.HOME_DIR}/repos/{self}":
+            return False
+
+        if os.path.realpath(binpkg_symlink) != f"{settings.HOME_DIR}/binpkgs/{self}":
+            return False
+
+        return True
