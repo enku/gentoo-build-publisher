@@ -1,0 +1,6 @@
+.coverage
+/.venv/
+/build/
+/dist/
+/htmlcov/
+gentoo_build_publisher.egg-info/
