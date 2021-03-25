@@ -24,17 +24,11 @@ def now(timestamp: Optional[datetime.datetime] = None) -> datetime.datetime:
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int):
     """Jenkins call-back to publish a new build"""
-    # Make sure we haven't already published this
-    query = Build.objects.filter(build_name=build_name, build_number=build_number)
+    build = Build.objects.get_or_create(
+        build_name=build_name, build_number=build_number, defaults={"submitted": now()}
+    )[0]
 
-    if query.exists():
-        build = query.get()
-        response = {"error": "Build already published", "build_id": build.pk}
-    else:
-        build = Build.objects.create(
-            build_name=build_name, build_number=build_number, submitted=now()
-        )
-        task = publish_build.delay(build.pk)
-        response = {"buildId": build.pk, "taskId": task.id, "error": None}
+    publish_build.delay(build.pk)
+    response = {"buildId": build.pk, "error": None}
 
     return JsonResponse(response)
