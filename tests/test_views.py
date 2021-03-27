@@ -6,10 +6,11 @@ from unittest import mock
 
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from gentoo_build_publisher.conf import settings
 from gentoo_build_publisher.models import Build
-from gentoo_build_publisher.views import delete, now, publish
+from gentoo_build_publisher.views import delete, publish
 
 from . import test_data
 
@@ -40,7 +41,7 @@ class PublishViewTestCase(TestCase):
         build_name = "babette"
         build_number = "193"
         build = Build.objects.create(
-            build_name=build_name, build_number=build_number, submitted=now()
+            build_name=build_name, build_number=build_number, submitted=timezone.now()
         )
 
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
