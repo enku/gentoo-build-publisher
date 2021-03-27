@@ -81,4 +81,4 @@ class DeleteViewTestCase(TestCase):
         request = self.request.post("/delete/")
 
         with self.assertRaises(Http404):
-            response = delete(request, "babette", "3000")
+            delete(request, "babette", "3000")
