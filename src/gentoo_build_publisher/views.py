@@ -15,7 +15,7 @@ from gentoo_build_publisher.tasks import publish_build
 
 @require_POST
 @csrf_exempt
-def publish(_request: HttpRequest, build_name: str, build_number: int):
+def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """Jenkins call-back to publish a new build"""
     build = Build.objects.get_or_create(
         build_name=build_name,
