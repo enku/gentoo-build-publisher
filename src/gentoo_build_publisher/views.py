@@ -5,6 +5,7 @@ import datetime
 from typing import Optional
 
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -30,5 +31,18 @@ def publish(_request: HttpRequest, build_name: str, build_number: int):
 
     publish_build.delay(build.pk)
     response = {"buildId": build.pk, "error": None}
+
+    return JsonResponse(response)
+
+
+@require_POST
+@csrf_exempt
+def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
+    """View to delete a build"""
+    build = get_object_or_404(Build, build_name=build_name, build_number=build_number)
+
+    build.delete()
+
+    response = {"deleted": True, "error": None}
 
     return JsonResponse(response)
