@@ -24,7 +24,8 @@ def publish(_request: HttpRequest, build_name: str, build_number: int):
     )[0]
 
     publish_build.delay(build.pk)
-    response = {"buildId": build.pk, "error": None}
+    response = build.as_dict()
+    response["error"] = None
 
     return JsonResponse(response)
 

@@ -3,6 +3,7 @@ Django models for Gentoo Build Publisher
 """
 import os
 import shutil
+from typing import Any, Dict
 
 import requests
 from django.db import models
@@ -124,3 +125,12 @@ class Build(models.Model):
             return False
 
         return True
+
+    def as_dict(self) -> Dict[str, Any]:
+        """Convert build instance attributes to a dict"""
+        return {
+            "buildName": self.build_name,
+            "buildNumber": self.build_number,
+            "published": self.published,
+            "url": self.url,
+        }

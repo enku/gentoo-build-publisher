@@ -123,3 +123,15 @@ class BuildTestCase(TestCase):
 
         # Then it returns False
         self.assertFalse(published)
+
+    def test_as_dict(self):
+        """build.as_dict() should return the expected dict"""
+        build = self.build
+
+        expected = {
+            "buildName": "babette",
+            "buildNumber": 193,
+            "published": False,
+            "url": "http://jenkins.invalid/job/Gentoo/job/babette/193/artifact/build.tar.gz",
+        }
+        self.assertEqual(build.as_dict(), expected)
