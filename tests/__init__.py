@@ -1,6 +1,5 @@
 """Tests for gentoo build publisher"""
 import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
@@ -13,14 +12,15 @@ def test_data(filename):
         return file_obj.read()
 
 
-@contextmanager
-def mock_get_artifact():
+def mock_get_artifact(func=None):
     """Mock the downloading of the artifact from Jenkins"""
-    with mock.patch("gentoo_build_publisher.models.requests.get") as mock_get:
-        response = mock_get.return_value
-        response.iter_content.return_value = iter([test_data("build.tar.gz")])
+    mock_get = mock.Mock()
+    mock_get.return_value.iter_content.side_effect = lambda *args, **kwargs: iter(
+        [test_data("build.tar.gz")]
+    )
+    patch = mock.patch("gentoo_build_publisher.models.requests.get", mock_get)
 
-        yield mock_get
+    return patch if func is None else patch(func)
 
 
 def mock_home_dir(func=None):

@@ -52,13 +52,13 @@ class DeleteViewTestCase(TestCase):
         self.request = RequestFactory()
 
     @mock_home_dir
+    @mock_get_artifact
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
         build = BuildFactory.create()
 
         # When we download the artifact
-        with mock_get_artifact():
-            build.publish()
+        build.publish()
 
         self.assertTrue(os.path.exists(build.binpkgs_dir))
         self.assertTrue(os.path.exists(build.repos_dir))

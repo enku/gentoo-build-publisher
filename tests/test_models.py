@@ -62,34 +62,32 @@ class BuildTestCase(TestCase):
         mock_symlink.assert_any_call(source, target)
 
     @mock_home_dir
+    @mock_get_artifact
     def test_download_artifact_moves_repos_and_binpks(self):
         """Should download artifacts and move to repos/ and binpkgs/"""
         # Given the build
         build = BuildFactory.create()
 
-        # Given the (fake) artifact
-        with mock_get_artifact():
-            # When we download the artifact
-            build.download_artifact()
+        # When we download the artifact
+        build.download_artifact()
 
-            # Then it creates the repos and binpks directories
-            self.assertTrue(os.path.isdir(f"{settings.HOME_DIR}/repos/{build}"))
-            self.assertTrue(os.path.isdir(f"{settings.HOME_DIR}/binpkgs/{build}"))
+        # Then it creates the repos and binpks directories
+        self.assertTrue(os.path.isdir(f"{settings.HOME_DIR}/repos/{build}"))
+        self.assertTrue(os.path.isdir(f"{settings.HOME_DIR}/binpkgs/{build}"))
 
     @mock_home_dir
+    @mock_get_artifact
     def test_published_true(self):
         """.publshed should return True when published"""
         # Given the published build
         build = BuildFactory.create()
+        build.publish()
 
-        with mock_get_artifact():
-            build.publish()
+        # When we acess the `published` attribute
+        published = build.published
 
-            # When we acess the `published` attribute
-            published = build.published
-
-            # Then it returns True
-            self.assertTrue(published)
+        # Then it returns True
+        self.assertTrue(published)
 
     def test_published_false(self):
         """.publshed should return False when not published"""
