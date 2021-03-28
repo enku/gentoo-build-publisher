@@ -45,12 +45,8 @@ class BuildTestCase(TestCase):
         os.symlink(".", f"{settings.HOME_DIR}/binpkgs/babette")
 
         # When we call its publish method
-        with mock.patch.object(
-            build, "download_artifact"
-        ) as mock_download_artifact:
-            with mock.patch(
-                "gentoo_build_publisher.models.os.symlink"
-            ) as mock_symlink:
+        with mock.patch.object(build, "download_artifact") as mock_download_artifact:
+            with mock.patch("gentoo_build_publisher.models.os.symlink") as mock_symlink:
                 build.publish()
 
         # Then it downloads the artifact
