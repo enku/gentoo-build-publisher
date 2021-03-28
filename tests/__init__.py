@@ -4,8 +4,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
-from gentoo_build_publisher.conf import settings
-
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
@@ -25,10 +23,9 @@ def mock_get_artifact():
         yield mock_get
 
 
-@contextmanager
-def mock_home_dir():
-    """Mock the home directory setting into a new TemporaryDirectory"""
+def mock_home_dir(func=None):
+    """Mock the settings.HOME_DIR setting into a new TemporaryDirectory"""
     with tempfile.TemporaryDirectory() as home_dir:
-        with mock.patch.object(settings, "HOME_DIR", home_dir):
+        patch = mock.patch("gentoo_build_publisher.conf.settings.HOME_DIR", home_dir)
 
-            yield home_dir
+        return patch if func is None else patch(func)

@@ -51,30 +51,30 @@ class DeleteViewTestCase(TestCase):
         super().setUp()
         self.request = RequestFactory()
 
+    @mock_home_dir
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
         build = BuildFactory.create()
 
         # When we download the artifact
-        with mock_home_dir():
-            with mock_get_artifact():
-                build.publish()
+        with mock_get_artifact():
+            build.publish()
 
-            self.assertTrue(os.path.exists(build.binpkgs_dir))
-            self.assertTrue(os.path.exists(build.repos_dir))
+        self.assertTrue(os.path.exists(build.binpkgs_dir))
+        self.assertTrue(os.path.exists(build.repos_dir))
 
-            request = self.request.post("/delete/")
-            response = delete(request, build.build_name, build.build_number)
+        request = self.request.post("/delete/")
+        response = delete(request, build.build_name, build.build_number)
 
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.content, b'{"deleted": true, "error": null}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'{"deleted": true, "error": null}')
 
-            query = Build.objects.filter(
-                build_name=build.build_name, build_number=build.build_number
-            )
-            self.assertFalse(query.exists())
-            self.assertFalse(os.path.exists(build.binpkgs_dir))
-            self.assertFalse(os.path.exists(build.repos_dir))
+        query = Build.objects.filter(
+            build_name=build.build_name, build_number=build.build_number
+        )
+        self.assertFalse(query.exists())
+        self.assertFalse(os.path.exists(build.binpkgs_dir))
+        self.assertFalse(os.path.exists(build.repos_dir))
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""
