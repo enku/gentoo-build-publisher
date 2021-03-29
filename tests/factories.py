@@ -2,15 +2,15 @@
 import factory
 from django.utils import timezone
 
-from gentoo_build_publisher.models import Build
+from gentoo_build_publisher.models import BuildModel
 
 
-class BuildFactory(factory.django.DjangoModelFactory):
-    """Build builder"""
+class BuildModelFactory(factory.django.DjangoModelFactory):
+    """BuildModel factory"""
 
     class Meta:
-        model = Build
+        model = BuildModel
 
-    build_name = "babette"
-    build_number = 193
+    name = "babette"
+    number = 193
     submitted = factory.LazyFunction(timezone.now)

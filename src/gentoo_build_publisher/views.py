@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from gentoo_build_publisher.models import Build
+from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.tasks import publish_build
 
 
@@ -15,14 +15,14 @@ from gentoo_build_publisher.tasks import publish_build
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """Jenkins call-back to publish a new build"""
-    build = Build.objects.get_or_create(
-        build_name=build_name,
-        build_number=build_number,
+    build_model = BuildModel.objects.get_or_create(
+        name=build_name,
+        number=build_number,
         defaults={"submitted": timezone.now()},
     )[0]
 
-    publish_build.delay(build.pk)
-    response = build.as_dict()
+    publish_build.delay(build_model.id)
+    response = build_model.as_dict()
     response["error"] = None
 
     return JsonResponse(response)
@@ -32,9 +32,9 @@ def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonRe
 @csrf_exempt
 def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to delete a build"""
-    build = get_object_or_404(Build, build_name=build_name, build_number=build_number)
+    build_model = get_object_or_404(BuildModel, name=build_name, number=build_number)
 
-    build.delete()
+    build_model.delete()
 
     response = {"deleted": True, "error": None}
 

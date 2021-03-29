@@ -5,11 +5,11 @@ from unittest import mock
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
 
-from gentoo_build_publisher.models import Build
+from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.views import delete, publish
 
 from . import mock_get_artifact, mock_home_dir
-from .factories import BuildFactory
+from .factories import BuildModelFactory
 
 
 class PublishViewTestCase(TestCase):
@@ -19,6 +19,7 @@ class PublishViewTestCase(TestCase):
         super().setUp()
         self.request = RequestFactory()
 
+    @mock_home_dir
     def test_publish_new(self):
         """Should publish brand new builds"""
         request = self.request.post("/publish/")
@@ -29,19 +30,21 @@ class PublishViewTestCase(TestCase):
             response = publish(request, build_name, build_number)
 
         self.assertEqual(response.status_code, 200)
-        build = Build.objects.get(build_name=build_name, build_number=build_number)
-        mock_pb.delay.assert_called_once_with(build.pk)
+        build_model = BuildModel.objects.get(name=build_name, number=build_number)
+        mock_pb.delay.assert_called_once_with(build_model.pk)
 
+    @mock_home_dir
     def test_publish_existing(self):
         """Should publish brand new builds"""
         request = self.request.post("/publish/")
-        build = BuildFactory.create()
+        build_model = BuildModelFactory.create()
+        build = build_model.build
 
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = publish(request, build.build_name, build.build_number)
+            response = publish(request, build.name, build.number)
 
         self.assertEqual(response.status_code, 200)
-        mock_pb.delay.assert_called_once_with(build.pk)
+        mock_pb.delay.assert_called_once_with(build_model.pk)
 
 
 class DeleteViewTestCase(TestCase):
@@ -55,26 +58,26 @@ class DeleteViewTestCase(TestCase):
     @mock_get_artifact
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
-        build = BuildFactory.create()
+        build_model = BuildModelFactory.create()
+        build = build_model.build
+        storage = build_model.storage
 
         # When we download the artifact
-        build.publish()
+        storage.publish(build)
 
-        self.assertTrue(os.path.exists(build.binpkgs_dir))
-        self.assertTrue(os.path.exists(build.repos_dir))
+        self.assertTrue(os.path.exists(storage.build_binpkgs(build)))
+        self.assertTrue(os.path.exists(storage.build_repos(build)))
 
         request = self.request.post("/delete/")
-        response = delete(request, build.build_name, build.build_number)
+        response = delete(request, build.name, build.number)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'{"deleted": true, "error": null}')
 
-        query = Build.objects.filter(
-            build_name=build.build_name, build_number=build.build_number
-        )
+        query = BuildModel.objects.filter(name=build.name, number=build.number)
         self.assertFalse(query.exists())
-        self.assertFalse(os.path.exists(build.binpkgs_dir))
-        self.assertFalse(os.path.exists(build.repos_dir))
+        self.assertFalse(os.path.exists(storage.build_binpkgs(build)))
+        self.assertFalse(os.path.exists(storage.build_repos(build)))
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""

@@ -6,6 +6,15 @@ from unittest import mock
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
+class TempDirMixin:
+    def setUp(self):
+        super().setUp()
+
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        self.tmpdir = tmpdir.name
+
+
 def test_data(filename):
     """Return all the data in filename"""
     with open(BASE_DIR / filename, "rb") as file_obj:
@@ -18,7 +27,7 @@ def mock_get_artifact(func=None):
     mock_get.return_value.iter_content.side_effect = lambda *args, **kwargs: iter(
         [test_data("build.tar.gz")]
     )
-    patch = mock.patch("gentoo_build_publisher.models.requests.get", mock_get)
+    patch = mock.patch("gentoo_build_publisher.types.requests.get", mock_get)
 
     return patch if func is None else patch(func)
 
