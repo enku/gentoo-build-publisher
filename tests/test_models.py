@@ -100,10 +100,16 @@ class BuildTestCase(TestCase):
         """build.as_dict() should return the expected dict"""
         build = BuildFactory.create()
 
+        with mock.patch.dict(
+            os.environ,
+            {"BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/job/Gentoo"},
+        ):
+            as_dict = build.as_dict()
+
         expected = {
             "buildName": "babette",
             "buildNumber": 193,
             "published": False,
             "url": "http://jenkins.invalid/job/Gentoo/job/babette/193/artifact/build.tar.gz",
         }
-        self.assertEqual(build.as_dict(), expected)
+        self.assertEqual(as_dict, expected)

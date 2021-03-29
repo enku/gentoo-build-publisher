@@ -1,8 +1,5 @@
 """App-specific settings for Gentoo Build Publisher"""
-from django.conf import settings as django_settings
-
-USER_SETTINGS = getattr(django_settings, "BUILD_PUBLISHER", None)
-
+import os
 
 DEFAULTS = {
     "JENKINS_ARTIFACT_NAME": "build.tar.gz",
@@ -15,8 +12,8 @@ DEFAULTS = {
 
 class GBPSettings:
     """Pattern for app settings"""
-    def __init__(self, user_settings=None, defaults=None):
-        self.user_settings = user_settings or {}
+    def __init__(self, prefix, defaults=None):
+        self.prefix = prefix
         self.defaults = defaults or {}
 
     def __getattr__(self, attr):
@@ -24,7 +21,7 @@ class GBPSettings:
             raise AttributeError(attr)
 
         try:
-            value = self.user_settings[attr]
+            value = os.environ[f"{self.prefix}{attr}"]
         except KeyError:
             value = self.defaults[attr]
 
@@ -39,4 +36,4 @@ class GBPSettings:
         return value
 
 
-settings = GBPSettings(USER_SETTINGS, DEFAULTS)
+settings = GBPSettings("BUILD_PUBLISHER_", DEFAULTS)
