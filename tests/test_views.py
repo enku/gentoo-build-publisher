@@ -5,10 +5,11 @@ from unittest import mock
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
 
+from gentoo_build_publisher.conf import settings
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.views import delete, publish
 
-from . import mock_get_artifact, mock_home_dir
+from . import MockJenkins, mock_home_dir
 from .factories import BuildModelFactory
 
 
@@ -55,15 +56,15 @@ class DeleteViewTestCase(TestCase):
         self.request = RequestFactory()
 
     @mock_home_dir
-    @mock_get_artifact
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
         build_model = BuildModelFactory.create()
         build = build_model.build
         storage = build_model.storage
+        jenkins = MockJenkins.from_settings(settings)
 
         # When we download the artifact
-        storage.publish(build)
+        storage.publish(build, jenkins)
 
         self.assertTrue(os.path.exists(storage.build_binpkgs(build)))
         self.assertTrue(os.path.exists(storage.build_repos(build)))

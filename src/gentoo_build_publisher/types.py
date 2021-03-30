@@ -4,22 +4,59 @@ from __future__ import annotations
 import os
 import shutil
 from dataclasses import dataclass
+from typing import Generator
 
 import requests
 
 from gentoo_build_publisher import io
-from gentoo_build_publisher.conf import GBPSettings, settings
+from gentoo_build_publisher.conf import GBPSettings
 
 
 @dataclass
 class Build:
-    """A (storage-less) representation of a build (dataclass)"""
+    """A Representation of a Jenkins build"""
 
     name: str
     number: int
 
     def __str__(self):
         return f"{self.name}.{self.number}"
+
+
+@dataclass
+class Jenkins:
+    """Interface to Jenkins"""
+
+    base_url: str
+    user: str
+    api_key: str
+    artifact_name: str = "build.tar.gz"
+
+    def build_url(self, build: Build) -> str:
+        """Return the artifact url for build"""
+        return (
+            f"{self.base_url}/job/{build.name}/{build.number}"
+            f"/artifact/{self.artifact_name}"
+        )
+
+    def download_artifact(self, build: Build) -> Generator[bytes, None, None]:
+        """Download and yield the build artifact in chunks of bytes"""
+        auth = (self.user, self.api_key)
+        url = self.build_url(build)
+        response = requests.get(url, auth=auth, stream=True)
+        response.raise_for_status()
+
+        return response.iter_content(chunk_size=2048, decode_unicode=False)
+
+    @classmethod
+    def from_settings(cls, settings: GBPSettings):
+        """Return a Jenkins instance given settings"""
+        return cls(
+            base_url=settings.JENKINS_BASE_URL,
+            artifact_name=settings.JENKINS_ARTIFACT_NAME,
+            user=settings.JENKINS_USER,
+            api_key=settings.JENKINS_API_KEY,
+        )
 
 
 class Storage:
@@ -39,14 +76,6 @@ class Storage:
         """Instatiate from settings"""
         return cls(my_settings.HOME_DIR)
 
-    @staticmethod
-    def artifact_url(build: Build) -> str:
-        """Return the url of the build's artifact on Jenkins"""
-        return (
-            f"{settings.JENKINS_BASE_URL}/job/{build.name}/{build.number}"
-            f"/artifact/{settings.JENKINS_ARTIFACT_NAME}"
-        )
-
     def build_repos(self, build: Build) -> str:
         """Return the path to the build's repos directory"""
         return f"{self.dirname}/repos/{build.name}.{build.number}"
@@ -55,23 +84,18 @@ class Storage:
         """Return the path to the build's binpkgs directory"""
         return f"{self.dirname}/binpkgs/{build.name}.{build.number}"
 
-    def download_artifact(self, build: Build):
+    def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
 
         * extract repos to build.repos_dir
         * extract binpkgs to build.binpkgs_dir
         """
-        url = self.artifact_url(build)
-        auth = (settings.JENKINS_USER, settings.JENKINS_API_KEY)
-        response = requests.get(url, auth=auth, stream=True)
-        response.raise_for_status()
-
         path = f"{self.dirname}/tmp/{build.name}{build.number}/build.tar.gz"
         dirpath = os.path.dirname(path)
         os.makedirs(dirpath, exist_ok=True)
 
         with open(path, "wb") as artifact_file:
-            for chunk in response.iter_content(chunk_size=2048, decode_unicode=False):
+            for chunk in jenkins.download_artifact(build):
                 artifact_file.write(chunk)
 
         io.extract_tarfile(path, dirpath)
@@ -81,13 +105,13 @@ class Storage:
 
         shutil.rmtree(dirpath)
 
-    def publish(self, build: Build):
+    def publish(self, build: Build, jenkins: Jenkins):
         """Make this build 'active'"""
         binpkgs_dir = self.build_binpkgs(build)
         repos_dir = self.build_repos(build)
 
         if not os.path.exists(repos_dir) and not os.path.exists(binpkgs_dir):
-            self.download_artifact(build)
+            self.download_artifact(build, jenkins)
 
         io.symlink(str(build), f"{self.dirname}/repos/{build.name}")
         io.symlink(str(build), f"{self.dirname}/binpkgs/{build.name}")

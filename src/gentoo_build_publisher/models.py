@@ -6,7 +6,7 @@ from typing import Any, Dict
 from django.db import models
 
 from gentoo_build_publisher.conf import settings
-from gentoo_build_publisher.types import Build, Storage
+from gentoo_build_publisher.types import Build, Jenkins, Storage
 
 
 class BuildModel(models.Model):
@@ -37,6 +37,11 @@ class BuildModel(models.Model):
             self.storage: Storage = kwargs.pop("storage")
         else:
             self.storage = Storage.from_settings(settings)
+
+        if "jenkins" in kwargs:
+            self.jenkins: Jenkins = kwargs.pop("jenkins")
+        else:
+            self.jenkins = Jenkins.from_settings(settings)
 
         super().__init__(*args, **kwargs)
 
@@ -69,5 +74,5 @@ class BuildModel(models.Model):
             "name": self.name,
             "number": self.number,
             "published": self.storage.published(self.build),
-            "url": self.storage.artifact_url(self.build),
+            "url": self.jenkins.build_url(self.build),
         }

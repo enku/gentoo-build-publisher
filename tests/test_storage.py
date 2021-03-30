@@ -2,10 +2,9 @@
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.conf import GBPSettings
-from gentoo_build_publisher.types import Build, Storage
+from gentoo_build_publisher.types import Build, Jenkins, Storage
 
-from . import TempDirMixin, mock_get_artifact
+from . import MockJenkins, TempDirMixin, mock_settings
 
 
 class StorageInitTestCase(TempDirMixin, TestCase):
@@ -45,13 +44,12 @@ class StorageFromSettings(TempDirMixin, TestCase):
     def test(self):
         """Should intantiate Storage from settings"""
         # Given the settings
-        values = {"HOME_DIR": self.tmpdir}
-        my_settings = GBPSettings("BUILD_PUBLISHER_", values)
+        settings = mock_settings(HOME_DIR=self.tmpdir)
 
         # When we instantiate Storage.from_settings
-        storage = Storage.from_settings(my_settings)
+        storage = Storage.from_settings(settings)
 
-        # Then we get a Storage instance with attributes from my_settings
+        # Then we get a Storage instance with attributes from settings
         self.assertIsInstance(storage, Storage)
         self.assertEqual(storage.dirname, self.tmpdir)
 
@@ -59,12 +57,12 @@ class StorageFromSettings(TempDirMixin, TestCase):
 class StorageDownloadArtifactTestCase(TempDirMixin, TestCase):
     """Tests for Storage.download_artifact"""
 
-    @mock_get_artifact
     def test_download_artifact_moves_repos_and_binpkgs(self):
         """Should download artifacts and move to repos/ and binpkgs/"""
         storage = Storage(self.tmpdir)
+        jenkins = MockJenkins.from_settings(mock_settings())
         build = Build(name="babette", number=19)
-        storage.download_artifact(build)
+        storage.download_artifact(build, jenkins)
 
         self.assertIs(os.path.isdir(storage.build_repos(build)), True)
         self.assertIs(os.path.isdir(storage.build_binpkgs(build)), True)
@@ -81,10 +79,13 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         # Given the build
         build = Build(name="babette", number=193)
 
+        # Given the jenkins instance
+        jenkins = MockJenkins.from_settings(mock_settings())
+
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
             with mock.patch("gentoo_build_publisher.types.os.symlink") as mock_symlink:
-                storage.publish(build)
+                storage.publish(build, jenkins)
 
         # Then it downloads the artifact
         mock_download_artifact.assert_called()
@@ -102,6 +103,9 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         # Given the build
         build = Build(name="babette", number=193)
 
+        # Given the jenkins instance
+        jenkins = Jenkins.from_settings(mock_settings())
+
         # given the existing symlinks
         os.symlink(".", f"{storage.dirname}/repos/babette")
         os.symlink(".", f"{storage.dirname}/binpkgs/babette")
@@ -109,7 +113,7 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
             with mock.patch("gentoo_build_publisher.types.os.symlink") as mock_symlink:
-                storage.publish(build)
+                storage.publish(build, jenkins)
 
         # Then it downloads the artifact
         mock_download_artifact.assert_called()
@@ -122,15 +126,17 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
 class StoragePublishedTestCase(TempDirMixin, TestCase):
     """Tests for Storage.published"""
 
-    @mock_get_artifact
     def test_published_true(self):
         """.publshed should return True when published"""
         # Given the storage
         storage = Storage(self.tmpdir)
 
+        # Given the jenkins instance
+        jenkins = MockJenkins.from_settings(mock_settings())
+
         # Given the published build
         build = Build(name="babette", number=193)
-        storage.publish(build)
+        storage.publish(build, jenkins)
 
         # When we call published(build)
         published = storage.published(build)

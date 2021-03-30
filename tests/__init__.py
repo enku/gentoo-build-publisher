@@ -1,9 +1,31 @@
 """Tests for gentoo build publisher"""
+import os
 import tempfile
 from pathlib import Path
 from unittest import mock
 
+from gentoo_build_publisher.conf import GBPSettings
+from gentoo_build_publisher.types import Jenkins
+
 BASE_DIR = Path(__file__).resolve().parent / "data"
+
+
+def mock_settings(**kwargs):
+    with mock.patch.dict(os.environ, {}, clear=True):
+        settings = GBPSettings(
+            "",
+            {
+                "HOME_DIR": "/var/lib/gentoo-build-publisher",
+                "JENKINS_API_KEY": "test_key",
+                "JENKINS_ARTIFACT_NAME": "test.tar.gz",
+                "JENKINS_BASE_URL": "https://test.invalid",
+                "JENKINS_USER": "test_user",
+            },
+        )
+        for name, value in kwargs.items():
+            setattr(settings, name, value)
+
+        return settings
 
 
 class TempDirMixin:
@@ -21,15 +43,18 @@ def test_data(filename):
         return file_obj.read()
 
 
-def mock_get_artifact(func=None):
-    """Mock the downloading of the artifact from Jenkins"""
-    mock_get = mock.Mock()
-    mock_get.return_value.iter_content.side_effect = lambda *args, **kwargs: iter(
-        [test_data("build.tar.gz")]
-    )
-    patch = mock.patch("gentoo_build_publisher.types.requests.get", mock_get)
+class MockJenkins(Jenkins):
+    """Jenkins with requests mocked out"""
 
-    return patch if func is None else patch(func)
+    mock_get = None
+
+    def download_artifact(self, build):
+        with mock.patch("gentoo_build_publisher.types.requests.get") as mock_get:
+            mock_get.return_value.iter_content.side_effect = (
+                lambda *args, **kwargs: iter([test_data("build.tar.gz")])
+            )
+            self.mock_get = mock_get
+            return super().download_artifact(build)
 
 
 def mock_home_dir(func=None):
