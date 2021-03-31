@@ -1,7 +1,7 @@
 """
 Django models for Gentoo Build Publisher
 """
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from django.db import models
 
@@ -31,25 +31,20 @@ class BuildModel(models.Model):
             models.UniqueConstraint(fields=["name", "number"], name="unique_build")
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        jenkins: Optional[Jenkins] = None,
+        settings: Optional[Settings] = None,
+        storage: Optional[Storage] = None,
+        **kwargs,
+    ):
         self.jenkins: Jenkins
         self.storage: Storage
-        settings: Settings
 
-        if "settings" in kwargs:
-            settings = kwargs.pop("settings")
-        else:
-            settings = Settings.from_environ()
-
-        if "storage" in kwargs:
-            self.storage = kwargs.pop("storage")
-        else:
-            self.storage = Storage.from_settings(settings)
-
-        if "jenkins" in kwargs:
-            self.jenkins = kwargs.pop("jenkins")
-        else:
-            self.jenkins = Jenkins.from_settings(settings)
+        settings = settings or Settings.from_environ()
+        self.jenkins = jenkins or Jenkins.from_settings(settings)
+        self.storage = storage or Storage.from_settings(settings)
 
         super().__init__(*args, **kwargs)
 
