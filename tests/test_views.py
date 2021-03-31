@@ -5,8 +5,8 @@ from unittest import mock
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
 
-from gentoo_build_publisher.conf import settings
 from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.types import Settings
 from gentoo_build_publisher.views import delete, publish
 
 from . import MockJenkins, mock_home_dir
@@ -61,7 +61,7 @@ class DeleteViewTestCase(TestCase):
         build_model = BuildModelFactory.create()
         build = build_model.build
         storage = build_model.storage
-        jenkins = MockJenkins.from_settings(settings)
+        jenkins = MockJenkins.from_settings(Settings())
 
         # When we download the artifact
         storage.publish(build, jenkins)

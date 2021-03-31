@@ -1,9 +1,9 @@
 """Unit tests for gbp models"""
 from django.test import TestCase
 
-from gentoo_build_publisher.types import Jenkins, Storage
+from gentoo_build_publisher.types import Jenkins, Settings, Storage
 
-from . import TempDirMixin, mock_settings
+from . import TempDirMixin
 from .factories import BuildModelFactory
 
 
@@ -12,7 +12,7 @@ class BuildModelTestCase(TempDirMixin, TestCase):
 
     def test_as_dict(self):
         """build.as_dict() should return the expected dict"""
-        settings = mock_settings(
+        settings = Settings(
             JENKINS_ARTIFACT_NAME="build.tar.gz",
             JENKINS_BASE_URL="http://jenkins.invalid/job/Gentoo",
         )

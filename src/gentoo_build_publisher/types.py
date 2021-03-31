@@ -4,12 +4,70 @@ from __future__ import annotations
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Generator
+from typing import Any, Dict, Generator
 
 import requests
 
 from gentoo_build_publisher import io
-from gentoo_build_publisher.conf import GBPSettings
+
+
+class Settings:
+    """GBP Settings"""
+
+    DEFAULTS = {
+        "JENKINS_ARTIFACT_NAME": "build.tar.gz",
+        "JENKINS_API_KEY": "JENKINS_API_KEY_REQUIRED",
+        "JENKINS_BASE_URL": "http://jenkins/Gentoo",
+        "JENKINS_USER": "jenkins",
+        "HOME_DIR": "/var/lib/gentoo-build-publisher",
+    }
+
+    def __init__(self, **kwargs):
+        for name, value in kwargs.items():
+            if name not in self.DEFAULTS:
+                raise ValueError(name)
+            value = self.validate_setting(name, value)
+            setattr(self, name, value)
+
+    def __getattr__(self, name):
+        if name not in self.DEFAULTS:
+            raise AttributeError(name)
+
+        value = self.DEFAULTS[name]
+        value = self.validate_setting(name, value)
+
+        setattr(self, name, value)
+
+        return value
+
+    def validate_setting(self, _attr, value):  # pylint: disable=no-self-use
+        """Validate a settings"""
+        # For now we don't do any special validation
+        return str(value)
+
+    @classmethod
+    def from_dict(cls, prefix, data_dict: Dict[str, Any]) -> Settings:
+        """Return Settings instantiated from a dict"""
+        prefix_len = len(prefix)
+        kwargs = {}
+
+        for name, value in data_dict.items():
+            if not name.startswith(prefix):
+                continue
+
+            name = name[prefix_len:]
+
+            if name not in cls.DEFAULTS:
+                continue
+
+            kwargs[name] = value
+
+        return cls(**kwargs)
+
+    @classmethod
+    def from_environ(cls, prefix: str = "BUILD_PUBLISHER_") -> Settings:
+        """Return settings instantiated from environment variables"""
+        return cls.from_dict(prefix, os.environ)
 
 
 @dataclass
@@ -49,7 +107,7 @@ class Jenkins:
         return response.iter_content(chunk_size=2048, decode_unicode=False)
 
     @classmethod
-    def from_settings(cls, settings: GBPSettings):
+    def from_settings(cls, settings: Settings):
         """Return a Jenkins instance given settings"""
         return cls(
             base_url=settings.JENKINS_BASE_URL,
@@ -72,7 +130,7 @@ class Storage:
         os.makedirs(self.repos, exist_ok=True)
 
     @classmethod
-    def from_settings(cls, my_settings: GBPSettings) -> Storage:
+    def from_settings(cls, my_settings: Settings) -> Storage:
         """Instatiate from settings"""
         return cls(my_settings.HOME_DIR)
 

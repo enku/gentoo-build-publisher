@@ -4,29 +4,9 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from gentoo_build_publisher.conf import GBPSettings
 from gentoo_build_publisher.types import Jenkins
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
-
-
-def mock_settings(**kwargs):
-    with mock.patch.dict(os.environ, {}, clear=True):
-        settings = GBPSettings(
-            "",
-            {
-                "HOME_DIR": "/var/lib/gentoo-build-publisher",
-                "JENKINS_API_KEY": "test_key",
-                "JENKINS_ARTIFACT_NAME": "test.tar.gz",
-                "JENKINS_BASE_URL": "https://test.invalid",
-                "JENKINS_USER": "test_user",
-            },
-        )
-        for name, value in kwargs.items():
-            setattr(settings, name, value)
-
-        return settings
-
 
 class TempDirMixin:
     def setUp(self):
@@ -60,6 +40,6 @@ class MockJenkins(Jenkins):
 def mock_home_dir(func=None):
     """Mock the settings.HOME_DIR setting into a new TemporaryDirectory"""
     with tempfile.TemporaryDirectory() as home_dir:
-        patch = mock.patch("gentoo_build_publisher.conf.settings.HOME_DIR", home_dir)
+        patch = mock.patch.dict(os.environ, {"BUILD_PUBLISHER_HOME_DIR": home_dir})
 
         return patch if func is None else patch(func)

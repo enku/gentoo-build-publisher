@@ -5,8 +5,7 @@ from typing import Any, Dict
 
 from django.db import models
 
-from gentoo_build_publisher.conf import settings
-from gentoo_build_publisher.types import Build, Jenkins, Storage
+from gentoo_build_publisher.types import Build, Jenkins, Settings, Storage
 
 
 class BuildModel(models.Model):
@@ -33,13 +32,22 @@ class BuildModel(models.Model):
         ]
 
     def __init__(self, *args, **kwargs):
+        self.jenkins: Jenkins
+        self.storage: Storage
+        settings: Settings
+
+        if "settings" in kwargs:
+            settings = kwargs.pop("settings")
+        else:
+            settings = Settings.from_environ()
+
         if "storage" in kwargs:
-            self.storage: Storage = kwargs.pop("storage")
+            self.storage = kwargs.pop("storage")
         else:
             self.storage = Storage.from_settings(settings)
 
         if "jenkins" in kwargs:
-            self.jenkins: Jenkins = kwargs.pop("jenkins")
+            self.jenkins = kwargs.pop("jenkins")
         else:
             self.jenkins = Jenkins.from_settings(settings)
 

@@ -3,9 +3,9 @@ import io
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.types import Build, Jenkins
+from gentoo_build_publisher.types import Build, Jenkins, Settings
 
-from . import MockJenkins, mock_settings, test_data
+from . import MockJenkins, test_data
 
 
 class JenkinsTestCase(TestCase):
@@ -62,7 +62,7 @@ class JenkinsTestCase(TestCase):
     def test_from_settings(self):
         """.from_settings() should return an instance instantiated from settings"""
         # Given the settings
-        settings = mock_settings(
+        settings = Settings(
             JENKINS_BASE_URL="https://foo.bar.invalid/jenkins",
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",

@@ -2,9 +2,9 @@
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.types import Build, Jenkins, Storage
+from gentoo_build_publisher.types import Build, Jenkins, Settings, Storage
 
-from . import MockJenkins, TempDirMixin, mock_settings
+from . import MockJenkins, TempDirMixin
 
 
 class StorageInitTestCase(TempDirMixin, TestCase):
@@ -44,7 +44,7 @@ class StorageFromSettings(TempDirMixin, TestCase):
     def test(self):
         """Should intantiate Storage from settings"""
         # Given the settings
-        settings = mock_settings(HOME_DIR=self.tmpdir)
+        settings = Settings(HOME_DIR=self.tmpdir)
 
         # When we instantiate Storage.from_settings
         storage = Storage.from_settings(settings)
@@ -60,7 +60,7 @@ class StorageDownloadArtifactTestCase(TempDirMixin, TestCase):
     def test_download_artifact_moves_repos_and_binpkgs(self):
         """Should download artifacts and move to repos/ and binpkgs/"""
         storage = Storage(self.tmpdir)
-        jenkins = MockJenkins.from_settings(mock_settings())
+        jenkins = MockJenkins.from_settings(Settings())
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
@@ -80,7 +80,7 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         build = Build(name="babette", number=193)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(mock_settings())
+        jenkins = MockJenkins.from_settings(Settings())
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
@@ -104,7 +104,7 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         build = Build(name="babette", number=193)
 
         # Given the jenkins instance
-        jenkins = Jenkins.from_settings(mock_settings())
+        jenkins = MockJenkins.from_settings(Settings())
 
         # given the existing symlinks
         os.symlink(".", f"{storage.dirname}/repos/babette")
@@ -132,7 +132,7 @@ class StoragePublishedTestCase(TempDirMixin, TestCase):
         storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(mock_settings())
+        jenkins = MockJenkins.from_settings(Settings())
 
         # Given the published build
         build = Build(name="babette", number=193)
