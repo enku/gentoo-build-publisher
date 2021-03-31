@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from gentoo_build_publisher.types import Jenkins, Settings, Storage
 
-from . import TempDirMixin
+from . import MockJenkins, TempDirMixin
 from .factories import BuildModelFactory
 
 
@@ -34,3 +34,19 @@ class BuildModelTestCase(TempDirMixin, TestCase):
             ),
         }
         self.assertEqual(as_dict, expected)
+
+    def test_publish(self):
+        """.publish should publish the build artifact"""
+        settings = Settings(
+            HOME_DIR=self.tmpdir,
+            JENKINS_ARTIFACT_NAME="build.tar.gz",
+            JENKINS_BASE_URL="http://jenkins.invalid/job/Gentoo",
+        )
+        jenkins = MockJenkins.from_settings(settings)
+
+        build_model = BuildModelFactory.create(settings=settings, jenkins=jenkins)
+
+        build_model.publish()
+
+        storage = Storage.from_settings(settings)
+        self.assertIs(storage.published(build_model.build), True)

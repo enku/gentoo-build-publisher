@@ -62,7 +62,7 @@ class BuildModel(models.Model):
 
     def publish(self):
         """Publish the Build"""
-        self.storage.publish(self.build)
+        self.storage.publish(self.build, self.jenkins)
 
     def delete(self, using=None, keep_parents=False):
         # The reason to call super().delete() before removing the directories is if for
