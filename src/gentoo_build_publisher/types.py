@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import os
 import shutil
+import tarfile
 from dataclasses import dataclass
 from typing import Any, Dict, Generator
 
 import requests
-
-from gentoo_build_publisher import io
 
 
 class Settings:
@@ -156,7 +155,8 @@ class Storage:
             for chunk in jenkins.download_artifact(build):
                 artifact_file.write(chunk)
 
-        io.extract_tarfile(path, dirpath)
+        with tarfile.open(path, mode="r") as tar_file:
+            tar_file.extractall(dirpath)
 
         os.renames(f"{dirpath}/repos", self.build_repos(build))
         os.renames(f"{dirpath}/binpkgs", self.build_binpkgs(build))
@@ -171,8 +171,8 @@ class Storage:
         if not os.path.exists(repos_dir) and not os.path.exists(binpkgs_dir):
             self.download_artifact(build, jenkins)
 
-        io.symlink(str(build), f"{self.dirname}/repos/{build.name}")
-        io.symlink(str(build), f"{self.dirname}/binpkgs/{build.name}")
+        self.symlink(str(build), f"{self.dirname}/repos/{build.name}")
+        self.symlink(str(build), f"{self.dirname}/binpkgs/{build.name}")
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
@@ -203,3 +203,13 @@ class Storage:
 
         shutil.rmtree(binpkgs_dir, ignore_errors=True)
         shutil.rmtree(repos_dir, ignore_errors=True)
+
+    @staticmethod
+    def symlink(source: str, target: str):
+        """If target is a symlink remove it. If it otherwise exists raise an error"""
+        if os.path.islink(target):
+            os.unlink(target)
+        elif os.path.exists(target):
+            raise EnvironmentError(f"{target} exists but is not a symlink")
+
+        os.symlink(source, target)
