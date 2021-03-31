@@ -53,9 +53,9 @@ class BuildModel(models.Model):
     def __repr__(self) -> str:
         name = self.name
         number = self.number
-        name = type(self).__name__
+        class_name = type(self).__name__
 
-        return f"{name}(name={name!r}, number={number})"
+        return f"{class_name}(name={name!r}, number={number})"
 
     def __str__(self) -> str:
         return str(self.build)

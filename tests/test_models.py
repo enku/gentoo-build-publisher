@@ -50,3 +50,19 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
 
         storage = Storage.from_settings(settings)
         self.assertIs(storage.published(build_model.build), True)
+
+    def test_str(self):
+        """str(build_model) should return the expected string"""
+        build_model = BuildModelFactory()
+
+        string = str(build_model)
+
+        self.assertEqual(string, f"{build_model.name}.{build_model.number}")
+
+    def test_repr(self):
+        """repr(build_model) should return the expected string"""
+        build_model = BuildModelFactory(name="test", number=1)
+
+        string = repr(build_model)
+
+        self.assertEqual(string, "BuildModel(name='test', number=1)")
