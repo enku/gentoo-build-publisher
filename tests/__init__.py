@@ -8,13 +8,16 @@ from gentoo_build_publisher.types import Jenkins
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
-class TempDirMixin:
+class TempHomeMixin:
     def setUp(self):
         super().setUp()
 
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
         self.tmpdir = tmpdir.name
+        patch = mock.patch.dict(os.environ, {"BUILD_PUBLISHER_HOME_DIR": tmpdir.name})
+        self.addCleanup(patch.stop)
+        patch.start()
 
 
 def test_data(filename):
@@ -35,11 +38,3 @@ class MockJenkins(Jenkins):
             )
             self.mock_get = mock_get
             return super().download_artifact(build)
-
-
-def mock_home_dir(func=None):
-    """Mock the settings.HOME_DIR setting into a new TemporaryDirectory"""
-    with tempfile.TemporaryDirectory() as home_dir:
-        patch = mock.patch.dict(os.environ, {"BUILD_PUBLISHER_HOME_DIR": home_dir})
-
-        return patch if func is None else patch(func)

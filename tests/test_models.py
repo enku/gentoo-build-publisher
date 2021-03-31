@@ -3,11 +3,11 @@ from django.test import TestCase
 
 from gentoo_build_publisher.types import Jenkins, Settings, Storage
 
-from . import MockJenkins, TempDirMixin
+from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
 
 
-class BuildModelTestCase(TempDirMixin, TestCase):
+class BuildModelTestCase(TempHomeMixin, TestCase):
     """Unit tests for the BuildModel"""
 
     def test_as_dict(self):

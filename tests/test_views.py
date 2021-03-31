@@ -9,18 +9,17 @@ from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.types import Settings
 from gentoo_build_publisher.views import delete, publish
 
-from . import MockJenkins, mock_home_dir
+from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
 
 
-class PublishViewTestCase(TestCase):
+class PublishViewTestCase(TempHomeMixin, TestCase):
     """Tests for the publish view"""
 
     def setUp(self):
         super().setUp()
         self.request = RequestFactory()
 
-    @mock_home_dir
     def test_publish_new(self):
         """Should publish brand new builds"""
         request = self.request.post("/publish/")
@@ -34,7 +33,6 @@ class PublishViewTestCase(TestCase):
         build_model = BuildModel.objects.get(name=build_name, number=build_number)
         mock_pb.delay.assert_called_once_with(build_model.pk)
 
-    @mock_home_dir
     def test_publish_existing(self):
         """Should publish brand new builds"""
         request = self.request.post("/publish/")
@@ -48,14 +46,13 @@ class PublishViewTestCase(TestCase):
         mock_pb.delay.assert_called_once_with(build_model.pk)
 
 
-class DeleteViewTestCase(TestCase):
+class DeleteViewTestCase(TempHomeMixin, TestCase):
     """Tests for the delete view"""
 
     def setUp(self):
         super().setUp()
         self.request = RequestFactory()
 
-    @mock_home_dir
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
         build_model = BuildModelFactory.create()

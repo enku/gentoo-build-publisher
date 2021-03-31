@@ -4,10 +4,10 @@ from unittest import TestCase, mock
 
 from gentoo_build_publisher.types import Build, Jenkins, Settings, Storage
 
-from . import MockJenkins, TempDirMixin
+from . import MockJenkins, TempHomeMixin
 
 
-class StorageInitTestCase(TempDirMixin, TestCase):
+class StorageInitTestCase(TempHomeMixin, TestCase):
     def test_creates_dir_if_not_exists(self):
         os.rmdir(self.tmpdir)
 
@@ -39,7 +39,7 @@ class StorageInitTestCase(TempDirMixin, TestCase):
         self.assertEqual(storage.repos, repos_dir)
 
 
-class StorageFromSettings(TempDirMixin, TestCase):
+class StorageFromSettings(TempHomeMixin, TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self):
         """Should intantiate Storage from settings"""
@@ -54,7 +54,7 @@ class StorageFromSettings(TempDirMixin, TestCase):
         self.assertEqual(storage.dirname, self.tmpdir)
 
 
-class StorageDownloadArtifactTestCase(TempDirMixin, TestCase):
+class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
     """Tests for Storage.download_artifact"""
 
     def test_download_artifact_moves_repos_and_binpkgs(self):
@@ -68,7 +68,7 @@ class StorageDownloadArtifactTestCase(TempDirMixin, TestCase):
         self.assertIs(os.path.isdir(storage.build_binpkgs(build)), True)
 
 
-class StoragePublishTestCase(TempDirMixin, TestCase):
+class StoragePublishTestCase(TempHomeMixin, TestCase):
     """Tests for Storage.publish"""
 
     def test_publish_downloads_archive_if_repos_dir_does_not_exit(self):
@@ -123,7 +123,7 @@ class StoragePublishTestCase(TempDirMixin, TestCase):
         mock_symlink.assert_any_call(str(build), target)
 
 
-class StoragePublishedTestCase(TempDirMixin, TestCase):
+class StoragePublishedTestCase(TempHomeMixin, TestCase):
     """Tests for Storage.published"""
 
     def test_published_true(self):
