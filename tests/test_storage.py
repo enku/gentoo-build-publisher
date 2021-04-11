@@ -157,3 +157,24 @@ class StoragePublishedTestCase(TempHomeMixin, TestCase):
 
         # Then it returns False
         self.assertFalse(published)
+
+    def test_other_published(self):
+        # Given the storage
+        storage = Storage(self.tmpdir)
+
+        # Given the jenkins instance
+        jenkins = MockJenkins.from_settings(Settings())
+
+        # Given the first build published
+        build1 = Build(name="babette", number=193)
+        storage.publish(build1, jenkins)
+
+        # Given the second build published
+        build2 = Build(name="babette", number=192)
+        storage.publish(build2, jenkins)
+
+        # Then published returns True on the second build
+        self.assertTrue(storage.published(build2))
+
+        # And False on the first build
+        self.assertFalse(storage.published(build1))
