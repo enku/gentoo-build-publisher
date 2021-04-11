@@ -4,12 +4,13 @@
 
 Right now for all my [Gentoo](https://www.gentoo.org) systems (physical, VMs,
 and containers) I have [Jenkins](https://www.jenkins.io) builds that creates
-binary packages for them.  The actual builds are done in (systemd) containers.
-The builds are triggered by periodically polling the Gentoo portage git repo,
-related overlays and the machine's "build" repo itself.  The systemd containers
-that build the packages have their binary packages exposed by a web service
-container (gentoo build publisher) and the portage tree is exposed via rsync on
-the host. When I want to update my system it's
+binary packages for them.  The actual builds are done in
+[buildah](https://buildah.io/) containers.  The builds are triggered by
+periodically polling the Gentoo portage git repo, related overlays and the
+machine's "build" repo itself.  The buildah containers that build the packages
+have their binary packages exposed by a web service container (gentoo build
+publisher) and the portage tree is exposed via rsync on the host. When I want
+to update my system it's
 
 ```bash
 # emerge --sync
@@ -52,10 +53,10 @@ change.  But basically the gist is this:
   repo. That also gets built from Jenkins and the last successul build's
   archive pulled.  Unpack that as well in your Jenkins workspace.
 * Your machine creates a `binpkgs` and `distfiles` directory (`mkdir -p`).
-* Your database Jenkins job then uses `systemd-nspawn` into your chroot.  It
-  should bind-mount /etc/portage, /var/lib/portage, overlays, distfiles, and
-  binpkgs  inside the container.  Then it does a world update.  Upon success
-  the job should pack the `repos` and `binpkgs` into a tar archive.
+* Your database Jenkins job then uses `buildah` to emerge world.  It should
+  copy /etc/portage, /var/lib/portage, and overlays inside the container.  Then
+  it does a world update.  Upon success the job should pack the `repos` and
+  `binpkgs` into a tar archive.
 * Your job should have a post-build task that calls the Gentoo Build Publisher.
   It will then pull the specified archive and publish it (rsync for repos, http
   for binpkgs.
