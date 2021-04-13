@@ -26,6 +26,18 @@ class StorageInitTestCase(TempHomeMixin, TestCase):
 
         self.assertIs(os.path.isdir(repos_dir), True)
 
+    def test_creates_etc_portage_dir_if_not_exists(self):
+        Storage(self.tmpdir)
+        etc_portage_dir = f"{self.tmpdir}/etc-portage"
+
+        self.assertIs(os.path.isdir(etc_portage_dir), True)
+
+    def test_has_etc_portage_attribute(self):
+        storage = Storage(self.tmpdir)
+        etc_portage_dir = f"{self.tmpdir}/etc-portage"
+
+        self.assertEqual(storage.etc_portage, etc_portage_dir)
+
     def test_has_binpkgs_attribute(self):
         storage = Storage(self.tmpdir)
         binpkgs_dir = f"{self.tmpdir}/binpkgs"
@@ -66,6 +78,15 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
 
         self.assertIs(os.path.isdir(storage.build_repos(build)), True)
         self.assertIs(os.path.isdir(storage.build_binpkgs(build)), True)
+
+    def test_download_artifact_creates_etc_portage_dir(self):
+        """Should download artifacts and move to etc-portage/"""
+        storage = Storage(self.tmpdir)
+        jenkins = MockJenkins.from_settings(Settings())
+        build = Build(name="babette", number=19)
+        storage.download_artifact(build, jenkins)
+
+        self.assertIs(os.path.isdir(storage.build_etc_portage(build)), True)
 
 
 class StoragePublishTestCase(TempHomeMixin, TestCase):

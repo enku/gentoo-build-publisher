@@ -123,10 +123,12 @@ class Storage:
         self.dirname = dirname
         self.binpkgs = f"{self.dirname}/binpkgs"
         self.repos = f"{self.dirname}/repos"
+        self.etc_portage = f"{self.dirname}/etc-portage"
 
         os.makedirs(f"{self.dirname}/tmp", exist_ok=True)
         os.makedirs(self.binpkgs, exist_ok=True)
         os.makedirs(self.repos, exist_ok=True)
+        os.makedirs(self.etc_portage, exist_ok=True)
 
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
@@ -140,6 +142,10 @@ class Storage:
     def build_binpkgs(self, build: Build) -> str:
         """Return the path to the build's binpkgs directory"""
         return f"{self.dirname}/binpkgs/{build.name}.{build.number}"
+
+    def build_etc_portage(self, build: Build) -> str:
+        """Return the path to the build's /etc/portage directory"""
+        return f"{self.dirname}/etc-portage/{build.name}.{build.number}"
 
     def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
@@ -160,6 +166,7 @@ class Storage:
 
         os.renames(f"{dirpath}/repos", self.build_repos(build))
         os.renames(f"{dirpath}/binpkgs", self.build_binpkgs(build))
+        os.renames(f"{dirpath}/etc-portage", self.build_etc_portage(build))
 
         shutil.rmtree(dirpath)
 
@@ -173,6 +180,7 @@ class Storage:
 
         self.symlink(str(build), f"{self.dirname}/repos/{build.name}")
         self.symlink(str(build), f"{self.dirname}/binpkgs/{build.name}")
+        self.symlink(str(build), f"{self.dirname}/etc-portage/{build.name}")
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
