@@ -124,11 +124,13 @@ class Storage:
         self.binpkgs = f"{self.dirname}/binpkgs"
         self.repos = f"{self.dirname}/repos"
         self.etc_portage = f"{self.dirname}/etc-portage"
+        self.var_lib_portage = f"{self.dirname}/var-lib-portage"
 
         os.makedirs(f"{self.dirname}/tmp", exist_ok=True)
         os.makedirs(self.binpkgs, exist_ok=True)
         os.makedirs(self.repos, exist_ok=True)
         os.makedirs(self.etc_portage, exist_ok=True)
+        os.makedirs(self.var_lib_portage, exist_ok=True)
 
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
@@ -146,6 +148,10 @@ class Storage:
     def build_etc_portage(self, build: Build) -> str:
         """Return the path to the build's /etc/portage directory"""
         return f"{self.dirname}/etc-portage/{build.name}.{build.number}"
+
+    def build_var_lib_portage(self, build: Build) -> str:
+        """Return the path to the build's /var_lib/portage directory"""
+        return f"{self.dirname}/var-lib-portage/{build.name}.{build.number}"
 
     def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
@@ -167,6 +173,11 @@ class Storage:
         os.renames(f"{dirpath}/repos", self.build_repos(build))
         os.renames(f"{dirpath}/binpkgs", self.build_binpkgs(build))
         os.renames(f"{dirpath}/etc-portage", self.build_etc_portage(build))
+
+        var_lib_portage = f"{dirpath}/var-lib-portage"
+
+        if os.path.isdir(var_lib_portage):
+            os.renames(var_lib_portage, self.build_var_lib_portage(build))
 
         shutil.rmtree(dirpath)
 
