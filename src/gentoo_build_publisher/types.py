@@ -172,10 +172,13 @@ class Storage:
 
         os.renames(f"{dirpath}/repos", self.build_repos(build))
         os.renames(f"{dirpath}/binpkgs", self.build_binpkgs(build))
-        os.renames(f"{dirpath}/etc-portage", self.build_etc_portage(build))
+
+
+        etc_portage = f"{dirpath}/etc-portage"
+        if os.path.isdir(etc_portage):
+            os.renames(etc_portage, self.build_etc_portage(build))
 
         var_lib_portage = f"{dirpath}/var-lib-portage"
-
         if os.path.isdir(var_lib_portage):
             os.renames(var_lib_portage, self.build_var_lib_portage(build))
 
