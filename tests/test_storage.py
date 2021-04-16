@@ -214,3 +214,25 @@ class StoragePublishedTestCase(TempHomeMixin, TestCase):
 
         # And False on the first build
         self.assertFalse(storage.published(build1))
+
+
+class StorageDeleteBuildTestCase(TempHomeMixin, TestCase):
+    """Tests for Storage.delete_build"""
+
+    def test_deletes_expected_directories(self):
+        storage = Storage(self.tmpdir)
+        jenkins = MockJenkins.from_settings(Settings())
+        build = Build(name="babette", number=19)
+        storage.download_artifact(build, jenkins)
+
+        storage.delete_build(build)
+
+        directories = [
+            f"{storage.dirname}/binpkgs/{build}",
+            f"{storage.dirname}/etc-portage/{build}",
+            f"{storage.dirname}/repos/{build}",
+            f"{storage.dirname}/var-lib-portage/{build}",
+        ]
+        for directory in directories:
+            with self.subTest(directory=directory):
+                self.assertIs(os.path.exists(directory), False)

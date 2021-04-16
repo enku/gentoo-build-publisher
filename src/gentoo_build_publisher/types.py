@@ -220,11 +220,10 @@ class Storage:
 
         Does not fix dangling symlinks.
         """
-        binpkgs_dir = self.build_binpkgs(build)
-        repos_dir = self.build_repos(build)
-
-        shutil.rmtree(binpkgs_dir, ignore_errors=True)
-        shutil.rmtree(repos_dir, ignore_errors=True)
+        shutil.rmtree(self.build_binpkgs(build), ignore_errors=True)
+        shutil.rmtree(self.build_repos(build), ignore_errors=True)
+        shutil.rmtree(self.build_etc_portage(build), ignore_errors=True)
+        shutil.rmtree(self.build_var_lib_portage(build), ignore_errors=True)
 
     @staticmethod
     def symlink(source: str, target: str):
