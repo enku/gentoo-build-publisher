@@ -71,10 +71,13 @@ class Settings:
 
 @dataclass
 class Build:
-    """A Representation of a Jenkins build"""
+    """A Representation of a Jenkins build artifact"""
 
     name: str
     number: int
+
+    # Each build (should) contain these contents
+    contents = ["repos", "binpkgs", "etc-portage", "var-lib-portage"]
 
     def __str__(self):
         return f"{self.name}.{self.number}"
@@ -121,16 +124,7 @@ class Storage:
 
     def __init__(self, dirname: str):
         self.dirname = dirname
-        self.binpkgs = f"{self.dirname}/binpkgs"
-        self.repos = f"{self.dirname}/repos"
-        self.etc_portage = f"{self.dirname}/etc-portage"
-        self.var_lib_portage = f"{self.dirname}/var-lib-portage"
-
         os.makedirs(f"{self.dirname}/tmp", exist_ok=True)
-        os.makedirs(self.binpkgs, exist_ok=True)
-        os.makedirs(self.repos, exist_ok=True)
-        os.makedirs(self.etc_portage, exist_ok=True)
-        os.makedirs(self.var_lib_portage, exist_ok=True)
 
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
@@ -153,6 +147,15 @@ class Storage:
         """Return the path to the build's /var_lib/portage directory"""
         return f"{self.dirname}/var-lib-portage/{build.name}.{build.number}"
 
+    def path(self, build: Build, content_type: str) -> str:
+        """Return the path of the content_type for build
+
+        Were it to be downloaded.
+        """
+        assert content_type in build.contents
+
+        return f"{self.dirname}/{content_type}/{build}"
+
     def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
 
@@ -170,48 +173,38 @@ class Storage:
         with tarfile.open(path, mode="r") as tar_file:
             tar_file.extractall(dirpath)
 
-        os.renames(f"{dirpath}/repos", self.build_repos(build))
-        os.renames(f"{dirpath}/binpkgs", self.build_binpkgs(build))
-
-
-        etc_portage = f"{dirpath}/etc-portage"
-        if os.path.isdir(etc_portage):
-            os.renames(etc_portage, self.build_etc_portage(build))
-
-        var_lib_portage = f"{dirpath}/var-lib-portage"
-        if os.path.isdir(var_lib_portage):
-            os.renames(var_lib_portage, self.build_var_lib_portage(build))
+        for item in build.contents:
+            src = f"{dirpath}/{item}"
+            dst = self.path(build, item)
+            os.renames(src, dst)
 
         shutil.rmtree(dirpath)
 
     def publish(self, build: Build, jenkins: Jenkins):
         """Make this build 'active'"""
-        binpkgs_dir = self.build_binpkgs(build)
-        repos_dir = self.build_repos(build)
 
-        if not os.path.exists(repos_dir) and not os.path.exists(binpkgs_dir):
-            self.download_artifact(build, jenkins)
+        for item in build.contents:
+            if not os.path.exists(self.path(build, item)):
+                self.download_artifact(build, jenkins)
+                break
 
-        self.symlink(str(build), f"{self.dirname}/repos/{build.name}")
-        self.symlink(str(build), f"{self.dirname}/binpkgs/{build.name}")
-        self.symlink(str(build), f"{self.dirname}/etc-portage/{build.name}")
+        for item in build.contents:
+            self.symlink(str(build), f"{self.dirname}/{item}/{build.name}")
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
 
-        By "published" we mean both repos and binpkgs symlinks point to the build
+        By "published" we mean all content are symlinked. Partially symlinked is
+        unstable and therefore considered not published.
         """
-        repo_symlink = f"{self.repos}/{build.name}"
-        binpkg_symlink = f"{self.binpkgs}/{build.name}"
+        for item in build.contents:
+            symlink = f"{self.dirname}/{item}/{build.name}"
 
-        if not os.path.exists(repo_symlink) or not os.path.exists(binpkg_symlink):
-            return False
+            if not os.path.exists(symlink):
+                return False
 
-        if os.path.realpath(repo_symlink) != self.build_repos(build):
-            return False
-
-        if os.path.realpath(binpkg_symlink) != self.build_binpkgs(build):
-            return False
+            if os.path.realpath(symlink) != self.path(build, item):
+                return False
 
         return True
 
@@ -220,10 +213,8 @@ class Storage:
 
         Does not fix dangling symlinks.
         """
-        shutil.rmtree(self.build_binpkgs(build), ignore_errors=True)
-        shutil.rmtree(self.build_repos(build), ignore_errors=True)
-        shutil.rmtree(self.build_etc_portage(build), ignore_errors=True)
-        shutil.rmtree(self.build_var_lib_portage(build), ignore_errors=True)
+        for item in build.contents:
+            shutil.rmtree(self.path(build, item), ignore_errors=True)
 
     @staticmethod
     def symlink(source: str, target: str):
