@@ -126,6 +126,12 @@ class Storage:
         self.dirname = dirname
         os.makedirs(f"{self.dirname}/tmp", exist_ok=True)
 
+    def __repr__(self):
+        cls = type(self)
+        module = cls.__module__
+
+        return f"{module}.{cls.__name__}({repr(self.dirname)})"
+
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
         """Instatiate from settings"""

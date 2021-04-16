@@ -15,6 +15,15 @@ class StorageInitTestCase(TempHomeMixin, TestCase):
         self.assertIs(os.path.isdir(self.tmpdir), True)
 
 
+class StorageReprTestCase(TempHomeMixin, TestCase):
+    def test(self):
+        storage = Storage(self.tmpdir)
+
+        self.assertEqual(
+            repr(storage), f"gentoo_build_publisher.types.Storage({repr(self.tmpdir)})"
+        )
+
+
 class StorageFromSettings(TempHomeMixin, TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self):
