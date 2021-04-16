@@ -1,17 +1,22 @@
-"""Settings for tests"""
-from pathlib import Path
+"""Tests for GBP Settings"""
+from unittest import TestCase
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+from gentoo_build_publisher import Settings
 
-SECRET_KEY = "test"
 
-USE_TZ = True
+class SettingsTestCase(TestCase):
+    def test_from_dict(self):
+        data_dict = dict(
+            BUILD_PUBLISHER_JENKINS_USER="fail",
+            TODAY_HOME_DIR="/home/today",
+            TODAY_IS="your birthday",
+        )
+        prefix = "TODAY_"
 
-INSTALLED_APPS = ["django.contrib.contenttypes", "gentoo_build_publisher"]
+        settings = Settings.from_dict(prefix, data_dict)
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+        self.assertEqual(settings.HOME_DIR, "/home/today")
+        self.assertEqual(settings.JENKINS_USER, Settings.DEFAULTS["JENKINS_USER"])
+
+        with self.assertRaises(AttributeError):
+            settings.IS

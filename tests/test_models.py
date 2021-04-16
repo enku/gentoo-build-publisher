@@ -1,7 +1,7 @@
 """Unit tests for gbp models"""
 from django.test import TestCase
 
-from gentoo_build_publisher.types import Jenkins, Settings, Storage
+from gentoo_build_publisher import Jenkins, Settings, Storage
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory

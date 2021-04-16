@@ -4,9 +4,10 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from gentoo_build_publisher.types import Jenkins
+from gentoo_build_publisher import Jenkins
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
+
 
 class TempHomeMixin:
     def setUp(self):
@@ -32,7 +33,7 @@ class MockJenkins(Jenkins):
     mock_get = None
 
     def download_artifact(self, build):
-        with mock.patch("gentoo_build_publisher.types.requests.get") as mock_get:
+        with mock.patch("gentoo_build_publisher.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: iter([test_data("build.tar.gz")])
             )

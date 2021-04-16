@@ -5,8 +5,8 @@ from unittest import mock
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
 
+from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.types import Settings
 from gentoo_build_publisher.views import delete, publish
 
 from . import MockJenkins, TempHomeMixin

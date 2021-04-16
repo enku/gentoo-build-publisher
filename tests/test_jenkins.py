@@ -3,7 +3,7 @@ import io
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.types import Build, Jenkins, Settings
+from gentoo_build_publisher import Build, Jenkins, Settings
 
 from . import MockJenkins, test_data
 

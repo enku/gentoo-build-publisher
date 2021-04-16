@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from django.db import models
 
-from gentoo_build_publisher.types import Build, Jenkins, Settings, Storage
+from gentoo_build_publisher import Build, Jenkins, Settings, Storage
 
 
 class BuildModel(models.Model):

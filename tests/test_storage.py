@@ -2,7 +2,7 @@
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.types import Build, Jenkins, Settings, Storage
+from gentoo_build_publisher import Build, Jenkins, Settings, Storage
 
 from . import MockJenkins, TempHomeMixin
 
@@ -20,7 +20,7 @@ class StorageReprTestCase(TempHomeMixin, TestCase):
         storage = Storage(self.tmpdir)
 
         self.assertEqual(
-            repr(storage), f"gentoo_build_publisher.types.Storage({repr(self.tmpdir)})"
+            repr(storage), f"gentoo_build_publisher.Storage({repr(self.tmpdir)})"
         )
 
 
@@ -87,7 +87,7 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
-            with mock.patch("gentoo_build_publisher.types.os.symlink") as mock_symlink:
+            with mock.patch("gentoo_build_publisher.os.symlink") as mock_symlink:
                 storage.publish(build, jenkins)
 
         # Then it downloads the artifact
@@ -116,7 +116,7 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
-            with mock.patch("gentoo_build_publisher.types.os.symlink") as mock_symlink:
+            with mock.patch("gentoo_build_publisher.os.symlink") as mock_symlink:
                 storage.publish(build, jenkins)
 
         # Then it downloads the artifact
