@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+
+    environment {
+        machine = "${env.JOB_BASE_NAME}"
+        build = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('sync repos') {
+            steps {
+                copyArtifacts(projectName: 'portage')
+                copyArtifacts(projectName: 'marduk-overlay')
+            }
+        }
+        stage('build chroot') {
+            steps {
+                sh 'make chroot'
+            }
+        }
+        stage('update world') {
+            steps {
+                sh 'make world'
+            }
+        }
+        stage('build artifacts') {
+            steps {
+                sh 'make archive'
+            }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts artifacts: 'build.tar.gz'
+            sh 'make publish'
+        }
+    }
+}

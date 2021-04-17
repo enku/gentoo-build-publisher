@@ -1,0 +1,18 @@
+dev-lang/erlang ssl
+dev-lang/python ssl xml
+dev-libs/gmp static-libs
+dev-libs/libxml2 icu python
+net-dns/avahi dbus
+net-misc/curl threads
+sys-apps/busybox -pam static
+sys-apps/kmod tools
+sys-apps/marduk-system bash-completion
+sys-apps/portage native-extensions
+sys-apps/systemd sysv-utils
+sys-apps/util-linux static-libs
+sys-devel/gcc pch pgo
+sys-firmware/intel-microcode split-ucode
+sys-libs/cracklib python
+sys-libs/glibc multiarch
+sys-libs/zlib minizip
+sys-process/procps kill

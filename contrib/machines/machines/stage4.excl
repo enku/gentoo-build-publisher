@@ -1,0 +1,9 @@
+.bash_history
+./dev/*
+./etc/ssh/ssh_host_*
+./mnt/*
+./tmp/*
+./usr/local/*
+./usr/src/*
+./var/cache/binpkgs/*
+./var/db/repos/*
