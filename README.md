@@ -41,25 +41,29 @@ I'm not going to go into all the details now as it's pretty complicated and may
 change.  But basically the gist is this:
 
 * You need a Jenkins instance
-* Create a "portage" job in Jenkins.  This job should poll the portage git repo
-  and publish and artifact (say `portage.tar.gz`) from it.
-* Ditto for any overlays
-* You need a chroot for Jenkins to build from for each machine type. I have a
-  sudo script that Jenkins can call to build a chroot inside the job's
-  workspace.
+* Create "repos" jobs in Jenkins.  These jobs should poll their respective
+  repos (e.g. [gentoo](https://anongit.gentoo.org/git/repo/sync/gentoo.git) and
+  publish archive an artifact (say `gentoo-repo.tar.gz`) from it.
 * For your machine type, say database, you create a Jenkins job. This job
-  should pull in the artifacts from the last successfull portage build. It
-  unpacks those into it's worspace.  You also need your machine's profile in a
-  repo. That also gets built from Jenkins and the last successul build's
-  archive pulled.  Unpack that as well in your Jenkins workspace.
-* Your machine creates a `binpkgs` and `distfiles` directory (`mkdir -p`).
-* Your database Jenkins job then uses `buildah` to emerge world.  It should
-  copy /etc/portage, /var/lib/portage, and overlays inside the container.  Then
-  it does a world update.  Upon success the job should pack the `repos` and
-  `binpkgs` into a tar archive.
+  should create a container from a
+  [stage3](https://hub.docker.com/r/gentoo/stage3) image (I actually use the
+  systemd image).  Then it could add the artifacts from the repos above into
+  the container's `/var/db/repos` directory.  You also need your machine's
+  "profile" in a repo. This should be the repo that's pulled by your Jenkins
+  job.  Unpack that as well in your Jenkins workspace. The "profile" should
+  contain such things as your machine's `/etc/portage` and `/var/lib/portage`
+  contents.
+* Your Jenkins job then uses `buildah run` to emerge world the container.
+* Upon success the job should pack the `repos` and `binpkgs` into a tar archive
+  (`build.tar.gz`).
 * Your job should have a post-build task that calls the Gentoo Build Publisher.
-  It will then pull the specified archive and publish it (rsync for repos, http
-  for binpkgs.
-* If the job fails, it does not be published.
-* Your real machine syncs from, e.g. rsync://gbp/repos/database/ and pulls binary
-  packages from http://gbp/binpkgs/database/
+  It will then pull the specified archive and publish it (e.g. rsync for repos,
+  http for binpkgs.
+* If the job fails, it does not be published. Your last successful build stays
+  current.
+* Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls binary
+  packages from http://gbp/binpkgs/<machine>/
+
+I have a git repo called `machines` that contains the profiles for all the
+machines whose builds I want to push to the publisher.  See the
+[contrib/machines](contrib/machines) directory for an example.
