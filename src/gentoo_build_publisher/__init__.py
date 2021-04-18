@@ -19,6 +19,7 @@ class Settings:
         "JENKINS_BASE_URL": "http://jenkins/Gentoo",
         "JENKINS_USER": "jenkins",
         "HOME_DIR": "/var/lib/gentoo-build-publisher",
+        "PURGE_TO_KEEP": 7,
     }
 
     def __init__(self, **kwargs):
@@ -39,9 +40,12 @@ class Settings:
 
         return value
 
-    def validate_setting(self, _attr, value):  # pylint: disable=no-self-use
+    @staticmethod
+    def validate_setting(attr, value):
         """Validate a settings"""
-        # For now we don't do any special validation
+        if attr == "PURGE_TO_KEEP":
+            return int(value)
+
         return str(value)
 
     @classmethod
