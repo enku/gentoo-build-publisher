@@ -1,8 +1,9 @@
 """Celery tasks for Gentoo Build Publisher"""
 from celery import shared_task
+from django.utils import timezone
 
-from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.purge import Purger
 
 
 @shared_task(bind=True)
@@ -18,5 +19,11 @@ def publish_build(self, build_id: int):
 @shared_task
 def purge_build(build_name: str):
     """Purge old builds for build_name"""
-    settings = Settings.from_environ()
-    BuildModel.purge(build_name, settings.PURGE_TO_KEEP)
+    builds = BuildModel.objects.filter(name=build_name)
+    purger = Purger(builds, key=lambda b: timezone.make_naive(b.submitted))
+
+    for build_model in purger.purge():
+        if build_model.storage.published(build_model.build):
+            continue
+
+        build_model.delete()

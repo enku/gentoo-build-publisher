@@ -71,29 +71,6 @@ class BuildModel(models.Model):
 
         self.storage.delete_build(self.build)
 
-    @classmethod
-    def purge(cls, name: str, keep: int):
-        """Purge all but the last `keep` builds.
-
-        Make sure to keep the published build.
-        """
-        published = None
-        builds = cls.objects.filter(name=name)
-
-        # First do the easy thing and get all the keep recent ones
-        to_keep = [*builds.order_by("-submitted").values_list("id", flat=True)[:keep]]
-
-        for build_model in builds.exclude(id__in=to_keep):
-            if not build_model.storage.published(build_model.build):
-                build_model.delete()
-            else:
-                published = build_model
-
-        if published:
-            num_kept = builds.count()
-            if num_kept > keep:
-                builds.exclude(id=published.id).order_by("submitted")[0].delete()
-
     def as_dict(self) -> Dict[str, Any]:
         """Convert build instance attributes to a dict"""
         return {

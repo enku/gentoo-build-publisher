@@ -19,7 +19,6 @@ class Settings:
         "JENKINS_BASE_URL": "http://jenkins/Gentoo",
         "JENKINS_USER": "jenkins",
         "HOME_DIR": "/var/lib/gentoo-build-publisher",
-        "PURGE_TO_KEEP": 7,
     }
 
     def __init__(self, **kwargs):
