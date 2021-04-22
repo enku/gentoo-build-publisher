@@ -71,39 +71,3 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
         string = repr(build_model)
 
         self.assertEqual(string, "BuildModel(name='test', number=1)")
-
-    @mock.patch("gentoo_build_publisher.models.Storage.from_settings")
-    @mock.patch("gentoo_build_publisher.models.Jenkins.from_settings")
-    def test_purge(self, jenkins, storage):
-        """BuildModel.purge should purge old builds"""
-        jenkins.return_value = MockJenkins("http://jenkins.invalid/", "user", "key")
-        storage.return_value = Storage(self.tmpdir)
-        timestamp = make_aware(datetime.datetime(2021, 4, 18))
-        day = datetime.timedelta(days=1)
-
-        # Given the 10 daily builds of which the 3rd one is published
-        for number in range(10):
-            build = BuildModelFactory.create(number=number, submitted=timestamp)
-
-            if number == 2:
-                build.publish()
-
-            timestamp += day
-
-        # When we call purge with keep=5
-        BuildModel.purge(BuildModelFactory.name, keep=5)
-
-        build_models = BuildModel.objects.order_by("submitted")
-        timestamps = [*build_models.values_list("submitted", flat=True)]
-
-        # Then only the 4 most recent remain plus the published one
-        self.assertEqual(
-            timestamps,
-            [
-                make_aware(datetime.datetime(2021, 4, 20)),
-                make_aware(datetime.datetime(2021, 4, 24)),
-                make_aware(datetime.datetime(2021, 4, 25)),
-                make_aware(datetime.datetime(2021, 4, 26)),
-                make_aware(datetime.datetime(2021, 4, 27)),
-            ],
-        )
