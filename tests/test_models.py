@@ -1,12 +1,7 @@
 """Unit tests for gbp models"""
-import datetime
-from unittest import mock
-
 from django.test import TestCase
-from django.utils.timezone import make_aware
 
 from gentoo_build_publisher import Jenkins, Settings, Storage
-from gentoo_build_publisher.models import BuildModel
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory

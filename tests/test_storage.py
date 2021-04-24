@@ -2,7 +2,7 @@
 import os
 from unittest import TestCase, mock
 
-from gentoo_build_publisher import Build, Jenkins, Settings, Storage
+from gentoo_build_publisher import Build, Settings, Storage
 
 from . import MockJenkins, TempHomeMixin
 
