@@ -13,6 +13,8 @@ def publish_build(self, build_id: int):
     build_model.task_id = self.request.id
     build_model.save()
     build_model.publish()
+    build_model.completed = timezone.now()
+    build_model.save()
     purge_build.delay(build_model.name)
 
 
