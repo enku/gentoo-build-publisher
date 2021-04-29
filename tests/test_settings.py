@@ -20,3 +20,8 @@ class SettingsTestCase(TestCase):
 
         with self.assertRaises(AttributeError):
             settings.IS
+
+    def test_init_with_invalid_value(self):
+        """Should raise ValueError when given setting not defined in DEFAULTS"""
+        with self.assertRaises(ValueError):
+            Settings(foo="bar")
