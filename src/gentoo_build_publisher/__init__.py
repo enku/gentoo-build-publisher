@@ -40,11 +40,8 @@ class Settings:
         return value
 
     @staticmethod
-    def validate_setting(attr, value):
+    def validate_setting(_attr, value):
         """Validate a settings"""
-        if attr == "PURGE_TO_KEEP":
-            return int(value)
-
         return str(value)
 
     @classmethod
