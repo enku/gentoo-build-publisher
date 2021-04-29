@@ -26,6 +26,9 @@ class BuildModel(models.Model):
     # The build's task id
     task_id = models.UUIDField(null=True)
 
+    # Flags that this build should not be purged
+    keep = models.BooleanField(default=False)
+
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         constraints = [
             models.UniqueConstraint(fields=["name", "number"], name="unique_build")
@@ -65,6 +68,9 @@ class BuildModel(models.Model):
         self.storage.publish(self.build, self.jenkins)
 
     def delete(self, using=None, keep_parents=False):
+        if self.keep:
+            raise ValueError(f"Cannot delete {type(self).__name__} when .keep=True")
+
         # The reason to call super().delete() before removing the directories is if for
         # some reason super().delete() fails we don't want to delete the directories.
         super().delete(using=using, keep_parents=keep_parents)

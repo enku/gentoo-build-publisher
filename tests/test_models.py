@@ -66,3 +66,16 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
         string = repr(build_model)
 
         self.assertEqual(string, "BuildModel(name='test', number=1)")
+
+    def test_purge_when_keep_is_true(self):
+        """When .keep=True should throw an error when calling .delete()"""
+        build_model = BuildModelFactory(keep=True)
+
+        with self.assertRaises(ValueError) as context:
+            build_model.delete()
+
+        exception = context.exception
+        self.assertEqual(
+            str(exception),
+            "Cannot delete BuildModel when .keep=True",
+        )
