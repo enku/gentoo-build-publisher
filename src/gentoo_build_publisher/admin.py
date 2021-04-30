@@ -8,6 +8,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     """"ModelAdmin for the BuildModel"""
 
     list_display = ["name", "number", "submitted", "completed", "keep"]
+    list_filter = ["name", "submitted", "keep"]
     readonly_fields = ["name", "number", "submitted", "completed", "task_id"]
 
     def has_add_permission(self, request):
