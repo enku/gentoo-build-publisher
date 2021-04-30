@@ -8,6 +8,7 @@ from gentoo_build_publisher.models import BuildModel
 class BuildModelAdmin(admin.ModelAdmin):
     """"ModelAdmin for the BuildModel"""
 
+    fields = ["name", "number", "submitted", "completed", "keep"]
     list_display = ["name", "number", "submitted", "completed", "keep"]
     list_filter = ["name", "submitted", "keep"]
     readonly_fields = ["name", "number", "submitted", "completed", "task_id"]
