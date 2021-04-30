@@ -4,6 +4,7 @@ from django.contrib import admin
 from gentoo_build_publisher.models import BuildModel
 
 
+@admin.register(BuildModel)
 class BuildModelAdmin(admin.ModelAdmin):
     """"ModelAdmin for the BuildModel"""
 
@@ -19,6 +20,3 @@ class BuildModelAdmin(admin.ModelAdmin):
             return super().has_delete_permission(request, None)
 
         return not obj.keep
-
-
-admin.site.register(BuildModel, BuildModelAdmin)
