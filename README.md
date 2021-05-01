@@ -2,6 +2,10 @@
 <img src="contrib/machines/Jenkins.png" alt="Jenkins build" width="100%">
 </p>
 
+<p align="center">
+<img src="contrib/machines/admin.png" alt="Jenkins build" width="100%">
+</p>
+
 # Gentoo Build Publisher
 
 ## Introduction
