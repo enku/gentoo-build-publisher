@@ -67,6 +67,10 @@ class BuildModel(models.Model):
         """Publish the Build"""
         self.storage.publish(self.build, self.jenkins)
 
+    def published(self) -> bool:
+        """Return True if this Build is published"""
+        return self.storage.published(self.build)
+
     def delete(self, using=None, keep_parents=False):
         if self.keep:
             raise ValueError(f"Cannot delete {type(self).__name__} when .keep=True")
@@ -82,6 +86,6 @@ class BuildModel(models.Model):
         return {
             "name": self.name,
             "number": self.number,
-            "published": self.storage.published(self.build),
+            "published": self.published(),
             "url": self.jenkins.build_url(self.build),
         }

@@ -8,10 +8,28 @@ from gentoo_build_publisher.models import BuildModel
 class BuildModelAdmin(admin.ModelAdmin):
     """"ModelAdmin for the BuildModel"""
 
-    fields = ["name", "number", "submitted", "completed", "keep"]
-    list_display = ["name", "number", "submitted", "completed", "keep"]
+    fields = ["name", "number", "submitted", "completed", "published", "keep"]
+    list_display = ["name", "number", "submitted", "completed", "published", "keep"]
     list_filter = ["name", "submitted", "keep"]
-    readonly_fields = ["name", "number", "submitted", "completed", "task_id"]
+    readonly_fields = [
+        "name",
+        "number",
+        "submitted",
+        "completed",
+        "published",
+        "task_id",
+    ]
+
+    def published(self, obj):
+        return obj.published()
+
+    published.boolean = True
+
+    def response_change(self, request, obj):
+        if "_publish" in request.POST:
+            obj.publish()
+
+        return super().response_change(request, obj)
 
     def has_add_permission(self, request):
         return False
