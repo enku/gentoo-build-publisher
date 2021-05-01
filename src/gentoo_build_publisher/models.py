@@ -33,6 +33,8 @@ class BuildModel(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["name", "number"], name="unique_build")
         ]
+        verbose_name = "Build"
+        verbose_name_plural = "Builds"
 
     def __init__(
         self,
