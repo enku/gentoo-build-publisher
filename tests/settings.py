@@ -7,7 +7,10 @@ SECRET_KEY = "test"
 
 USE_TZ = True
 
-INSTALLED_APPS = ["django.contrib.contenttypes", "gentoo_build_publisher"]
+INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "gentoo_build_publisher.apps.GentooBuildPublisherConfig",
+]
 
 DATABASES = {
     "default": {

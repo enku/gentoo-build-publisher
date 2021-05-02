@@ -231,3 +231,6 @@ class Storage:
             raise EnvironmentError(f"{target} exists but is not a symlink")
 
         os.symlink(source, target)
+
+
+default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
