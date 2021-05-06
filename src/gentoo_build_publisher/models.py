@@ -33,6 +33,9 @@ class BuildModel(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["name", "number"], name="unique_build")
         ]
+        indexes = [
+            models.Index(fields=["name"]),
+        ]
         verbose_name = "Build"
         verbose_name_plural = "Builds"
 
