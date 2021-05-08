@@ -1,6 +1,8 @@
 """
 Django models for Gentoo Build Publisher
 """
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 from django.db import models
@@ -26,8 +28,7 @@ class BuildModel(models.Model):
     # The build's task id
     task_id = models.UUIDField(null=True)
 
-    # Flags that this build should not be purged
-    keep = models.BooleanField(default=False)
+    keptbuild: KeptBuild
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         constraints = [
@@ -68,6 +69,26 @@ class BuildModel(models.Model):
     def __str__(self) -> str:
         return str(self.build)
 
+    @property
+    def keep(self) -> bool:
+        """Whether or not this BuildModel should be excluded from the purge"""
+        try:
+            self.keptbuild  # pylint: disable=pointless-statement
+            return True
+        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
+            return False
+
+    @keep.setter
+    def keep(self, value: bool):
+        if value:
+            KeptBuild.objects.get_or_create(build_model=self)
+            return
+
+        try:
+            self.keptbuild.delete()
+        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
+            pass
+
     def publish(self):
         """Publish the Build"""
         self.storage.publish(self.build, self.jenkins)
@@ -77,8 +98,11 @@ class BuildModel(models.Model):
         return self.storage.published(self.build)
 
     def delete(self, using=None, keep_parents=False):
-        if self.keep:
-            raise ValueError(f"Cannot delete {type(self).__name__} when .keep=True")
+        try:
+            self.keptbuild  # pylint: disable=pointless-statement
+            raise ValueError(f"{type(self).__name__} marked kept cannot be deleted")
+        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
+            pass
 
         # The reason to call super().delete() before removing the directories is if for
         # some reason super().delete() fails we don't want to delete the directories.
@@ -94,3 +118,17 @@ class BuildModel(models.Model):
             "published": self.published(),
             "url": self.jenkins.build_url(self.build),
         }
+
+
+class KeptBuild(models.Model):
+    """BuildModels that we want to keep"""
+
+    build_model = models.OneToOneField(
+        BuildModel,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        db_column="id",
+    )
+
+    def __str__(self) -> str:
+        return str(self.build_model)

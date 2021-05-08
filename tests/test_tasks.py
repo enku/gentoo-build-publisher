@@ -106,8 +106,9 @@ class PurgeBuildTestCase(BaseTestCase):
     def test_doesnt_delete_build_when_keep_is_true(self):
         """Should not delete build when .keep=True"""
         build_model = BuildModelFactory.create(
-            number=1, submitted=timezone.make_aware(datetime(1970, 1, 1)), keep=True
+            number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
         )
+        build_model.keep = True
         BuildModelFactory.create(
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )
