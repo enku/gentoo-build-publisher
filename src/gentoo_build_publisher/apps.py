@@ -5,3 +5,4 @@ from django.apps import AppConfig
 class GentooBuildPublisherConfig(AppConfig):
     name = "gentoo_build_publisher"
     verbose_name = "Gentoo Build Publisher"
+    default_auto_field = "django.db.models.BigAutoField"
