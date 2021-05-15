@@ -1,4 +1,4 @@
 app-emulation/docker-registry
-dev-db/postgresql:13
+dev-libs/libxml2
 net-misc/rabbitmq-server
 www-servers/nginx

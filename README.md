@@ -1,52 +1,82 @@
 <p align="center">
-<img src="contrib/machines/Jenkins.png" alt="Jenkins build" width="100%">
+<img src="docs/media/Jenkins.png" alt="Jenkins build" width="100%">
 </p>
 
 <p align="center">
-<img src="contrib/machines/admin.png" alt="Jenkins build" width="100%">
+<img src="docs/media/admin.png" alt="Jenkins build" width="100%">
 </p>
 
 # Gentoo Build Publisher
 
 ## Introduction
 
-Right now for all my [Gentoo](https://www.gentoo.org) systems (physical, VMs,
-and containers) I have [Jenkins](https://www.jenkins.io) builds that creates
-binary packages for them.  The actual builds are done in
-[buildah](https://buildah.io/) containers.  The builds are triggered by
-periodically polling the Gentoo portage git repo, related overlays and the
-machine's "build" repo itself.  The buildah containers that build the packages
-have their binary packages exposed by a web service container (gentoo build
-publisher) and the portage tree is exposed via rsync on the host. When I want
-to update my system it's
+The idea is to combine best practices with CI/CD and other tools to deliver
+successful, consistent "builds" to your Gentoo machine(s).
 
-```bash
-# emerge --sync
-# emerge --deep --upgrade --ask --newuse @world
-```
+In case you didn't know, [Gentoo Linux](https://www.gentoo.org/) is a
+source-based rolling-release meta-distribution that you can twist and mold into
+pretty much anything you like. That's just a verbose way of saying Gentoo is
+awesome.
 
-The `/etc/portage` and `/var/lib/portage` directories for each system are also
-kept in version control, which is tracked by Jenkins. So e.g. if I want to add
-a package or change a use flag, I do so in the repo, push it and Jenkins picks
-up the change and creates a new build job.
+If you run a Gentoo system, say a laptop, and you may be updating your system
+using the standard `emerge --sync` followed by a world update.  This pulls in
+the latest ebuilds from the Gentoo repo and if there are any updates applicable
+to your system then they get built on your system.
 
-As Jenkins creates artifacts of all the successful builds those artifacts get
-published to gentoo build publisher to host them.  This is done for both binary
-packages and the portage tree. So when you sync/update from GBP you're always
-getting a stable upgrade.  Even nicer, since successful all artifacts are kept
-you can go back to a previous succesful build and still have the portage
-snapshot and binary packages from that build.
+Except sometimes they don't.
 
-Eventually I'd like to automate all this.  For example I want to stand up a new
-system. I go to a web ui, give it a profile name and click "build". It creates
-a new machine profile/repo pushes it and then creates a new job in Jenkins to
-build from it. I can then build a new system from that.
+Sometimes builds fail. Sometimes `USE` flags need to be changed. Sometimes
+there's an update to a piece of software that is buggy and you want to revert.
+Sometimes a build takes a long time and you don't want to wait.
+
+Well since Gentoo is the distribution you build yourself, CI/CD seems like a
+natural fit. For years I would have a Jenkins instance that ran "builds" for my
+Gentoo systems. Each Gentoo job consisted of a systemd container.  These
+containers were "shadows" of my real systems and the Jenkins job would
+bind-mount a portage repo and binpkgs directory inside and do a world update.
+The binpkgs directory was shared via nginx and the portage tree was shared via
+rsync. This worked well but there were a few annoying issues:
+
+    * The job that updated the portage tree and the job that updated the
+      binpkgs were not always in sync.  If a world update took 5 hours, for
+      example, the hourly portage tree poller might have synced 5 times.
+      Moreover if I sync against my "real" machine hours later it may be even
+      more out of sync.
+
+    * It's certainly possible that my "real" machines could sync while the
+      Jenkins job is still building causing any not-yet-built binpkgs to want
+      to build on my real machine.
+
+    * If the build failed in Jenkins for any reason when I go to sync from my
+      real machine I will have a system in a inconsistent state.  Likely
+      packages will want to build on my real machine and will fail again.
+
+    * Although possible with a little elbow grease, there's no easy way to
+      revert back to a previous build.
+
+    * If I changed a config (USE flags, world file, etc.) on my real machine
+      I'd have to find a way of getting the change into the shadow container.
+
+The last issue I later solved by having my the `/etc/portage` and
+`/var/lib/portage` of all my real machines in version control and having the
+shadows pull from a repo.
+
+Most, if not all, of the other issues stem from the fact that I was not taking
+advantage of a fundamental CI/CD feature: build artifacts. The portage tree and
+binpkgs were "live".  They changed independent of the "build" and if a build
+failed the partially-completed parts were always shared. I concluded that the
+thing that created the builds, Jenkins, needed to archive successful builds and
+there needs to be another thing that only publishes the builds.
+
+Enter Gentoo Build Publisher.
+
+Gentoo Build Pubisher is the combination of an rsync server (for ebuild repos
+and machine configs) and HTTP server (for binpkgs) for successful builds.  For
+Jenkins it is a gateway to publish builds. For my real machines it the source
+for repo syncs and binpkgs.
 
 
 ## Procedure
-
-I'm not going to go into all the details now as it's pretty complicated and may
-change.  But basically the gist is this:
 
 * You need a Jenkins instance
 * Create "repos" jobs in Jenkins.  These jobs should poll their respective
@@ -60,9 +90,12 @@ change.  But basically the gist is this:
   "profile" in a repo. This should be the repo that's pulled by your Jenkins
   job.  Unpack that as well in your Jenkins workspace. The "profile" should
   contain such things as your machine's `/etc/portage` and `/var/lib/portage`
-  contents.
+  contents. If this all sounds rather complicated, check the `contrib`
+  directory of the gentoo-build-publisher source for a (hopefully) working
+  example.
 * Your Jenkins job then uses `buildah run` to emerge world the container.
-* Upon success the job should pack the `repos` and `binpkgs` into a tar archive
+* Upon success the job should pack the `repos` and `binpkgs` and other config
+  into a tar archive
   (`build.tar.gz`).
 * Your job should have a post-build task that calls the Gentoo Build Publisher.
   It will then pull the specified archive and publish it (e.g. rsync for repos,
@@ -70,7 +103,11 @@ change.  But basically the gist is this:
 * If the job fails, it does not be published. Your last successful build stays
   current.
 * Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls binary
-  packages from http://gbp/binpkgs/<machine>/
+  packages from https://gbp/binpkgs/<machine>/
+
+<p align="center">
+<img src="docs/media/gbp.svg" alt="Jenkins build" width="100%">
+</p>
 
 I have a git repo called `machines` that contains the profiles for all the
 machines whose builds I want to push to the publisher.  See the

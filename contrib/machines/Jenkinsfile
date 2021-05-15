@@ -9,8 +9,13 @@ pipeline {
     stages {
         stage('sync repos') {
             steps {
-                copyArtifacts(projectName: 'portage')
-                copyArtifacts(projectName: 'marduk-overlay')
+                script {
+                    def fileName = "${env.JOB_BASE_NAME}/repos"
+                    def repos = readFile(file: fileName).split("\n")
+                    for (String repo: repos) {
+                        copyArtifacts(projectName: "repos/${repo}")
+                    }
+                }
             }
         }
         stage('build chroot') {

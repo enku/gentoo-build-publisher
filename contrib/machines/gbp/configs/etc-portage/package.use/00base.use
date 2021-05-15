@@ -16,3 +16,4 @@ sys-libs/cracklib python
 sys-libs/glibc multiarch
 sys-libs/zlib minizip
 sys-process/procps kill
+www-servers/nginx aio http ipv6 pcre threads ssl
