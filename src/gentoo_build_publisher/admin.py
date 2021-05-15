@@ -78,4 +78,4 @@ class BuildModelAdmin(admin.ModelAdmin):
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not obj.keep
+        return not (obj.keep or obj.published())
