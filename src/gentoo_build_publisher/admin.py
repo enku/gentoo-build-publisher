@@ -1,7 +1,7 @@
 """Admin for Gentoo Build Publisher"""
 from django.contrib import admin
 
-from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.models import BuildModel, BuildNote
 
 
 class KeepListFilter(admin.SimpleListFilter):
@@ -27,11 +27,16 @@ class KeepListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class BuildNoteInline(admin.TabularInline):
+    model = BuildNote
+
+
 @admin.register(BuildModel)
 class BuildModelAdmin(admin.ModelAdmin):
     """"ModelAdmin for the BuildModel"""
 
     fields = ["name", "number", "submitted", "completed", "published", "keep"]
+    inlines = [BuildNoteInline]
     list_display = ["name", "number", "submitted", "completed", "published", "keep"]
     list_filter = ["name", "submitted", KeepListFilter]
     readonly_fields = [

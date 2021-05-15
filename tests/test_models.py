@@ -2,7 +2,7 @@
 from django.test import TestCase
 
 from gentoo_build_publisher import Jenkins, Settings, Storage
-from gentoo_build_publisher.models import KeptBuild
+from gentoo_build_publisher.models import BuildNote, KeptBuild
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -126,3 +126,14 @@ class KeptBuildTestCase(TempHomeMixin, TestCase):
         kept_build = KeptBuild.objects.create(build_model=build_model)
 
         self.assertEqual(str(kept_build), str(build_model))
+
+
+class BuildNoteTestCase(TempHomeMixin, TestCase):
+    """Unit tests for BuildNote"""
+
+    def test_str(self):
+        """str(BuildNote) should return the note string"""
+        build_model = BuildModelFactory.create()
+        build_note = BuildNote(build_model=build_model, note="Test note")
+
+        self.assertEqual(str(build_note), f"Notes for build {build_model}")

@@ -132,3 +132,13 @@ class KeptBuild(models.Model):
 
     def __str__(self) -> str:
         return str(self.build_model)
+
+
+class BuildNote(models.Model):
+    """Notes on a build"""
+
+    build_model = models.OneToOneField(BuildModel, on_delete=models.CASCADE)
+    note = models.TextField()
+
+    def __str__(self) -> str:
+        return f"Notes for build {self.build_model}"
