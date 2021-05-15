@@ -37,25 +37,24 @@ bind-mount a portage repo and binpkgs directory inside and do a world update.
 The binpkgs directory was shared via nginx and the portage tree was shared via
 rsync. This worked well but there were a few annoying issues:
 
-    * The job that updated the portage tree and the job that updated the
-      binpkgs were not always in sync.  If a world update took 5 hours, for
-      example, the hourly portage tree poller might have synced 5 times.
-      Moreover if I sync against my "real" machine hours later it may be even
-      more out of sync.
+* The job that updated the portage tree and the job that updated the binpkgs
+  were not always in sync.  If a world update took 5 hours, for example, the
+  hourly portage tree poller might have synced 5 times.  Moreover if I sync
+  against my "real" machine hours later it may be even more out of sync.
 
-    * It's certainly possible that my "real" machines could sync while the
-      Jenkins job is still building causing any not-yet-built binpkgs to want
-      to build on my real machine.
+* It's certainly possible that my "real" machines could sync while the Jenkins
+  job is still building causing any not-yet-built binpkgs to want to build on
+  my real machine.
 
-    * If the build failed in Jenkins for any reason when I go to sync from my
-      real machine I will have a system in a inconsistent state.  Likely
-      packages will want to build on my real machine and will fail again.
+* If the build failed in Jenkins for any reason when I go to sync from my real
+  machine I will have a system in a inconsistent state.  Likely packages will
+  want to build on my real machine and will fail again.
 
-    * Although possible with a little elbow grease, there's no easy way to
-      revert back to a previous build.
+* Although possible with a little elbow grease, there's no easy way to revert
+  back to a previous build.
 
-    * If I changed a config (USE flags, world file, etc.) on my real machine
-      I'd have to find a way of getting the change into the shadow container.
+* If I changed a config (USE flags, world file, etc.) on my real machine I'd
+  have to find a way of getting the change into the shadow container.
 
 The last issue I later solved by having my the `/etc/portage` and
 `/var/lib/portage` of all my real machines in version control and having the
@@ -106,7 +105,7 @@ for repo syncs and binpkgs.
   packages from https://gbp/binpkgs/<machine>/
 
 <p align="center">
-<img src="docs/media/gbp.svg" alt="Jenkins build" width="100%">
+<img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
 </p>
 
 I have a git repo called `machines` that contains the profiles for all the
