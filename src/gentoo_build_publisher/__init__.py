@@ -5,44 +5,22 @@ import os
 import shutil
 import tarfile
 from dataclasses import dataclass
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Optional
 
 import requests
+from pydantic import BaseModel
 
 
-class Settings:
+# NOTE: Using pydantic's BaseSettings was considered here but was considered too much
+# "magic" and explicitly calling .from_environ() preferred.
+class Settings(BaseModel):
     """GBP Settings"""
 
-    DEFAULTS = {
-        "JENKINS_ARTIFACT_NAME": "build.tar.gz",
-        "JENKINS_API_KEY": "JENKINS_API_KEY_REQUIRED",
-        "JENKINS_BASE_URL": "http://jenkins/Gentoo",
-        "JENKINS_USER": "jenkins",
-        "HOME_DIR": "/var/lib/gentoo-build-publisher",
-    }
-
-    def __init__(self, **kwargs):
-        for name, value in kwargs.items():
-            if name not in self.DEFAULTS:
-                raise ValueError(name)
-            value = self.validate_setting(name, value)
-            setattr(self, name, value)
-
-    def __getattr__(self, name):
-        if name not in self.DEFAULTS:
-            raise AttributeError(name)
-
-        value = self.DEFAULTS[name]
-        value = self.validate_setting(name, value)
-
-        setattr(self, name, value)
-
-        return value
-
-    @staticmethod
-    def validate_setting(_attr, value):
-        """Validate a settings"""
-        return str(value)
+    JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
+    JENKINS_API_KEY: Optional[str] = None
+    JENKINS_BASE_URL: str
+    JENKINS_USER: Optional[str] = None
+    HOME_DIR: str
 
     @classmethod
     def from_dict(cls, prefix, data_dict: Dict[str, Any]) -> Settings:
@@ -56,7 +34,7 @@ class Settings:
 
             name = name[prefix_len:]
 
-            if name not in cls.DEFAULTS:
+            if name not in cls.__fields__:
                 continue
 
             kwargs[name] = value
@@ -88,8 +66,8 @@ class Jenkins:
     """Interface to Jenkins"""
 
     base_url: str
-    user: str
-    api_key: str
+    user: Optional[str] = None
+    api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
 
     def build_url(self, build: Build) -> str:
@@ -101,7 +79,10 @@ class Jenkins:
 
     def download_artifact(self, build: Build) -> Generator[bytes, None, None]:
         """Download and yield the build artifact in chunks of bytes"""
-        auth = (self.user, self.api_key)
+        auth = None
+        if self.user is not None and self.api_key is not None:
+            auth = (self.user, self.api_key)
+
         url = self.build_url(build)
         response = requests.get(url, auth=auth, stream=True)
         response.raise_for_status()

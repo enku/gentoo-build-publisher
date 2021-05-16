@@ -58,6 +58,26 @@ class JenkinsTestCase(TestCase):
             stream=True,
         )
 
+    def test_download_artifact_with_no_auth(self):
+        # Given the Jenkins instance having no user/api_key
+        jenkins = MockJenkins(
+            base_url="https://jenkins.invalid",
+            artifact_name="build.tar.gz",
+        )
+
+        # Given the build
+        build = Build(name="babette", number=193)
+
+        # When we call download_artifact on the build
+        jenkins.download_artifact(build)
+
+        # Then it requests the artifact with no auth
+        jenkins.mock_get.assert_called_with(
+            "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
+            auth=None,
+            stream=True,
+        )
+
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_from_settings(self):
         """.from_settings() should return an instance instantiated from settings"""
@@ -67,6 +87,7 @@ class JenkinsTestCase(TestCase):
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",
             JENKINS_ARTIFACT_NAME="stuff.tar",
+            HOME_DIR="/dev/null",
         )
 
         # When we instantiate Jenkins.from_settings

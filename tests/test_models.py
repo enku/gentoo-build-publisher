@@ -14,8 +14,8 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
     def test_as_dict(self):
         """build.as_dict() should return the expected dict"""
         settings = Settings(
-            JENKINS_ARTIFACT_NAME="build.tar.gz",
             JENKINS_BASE_URL="http://jenkins.invalid/job/Gentoo",
+            HOME_DIR="/dev/null",
         )
         jenkins = Jenkins.from_settings(settings)
 

@@ -16,7 +16,13 @@ class TempHomeMixin:
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
         self.tmpdir = tmpdir.name
-        patch = mock.patch.dict(os.environ, {"BUILD_PUBLISHER_HOME_DIR": tmpdir.name})
+        patch = mock.patch.dict(
+            os.environ,
+            {
+                "BUILD_PUBLISHER_HOME_DIR": tmpdir.name,
+                "BUILD_PUBLISHER_JENKINS_BASE_URL": "/dev/null",
+            },
+        )
         self.addCleanup(patch.stop)
         patch.start()
 

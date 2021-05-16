@@ -6,6 +6,10 @@ from gentoo_build_publisher import Build, Settings, Storage
 
 from . import MockJenkins, TempHomeMixin
 
+TEST_SETTINGS = Settings(
+    HOME_DIR="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
+)
+
 
 class StorageInitTestCase(TempHomeMixin, TestCase):
     def test_creates_dir_if_not_exists(self):
@@ -29,7 +33,8 @@ class StorageFromSettings(TempHomeMixin, TestCase):
     def test(self):
         """Should intantiate Storage from settings"""
         # Given the settings
-        settings = Settings(HOME_DIR=self.tmpdir)
+        settings = TEST_SETTINGS.copy()
+        settings.HOME_DIR = self.tmpdir
 
         # When we instantiate Storage.from_settings
         storage = Storage.from_settings(settings)
@@ -45,7 +50,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
     def test_download_artifact_moves_repos_and_binpkgs(self):
         """Should download artifacts and move to repos/ and binpkgs/"""
         storage = Storage(self.tmpdir)
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
@@ -55,7 +60,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
     def test_download_artifact_creates_etc_portage_dir(self):
         """Should download artifacts and move to etc-portage/"""
         storage = Storage(self.tmpdir)
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
@@ -64,7 +69,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
     def test_download_artifact_creates_var_lib_portage_dir(self):
         """Should download artifacts and move to var-lib-portage/"""
         storage = Storage(self.tmpdir)
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
@@ -83,7 +88,7 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=193)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
@@ -107,7 +112,7 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=193)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # given the existing symlinks
         for item in build.contents:
@@ -136,7 +141,7 @@ class StoragePublishedTestCase(TempHomeMixin, TestCase):
         storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # Given the published build
         build = Build(name="babette", number=193)
@@ -167,7 +172,7 @@ class StoragePublishedTestCase(TempHomeMixin, TestCase):
         storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # Given the first build published
         build1 = Build(name="babette", number=192)
@@ -189,7 +194,7 @@ class StorageDeleteBuildTestCase(TempHomeMixin, TestCase):
 
     def test_deletes_expected_directories(self):
         storage = Storage(self.tmpdir)
-        jenkins = MockJenkins.from_settings(Settings())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 

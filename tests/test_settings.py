@@ -10,13 +10,16 @@ class SettingsTestCase(TestCase):
             BUILD_PUBLISHER_JENKINS_USER="fail",
             TODAY_HOME_DIR="/home/today",
             TODAY_IS="your birthday",
+            TODAY_JENKINS_BASE_URL="https://jenkins.invalid/",
         )
         prefix = "TODAY_"
 
         settings = Settings.from_dict(prefix, data_dict)
 
         self.assertEqual(settings.HOME_DIR, "/home/today")
-        self.assertEqual(settings.JENKINS_USER, Settings.DEFAULTS["JENKINS_USER"])
+        self.assertEqual(
+            settings.JENKINS_USER, Settings.__fields__["JENKINS_USER"].default
+        )
 
         with self.assertRaises(AttributeError):
             settings.IS
