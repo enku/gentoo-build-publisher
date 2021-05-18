@@ -16,6 +16,7 @@ from pydantic import BaseModel
 class Settings(BaseModel):
     """GBP Settings"""
 
+    ENABLE_PURGE: bool = False
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_API_KEY: Optional[str] = None
     JENKINS_BASE_URL: str

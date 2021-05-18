@@ -15,7 +15,9 @@ def publish_build(self, build_id: int):
     build_model.publish()
     build_model.completed = timezone.now()
     build_model.save()
-    purge_build.delay(build_model.name)
+
+    if build_model.settings.ENABLE_PURGE:
+        purge_build.delay(build_model.name)
 
 
 @shared_task

@@ -51,9 +51,9 @@ class BuildModel(models.Model):
         self.jenkins: Jenkins
         self.storage: Storage
 
-        settings = settings or Settings.from_environ()
-        self.jenkins = jenkins or Jenkins.from_settings(settings)
-        self.storage = storage or Storage.from_settings(settings)
+        self.settings = settings or Settings.from_environ()
+        self.jenkins = jenkins or Jenkins.from_settings(self.settings)
+        self.storage = storage or Storage.from_settings(self.settings)
 
         super().__init__(*args, **kwargs)
 
