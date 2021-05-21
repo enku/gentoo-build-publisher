@@ -37,7 +37,15 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     fields = ["name", "number", "submitted", "completed", "published", "keep"]
     inlines = [BuildNoteInline]
-    list_display = ["name", "number", "submitted", "completed", "published", "keep"]
+    list_display = [
+        "name",
+        "number",
+        "submitted",
+        "completed",
+        "published",
+        "keep",
+        "note",
+    ]
     list_filter = ["name", "submitted", KeepListFilter]
     readonly_fields = [
         "name",
@@ -61,6 +69,17 @@ class BuildModelAdmin(admin.ModelAdmin):
         return obj.keep
 
     keep.boolean = True
+
+    @admin.display(ordering="buildnote")
+    def note(self, obj):
+        """Return whether this build has a note"""
+        try:
+            BuildNote.objects.get(build_model=obj)
+            return True
+        except BuildNote.DoesNotExist:
+            return False
+
+    note.boolean = True
 
     def response_change(self, request, obj):
         if "_publish" in request.POST:
