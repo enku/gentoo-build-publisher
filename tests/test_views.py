@@ -65,8 +65,8 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         # When we download the artifact
         storage.publish(build, jenkins)
 
-        self.assertTrue(storage.build_binpkgs(build).exists())
-        self.assertTrue(os.path.exists(storage.build_repos(build)))
+        self.assertTrue(storage.get_path(build, "binpkgs").exists())
+        self.assertTrue(storage.get_path(build, "repos").exists())
 
         request = self.request.post("/delete/")
         response = delete(request, build.name, build.number)
@@ -76,8 +76,8 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
 
         query = BuildModel.objects.filter(name=build.name, number=build.number)
         self.assertFalse(query.exists())
-        self.assertFalse(os.path.exists(storage.build_binpkgs(build)))
-        self.assertFalse(os.path.exists(storage.build_repos(build)))
+        self.assertFalse(storage.get_path(build, "binpkgs").exists())
+        self.assertFalse(storage.get_path(build, "repos").exists())
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""

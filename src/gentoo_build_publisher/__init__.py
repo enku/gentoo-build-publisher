@@ -120,22 +120,6 @@ class Storage:
         """Instatiate from settings"""
         return cls(my_settings.HOME_DIR)
 
-    def build_repos(self, build: Build) -> PosixPath:
-        """Return the Path to the build's repos directory"""
-        return self.path / "repos" / str(build)
-
-    def build_binpkgs(self, build: Build) -> PosixPath:
-        """Return the Path to the build's binpkgs directory"""
-        return self.path / "binpkgs" / str(build)
-
-    def build_etc_portage(self, build: Build) -> PosixPath:
-        """Return the path to the build's /etc/portage directory"""
-        return self.path / "etc-portage" / str(build)
-
-    def build_var_lib_portage(self, build: Build) -> PosixPath:
-        """Return the Path to the build's /var_lib/portage directory"""
-        return self.path / "var-lib-portage" / str(build)
-
     def get_path(self, build: Build, content_type: str) -> PosixPath:
         """Return the Path of the content_type for build
 

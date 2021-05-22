@@ -54,8 +54,8 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(os.path.isdir(storage.build_repos(build)), True)
-        self.assertIs(os.path.isdir(storage.build_binpkgs(build)), True)
+        self.assertIs(storage.get_path(build, "repos").is_dir(), True)
+        self.assertIs(storage.get_path(build, "binpkgs").is_dir(), True)
 
     def test_download_artifact_creates_etc_portage_dir(self):
         """Should download artifacts and move to etc-portage/"""
@@ -64,7 +64,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(os.path.isdir(storage.build_etc_portage(build)), True)
+        self.assertIs(storage.get_path(build, "etc-portage").is_dir(), True)
 
     def test_download_artifact_creates_var_lib_portage_dir(self):
         """Should download artifacts and move to var-lib-portage/"""
@@ -73,7 +73,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(os.path.isdir(storage.build_var_lib_portage(build)), True)
+        self.assertIs(storage.get_path(build, "var-lib-portage").is_dir(), True)
 
 
 class StoragePublishTestCase(TempHomeMixin, TestCase):
