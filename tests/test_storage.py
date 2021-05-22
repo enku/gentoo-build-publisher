@@ -54,8 +54,8 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(storage.get_path(build, "repos").is_dir(), True)
-        self.assertIs(storage.get_path(build, "binpkgs").is_dir(), True)
+        self.assertIs(storage.get_path(build, build.Content.REPOS).is_dir(), True)
+        self.assertIs(storage.get_path(build, build.Content.BINPKGS).is_dir(), True)
 
     def test_download_artifact_creates_etc_portage_dir(self):
         """Should download artifacts and move to etc-portage/"""
@@ -64,7 +64,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(storage.get_path(build, "etc-portage").is_dir(), True)
+        self.assertIs(storage.get_path(build, build.Content.ETC_PORTAGE).is_dir(), True)
 
     def test_download_artifact_creates_var_lib_portage_dir(self):
         """Should download artifacts and move to var-lib-portage/"""
@@ -73,7 +73,7 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage.download_artifact(build, jenkins)
 
-        self.assertIs(storage.get_path(build, "var-lib-portage").is_dir(), True)
+        self.assertIs(storage.get_path(build, build.Content.ETC_PORTAGE).is_dir(), True)
 
 
 class StoragePublishTestCase(TempHomeMixin, TestCase):
@@ -115,9 +115,9 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # given the existing symlinks
-        for item in build.contents:
-            os.makedirs(f"{storage.path}/{item}")
-            os.symlink(".", f"{storage.path}/{item}/babette")
+        for item in build.Content:
+            os.makedirs(f"{storage.path}/{item.value}")
+            os.symlink(".", f"{storage.path}/{item.value}/babette")
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:

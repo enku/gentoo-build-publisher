@@ -5,6 +5,7 @@ import os
 import shutil
 import tarfile
 from dataclasses import dataclass
+from enum import Enum, unique
 from pathlib import PosixPath
 from typing import Any, Dict, Generator, Optional
 
@@ -56,8 +57,14 @@ class Build:
     name: str
     number: int
 
-    # Each build (should) contain these contents
-    contents = ["repos", "binpkgs", "etc-portage", "var-lib-portage"]
+    @unique
+    class Content(Enum):
+        """Each build (should) contain these contents"""
+
+        REPOS = "repos"
+        BINPKGS = "binpkgs"
+        ETC_PORTAGE = "etc-portage"
+        VAR_LIB_PORTAGE = "var-lib-portage"
 
     def __str__(self):
         return f"{self.name}.{self.number}"
@@ -120,14 +127,12 @@ class Storage:
         """Instatiate from settings"""
         return cls(my_settings.STORAGE_PATH)
 
-    def get_path(self, build: Build, content_type: str) -> PosixPath:
-        """Return the Path of the content_type for build
+    def get_path(self, build: Build, item: Build.Content) -> PosixPath:
+        """Return the Path of the content type for build
 
         Were it to be downloaded.
         """
-        assert content_type in build.contents
-
-        return self.path / content_type / str(build)
+        return self.path / item.value / str(build)
 
     def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
@@ -148,8 +153,8 @@ class Storage:
         with tarfile.open(artifact_path, mode="r") as tar_file:
             tar_file.extractall(dirpath)
 
-        for item in build.contents:
-            src = dirpath / item
+        for item in build.Content:
+            src = dirpath / item.value
             dst = self.get_path(build, item)
             os.renames(src, dst)
 
@@ -158,14 +163,14 @@ class Storage:
     def publish(self, build: Build, jenkins: Jenkins):
         """Make this build 'active'"""
 
-        for item in build.contents:
+        for item in build.Content:
             path = self.get_path(build, item)
             if not path.exists():
                 self.download_artifact(build, jenkins)
                 break
 
-        for item in build.contents:
-            path = self.path / item / build.name
+        for item in build.Content:
+            path = self.path / item.value / build.name
             self.symlink(str(build), str(path))
 
     def published(self, build: Build) -> bool:
@@ -174,8 +179,8 @@ class Storage:
         By "published" we mean all content are symlinked. Partially symlinked is
         unstable and therefore considered not published.
         """
-        for item in build.contents:
-            symlink = self.path / item / build.name
+        for item in build.Content:
+            symlink = self.path / item.value / build.name
 
             if not symlink.exists():
                 return False
@@ -190,7 +195,7 @@ class Storage:
 
         Does not fix dangling symlinks.
         """
-        for item in build.contents:
+        for item in build.Content:
             shutil.rmtree(self.get_path(build, item), ignore_errors=True)
 
     @staticmethod
