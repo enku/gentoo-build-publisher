@@ -116,7 +116,7 @@ class BuildModel(models.Model):
             "name": self.name,
             "number": self.number,
             "published": self.published(),
-            "url": self.jenkins.build_url(self.build),
+            "url": str(self.jenkins.build_url(self.build)),
         }
 
 

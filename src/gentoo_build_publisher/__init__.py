@@ -10,7 +10,8 @@ from pathlib import PosixPath
 from typing import Any, Dict, Generator, Optional
 
 import requests
-from pydantic import BaseModel
+from pydantic import AnyHttpUrl, BaseModel
+from yarl import URL
 
 
 # NOTE: Using pydantic's BaseSettings was considered here but was considered too much
@@ -21,7 +22,7 @@ class Settings(BaseModel):
     ENABLE_PURGE: bool = False
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_API_KEY: Optional[str] = None
-    JENKINS_BASE_URL: str
+    JENKINS_BASE_URL: AnyHttpUrl
     JENKINS_USER: Optional[str] = None
     STORAGE_PATH: PosixPath
 
@@ -74,16 +75,20 @@ class Build:
 class Jenkins:
     """Interface to Jenkins"""
 
-    base_url: str
+    base_url: URL
     user: Optional[str] = None
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
 
-    def build_url(self, build: Build) -> str:
+    def build_url(self, build: Build) -> URL:
         """Return the artifact url for build"""
         return (
-            f"{self.base_url}/job/{build.name}/{build.number}"
-            f"/artifact/{self.artifact_name}"
+            self.base_url
+            / "job"
+            / build.name
+            / str(build.number)
+            / "artifact"
+            / self.artifact_name
         )
 
     def download_artifact(self, build: Build) -> Generator[bytes, None, None]:
@@ -93,7 +98,7 @@ class Jenkins:
             auth = (self.user, self.api_key)
 
         url = self.build_url(build)
-        response = requests.get(url, auth=auth, stream=True)
+        response = requests.get(str(url), auth=auth, stream=True)
         response.raise_for_status()
 
         return response.iter_content(chunk_size=2048, decode_unicode=False)
@@ -102,7 +107,7 @@ class Jenkins:
     def from_settings(cls, settings: Settings):
         """Return a Jenkins instance given settings"""
         return cls(
-            base_url=settings.JENKINS_BASE_URL,
+            base_url=URL(settings.JENKINS_BASE_URL),
             artifact_name=settings.JENKINS_ARTIFACT_NAME,
             user=settings.JENKINS_USER,
             api_key=settings.JENKINS_API_KEY,

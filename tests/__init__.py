@@ -20,7 +20,7 @@ class TempHomeMixin:
             os.environ,
             {
                 "BUILD_PUBLISHER_STORAGE_PATH": tmpdir.name,
-                "BUILD_PUBLISHER_JENKINS_BASE_URL": "/dev/null",
+                "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
             },
         )
         self.addCleanup(patch.stop)

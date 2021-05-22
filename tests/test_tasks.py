@@ -5,6 +5,7 @@ from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
+from yarl import URL
 
 from gentoo_build_publisher import Storage
 from gentoo_build_publisher.models import BuildModel
@@ -31,7 +32,7 @@ class BaseTestCase(TempHomeMixin, TestCase):
         self.addCleanup(patch.stop)
         mock_jenkins = patch.start()
         self.jenkins = mock_jenkins.return_value = MockJenkins(
-            "http://jenkins.invalid/", "user", "key"
+            URL("http://jenkins.invalid/"), "user", "key"
         )
 
 

@@ -3,6 +3,8 @@ import io
 import os
 from unittest import TestCase, mock
 
+from yarl import URL
+
 from gentoo_build_publisher import Build, Jenkins, Settings
 
 from . import MockJenkins, test_data
@@ -15,7 +17,7 @@ class JenkinsTestCase(TestCase):
         """.build_url() should return the url of the given build artifact"""
         # Given the Jenkins instance
         jenkins = Jenkins(
-            base_url="https://jenkins.invalid", api_key="foo", user="jenkins"
+            base_url=URL("https://jenkins.invalid"), api_key="foo", user="jenkins"
         )
 
         # Given the build
@@ -26,14 +28,15 @@ class JenkinsTestCase(TestCase):
 
         # Then we get the expected url
         self.assertEqual(
-            build_url, "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz"
+            build_url,
+            URL("https://jenkins.invalid/job/babette/193/artifact/build.tar.gz"),
         )
 
     def test_download_artifact(self):
         """.download_artifact should download the given build artifact"""
         # Given the Jenkins instance
         jenkins = MockJenkins(
-            base_url="https://jenkins.invalid",
+            base_url=URL("https://jenkins.invalid"),
             api_key="foo",
             user="jenkins",
             artifact_name="build.tar.gz",
@@ -61,7 +64,7 @@ class JenkinsTestCase(TestCase):
     def test_download_artifact_with_no_auth(self):
         # Given the Jenkins instance having no user/api_key
         jenkins = MockJenkins(
-            base_url="https://jenkins.invalid",
+            base_url=URL("https://jenkins.invalid"),
             artifact_name="build.tar.gz",
         )
 
@@ -95,7 +98,7 @@ class JenkinsTestCase(TestCase):
 
         # Then we get a Jenkins instance with attributes from my_settings
         self.assertIsInstance(jenkins, Jenkins)
-        self.assertEqual(jenkins.base_url, "https://foo.bar.invalid/jenkins")
+        self.assertEqual(jenkins.base_url, URL("https://foo.bar.invalid/jenkins"))
         self.assertEqual(jenkins.api_key, "super secret key")
         self.assertEqual(jenkins.user, "admin")
         self.assertEqual(jenkins.artifact_name, "stuff.tar")
