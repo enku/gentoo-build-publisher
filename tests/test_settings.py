@@ -1,4 +1,5 @@
 """Tests for GBP Settings"""
+from pathlib import PosixPath
 from unittest import TestCase
 
 from gentoo_build_publisher import Settings
@@ -16,7 +17,7 @@ class SettingsTestCase(TestCase):
 
         settings = Settings.from_dict(prefix, data_dict)
 
-        self.assertEqual(settings.HOME_DIR, "/home/today")
+        self.assertEqual(settings.HOME_DIR, PosixPath("/home/today"))
         self.assertEqual(
             settings.JENKINS_USER, Settings.__fields__["JENKINS_USER"].default
         )

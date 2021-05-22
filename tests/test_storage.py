@@ -41,7 +41,7 @@ class StorageFromSettings(TempHomeMixin, TestCase):
 
         # Then we get a Storage instance with attributes from settings
         self.assertIsInstance(storage, Storage)
-        self.assertEqual(storage.dirname, self.tmpdir)
+        self.assertEqual(storage.path, self.tmpdir)
 
 
 class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
@@ -100,8 +100,8 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
 
         # And creates the symlinks
         source = "babette.193"
-        mock_symlink.assert_any_call(source, f"{storage.dirname}/repos/babette")
-        mock_symlink.assert_any_call(source, f"{storage.dirname}/binpkgs/babette")
+        mock_symlink.assert_any_call(source, f"{storage.path}/repos/babette")
+        mock_symlink.assert_any_call(source, f"{storage.path}/binpkgs/babette")
 
     def test_downloads_archive_given_existing_symlinks(self):
         """Bug"""
@@ -116,8 +116,8 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
 
         # given the existing symlinks
         for item in build.contents:
-            os.makedirs(f"{storage.dirname}/{item}")
-            os.symlink(".", f"{storage.dirname}/{item}/babette")
+            os.makedirs(f"{storage.path}/{item}")
+            os.symlink(".", f"{storage.path}/{item}/babette")
 
         # When we call its publish method
         with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
@@ -128,7 +128,7 @@ class StoragePublishTestCase(TempHomeMixin, TestCase):
         mock_download_artifact.assert_called()
 
         # And creates a symlink in the directory
-        target = f"{storage.dirname}/repos/{build.name}"
+        target = f"{storage.path}/repos/{build.name}"
         mock_symlink.assert_any_call(str(build), target)
 
 
@@ -201,10 +201,10 @@ class StorageDeleteBuildTestCase(TempHomeMixin, TestCase):
         storage.delete_build(build)
 
         directories = [
-            f"{storage.dirname}/binpkgs/{build}",
-            f"{storage.dirname}/etc-portage/{build}",
-            f"{storage.dirname}/repos/{build}",
-            f"{storage.dirname}/var-lib-portage/{build}",
+            f"{storage.path}/binpkgs/{build}",
+            f"{storage.path}/etc-portage/{build}",
+            f"{storage.path}/repos/{build}",
+            f"{storage.path}/var-lib-portage/{build}",
         ]
         for directory in directories:
             with self.subTest(directory=directory):

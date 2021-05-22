@@ -5,6 +5,7 @@ import os
 import shutil
 import tarfile
 from dataclasses import dataclass
+from pathlib import PosixPath
 from typing import Any, Dict, Generator, Optional
 
 import requests
@@ -21,7 +22,7 @@ class Settings(BaseModel):
     JENKINS_API_KEY: Optional[str] = None
     JENKINS_BASE_URL: str
     JENKINS_USER: Optional[str] = None
-    HOME_DIR: str
+    HOME_DIR: PosixPath
 
     @classmethod
     def from_dict(cls, prefix, data_dict: Dict[str, Any]) -> Settings:
@@ -104,45 +105,45 @@ class Jenkins:
 class Storage:
     """Storage (HOME_DIR) for gentoo_build_publisher"""
 
-    def __init__(self, dirname: str):
-        self.dirname = dirname
-        os.makedirs(f"{self.dirname}/tmp", exist_ok=True)
+    def __init__(self, path: PosixPath):
+        self.path = path
+        (self.path / "tmp").mkdir(parents=True, exist_ok=True)
 
     def __repr__(self):
         cls = type(self)
         module = cls.__module__
 
-        return f"{module}.{cls.__name__}({repr(self.dirname)})"
+        return f"{module}.{cls.__name__}({repr(self.path)})"
 
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
         """Instatiate from settings"""
         return cls(my_settings.HOME_DIR)
 
-    def build_repos(self, build: Build) -> str:
-        """Return the path to the build's repos directory"""
-        return f"{self.dirname}/repos/{build.name}.{build.number}"
+    def build_repos(self, build: Build) -> PosixPath:
+        """Return the Path to the build's repos directory"""
+        return self.path / "repos" / str(build)
 
-    def build_binpkgs(self, build: Build) -> str:
-        """Return the path to the build's binpkgs directory"""
-        return f"{self.dirname}/binpkgs/{build.name}.{build.number}"
+    def build_binpkgs(self, build: Build) -> PosixPath:
+        """Return the Path to the build's binpkgs directory"""
+        return self.path / "binpkgs" / str(build)
 
-    def build_etc_portage(self, build: Build) -> str:
+    def build_etc_portage(self, build: Build) -> PosixPath:
         """Return the path to the build's /etc/portage directory"""
-        return f"{self.dirname}/etc-portage/{build.name}.{build.number}"
+        return self.path / "etc-portage" / str(build)
 
-    def build_var_lib_portage(self, build: Build) -> str:
-        """Return the path to the build's /var_lib/portage directory"""
-        return f"{self.dirname}/var-lib-portage/{build.name}.{build.number}"
+    def build_var_lib_portage(self, build: Build) -> PosixPath:
+        """Return the Path to the build's /var_lib/portage directory"""
+        return self.path / "var-lib-portage" / str(build)
 
-    def path(self, build: Build, content_type: str) -> str:
-        """Return the path of the content_type for build
+    def get_path(self, build: Build, content_type: str) -> PosixPath:
+        """Return the Path of the content_type for build
 
         Were it to be downloaded.
         """
         assert content_type in build.contents
 
-        return f"{self.dirname}/{content_type}/{build}"
+        return self.path / content_type / str(build)
 
     def download_artifact(self, build: Build, jenkins: Jenkins):
         """Download the artifact from Jenkins
@@ -150,20 +151,22 @@ class Storage:
         * extract repos to build.repos_dir
         * extract binpkgs to build.binpkgs_dir
         """
-        path = f"{self.dirname}/tmp/{build.name}{build.number}/build.tar.gz"
-        dirpath = os.path.dirname(path)
-        os.makedirs(dirpath, exist_ok=True)
+        artifact_path = (
+            self.path / "tmp" / build.name / str(build.number) / "build.tar.gz"
+        )
+        dirpath = artifact_path.parent
+        dirpath.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "wb") as artifact_file:
+        with artifact_path.open("wb") as artifact_file:
             for chunk in jenkins.download_artifact(build):
                 artifact_file.write(chunk)
 
-        with tarfile.open(path, mode="r") as tar_file:
+        with tarfile.open(artifact_path, mode="r") as tar_file:
             tar_file.extractall(dirpath)
 
         for item in build.contents:
-            src = f"{dirpath}/{item}"
-            dst = self.path(build, item)
+            src = dirpath / item
+            dst = self.get_path(build, item)
             os.renames(src, dst)
 
         shutil.rmtree(dirpath)
@@ -172,12 +175,14 @@ class Storage:
         """Make this build 'active'"""
 
         for item in build.contents:
-            if not os.path.exists(self.path(build, item)):
+            path = self.get_path(build, item)
+            if not path.exists():
                 self.download_artifact(build, jenkins)
                 break
 
         for item in build.contents:
-            self.symlink(str(build), f"{self.dirname}/{item}/{build.name}")
+            path = self.path / item / build.name
+            self.symlink(str(build), str(path))
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
@@ -186,12 +191,12 @@ class Storage:
         unstable and therefore considered not published.
         """
         for item in build.contents:
-            symlink = f"{self.dirname}/{item}/{build.name}"
+            symlink = self.path / item / build.name
 
-            if not os.path.exists(symlink):
+            if not symlink.exists():
                 return False
 
-            if os.path.realpath(symlink) != self.path(build, item):
+            if os.path.realpath(symlink) != str(self.get_path(build, item)):
                 return False
 
         return True
@@ -202,7 +207,7 @@ class Storage:
         Does not fix dangling symlinks.
         """
         for item in build.contents:
-            shutil.rmtree(self.path(build, item), ignore_errors=True)
+            shutil.rmtree(self.get_path(build, item), ignore_errors=True)
 
     @staticmethod
     def symlink(source: str, target: str):

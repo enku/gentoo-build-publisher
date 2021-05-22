@@ -65,7 +65,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         # When we download the artifact
         storage.publish(build, jenkins)
 
-        self.assertTrue(os.path.exists(storage.build_binpkgs(build)))
+        self.assertTrue(storage.build_binpkgs(build).exists())
         self.assertTrue(os.path.exists(storage.build_repos(build)))
 
         request = self.request.post("/delete/")

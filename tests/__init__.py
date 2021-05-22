@@ -15,7 +15,7 @@ class TempHomeMixin:
 
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
-        self.tmpdir = tmpdir.name
+        self.tmpdir = Path(tmpdir.name)
         patch = mock.patch.dict(
             os.environ,
             {
