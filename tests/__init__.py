@@ -19,7 +19,7 @@ class TempHomeMixin:
         patch = mock.patch.dict(
             os.environ,
             {
-                "BUILD_PUBLISHER_HOME_DIR": tmpdir.name,
+                "BUILD_PUBLISHER_STORAGE_PATH": tmpdir.name,
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "/dev/null",
             },
         )

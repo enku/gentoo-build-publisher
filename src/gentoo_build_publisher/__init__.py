@@ -22,7 +22,7 @@ class Settings(BaseModel):
     JENKINS_API_KEY: Optional[str] = None
     JENKINS_BASE_URL: str
     JENKINS_USER: Optional[str] = None
-    HOME_DIR: PosixPath
+    STORAGE_PATH: PosixPath
 
     @classmethod
     def from_dict(cls, prefix, data_dict: Dict[str, Any]) -> Settings:
@@ -103,7 +103,7 @@ class Jenkins:
 
 
 class Storage:
-    """Storage (HOME_DIR) for gentoo_build_publisher"""
+    """Storage for gentoo_build_publisher"""
 
     def __init__(self, path: PosixPath):
         self.path = path
@@ -118,7 +118,7 @@ class Storage:
     @classmethod
     def from_settings(cls, my_settings: Settings) -> Storage:
         """Instatiate from settings"""
-        return cls(my_settings.HOME_DIR)
+        return cls(my_settings.STORAGE_PATH)
 
     def get_path(self, build: Build, content_type: str) -> PosixPath:
         """Return the Path of the content_type for build

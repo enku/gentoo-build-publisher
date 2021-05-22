@@ -59,7 +59,9 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         build = build_model.build
         storage = build_model.storage
         jenkins = MockJenkins.from_settings(
-            Settings(HOME_DIR="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/")
+            Settings(
+                STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
+            )
         )
 
         # When we download the artifact

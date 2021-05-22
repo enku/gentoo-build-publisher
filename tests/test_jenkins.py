@@ -87,7 +87,7 @@ class JenkinsTestCase(TestCase):
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",
             JENKINS_ARTIFACT_NAME="stuff.tar",
-            HOME_DIR="/dev/null",
+            STORAGE_PATH="/dev/null",
         )
 
         # When we instantiate Jenkins.from_settings

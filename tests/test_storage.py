@@ -7,7 +7,7 @@ from gentoo_build_publisher import Build, Settings, Storage
 from . import MockJenkins, TempHomeMixin
 
 TEST_SETTINGS = Settings(
-    HOME_DIR="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
+    STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
 )
 
 
@@ -34,7 +34,7 @@ class StorageFromSettings(TempHomeMixin, TestCase):
         """Should intantiate Storage from settings"""
         # Given the settings
         settings = TEST_SETTINGS.copy()
-        settings.HOME_DIR = self.tmpdir
+        settings.STORAGE_PATH = self.tmpdir
 
         # When we instantiate Storage.from_settings
         storage = Storage.from_settings(settings)
