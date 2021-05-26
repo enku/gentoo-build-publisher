@@ -69,26 +69,6 @@ class BuildModel(models.Model):
     def __str__(self) -> str:
         return str(self.build)
 
-    @property
-    def keep(self) -> bool:
-        """Whether or not this BuildModel should be excluded from the purge"""
-        try:
-            self.keptbuild  # pylint: disable=pointless-statement
-            return True
-        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
-            return False
-
-    @keep.setter
-    def keep(self, value: bool):
-        if value:
-            KeptBuild.objects.get_or_create(build_model=self)
-            return
-
-        try:
-            self.keptbuild.delete()
-        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
-            pass
-
     def publish(self):
         """Publish the Build"""
         self.storage.publish(self.build, self.jenkins)
@@ -98,12 +78,6 @@ class BuildModel(models.Model):
         return self.storage.published(self.build)
 
     def delete(self, using=None, keep_parents=False):
-        try:
-            self.keptbuild  # pylint: disable=pointless-statement
-            raise ValueError(f"{type(self).__name__} marked kept cannot be deleted")
-        except BuildModel.keptbuild.RelatedObjectDoesNotExist:
-            pass
-
         # The reason to call super().delete() before removing the directories is if for
         # some reason super().delete() fails we don't want to delete the directories.
         super().delete(using=using, keep_parents=keep_parents)
@@ -129,6 +103,15 @@ class KeptBuild(models.Model):
         primary_key=True,
         db_column="id",
     )
+
+    @classmethod
+    def keep(cls, build_model: BuildModel) -> bool:
+        """Return True if KeptBuild record exists for the given build_model"""
+        try:
+            cls.objects.get(build_model=build_model)
+            return True
+        except cls.DoesNotExist:
+            return False
 
     def __str__(self) -> str:
         return str(self.build_model)

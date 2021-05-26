@@ -8,7 +8,7 @@ from django.utils import timezone
 from yarl import URL
 
 from gentoo_build_publisher import Storage
-from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, purge_build
 
 from . import MockJenkins, TempHomeMixin
@@ -116,12 +116,12 @@ class PurgeBuildTestCase(BaseTestCase):
 
         self.assertIs(query.exists(), True)
 
-    def test_doesnt_delete_build_when_keep_is_true(self):
-        """Should not delete build when .keep=True"""
+    def test_doesnt_delete_build_when_keptbuild_exists(self):
+        """Should not delete build when KeptBuild exists for the BuildModel"""
         build_model = BuildModelFactory.create(
             number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
         )
-        build_model.keep = True
+        KeptBuild.objects.create(build_model=build_model)
         BuildModelFactory.create(
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )

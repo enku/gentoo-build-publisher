@@ -10,7 +10,7 @@
 
 {% block submit_buttons_bottom %}
     {{ block.super }}
-       <input type="submit" value="{% if original.keep %}Un{% endif %}Keep" name="_keep" id="keep">
+       <input type="submit" value="{% if keep %}Un{% endif %}Keep" name="_keep" id="keep">
        {% if not original.published %}
           <input type="submit" value="Publish" name="_publish" id="publish">
         {% else %}

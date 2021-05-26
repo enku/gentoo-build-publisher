@@ -1,7 +1,7 @@
 """Admin for Gentoo Build Publisher"""
 from django.contrib import admin
 
-from gentoo_build_publisher.models import BuildModel, BuildNote
+from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
 
 
 class KeepListFilter(admin.SimpleListFilter):
@@ -66,7 +66,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     @admin.display(ordering="keptbuild")
     def keep(self, obj):
         """Return the admin keep field"""
-        return obj.keep
+        return KeptBuild.keep(obj)
 
     keep.boolean = True
 
@@ -86,7 +86,11 @@ class BuildModelAdmin(admin.ModelAdmin):
             obj.publish()
 
         if "_keep" in request.POST:
-            obj.keep = not obj.keep
+            try:
+                kept_build = KeptBuild.objects.get(build_model=obj)
+                kept_build.delete()
+            except KeptBuild.DoesNotExist:
+                KeptBuild.objects.create(build_model=obj)
 
         return super().response_change(request, obj)
 
@@ -97,4 +101,14 @@ class BuildModelAdmin(admin.ModelAdmin):
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not (obj.keep or obj.published())
+        return not (KeptBuild.keep(obj) or obj.published())
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["keep"] = KeptBuild.objects.filter(
+            build_model__id=object_id
+        ).exists()
+
+        return super().change_view(
+            request, object_id, form_url=form_url, extra_context=extra_context
+        )

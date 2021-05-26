@@ -68,55 +68,6 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
 
         self.assertEqual(string, "BuildModel(name='test', number=1)")
 
-    def test_purge_when_keep_is_true(self):
-        """When marked kept should throw an error when calling .delete()"""
-        build_model = BuildModelFactory()
-        KeptBuild.objects.create(build_model=build_model)
-
-        with self.assertRaises(ValueError) as context:
-            build_model.delete()
-
-        exception = context.exception
-        self.assertEqual(str(exception), "BuildModel marked kept cannot be deleted")
-
-    def test_keep_getter_false(self):
-        """.keep should be False when there is no KeptBuild for the BuildModel"""
-        build_model = BuildModelFactory.create()
-
-        self.assertIs(build_model.keep, False)
-
-    def test_keep_getter_true(self):
-        """.keep should be True when ther is a KeptBuild for the BuildModel"""
-        build_model = BuildModelFactory.create()
-        KeptBuild.objects.create(build_model=build_model)
-
-        self.assertIs(build_model.keep, True)
-
-    def test_keep_true_setter_when_no_keptbuild(self):
-        """keep=True should create a KeptBuild when there isn't one"""
-        build_model = BuildModelFactory.create()
-
-        build_model.keep = True
-
-        KeptBuild.objects.get(build_model=build_model)
-
-    def test_keep_setter_false_when_keptbuild(self):
-        """.keep=False should delete the existing KeptBuild"""
-        build_model = BuildModelFactory.create()
-        KeptBuild.objects.create(build_model=build_model)
-
-        build_model.keep = False
-
-        with self.assertRaises(KeptBuild.DoesNotExist):
-            KeptBuild.objects.get(build_model=build_model)
-
-    def test_keep_setter_false_when_not_keptbuild(self):
-        build_model = BuildModelFactory.create()
-
-        build_model.keep = False
-
-        self.assertIs(build_model.keep, False)
-
 
 class KeptBuildTestCase(TempHomeMixin, TestCase):
     """Unit tests for KeptBuild"""
