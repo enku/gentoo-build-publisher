@@ -33,7 +33,7 @@ class BuildNoteInline(admin.TabularInline):
 
 @admin.register(BuildModel)
 class BuildModelAdmin(admin.ModelAdmin):
-    """"ModelAdmin for the BuildModel"""
+    """ModelAdmin for the BuildModel"""
 
     fields = ["name", "number", "submitted", "completed", "published", "keep"]
     inlines = [BuildNoteInline]
