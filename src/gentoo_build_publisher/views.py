@@ -15,11 +15,11 @@ from gentoo_build_publisher.tasks import publish_build
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """Jenkins call-back to publish a new build"""
-    build_model = BuildModel.objects.get_or_create(
+    build_model, _ = BuildModel.objects.get_or_create(
         name=build_name,
         number=build_number,
         defaults={"submitted": timezone.now()},
-    )[0]
+    )
 
     publish_build.delay(build_model.id)
     response = build_model.as_dict()
@@ -36,6 +36,4 @@ def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonRes
 
     build_model.delete()
 
-    response = {"deleted": True, "error": None}
-
-    return JsonResponse(response)
+    return JsonResponse({"deleted": True, "error": None})
