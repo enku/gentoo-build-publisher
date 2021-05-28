@@ -159,12 +159,8 @@ class Storage:
 
     def publish(self, build: Build, jenkins: Jenkins):
         """Make this build 'active'"""
-
-        for item in build.Content:
-            path = self.get_path(build, item)
-            if not path.exists():
-                self.download_artifact(build, jenkins)
-                break
+        if not all(self.get_path(build, item).exists() for item in build.Content):
+            self.download_artifact(build, jenkins)
 
         for item in build.Content:
             path = self.path / item.value / build.name
