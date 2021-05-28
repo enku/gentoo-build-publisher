@@ -27,23 +27,15 @@ class Settings(BaseModel):
     STORAGE_PATH: PosixPath
 
     @classmethod
-    def from_dict(cls, prefix, data_dict: Dict[str, Any]) -> Settings:
+    def from_dict(cls, prefix: str, data_dict: Dict[str, Any]) -> Settings:
         """Return Settings instantiated from a dict"""
-        prefix_len = len(prefix)
-        kwargs = {}
-
-        for name, value in data_dict.items():
-            if not name.startswith(prefix):
-                continue
-
-            name = name[prefix_len:]
-
-            if name not in cls.__fields__:
-                continue
-
-            kwargs[name] = value
-
-        return cls(**kwargs)
+        return cls(
+            **{
+                key: value
+                for key in cls.__fields__
+                if (value := data_dict.get(f"{prefix}{key}")) is not None
+            }
+        )
 
     @classmethod
     def from_environ(cls, prefix: str = "BUILD_PUBLISHER_") -> Settings:
