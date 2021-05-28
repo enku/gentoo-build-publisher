@@ -172,16 +172,11 @@ class Storage:
         By "published" we mean all content are symlinked. Partially symlinked is
         unstable and therefore considered not published.
         """
-        for item in build.Content:
-            symlink = self.path / item.value / build.name
-
-            if not symlink.exists():
-                return False
-
-            if os.path.realpath(symlink) != str(self.get_path(build, item)):
-                return False
-
-        return True
+        return all(
+            (symlink := self.path / item.value / build.name).exists()
+            and os.path.realpath(symlink) == str(self.get_path(build, item))
+            for item in build.Content
+        )
 
     def delete_build(self, build: Build):
         """Delete files/dirs associated with build
