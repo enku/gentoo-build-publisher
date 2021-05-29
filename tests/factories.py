@@ -12,5 +12,5 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
         model = BuildModel
 
     name = "babette"
-    number = 193
+    number = factory.Sequence(lambda n: n)
     submitted = factory.LazyFunction(timezone.now)
