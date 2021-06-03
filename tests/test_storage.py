@@ -79,6 +79,44 @@ class StorageDownloadArtifactTestCase(TempHomeMixin, TestCase):
 class StoragePublishTestCase(TempHomeMixin, TestCase):
     """Tests for Storage.publish"""
 
+    def test_pull_downloads_archive_if_contents_dont_exist(self):
+        # Given the storage
+        storage = Storage(self.tmpdir)
+
+        # Given the build
+        build = Build(name="babette", number=193)
+
+        # Given the jenkins instance
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+
+        # When we call its pull method
+        with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
+            storage.pull(build, jenkins)
+
+        # Then it downloads the artifact
+        mock_download_artifact.assert_called()
+
+    def test_pull_does_not_download_archive_with_existing_content(self):
+        # Given the storage
+        storage = Storage(self.tmpdir)
+
+        # Given the build
+        build = Build(name="babette", number=193)
+
+        # Given the jenkins instance
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+
+        # given the existing content
+        for item in build.Content:
+            os.makedirs(storage.get_path(build, item))
+
+        # When we call its publish method
+        with mock.patch.object(storage, "download_artifact") as mock_download_artifact:
+            storage.publish(build, jenkins)
+
+        # Then it does not download the artifact
+        mock_download_artifact.assert_not_called()
+
     def test_publish_downloads_archive_if_repos_dir_does_not_exit(self):
         """Should download the archive if repos/<name>.<number> doesn't exist"""
         # Given the storage
