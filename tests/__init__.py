@@ -1,4 +1,5 @@
 """Tests for gentoo build publisher"""
+# pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
 import os
 import tempfile
 from pathlib import Path
@@ -9,11 +10,11 @@ from gentoo_build_publisher import Jenkins
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
-class TempHomeMixin:
+class TempHomeMixin:  # pylint: disable=too-few-public-methods
     def setUp(self):
         super().setUp()
 
-        tmpdir = tempfile.TemporaryDirectory()
+        tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.addCleanup(tmpdir.cleanup)
         self.tmpdir = Path(tmpdir.name)
         patch = mock.patch.dict(

@@ -1,4 +1,6 @@
 """Unit tests for the tasks module"""
+# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=no-value-for-parameter,no-self-use
 import os
 from datetime import datetime
 from unittest import mock

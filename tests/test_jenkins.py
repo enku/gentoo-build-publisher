@@ -1,4 +1,5 @@
 """Tests for the Jenkins type"""
+# pylint: disable=missing-class-docstring,missing-function-docstring,no-self-use
 import io
 import os
 from unittest import TestCase, mock

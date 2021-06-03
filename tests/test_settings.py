@@ -1,4 +1,5 @@
 """Tests for GBP Settings"""
+# pylint: disable=missing-class-docstring,missing-function-docstring
 from pathlib import PosixPath
 from unittest import TestCase
 
@@ -23,7 +24,7 @@ class SettingsTestCase(TestCase):
         )
 
         with self.assertRaises(AttributeError):
-            settings.IS
+            settings.IS  # pylint: disable=pointless-statement
 
     def test_init_with_invalid_value(self):
         """Should raise ValueError when given setting not defined in DEFAULTS"""

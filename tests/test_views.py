@@ -1,5 +1,4 @@
 """Unit tests for gbp views"""
-import os
 from unittest import mock
 
 from django.http.response import Http404

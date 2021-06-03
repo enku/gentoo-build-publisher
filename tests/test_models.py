@@ -1,4 +1,5 @@
 """Unit tests for gbp models"""
+# pylint: disable=missing-class-docstring,missing-function-docstring
 from django.test import TestCase
 
 from gentoo_build_publisher import Jenkins, Settings, Storage

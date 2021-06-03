@@ -7,7 +7,7 @@ able to use it for purging builds or anything else for that matter.
 import datetime
 from typing import Callable, Iterable, List, Optional, TypeVar
 
-T = TypeVar("T")
+T = TypeVar("T")  # pylint: disable=invalid-name
 KeyFunc = Callable[[T], datetime.datetime]
 
 

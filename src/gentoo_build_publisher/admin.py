@@ -1,4 +1,5 @@
 """Admin for Gentoo Build Publisher"""
+# pylint: disable=no-self-use
 from django.contrib import admin
 
 from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
@@ -28,6 +29,7 @@ class KeepListFilter(admin.SimpleListFilter):
 
 
 class BuildNoteInline(admin.TabularInline):
+    """TabularInline for Build notes"""
     model = BuildNote
 
 

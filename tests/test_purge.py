@@ -1,4 +1,5 @@
 """Unit tests for the purge module"""
+# pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
 import random
 from dataclasses import dataclass
@@ -82,6 +83,7 @@ class PurgeTestCase(TestCase):
         )
 
     def assertDates(self, items, expected):
+        # pylint: disable=invalid-name
         item_dates = [
             datetime.datetime.strftime(i.timestamp, "%Y-%m-%d") for i in items
         ]

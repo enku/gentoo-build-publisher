@@ -10,7 +10,7 @@ from pathlib import PosixPath
 from typing import Any, Dict, Generator, Optional
 
 import requests
-from pydantic import AnyHttpUrl, BaseModel
+from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 from yarl import URL
 
 
@@ -201,4 +201,5 @@ class Storage:
         os.symlink(source, target)
 
 
+# pylint: disable=invalid-name
 default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
