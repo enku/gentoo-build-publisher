@@ -8,5 +8,6 @@ urlpatterns = [
     path("publish/<build_name>/<int:build_number>/", views.publish, name="publish"),
     path("pull/<build_name>/<int:build_number>/", views.pull, name="pull"),
     path("latest/<build_name>/", views.latest, name="latest"),
+    path("builds/<build_name>/", views.list_builds, name="list_builds"),
     path("admin/", admin.site.urls),
 ]

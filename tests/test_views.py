@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.views import delete, latest, publish, pull
+from gentoo_build_publisher.views import delete, latest, list_builds, publish, pull
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -68,6 +68,48 @@ class PullViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         build_model = BuildModel.objects.get(name=build_name, number=build_number)
         mock_pb.delay.assert_called_once_with(build_model.pk)
+
+
+class ListBuildsViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the list_builds view"""
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory()
+
+        BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 1)),
+            completed=timezone.make_aware(datetime(1970, 1, 4)),
+        )
+        self.latest = BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 2)),
+            completed=timezone.make_aware(datetime(1970, 1, 2)),
+        )
+        BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 3)),
+        )
+
+    def test_when_no_builds_should_respond_with_404(self):
+        request = self.request.get("/builds/bogus/")
+
+        response = list_builds(request, "bogus")
+
+        self.assertEqual(response.status_code, 404)
+
+        self.assertEqual(
+            json.loads(response.content),
+            {"error": "No completed builds exist with that name", "builds": []},
+        )
+
+    def test_should_return_the_list_of_completed_builds(self):
+        request = self.request.get("/builds/babette/")
+
+        response = list_builds(request, "babette")
+
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.content)
+        self.assertEqual(len(data["builds"]), 2)
 
 
 class LatestViewTestCase(TempHomeMixin, TestCase):

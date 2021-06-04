@@ -71,3 +71,18 @@ def latest(_request: HttpRequest, name: str) -> JsonResponse:
     response["error"] = None
 
     return JsonResponse(response)
+
+
+def list_builds(_request: HttpRequest, name: str) -> JsonResponse:
+    """View to return the list of builds with the given machine"""
+    builds = BuildModel.objects.filter(name=name, completed__isnull=False).order_by(
+        "number"
+    )
+
+    if builds.count() == 0:
+        return JsonResponse(
+            {"error": "No completed builds exist with that name", "builds": []},
+            status=404,
+        )
+
+    return JsonResponse({"error": None, "builds": [i.as_dict() for i in builds]})
