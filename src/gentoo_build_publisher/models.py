@@ -86,12 +86,20 @@ class BuildModel(models.Model):
 
     def as_dict(self) -> Dict[str, Any]:
         """Convert build instance attributes to a dict"""
-        return {
+        data = {
             "name": self.name,
+            "note": None,
             "number": self.number,
             "published": self.published(),
             "url": str(self.jenkins.build_url(self.build)),
         }
+
+        try:
+            data["note"] = self.buildnote.note  # pylint: disable=no-member
+        except BuildNote.DoesNotExist:
+            pass
+
+        return data
 
 
 class KeptBuild(models.Model):

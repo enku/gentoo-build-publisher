@@ -28,6 +28,33 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
 
         expected = {
             "name": build_model.name,
+            "note": None,
+            "number": build_model.number,
+            "published": False,
+            "url": (
+                "http://jenkins.invalid/job/Gentoo/job/"
+                f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
+            ),
+        }
+        self.assertEqual(as_dict, expected)
+
+    def test_as_dict_with_buildnote(self):
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/job/Gentoo",
+            STORAGE_PATH="/dev/null",
+        )
+        jenkins = Jenkins.from_settings(settings)
+
+        build_model = BuildModelFactory.create(
+            storage=Storage(self.tmpdir), jenkins=jenkins
+        )
+        BuildNote.objects.create(build_model=build_model, note="This is a test")
+
+        as_dict = build_model.as_dict()
+
+        expected = {
+            "name": build_model.name,
+            "note": "This is a test",
             "number": build_model.number,
             "published": False,
             "url": (

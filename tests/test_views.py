@@ -114,6 +114,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         expected = {
             "error": None,
             "name": name,
+            "note": None,
             "number": number,
             "published": False,
             "url": f"https://jenkins.invalid/job/{name}/{number}/artifact/build.tar.gz",
