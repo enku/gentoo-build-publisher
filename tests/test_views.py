@@ -30,7 +30,9 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
         build_number = "193"
 
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = publish(request, build_name, build_number)
+            response = publish(
+                request, build_name=build_name, build_number=build_number
+            )
 
         self.assertEqual(response.status_code, 200)
         build_model = BuildModel.objects.get(name=build_name, number=build_number)
@@ -43,7 +45,9 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
         build = build_model.build
 
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = publish(request, build.name, build.number)
+            response = publish(
+                request, build_name=build.name, build_number=build.number
+            )
 
         self.assertEqual(response.status_code, 200)
         mock_pb.delay.assert_called_once_with(build_model.pk)
@@ -63,7 +67,7 @@ class PullViewTestCase(TempHomeMixin, TestCase):
         build_number = "193"
 
         with mock.patch("gentoo_build_publisher.views.pull_build") as mock_pb:
-            response = pull(request, build_name, build_number)
+            response = pull(request, build_name=build_name, build_number=build_number)
 
         self.assertEqual(response.status_code, 200)
         build_model = BuildModel.objects.get(name=build_name, number=build_number)
@@ -92,7 +96,7 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
     def test_when_no_builds_should_respond_with_404(self):
         request = self.request.get("/builds/bogus/")
 
-        response = list_builds(request, "bogus")
+        response = list_builds(request, build_name="bogus")
 
         self.assertEqual(response.status_code, 404)
 
@@ -104,7 +108,7 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
     def test_should_return_the_list_of_completed_builds(self):
         request = self.request.get("/builds/babette/")
 
-        response = list_builds(request, "babette")
+        response = list_builds(request, build_name="babette")
 
         self.assertEqual(response.status_code, 200)
 
@@ -135,7 +139,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         request = self.request.get("/latest/bogus/")
         build_name = "bogus"
 
-        response = latest(request, build_name)
+        response = latest(request, build_name=build_name)
 
         self.assertEqual(response.status_code, 404)
 
@@ -148,7 +152,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         request = self.request.get("/latest/babette/")
         build_name = "babette"
 
-        response = latest(request, build_name)
+        response = latest(request, build_name=build_name)
 
         self.assertEqual(response.status_code, 200)
         name = self.latest.name
@@ -190,7 +194,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         self.assertTrue(storage.get_path(build, build.Content.REPOS).exists())
 
         request = self.request.post("/delete/")
-        response = delete(request, build.name, build.number)
+        response = delete(request, build_name=build.name, build_number=build.number)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'{"deleted": true, "error": null}')

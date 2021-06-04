@@ -56,11 +56,11 @@ def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonRes
     return JsonResponse({"deleted": True, "error": None})
 
 
-def latest(_request: HttpRequest, name: str) -> JsonResponse:
+def latest(_request: HttpRequest, build_name: str) -> JsonResponse:
     """View to return the latest build for a machine"""
-    builds = BuildModel.objects.filter(name=name, completed__isnull=False).order_by(
-        "-submitted"
-    )
+    builds = BuildModel.objects.filter(
+        name=build_name, completed__isnull=False
+    ).order_by("-submitted")
 
     if builds.count() == 0:
         return JsonResponse(
@@ -73,11 +73,11 @@ def latest(_request: HttpRequest, name: str) -> JsonResponse:
     return JsonResponse(response)
 
 
-def list_builds(_request: HttpRequest, name: str) -> JsonResponse:
+def list_builds(_request: HttpRequest, build_name: str) -> JsonResponse:
     """View to return the list of builds with the given machine"""
-    builds = BuildModel.objects.filter(name=name, completed__isnull=False).order_by(
-        "number"
-    )
+    builds = BuildModel.objects.filter(
+        name=build_name, completed__isnull=False
+    ).order_by("number")
 
     if builds.count() == 0:
         return JsonResponse(
