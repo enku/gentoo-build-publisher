@@ -1,12 +1,16 @@
 """Unit tests for gbp views"""
+# pylint: disable=missing-class-docstring,missing-function-docstring
+import json
+from datetime import datetime
 from unittest import mock
 
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.views import delete, publish, pull
+from gentoo_build_publisher.views import delete, latest, publish, pull
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -64,6 +68,58 @@ class PullViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         build_model = BuildModel.objects.get(name=build_name, number=build_number)
         mock_pb.delay.assert_called_once_with(build_model.pk)
+
+
+class LatestViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the latest view"""
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory()
+
+        BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 1)),
+            completed=timezone.make_aware(datetime(1970, 1, 4)),
+        )
+        self.latest = BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 2)),
+            completed=timezone.make_aware(datetime(1970, 1, 2)),
+        )
+        BuildModelFactory.create(
+            submitted=timezone.make_aware(datetime(1970, 1, 3)),
+        )
+
+    def test_when_no_builds_should_respond_with_404(self):
+        request = self.request.get("/latest/bogus/")
+        build_name = "bogus"
+
+        response = latest(request, build_name)
+
+        self.assertEqual(response.status_code, 404)
+
+        self.assertEqual(
+            json.loads(response.content),
+            {"error": "No completed builds exist with that name"},
+        )
+
+    def test_should_return_the_latest_submitted_completed(self):
+        request = self.request.get("/latest/babette/")
+        build_name = "babette"
+
+        response = latest(request, build_name)
+
+        self.assertEqual(response.status_code, 200)
+        name = self.latest.name
+        number = self.latest.number
+        expected = {
+            "error": None,
+            "name": name,
+            "number": number,
+            "published": False,
+            "url": f"https://jenkins.invalid/job/{name}/{number}/artifact/build.tar.gz",
+        }
+
+        self.assertEqual(json.loads(response.content), expected)
 
 
 class DeleteViewTestCase(TempHomeMixin, TestCase):

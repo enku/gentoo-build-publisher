@@ -54,3 +54,20 @@ def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonRes
     build_model.delete()
 
     return JsonResponse({"deleted": True, "error": None})
+
+
+def latest(_request: HttpRequest, name: str) -> JsonResponse:
+    """View to return the latest build for a machine"""
+    builds = BuildModel.objects.filter(name=name, completed__isnull=False).order_by(
+        "-submitted"
+    )
+
+    if builds.count() == 0:
+        return JsonResponse(
+            {"error": "No completed builds exist with that name"}, status=404
+        )
+
+    response = builds[0].as_dict()
+    response["error"] = None
+
+    return JsonResponse(response)
