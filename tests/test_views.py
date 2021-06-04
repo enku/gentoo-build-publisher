@@ -6,7 +6,7 @@ from django.test import RequestFactory, TestCase
 
 from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.views import delete, publish
+from gentoo_build_publisher.views import delete, publish, pull
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -42,6 +42,27 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
             response = publish(request, build.name, build.number)
 
         self.assertEqual(response.status_code, 200)
+        mock_pb.delay.assert_called_once_with(build_model.pk)
+
+
+class PullViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the pull view"""
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory()
+
+    def test_publish_new(self):
+        """Should publish brand new builds"""
+        request = self.request.post("/pull/")
+        build_name = "babette"
+        build_number = "193"
+
+        with mock.patch("gentoo_build_publisher.views.pull_build") as mock_pb:
+            response = pull(request, build_name, build_number)
+
+        self.assertEqual(response.status_code, 200)
+        build_model = BuildModel.objects.get(name=build_name, number=build_number)
         mock_pb.delay.assert_called_once_with(build_model.pk)
 
 
