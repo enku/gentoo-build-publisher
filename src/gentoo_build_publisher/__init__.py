@@ -159,8 +159,15 @@ class Storage:
 
     def pull(self, build: Build, jenkins: Jenkins):
         """Pull and unpack the artifact"""
-        if not all(self.get_path(build, item).exists() for item in build.Content):
+        if not self.pulled(build):
             self.download_artifact(build, jenkins)
+
+    def pulled(self, build: Build) -> bool:
+        """Returns True if build has been pulled
+
+        By "pulled" we mean all Build components exist in Storage
+        """
+        return all(self.get_path(build, item).exists() for item in build.Content)
 
     def publish(self, build: Build, jenkins: Jenkins):
         """Make this build 'active'"""

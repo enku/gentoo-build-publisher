@@ -11,7 +11,7 @@ from yarl import URL
 
 from gentoo_build_publisher import Storage
 from gentoo_build_publisher.models import BuildModel, KeptBuild
-from gentoo_build_publisher.tasks import publish_build, purge_build
+from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -49,39 +49,6 @@ class PublishBuildTestCase(BaseTestCase):
             publish_build(build_model.id)
 
         self.assertIs(self.storage.published(build_model.build), True)
-
-    def test_calls_purge_build(self):
-        """Should issue the purge_build task when setting is true"""
-        build_model = BuildModelFactory.create()
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
-            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                publish_build(build_model.id)
-
-        mock_purge_build.delay.assert_called_with(build_model.name)
-
-    def test_does_not_call_purge_build(self):
-        """Should not issue the purge_build task when setting is false"""
-        build_model = BuildModelFactory.create()
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
-            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                publish_build(build_model.id)
-
-        mock_purge_build.delay.assert_not_called()
-
-    def test_updates_build_models_completed_field(self):
-        """Should update the completed field with the current timestamp"""
-        now = timezone.now()
-        build_model = BuildModelFactory.create()
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            with mock.patch("gentoo_build_publisher.tasks.timezone.now") as mock_now:
-                mock_now.return_value = now
-                publish_build(build_model.id)
-
-        build_model.refresh_from_db()
-        self.assertEqual(build_model.completed, now)
 
 
 class PurgeBuildTestCase(BaseTestCase):
@@ -133,3 +100,49 @@ class PurgeBuildTestCase(BaseTestCase):
         query = BuildModel.objects.filter(id=build_model.id)
 
         self.assertIs(query.exists(), True)
+
+
+class PullBuildTestCase(BaseTestCase):
+    """Tests for the pull_build task"""
+
+    def test_pulls_build(self):
+        """Should actually pull the build"""
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+            pull_build(build_model.id)
+
+        self.assertIs(self.storage.pulled(build_model.build), True)
+
+    def test_calls_purge_build(self):
+        """Should issue the purge_build task when setting is true"""
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
+            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
+                pull_build(build_model.id)
+
+        mock_purge_build.delay.assert_called_with(build_model.name)
+
+    def test_does_not_call_purge_build(self):
+        """Should not issue the purge_build task when setting is false"""
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
+            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
+                pull_build(build_model.id)
+
+        mock_purge_build.delay.assert_not_called()
+
+    def test_updates_build_models_completed_field(self):
+        """Should update the completed field with the current timestamp"""
+        now = timezone.now()
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+            with mock.patch("gentoo_build_publisher.tasks.timezone.now") as mock_now:
+                mock_now.return_value = now
+                pull_build(build_model.id)
+
+        build_model.refresh_from_db()
+        self.assertEqual(build_model.completed, now)

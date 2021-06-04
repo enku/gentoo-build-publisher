@@ -6,15 +6,25 @@ from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.purge import Purger
 
 
-@shared_task(bind=True)
-def publish_build(self, build_id: int):
+@shared_task
+def publish_build(build_id: int):
     """Publish the build"""
+    pull_build.apply((build_id,))
     build_model = BuildModel.objects.get(pk=build_id)
-    build_model.task_id = self.request.id
-    build_model.save()
     build_model.publish()
-    build_model.completed = timezone.now()
-    build_model.save()
+
+
+@shared_task(bind=True)
+def pull_build(self, build_id: int):
+    """Pull the build into storage"""
+    build_model = BuildModel.objects.get(pk=build_id)
+
+    if not build_model.storage.pulled(build_model.build):
+        build_model.task_id = self.request.id
+        build_model.save()
+        build_model.storage.pull(build_model.build, build_model.jenkins)
+        build_model.completed = timezone.now()
+        build_model.save()
 
     if build_model.settings.ENABLE_PURGE:
         purge_build.delay(build_model.name)
