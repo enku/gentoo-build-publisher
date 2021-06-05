@@ -8,8 +8,15 @@ from django.http.response import Http404
 from django.test import RequestFactory, TestCase
 
 from gentoo_build_publisher import Settings
-from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.views import delete, latest, list_builds, publish, pull
+from gentoo_build_publisher.models import BuildLog, BuildModel
+from gentoo_build_publisher.views import (
+    delete,
+    latest,
+    list_builds,
+    logs,
+    publish,
+    pull,
+)
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
@@ -168,6 +175,35 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         }
 
         self.assertEqual(json.loads(response.content), expected)
+
+
+class LogsViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the logs view"""
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory()
+
+    def test_returns_logs_when_there_are_logs(self):
+        build_model = BuildModelFactory.create()
+        BuildLog.objects.create(build_model=build_model, logs="foo\n")
+
+        request = self.request.get("/logs/{build_model.name}/{build_model.number}/")
+        response = logs(
+            request, build_name=build_model.name, build_number=build_model.number
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/plain")
+        self.assertEqual(response.content, b"foo\n")
+
+    def test_gives_404_response_when_there_are_no_logs(self):
+        build_model = BuildModelFactory.create()
+
+        request = self.request.get("/logs/{build_model.name}/{build_model.number}/")
+
+        with self.assertRaises(Http404):
+            logs(request, build_name=build_model.name, build_number=build_model.number)
 
 
 class DeleteViewTestCase(TempHomeMixin, TestCase):

@@ -1,13 +1,13 @@
 """
 View for gbp
 """
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.models import BuildLog, BuildModel
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
 
@@ -86,3 +86,12 @@ def list_builds(_request: HttpRequest, build_name: str) -> JsonResponse:
         )
 
     return JsonResponse({"error": None, "builds": [i.as_dict() for i in builds]})
+
+
+def logs(_request: HttpRequest, build_name: str, build_number: int) -> HttpResponse:
+    """View to return the Jenkins build logs for a given build"""
+    build_log = get_object_or_404(
+        BuildLog, build_model__name=build_name, build_model__number=build_number
+    )
+
+    return HttpResponse(build_log.logs, content_type="text/plain")
