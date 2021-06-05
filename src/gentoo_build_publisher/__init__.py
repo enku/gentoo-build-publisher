@@ -7,12 +7,13 @@ import tarfile
 from dataclasses import dataclass
 from enum import Enum, unique
 from pathlib import PosixPath
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator, Optional, Tuple
 
 import requests
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 from yarl import URL
 
+AuthTuple = Tuple[str, str]
 
 # NOTE: Using pydantic's BaseSettings was considered here but was considered too much
 # "magic" and explicitly calling .from_environ() preferred.
@@ -83,20 +84,28 @@ class Jenkins:
             / self.artifact_name
         )
 
+    def logs_url(self, build: Build) -> URL:
+        """Return the url for the build's console logs"""
+        return self.base_url / "job" / build.name / str(build.number) / "consoleText"
+
     def download_artifact(self, build: Build) -> Generator[bytes, None, None]:
         """Download and yield the build artifact in chunks of bytes"""
-        auth = None
-        if self.user is not None and self.api_key is not None:
-            auth = (self.user, self.api_key)
-
         url = self.build_url(build)
-        response = requests.get(str(url), auth=auth, stream=True)
+        response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()
 
         return (
             bytes(i)
             for i in response.iter_content(chunk_size=2048, decode_unicode=False)
         )
+
+    def get_build_logs(self, build: Build) -> str:
+        """Get and return the build's jenkins logs"""
+        url = self.logs_url(build)
+        response = requests.get(str(url), auth=self.auth)
+        response.raise_for_status()
+
+        return response.text
 
     @classmethod
     def from_settings(cls, settings: Settings):
@@ -107,6 +116,17 @@ class Jenkins:
             user=settings.JENKINS_USER,
             api_key=settings.JENKINS_API_KEY,
         )
+
+    @property
+    def auth(self) -> Optional[AuthTuple]:
+        """The auth used for requests
+
+        Either a 2-tuple or `None`
+        """
+        if self.user is None or self.api_key is None:
+            return None
+
+        return (self.user, self.api_key)
 
 
 class Storage:

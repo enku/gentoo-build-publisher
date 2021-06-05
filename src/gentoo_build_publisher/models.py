@@ -137,3 +137,10 @@ class BuildNote(models.Model):
 
     def __str__(self) -> str:
         return f"Notes for build {self.build_model}"
+
+
+class BuildLog(models.Model):
+    """The Jenkins logs for a build"""
+
+    build_model = models.OneToOneField(BuildModel, on_delete=models.CASCADE)
+    logs = models.TextField()
