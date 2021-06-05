@@ -1,12 +1,11 @@
 """Unit tests for gbp views"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
 
 from django.http.response import Http404
 from django.test import RequestFactory, TestCase
-from django.utils import timezone
 
 from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildModel
@@ -82,15 +81,15 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
         self.request = RequestFactory()
 
         BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 1)),
-            completed=timezone.make_aware(datetime(1970, 1, 4)),
+            submitted=datetime(1970, 1, 1).replace(tzinfo=timezone.utc),
+            completed=datetime(1970, 1, 4).replace(tzinfo=timezone.utc),
         )
         self.latest = BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 2)),
-            completed=timezone.make_aware(datetime(1970, 1, 2)),
+            submitted=datetime(1970, 1, 2).replace(tzinfo=timezone.utc),
+            completed=datetime(1970, 1, 2).replace(tzinfo=timezone.utc),
         )
         BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 3)),
+            submitted=datetime(1970, 1, 3).replace(tzinfo=timezone.utc),
         )
 
     def test_when_no_builds_should_respond_with_404(self):
@@ -124,15 +123,15 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         self.request = RequestFactory()
 
         BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 1)),
-            completed=timezone.make_aware(datetime(1970, 1, 4)),
+            submitted=datetime(1970, 1, 1).replace(tzinfo=timezone.utc),
+            completed=datetime(1970, 1, 4).replace(tzinfo=timezone.utc),
         )
         self.latest = BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 2)),
-            completed=timezone.make_aware(datetime(1970, 1, 2)),
+            submitted=datetime(1970, 1, 2).replace(tzinfo=timezone.utc),
+            completed=datetime(1970, 1, 2).replace(tzinfo=timezone.utc),
         )
         BuildModelFactory.create(
-            submitted=timezone.make_aware(datetime(1970, 1, 3)),
+            submitted=datetime(1970, 1, 3).replace(tzinfo=timezone.utc),
         )
 
     def test_when_no_builds_should_respond_with_404(self):
@@ -163,6 +162,8 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
             "note": None,
             "number": number,
             "published": False,
+            "submitted": self.latest.submitted.isoformat(),
+            "completed": self.latest.completed.isoformat(),
             "url": f"https://jenkins.invalid/job/{name}/{number}/artifact/build.tar.gz",
         }
 

@@ -92,6 +92,10 @@ class BuildModel(models.Model):
             "number": self.number,
             "published": self.published(),
             "url": str(self.jenkins.build_url(self.build)),
+            "submitted": self.submitted.isoformat(),
+            "completed": self.completed.isoformat()
+            if self.completed is not None
+            else None,
         }
 
         try:

@@ -31,6 +31,8 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
             "note": None,
             "number": build_model.number,
             "published": False,
+            "submitted": build_model.submitted.isoformat(),
+            "completed": None,
             "url": (
                 "http://jenkins.invalid/job/Gentoo/job/"
                 f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
@@ -57,6 +59,8 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
             "note": "This is a test",
             "number": build_model.number,
             "published": False,
+            "submitted": build_model.submitted.isoformat(),
+            "completed": None,
             "url": (
                 "http://jenkins.invalid/job/Gentoo/job/"
                 f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
