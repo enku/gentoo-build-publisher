@@ -2,6 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from unittest import mock
 
 from django.http.response import Http404
@@ -11,6 +12,7 @@ from gentoo_build_publisher import Settings
 from gentoo_build_publisher.models import BuildLog, BuildModel
 from gentoo_build_publisher.views import (
     delete,
+    diff_builds,
     latest,
     list_builds,
     logs,
@@ -20,6 +22,8 @@ from gentoo_build_publisher.views import (
 
 from . import MockJenkins, TempHomeMixin
 from .factories import BuildModelFactory
+
+BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
 class PublishViewTestCase(TempHomeMixin, TestCase):
@@ -247,3 +251,37 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
 
         with self.assertRaises(Http404):
             delete(request, "babette", "3000")
+
+
+class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the diff_builds view"""
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory()
+
+    def test(self):
+        build_name = "babette"
+        left = 132
+        right = 147
+
+        left_bm = BuildModelFactory.create(name="babette", number=132)
+        right_bm = BuildModelFactory.create(name="babette", number=147)
+        left_path = str(BASE_DIR / "binpkgs" / "babette.132")
+        right_path = str(BASE_DIR / "binpkgs" / "babette.147")
+
+        with mock.patch("gentoo_build_publisher.Storage.get_path") as mock_get_path:
+            mock_get_path.side_effect = (left_path, right_path)
+            request = self.request.get("/diff/babette/132/147/")
+
+            response = diff_builds(request, build_name, left, right)
+
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.content)
+        self.assertEqual(data["error"], None)
+        self.assertEqual(
+            data["diff"]["builds"], [left_bm.as_dict(), right_bm.as_dict()]
+        )
+
+        self.assertEqual(len(data["diff"]["items"]), 6)

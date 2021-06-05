@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from gentoo_build_publisher.diff import dirdiff
 from gentoo_build_publisher.models import BuildLog, BuildModel
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
@@ -95,3 +96,30 @@ def logs(_request: HttpRequest, build_name: str, build_number: int) -> HttpRespo
     )
 
     return HttpResponse(build_log.logs, content_type="text/plain")
+
+
+def diff_builds(
+    _request: HttpRequest, build_name: str, left: int, right: int
+) -> JsonResponse:
+    """View to show the diff between two builds for the given machines"""
+    left_build = get_object_or_404(BuildModel, name=build_name, number=left)
+    right_build = get_object_or_404(BuildModel, name=build_name, number=right)
+
+    left_path = left_build.storage.get_path(
+        left_build.build, left_build.build.Content.BINPKGS
+    )
+    right_path = right_build.storage.get_path(
+        right_build.build, right_build.build.Content.BINPKGS
+    )
+
+    items = dirdiff(str(left_path), str(right_path))
+
+    return JsonResponse(
+        {
+            "error": None,
+            "diff": {
+                "builds": [left_build.as_dict(), right_build.as_dict()],
+                "items": list(items),
+            },
+        }
+    )
