@@ -40,7 +40,7 @@ class Settings(BaseModel):
     @classmethod
     def from_environ(cls, prefix: str = "BUILD_PUBLISHER_") -> Settings:
         """Return settings instantiated from environment variables"""
-        return cls.from_dict(prefix, os.environ)
+        return cls.from_dict(prefix, dict(os.environ))
 
 
 @dataclass
@@ -93,7 +93,10 @@ class Jenkins:
         response = requests.get(str(url), auth=auth, stream=True)
         response.raise_for_status()
 
-        return response.iter_content(chunk_size=2048, decode_unicode=False)
+        return (
+            bytes(i)
+            for i in response.iter_content(chunk_size=2048, decode_unicode=False)
+        )
 
     @classmethod
     def from_settings(cls, settings: Settings):

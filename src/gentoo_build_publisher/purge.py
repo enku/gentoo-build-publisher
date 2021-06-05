@@ -5,7 +5,7 @@ give a proper attribution.  It's originally a backup purging strategy but I want
 able to use it for purging builds or anything else for that matter.
 """
 import datetime
-from typing import Callable, Iterable, List, Optional, TypeVar
+from typing import Callable, Iterable, List, Optional, Set, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 KeyFunc = Callable[[T], datetime.datetime]
@@ -32,7 +32,7 @@ class Purger:
 
     def purge(self) -> List[T]:
         """Return a list of items to purge"""
-        keep = set()
+        keep: Set[T] = set()
 
         keep.update(self.yesterday_plus())
         keep.update(self.one_per_day_last_week())
@@ -104,7 +104,7 @@ class Purger:
 
     def one_per_day_last_week(self) -> List[T]:
         """Return one item for every day within the past week."""
-        lst = []
+        lst: List[T] = []
         last_week = self.end - datetime.timedelta(days=7)
         last_week = last_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -121,7 +121,7 @@ class Purger:
         Return a the subset of items comprising of at most one from each week last
         month. If multiple datetimes fit within the week, use the later.
         """
-        lst = []
+        lst: List[T] = []
         today = self.end.replace(hour=0, minute=0, second=0, microsecond=0)
         last_month = today - datetime.timedelta(days=31)
         start_of_month = last_month.replace(day=1)
@@ -153,7 +153,7 @@ class Purger:
         Return a list of which include a maximum of one for each month of the past year.
         If multiple datetimes fit the criteria for a month, use the latest.
         """
-        lst = []
+        lst: List[T] = []
         last_year = self.end - datetime.timedelta(days=365)
         last_year = last_year.replace(hour=0, minute=0, second=0, microsecond=0)
 

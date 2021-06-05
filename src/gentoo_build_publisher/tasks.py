@@ -36,7 +36,7 @@ def purge_build(build_name: str):
     builds = BuildModel.objects.filter(name=build_name)
     purger = Purger(builds, key=lambda b: timezone.make_naive(b.submitted))
 
-    for build_model in purger.purge():
+    for build_model in purger.purge():  # type: BuildModel
         if KeptBuild.keep(build_model) or build_model.storage.published(
             build_model.build
         ):
