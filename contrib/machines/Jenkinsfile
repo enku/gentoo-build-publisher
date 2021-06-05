@@ -38,7 +38,7 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: 'build.tar.gz'
-            sh 'make publish'
+            sh 'make push'
         }
     }
 }

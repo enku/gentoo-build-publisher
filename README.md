@@ -97,10 +97,14 @@ for repo syncs and binpkgs.
   into a tar archive
   (`build.tar.gz`).
 * Your job should have a post-build task that calls the Gentoo Build Publisher.
-  It will then pull the specified archive and publish it (e.g. rsync for repos,
-  http for binpkgs.
-* If the job fails, it does not be published. Your last successful build stays
-  current.
+  It will then pull the specified archive.
+
+* Once a Jenkins job has been pulled by Gentoo Build Publisher it can be
+  published so that actual machines can use it (e.g. rsync for repos, http for
+  binpkgs).
+
+* If the job fails, it will not be pulled.
+
 * Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls binary
   packages from https://gbp/binpkgs/<machine>/
 
@@ -111,3 +115,36 @@ for repo syncs and binpkgs.
 I have a git repo called `machines` that contains the profiles for all the
 machines whose builds I want to push to the publisher.  See the
 [contrib/machines](contrib/machines) directory for an example.
+
+My Jenkins job does not publish a build by default. I (can) later publish the
+build so that my machines can consume them.  There is a REST interface for
+doing such tasks and I'm currently working on a command-line interface.
+
+```bash
+$ gbp list babette
+[  ]   104 04/25/21 06:51:19
+[  ]   109 04/30/21 07:27:04
+[PN]   132 05/21/21 11:27:50
+[  ]   142 05/31/21 07:00:30
+[  ]   143 06/01/21 17:51:28
+[  ]   144 06/02/21 06:49:41
+[  ]   145 06/03/21 09:49:21
+[  ]   146 06/04/21 06:53:53
+[  ]   147 06/05/21 06:49:36
+
+$ gbp show babette 132
+Build: babette/132
+Submitted: Fri May 21 11:27:50 2021 -0700
+Completed: Fri May 21 11:28:44 2021 -0700
+Published: True
+
+  This is where babette is now
+
+$ gbp publish babette 147
+```
+
+In the above example, the `PN` output for build `132` signifies that this build
+is currently published (`P`) and there is a user note for that build (`N`).
+The user note can be shown with the `gbp show` command.  I will soon implement
+a `gbp diff` command so that you can see the differences between two builds
+(packages added/changed/removed)

@@ -57,7 +57,7 @@ chroot: $(repos_targets) $(config_targets)  ## Build the chroot in the container
 
 
 world: chroot  ## Update @world and remove unneeded pkgs & binpkgs
-	$(chroot) emerge $(emerge_opts) --usepkg=y @world gentoolkit
+	$(chroot) emerge $(emerge_opts) --usepkg=y --with-bdeps=y @world gentoolkit
 	$(chroot) emerge $(emerge_opts) --usepkg=n @preserved-rebuild
 	$(chroot) eclean-pkg --deep --quiet
 	$(chroot) emerge --depclean --quiet --with-bdeps=y
@@ -84,9 +84,9 @@ $(archive): world gbp.json
 	gzip build.tar
 
 
-.PHONY: publish
-publish: $(archive)  ## Publish artifact (to GBP)
-	curl -X POST https://gbp/publish/$(machine)/$(build)/
+.PHONY: push
+push: $(archive)  ## Push artifact (to GBP)
+	curl -X POST https://gbp/pull/$(machine)/$(build)/
 
 
 .PHONY: %.machine
