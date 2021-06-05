@@ -38,6 +38,7 @@ class MockJenkins(Jenkins):
     """Jenkins with requests mocked out"""
 
     mock_get = None
+    get_build_logs_mock_get = None
 
     def download_artifact(self, build):
         with mock.patch("gentoo_build_publisher.requests.get") as mock_get:
@@ -46,3 +47,10 @@ class MockJenkins(Jenkins):
             )
             self.mock_get = mock_get
             return super().download_artifact(build)
+
+    def get_build_logs(self, build):
+        with mock.patch("gentoo_build_publisher.requests.get") as mock_get:
+            mock_get.return_value.text = "foo\n"
+            self.get_build_logs_mock_get = mock_get
+
+            return super().get_build_logs(build)

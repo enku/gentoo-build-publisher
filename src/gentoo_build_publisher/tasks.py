@@ -2,7 +2,7 @@
 from celery import shared_task
 from django.utils import timezone
 
-from gentoo_build_publisher.models import BuildModel, KeptBuild
+from gentoo_build_publisher.models import BuildLog, BuildModel, KeptBuild
 from gentoo_build_publisher.purge import Purger
 
 
@@ -23,6 +23,8 @@ def pull_build(self, build_id: int):
         build_model.task_id = self.request.id
         build_model.save()
         build_model.storage.pull(build_model.build, build_model.jenkins)
+        logs = build_model.jenkins.get_build_logs(build_model.build)
+        BuildLog.objects.create(build_model=build_model, logs=logs)
         build_model.completed = timezone.now()
         build_model.save()
 

@@ -10,7 +10,7 @@ from django.utils import timezone
 from yarl import URL
 
 from gentoo_build_publisher import Storage
-from gentoo_build_publisher.models import BuildModel, KeptBuild
+from gentoo_build_publisher.models import BuildLog, BuildModel, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
 from . import MockJenkins, TempHomeMixin
@@ -113,6 +113,21 @@ class PullBuildTestCase(BaseTestCase):
             pull_build(build_model.id)
 
         self.assertIs(self.storage.pulled(build_model.build), True)
+
+    def test_stores_build_logs(self):
+        """Should store the logs of the build"""
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+            pull_build(build_model.id)
+
+        url = str(build_model.jenkins.logs_url(build_model.build))
+        build_model.jenkins.get_build_logs_mock_get.assert_called_once()
+        call_args = build_model.jenkins.get_build_logs_mock_get.call_args
+        self.assertEqual(call_args[0][0], url)
+
+        build_log = BuildLog.objects.get(build_model=build_model)
+        self.assertEqual(build_log.logs, "foo\n")
 
     def test_calls_purge_build(self):
         """Should issue the purge_build task when setting is true"""
