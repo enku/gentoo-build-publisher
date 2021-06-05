@@ -30,6 +30,7 @@ class KeepListFilter(admin.SimpleListFilter):
 
 class BuildNoteInline(admin.TabularInline):
     """TabularInline for Build notes"""
+
     model = BuildNote
 
 
