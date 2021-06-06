@@ -140,11 +140,22 @@ Published: True
 
   This is where babette is now
 
+$ gbp diff babette 132 147
+diff -r babette/132 babette/147
+--- a/babette/132 Fri May 21 11:27:50 2021 -0700
++++ b/babette/147 Sat Jun  5 06:49:36 2021 -0700
+-app-crypt/gpgme-1.14.0-1
++app-crypt/gpgme-1.14.0-2
+-app-editors/vim-8.2.0814-r100-2
++app-editors/vim-8.2.0814-r100-3
+-app-misc/pax-utils-1.2.9-1
++app-misc/pax-utils-1.3.1-2
+...
+
 $ gbp publish babette 147
 ```
 
 In the above example, the `PN` output for build `132` signifies that this build
 is currently published (`P`) and there is a user note for that build (`N`).
-The user note can be shown with the `gbp show` command.  I will soon implement
-a `gbp diff` command so that you can see the differences between two builds
-(packages added/changed/removed)
+The user note can be shown with the `gbp show` command.  `gbp diff` shows the
+differences between two builds (packages added/changed/removed)
