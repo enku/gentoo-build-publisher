@@ -10,6 +10,7 @@ from django.utils import timezone
 from yarl import URL
 
 from gentoo_build_publisher import Storage
+from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
@@ -137,10 +138,10 @@ class PullBuildTestCase(BaseTestCase):
             with mock.patch("gentoo_build_publisher.diff.dirdiff") as mock_dirdiff:
                 mock_dirdiff.return_value = iter(
                     [
-                        (-1, "app-crypt/gpgme-1.14.0-1"),
-                        (1, "app-crypt/gpgme-1.14.0-1"),
-                        (0, "sys-apps/sandbox-2.24-1"),
-                        (0, "sys-apps/sandbox-2.24-1"),
+                        Change(item="app-crypt/gpgme-1.14.0-1", status=Status.REMOVED),
+                        Change(item="app-crypt/gpgme-1.14.0-2", status=Status.ADDED),
+                        Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
+                        Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
                     ]
                 )
                 pull_build(build_model.id)
@@ -148,7 +149,7 @@ class PullBuildTestCase(BaseTestCase):
         note = BuildNote.objects.get(build_model=build_model)
         self.assertEqual(
             note.note,
-            "Packages built:\n\n* app-crypt/gpgme-1.14.0-1\n* sys-apps/sandbox-2.24-1",
+            "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
         )
 
     def test_calls_purge_build(self):

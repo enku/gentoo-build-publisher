@@ -119,7 +119,7 @@ def diff_builds(
             "error": None,
             "diff": {
                 "builds": [left_build.as_dict(), right_build.as_dict()],
-                "items": list(items),
+                "items": list(i.tuple() for i in items),
             },
         }
     )

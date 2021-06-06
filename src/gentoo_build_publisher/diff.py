@@ -5,9 +5,34 @@ similar purpose.
 """
 import filecmp
 import os
-from typing import Generator, Literal, Tuple
+from enum import Enum
+from typing import Generator, Tuple
+from dataclasses import dataclass
 
-FileComp = Tuple[Literal[-1, 0, 1], str]
+
+class Status(Enum):
+    """Change item status (added, changed, removed)"""
+
+    REMOVED = -1
+    CHANGED = 0
+    ADDED = 1
+
+    def is_a_build(self):
+        """Return true if this is a "build" change"""
+        return self is not Status.REMOVED
+
+
+@dataclass(frozen=True)
+class Change:
+    """A changed item (file or directory)"""
+
+    item: str
+    status: Status
+
+    def tuple(self) -> Tuple[int, str]:
+        """Return Change as a JSON-compatible tuple"""
+        return (self.status.value, self.item)
+
 
 HAS_REMOVEPREFIX = hasattr(str, "removeprefix")
 HAS_REMOVESUFFIX = hasattr(str, "removesuffix")
@@ -46,9 +71,9 @@ def path_to_pkg(prefix: str, path: str) -> str:
     return f"{category}/{package}"
 
 
-def generate(
+def changes(
     left: str, right: str, dircmp: filecmp.dircmp
-) -> Generator[FileComp, None, None]:
+) -> Generator[Change, None, None]:
     """Recursive generator for file comparisions"""
     for subcmp in dircmp.subdirs.values():
 
@@ -58,7 +83,7 @@ def generate(
             if os.path.isdir(path):
                 continue
 
-            yield (-1, path_to_pkg(left, path))
+            yield Change(item=path_to_pkg(left, path), status=Status.REMOVED)
 
         for item in subcmp.right_only:
             path = f"{subcmp.right}/{item}"
@@ -66,7 +91,7 @@ def generate(
             if os.path.isdir(path):
                 continue
 
-            yield (1, path_to_pkg(right, path))
+            yield Change(item=path_to_pkg(right, path), status=Status.ADDED)
 
         for item in subcmp.diff_files:
             path1 = f"{subcmp.left}/{item}"
@@ -75,17 +100,17 @@ def generate(
             if os.path.isdir(path1) and os.path.isdir(path2):
                 continue
 
-            yield (0, path_to_pkg(left, path1))
-            yield (0, path_to_pkg(right, path2))
+            yield Change(item=path_to_pkg(left, path1), status=Status.CHANGED)
+            yield Change(item=path_to_pkg(right, path2), status=Status.CHANGED)
 
-        yield from generate(left, right, subcmp)
+        yield from changes(left, right, subcmp)
 
 
-def dirdiff(left: str, right: str) -> Generator[FileComp, None, None]:
+def dirdiff(left: str, right: str) -> Generator[Change, None, None]:
     """Generate differences between to directory paths"""
     dircmp = filecmp.dircmp(left, right)
 
-    yield from generate(left, right, dircmp)
+    yield from changes(left, right, dircmp)
 
 
 def diff_notes(left: str, right: str, header: str = "") -> str:
@@ -93,8 +118,10 @@ def diff_notes(left: str, right: str, header: str = "") -> str:
 
     If there are no changes, return an empty string
     """
-    changeset = set(i for i in dirdiff(left, right) if i[0] in [0, 1])
-    note = "\n".join(f"* {i[1]}" for i in changeset)
+    changeset = list(set(i for i in dirdiff(left, right) if i.status.is_a_build()))
+    changeset.sort(key=lambda i: i.item)
+
+    note = "\n".join(f"* {i.item}" for i in changeset)
 
     if note and header:
         note = f"{header}\n{note}"

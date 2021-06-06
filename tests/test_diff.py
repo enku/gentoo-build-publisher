@@ -85,24 +85,24 @@ class TestPathToPackage(TestCase):
         self.assertEqual(pkg, "sys-apps/sandbox-2.24-1")
 
 
-class TestGenerate(TestCase):
-    """Tests for the generate helper function"""
+class TestChanges(TestCase):
+    """Tests for the changes helper function"""
 
     def test(self):
         left = str(BASE_DIR / "binpkgs" / "babette.132")
         right = str(BASE_DIR / "binpkgs" / "babette.147")
 
         dircmp = filecmp.dircmp(left, right)
-        gen = diff.generate(left, right, dircmp)
+        gen = diff.changes(left, right, dircmp)
 
         items = set(gen)
 
         expected = {
-            (0, "sys-apps/less-590-1"),
-            (-1, "sys-apps/portage-3.0.18-1"),
-            (1, "sys-apps/portage-3.0.18-2"),
-            (-1, "sys-apps/sandbox-2.24-1"),
-            (1, "sys-apps/sandbox-2.23-1"),
+            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/less-590-1", status=diff.Status.CHANGED),
+            diff.Change(item="sys-apps/portage-3.0.18-2", status=diff.Status.ADDED),
         }
         self.assertEqual(items, expected)
 
@@ -119,10 +119,10 @@ class TestDirDiff(TestCase):
         items = set(gen)
 
         expected = {
-            (0, "sys-apps/less-590-1"),
-            (-1, "sys-apps/portage-3.0.18-1"),
-            (1, "sys-apps/portage-3.0.18-2"),
-            (-1, "sys-apps/sandbox-2.24-1"),
-            (1, "sys-apps/sandbox-2.23-1"),
+            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/less-590-1", status=diff.Status.CHANGED),
+            diff.Change(item="sys-apps/portage-3.0.18-2", status=diff.Status.ADDED),
         }
         self.assertEqual(items, expected)
