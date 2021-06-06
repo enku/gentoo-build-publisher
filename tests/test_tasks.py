@@ -10,7 +10,7 @@ from django.utils import timezone
 from yarl import URL
 
 from gentoo_build_publisher import Storage
-from gentoo_build_publisher.models import BuildLog, BuildModel, KeptBuild
+from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
 from . import MockJenkins, TempHomeMixin
@@ -128,6 +128,28 @@ class PullBuildTestCase(BaseTestCase):
 
         build_log = BuildLog.objects.get(build_model=build_model)
         self.assertEqual(build_log.logs, "foo\n")
+
+    def test_writes_built_pkgs_in_note(self):
+        BuildModelFactory.create()
+        build_model = BuildModelFactory.create()
+
+        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+            with mock.patch("gentoo_build_publisher.diff.dirdiff") as mock_dirdiff:
+                mock_dirdiff.return_value = iter(
+                    [
+                        (-1, "app-crypt/gpgme-1.14.0-1"),
+                        (1, "app-crypt/gpgme-1.14.0-1"),
+                        (0, "sys-apps/sandbox-2.24-1"),
+                        (0, "sys-apps/sandbox-2.24-1"),
+                    ]
+                )
+                pull_build(build_model.id)
+
+        note = BuildNote.objects.get(build_model=build_model)
+        self.assertEqual(
+            note.note,
+            "Packages built:\n\n* app-crypt/gpgme-1.14.0-1\n* sys-apps/sandbox-2.24-1",
+        )
 
     def test_calls_purge_build(self):
         """Should issue the purge_build task when setting is true"""

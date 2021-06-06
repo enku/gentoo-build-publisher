@@ -86,3 +86,17 @@ def dirdiff(left: str, right: str) -> Generator[FileComp, None, None]:
     dircmp = filecmp.dircmp(left, right)
 
     yield from generate(left, right, dircmp)
+
+
+def diff_notes(left: str, right: str, header: str = "") -> str:
+    """Return dirdiff as a string of notes
+
+    If there are no changes, return an empty string
+    """
+    changeset = set(i for i in dirdiff(left, right) if i[0] in [0, 1])
+    note = "\n".join(f"* {i[1]}" for i in changeset)
+
+    if note and header:
+        note = f"{header}\n{note}"
+
+    return note
