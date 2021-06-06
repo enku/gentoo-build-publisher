@@ -1,8 +1,9 @@
 """Tests for the diff module"""
 # pylint: disable=missing-function-docstring
 import filecmp
+import sys
 from pathlib import Path
-from unittest import TestCase, mock
+from unittest import TestCase, mock, skipIf
 
 from gentoo_build_publisher import diff
 
@@ -12,28 +13,30 @@ BASE_DIR = Path(__file__).resolve().parent / "data"
 class TestRemovePrefix(TestCase):
     """Tests for the removeprefix helper function"""
 
-    def test_with_python38(self):
+    @skipIf(sys.version_info < (3, 9), "Python 3.9+ required")
+    def test_with_python39(self):
         with mock.patch.object(diff, "HAS_REMOVEPREFIX", new=True):
             string = "a.foo"
             prefix = "a."
 
             self.assertEqual(diff.removeprefix(string, prefix), "foo")
 
-    def test_with_python38_no_prefix(self):
+    @skipIf(sys.version_info < (3, 9), "Python 3.9+ required")
+    def test_with_python39_no_prefix(self):
         with mock.patch.object(diff, "HAS_REMOVEPREFIX", new=True):
             string = "a.foo"
             prefix = "bar"
 
             self.assertEqual(diff.removeprefix(string, prefix), "a.foo")
 
-    def test_without_python38(self):
+    def test_without_python39(self):
         with mock.patch.object(diff, "HAS_REMOVEPREFIX", new=False):
             string = "a.foo"
             prefix = "a."
 
             self.assertEqual(diff.removeprefix(string, prefix), "foo")
 
-    def test_without_python38_no_prefix(self):
+    def test_without_python39_no_prefix(self):
         with mock.patch.object(diff, "HAS_REMOVEPREFIX", new=False):
             string = "a.foo"
             prefix = "bar"
@@ -44,28 +47,30 @@ class TestRemovePrefix(TestCase):
 class TestRemoveSuffix(TestCase):
     """Tests for the removesuffix helper function"""
 
-    def test_with_python38(self):
+    @skipIf(sys.version_info < (3, 9), "Python 3.9+ required")
+    def test_with_python39(self):
         with mock.patch.object(diff, "HAS_REMOVESUFFIX", new=True):
             string = "foo.a"
             suffix = ".a"
 
             self.assertEqual(diff.removesuffix(string, suffix), "foo")
 
-    def test_with_python38_no_suffix(self):
+    @skipIf(sys.version_info < (3, 9), "Python 3.9+ required")
+    def test_with_python39_no_suffix(self):
         with mock.patch.object(diff, "HAS_REMOVESUFFIX", new=True):
             string = "foo.a"
             suffix = "bar"
 
             self.assertEqual(diff.removesuffix(string, suffix), "foo.a")
 
-    def test_without_python38(self):
+    def test_without_python39(self):
         with mock.patch.object(diff, "HAS_REMOVESUFFIX", new=False):
             string = "foo.a"
             suffix = ".a"
 
             self.assertEqual(diff.removesuffix(string, suffix), "foo")
 
-    def test_without_python38_no_suffix(self):
+    def test_without_python39_no_suffix(self):
         with mock.patch.object(diff, "HAS_REMOVESUFFIX", new=False):
             string = "foo.a"
             suffix = "bar"
