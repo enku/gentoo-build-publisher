@@ -56,4 +56,4 @@ class BuildManTestCase(TempHomeMixin, TestCase):
 
         buildman.publish()
 
-        self.assertIs(buildman.storage.published(buildman.build), True)
+        self.assertIs(buildman.storage_build.published(), True)

@@ -137,10 +137,11 @@ class JenkinsBuild:
         return (self.user, self.api_key)
 
 
-class Storage:
-    """Storage for gentoo_build_publisher"""
+class StorageBuild:
+    """A Build stored on the filesystem"""
 
-    def __init__(self, path: PosixPath):
+    def __init__(self, build: Build, path: PosixPath):
+        self.build = build
         self.path = path
         (self.path / "tmp").mkdir(parents=True, exist_ok=True)
 
@@ -151,25 +152,29 @@ class Storage:
         return f"{module}.{cls.__name__}({repr(self.path)})"
 
     @classmethod
-    def from_settings(cls, my_settings: Settings) -> Storage:
+    def from_settings(cls, build: Build, my_settings: Settings) -> StorageBuild:
         """Instatiate from settings"""
-        return cls(my_settings.STORAGE_PATH)
+        return cls(build, my_settings.STORAGE_PATH)
 
-    def get_path(self, build: Build, item: Build.Content) -> PosixPath:
+    def get_path(self, item: Build.Content) -> PosixPath:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
         """
-        return self.path / item.value / str(build)
+        return self.path / item.value / str(self.build)
 
-    def download_artifact(self, build: Build, jenkins_build: JenkinsBuild):
+    def download_artifact(self, jenkins_build: JenkinsBuild):
         """Download the artifact from JenkinsBuild
 
         * extract repos to build.repos_dir
         * extract binpkgs to build.binpkgs_dir
         """
         artifact_path = (
-            self.path / "tmp" / build.name / str(build.number) / "build.tar.gz"
+            self.path
+            / "tmp"
+            / self.build.name
+            / str(self.build.number)
+            / "build.tar.gz"
         )
         dirpath = artifact_path.parent
         dirpath.mkdir(parents=True, exist_ok=True)
@@ -181,52 +186,52 @@ class Storage:
         with tarfile.open(artifact_path, mode="r") as tar_file:
             tar_file.extractall(dirpath)
 
-        for item in build.Content:
+        for item in Build.Content:
             src = dirpath / item.value
-            dst = self.get_path(build, item)
+            dst = self.get_path(item)
             os.renames(src, dst)
 
         shutil.rmtree(dirpath)
 
-    def pull(self, build: Build, jenkins_build: JenkinsBuild):
+    def pull(self, jenkins_build: JenkinsBuild):
         """Pull and unpack the artifact"""
-        if not self.pulled(build):
-            self.download_artifact(build, jenkins_build)
+        if not self.pulled():
+            self.download_artifact(jenkins_build)
 
-    def pulled(self, build: Build) -> bool:
+    def pulled(self) -> bool:
         """Returns True if build has been pulled
 
-        By "pulled" we mean all Build components exist in Storage
+        By "pulled" we mean all Build components exist in StorageBuild
         """
-        return all(self.get_path(build, item).exists() for item in build.Content)
+        return all(self.get_path(item).exists() for item in Build.Content)
 
-    def publish(self, build: Build, jenkins_build: JenkinsBuild):
+    def publish(self, jenkins_build: JenkinsBuild):
         """Make this build 'active'"""
-        self.pull(build, jenkins_build)
+        self.pull(jenkins_build)
 
-        for item in build.Content:
-            path = self.path / item.value / build.name
-            self.symlink(str(build), str(path))
+        for item in Build.Content:
+            path = self.path / item.value / self.build.name
+            self.symlink(str(self.build), str(path))
 
-    def published(self, build: Build) -> bool:
+    def published(self) -> bool:
         """Return True if the build currently published.
 
         By "published" we mean all content are symlinked. Partially symlinked is
         unstable and therefore considered not published.
         """
         return all(
-            (symlink := self.path / item.value / build.name).exists()
-            and os.path.realpath(symlink) == str(self.get_path(build, item))
-            for item in build.Content
+            (symlink := self.path / item.value / self.build.name).exists()
+            and os.path.realpath(symlink) == str(self.get_path(item))
+            for item in Build.Content
         )
 
-    def delete_build(self, build: Build):
+    def delete(self):
         """Delete files/dirs associated with build
 
         Does not fix dangling symlinks.
         """
-        for item in build.Content:
-            shutil.rmtree(self.get_path(build, item), ignore_errors=True)
+        for item in Build.Content:
+            shutil.rmtree(self.get_path(item), ignore_errors=True)
 
     @staticmethod
     def symlink(source: str, target: str):

@@ -158,10 +158,8 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         # When we download the artifact
         buildman.publish()
 
-        self.assertTrue(
-            buildman.storage.get_path(build, build.Content.BINPKGS).exists()
-        )
-        self.assertTrue(buildman.storage.get_path(build, build.Content.REPOS).exists())
+        self.assertTrue(buildman.storage_build.get_path(build.Content.BINPKGS).exists())
+        self.assertTrue(buildman.storage_build.get_path(build.Content.REPOS).exists())
 
         response = self.client.post(f"/delete/{build.name}/{build.number}/")
 
@@ -172,7 +170,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         self.assertFalse(query.exists())
 
         for item in build.Content:
-            self.assertFalse(buildman.storage.get_path(build, item).exists())
+            self.assertFalse(buildman.storage_build.get_path(item).exists())
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""
@@ -190,7 +188,9 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
         left_path = str(BASE_DIR / "binpkgs" / "babette.132")
         right_path = str(BASE_DIR / "binpkgs" / "babette.147")
 
-        with mock.patch("gentoo_build_publisher.Storage.get_path") as mock_get_path:
+        with mock.patch(
+            "gentoo_build_publisher.StorageBuild.get_path"
+        ) as mock_get_path:
             mock_get_path.side_effect = (left_path, right_path)
 
             response = self.client.get("/diff/babette/132/147/")

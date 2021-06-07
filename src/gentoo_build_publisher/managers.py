@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 from django.utils import timezone
 from yarl import URL
 
-from gentoo_build_publisher import Build, JenkinsBuild, Settings, Storage
+from gentoo_build_publisher import Build, JenkinsBuild, Settings, StorageBuild
 from gentoo_build_publisher.models import BuildModel, BuildNote
 
 
@@ -17,7 +17,7 @@ class BuildMan:
         build: Union[Build, BuildModel],
         *,
         jenkins_build: Optional[JenkinsBuild] = None,
-        storage: Optional[Storage] = None
+        storage_build: Optional[StorageBuild] = None
     ):
         if isinstance(build, Build):
             self.build = build
@@ -40,10 +40,12 @@ class BuildMan:
         else:
             self.jenkins_build = jenkins_build
 
-        if storage is None:
-            self.storage = Storage.from_settings(Settings.from_environ())
+        if storage_build is None:
+            self.storage_build = StorageBuild.from_settings(
+                self.build, Settings.from_environ()
+            )
         else:
-            self.storage = storage
+            self.storage_build = storage_build
 
     @property
     def id(self):  # pylint: disable=invalid-name
@@ -58,11 +60,11 @@ class BuildMan:
                 number=self.number,
                 defaults={"submitted": timezone.now()},
             )
-        self.storage.publish(self.build, self.jenkins_build)
+        self.storage_build.publish(self.jenkins_build)
 
     def published(self) -> bool:
         """Return True if this Build is published"""
-        return self.storage.published(self.build)
+        return self.storage_build.published()
 
     def pull(self):
         """pull the Build to storage"""
@@ -72,18 +74,18 @@ class BuildMan:
                 number=self.number,
                 defaults={"submitted": timezone.now()},
             )
-        return self.storage.pull(self.build, self.jenkins_build)
+        return self.storage_build.pull(self.jenkins_build)
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
-        return self.storage.pulled(self.build)
+        return self.storage_build.pulled()
 
     def delete(self):
         """Delete this build"""
         if self.model is not None:
             self.model.delete()
 
-        self.storage.delete_build(self.build)
+        self.storage_build.delete()
 
     def as_dict(self) -> Dict[str, Any]:
         """Convert build instance attributes to a dict"""
@@ -120,4 +122,4 @@ class BuildMan:
 
     def get_path(self, item: Build.Content) -> PosixPath:
         """Return the path of the content type for this Build's storage"""
-        return self.storage.get_path(self.build, item)
+        return self.storage_build.get_path(item)
