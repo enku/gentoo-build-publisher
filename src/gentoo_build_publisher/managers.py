@@ -54,13 +54,8 @@ class BuildMan:
 
     def publish(self):
         """Publish the build"""
-        if self.model is None:
-            self.model, _ = BuildModel.objects.get_or_create(
-                name=self.name,
-                number=self.number,
-                defaults={"submitted": timezone.now()},
-            )
-        self.storage_build.publish(self.jenkins_build)
+        self.pull()
+        self.storage_build.publish()
 
     def published(self) -> bool:
         """Return True if this Build is published"""
@@ -74,7 +69,9 @@ class BuildMan:
                 number=self.number,
                 defaults={"submitted": timezone.now()},
             )
-        return self.storage_build.pull(self.jenkins_build)
+
+        if not self.storage_build.pulled():
+            self.storage_build.extract_artifact(self.jenkins_build.download_artifact())
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""

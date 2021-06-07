@@ -1,6 +1,7 @@
 """Tests for the storage type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import os
+import tarfile
 from unittest import TestCase, mock
 
 from gentoo_build_publisher import Build, Settings, StorageBuild
@@ -54,31 +55,31 @@ class StorageBuildFromSettings(TempHomeMixin, TestCase):
 class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
     """Tests for StorageBuild.download_artifact"""
 
-    def test_download_artifact_moves_repos_and_binpkgs(self):
-        """Should download artifacts and move to repos/ and binpkgs/"""
+    def test_extract_artifact_moves_repos_and_binpkgs(self):
+        """Should extract artifacts and move to repos/ and binpkgs/"""
         build = Build(name="babette", number=19)
         storage_build = StorageBuild(build, self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.download_artifact(jenkins_build)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
 
         self.assertIs(storage_build.get_path(Build.Content.REPOS).is_dir(), True)
         self.assertIs(storage_build.get_path(Build.Content.BINPKGS).is_dir(), True)
 
-    def test_download_artifact_creates_etc_portage_dir(self):
-        """Should download artifacts and move to etc-portage/"""
+    def test_extract_artifact_creates_etc_portage_dir(self):
+        """Should extract artifacts and move to etc-portage/"""
         build = Build(name="babette", number=19)
         storage_build = StorageBuild(build, self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.download_artifact(jenkins_build)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
 
         self.assertIs(storage_build.get_path(Build.Content.ETC_PORTAGE).is_dir(), True)
 
-    def test_download_artifact_creates_var_lib_portage_dir(self):
-        """Should download artifacts and move to var-lib-portage/"""
+    def test_extract_artifact_creates_var_lib_portage_dir(self):
+        """Should extract artifacts and move to var-lib-portage/"""
         build = Build(name="babette", number=19)
         storage_build = StorageBuild(build, self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.download_artifact(jenkins_build)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
 
         self.assertIs(
             storage_build.get_path(Build.Content.VAR_LIB_PORTAGE).is_dir(), True
@@ -88,103 +89,18 @@ class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
 class StorageBuildPublishTestCase(TempHomeMixin, TestCase):
     """Tests for StorageBuild.publish"""
 
-    def test_pull_downloads_archive_if_contents_dont_exist(self):
+    def test_publish_raises_exception_repos_dir_does_not_exit(self):
+        """Should raise an exception if the build has not been pulled"""
         # Given the build
         build = Build(name="babette", number=193)
 
         # Given the storage_build
         storage_build = StorageBuild(build, self.tmpdir)
 
-        # Given the jenkins instance
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-
-        # When we call its pull method
-        with mock.patch.object(
-            storage_build, "download_artifact"
-        ) as mock_download_artifact:
-            storage_build.pull(jenkins_build)
-
-        # Then it downloads the artifact
-        mock_download_artifact.assert_called()
-
-    def test_pull_does_not_download_archive_with_existing_content(self):
-        # Given the build
-        build = Build(name="babette", number=193)
-
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
-
-        # Given the jenkins instance
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-
-        # given the existing content
-        for item in Build.Content:
-            os.makedirs(storage_build.get_path(item))
-
-        # When we call its publish method
-        with mock.patch.object(
-            storage_build, "download_artifact"
-        ) as mock_download_artifact:
-            storage_build.publish(jenkins_build)
-
-        # Then it does not download the artifact
-        mock_download_artifact.assert_not_called()
-
-    def test_publish_downloads_archive_if_repos_dir_does_not_exit(self):
-        """Should download the archive if repos/<name>.<number> doesn't exist"""
-        # Given the build
-        build = Build(name="babette", number=193)
-
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
-
-        # Given the jenkins_build instance
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-
-        # When we call its publish method
-        with mock.patch.object(
-            storage_build, "download_artifact"
-        ) as mock_download_artifact:
-            with mock.patch("gentoo_build_publisher.os.symlink") as mock_symlink:
-                storage_build.publish(jenkins_build)
-
-        # Then it downloads the artifact
-        mock_download_artifact.assert_called()
-
-        # And creates the symlinks
-        source = "babette.193"
-        mock_symlink.assert_any_call(source, f"{storage_build.path}/repos/babette")
-        mock_symlink.assert_any_call(source, f"{storage_build.path}/binpkgs/babette")
-
-    def test_downloads_archive_given_existing_symlinks(self):
-        """Bug"""
-        # Given the build
-        build = Build(name="babette", number=193)
-
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
-
-        # Given the jenkins instance
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-
-        # given the existing symlinks
-        for item in build.Content:
-            os.makedirs(f"{storage_build.path}/{item.value}")
-            os.symlink(".", f"{storage_build.path}/{item.value}/babette")
-
-        # When we call its publish method
-        with mock.patch.object(
-            storage_build, "download_artifact"
-        ) as mock_download_artifact:
-            with mock.patch("gentoo_build_publisher.os.symlink") as mock_symlink:
-                storage_build.publish(jenkins_build)
-
-        # Then it downloads the artifact
-        mock_download_artifact.assert_called()
-
-        # And creates a symlink in the directory
-        target = f"{storage_build.path}/repos/{build.name}"
-        mock_symlink.assert_any_call(str(build), target)
+        # Then an exception is raised
+        with self.assertRaises(FileNotFoundError):
+            # When we call publish
+            storage_build.publish()
 
 
 class StorageBuildPublishedTestCase(TempHomeMixin, TestCase):
@@ -202,7 +118,8 @@ class StorageBuildPublishedTestCase(TempHomeMixin, TestCase):
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
 
         # When we publish the build
-        storage_build.publish(jenkins_build)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage_build.publish()
 
         # And call published(build)
         published = storage_build.published()
@@ -235,12 +152,14 @@ class StorageBuildPublishedTestCase(TempHomeMixin, TestCase):
         jenkins_build = MockJenkinsBuild.from_settings(build1, TEST_SETTINGS)
 
         # When we publish the first build
-        storage_build1.publish(jenkins_build)
+        storage_build1.extract_artifact(jenkins_build.download_artifact())
+        storage_build1.publish()
 
         # Given the second build published
         build2 = Build(name="babette", number=193)
         storage_build2 = StorageBuild(build2, self.tmpdir)
-        storage_build2.publish(jenkins_build)
+        storage_build2.extract_artifact(jenkins_build.download_artifact())
+        storage_build2.publish()
 
         # Then published returns True on the second build
         self.assertTrue(storage_build2.published())
@@ -256,7 +175,7 @@ class StorageBuildDeleteTestCase(TempHomeMixin, TestCase):
         build = Build(name="babette", number=19)
         storage_build = StorageBuild(build, self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.download_artifact(jenkins_build)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
 
         storage_build.delete()
 
@@ -269,3 +188,32 @@ class StorageBuildDeleteTestCase(TempHomeMixin, TestCase):
         for directory in directories:
             with self.subTest(directory=directory):
                 self.assertIs(os.path.exists(directory), False)
+
+
+class StorageExtractArtifactTestCase(TempHomeMixin, TestCase):
+    """Tests for StorageBuild.extract_artifact"""
+
+    def test_does_not_extract_already_pulled_build(self):
+        build = Build(name="babette", number=19)
+        storage_build = StorageBuild(build, self.tmpdir)
+        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
+
+        storage_build.extract_artifact(jenkins_build.download_artifact())
+        assert storage_build.pulled()
+
+        # extract won't be able to extract this
+        byte_stream_mock = iter([b""])
+
+        try:
+            storage_build.extract_artifact(byte_stream_mock)
+        except tarfile.ReadError:
+            self.fail("extract_artifact() should not have attempted to extract")
+
+    def test_extracts_bytesteam_and_content(self):
+        build = Build(name="babette", number=19)
+        storage_build = StorageBuild(build, self.tmpdir)
+        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
+
+        storage_build.extract_artifact(jenkins_build.download_artifact())
+
+        self.assertIs(storage_build.pulled(), True)

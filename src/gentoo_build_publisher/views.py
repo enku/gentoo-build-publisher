@@ -109,12 +109,8 @@ def diff_builds(
     left_build = BuildMan(get_object_or_404(BuildModel, name=build_name, number=left))
     right_build = BuildMan(get_object_or_404(BuildModel, name=build_name, number=right))
 
-    left_path = left_build.storage_build.get_path(
-        left_build.build, left_build.build.Content.BINPKGS
-    )
-    right_path = right_build.storage_build.get_path(
-        right_build.build, right_build.build.Content.BINPKGS
-    )
+    left_path = left_build.storage_build.get_path(Build.Content.BINPKGS)
+    right_path = right_build.storage_build.get_path(Build.Content.BINPKGS)
 
     items = dirdiff(str(left_path), str(right_path))
 

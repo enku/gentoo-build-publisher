@@ -7,7 +7,7 @@ import tarfile
 from dataclasses import dataclass
 from enum import Enum, unique
 from pathlib import PosixPath
-from typing import Any, Dict, Generator, Optional, Tuple
+from typing import Any, Dict, Generator, Iterator, Optional, Tuple
 
 import requests
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
@@ -163,12 +163,11 @@ class StorageBuild:
         """
         return self.path / item.value / str(self.build)
 
-    def download_artifact(self, jenkins_build: JenkinsBuild):
-        """Download the artifact from JenkinsBuild
+    def extract_artifact(self, byte_stream: Iterator[bytes]):
+        """Pull and unpack the artifact"""
+        if self.pulled():
+            return
 
-        * extract repos to build.repos_dir
-        * extract binpkgs to build.binpkgs_dir
-        """
         artifact_path = (
             self.path
             / "tmp"
@@ -180,7 +179,7 @@ class StorageBuild:
         dirpath.mkdir(parents=True, exist_ok=True)
 
         with artifact_path.open("wb") as artifact_file:
-            for chunk in jenkins_build.download_artifact():
+            for chunk in byte_stream:
                 artifact_file.write(chunk)
 
         with tarfile.open(artifact_path, mode="r") as tar_file:
@@ -193,21 +192,17 @@ class StorageBuild:
 
         shutil.rmtree(dirpath)
 
-    def pull(self, jenkins_build: JenkinsBuild):
-        """Pull and unpack the artifact"""
-        if not self.pulled():
-            self.download_artifact(jenkins_build)
-
     def pulled(self) -> bool:
         """Returns True if build has been pulled
 
-        By "pulled" we mean all Build components exist in StorageBuild
+        By "pulled" we mean all Build components exist on the filesystem
         """
         return all(self.get_path(item).exists() for item in Build.Content)
 
-    def publish(self, jenkins_build: JenkinsBuild):
+    def publish(self):
         """Make this build 'active'"""
-        self.pull(jenkins_build)
+        if not self.pulled():
+            raise FileNotFoundError("The build has not been pulled")
 
         for item in Build.Content:
             path = self.path / item.value / self.build.name
