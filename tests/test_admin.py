@@ -6,7 +6,7 @@ from unittest import mock
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from gentoo_build_publisher.models import KeptBuild
+from gentoo_build_publisher.models import BuildNote, KeptBuild
 
 from . import TempHomeMixin
 from .factories import BuildModelFactory
@@ -22,6 +22,7 @@ class BuildModelListViewFilterTestCase(TempHomeMixin, TestCase):
         BuildModelFactory.create()
         kept = BuildModelFactory.create()
         KeptBuild.objects.create(build_model=kept)
+        BuildNote.objects.create(build_model=kept, note="Test log")
         self.user = User.objects.create_superuser("root")
 
     def test_filter_on_keep_true(self):
