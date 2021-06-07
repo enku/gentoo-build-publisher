@@ -1,6 +1,7 @@
 """
 View for gbp
 """
+from django.db.models import Count
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -123,3 +124,14 @@ def diff_builds(
             },
         }
     )
+
+
+def list_machines(_request: HttpRequest) -> JsonResponse:
+    """List the machines and build counts"""
+    machines = [
+        *BuildModel.objects.values("name")
+        .order_by("name")
+        .annotate(builds=Count("name"))
+    ]
+
+    return JsonResponse({"error": None, "machines": machines})

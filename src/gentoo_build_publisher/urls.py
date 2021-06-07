@@ -12,5 +12,6 @@ urlpatterns = [
     path("builds/<build_name>/", views.list_builds, name="list_builds"),
     path("logs/<build_name>/<int:build_number>/", views.logs, name="logs"),
     path("diff/<build_name>/<int:left>/<int:right>/", views.diff_builds, name="diff"),
+    path("machines/", views.list_machines, name="list_machines"),
     path("admin/", admin.site.urls),
 ]

@@ -220,3 +220,23 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
         )
 
         self.assertEqual(len(data["diff"]["items"]), 6)
+
+
+class MachinesViewTestCase(TempHomeMixin, TestCase):
+    def test_self(self):
+        BuildModelFactory.create_batch(2, name="babette")
+        BuildModelFactory.create_batch(3, name="lighthouse")
+
+        response = self.client.get("/machines/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "error": None,
+                "machines": [
+                    {"name": "babette", "builds": 2},
+                    {"name": "lighthouse", "builds": 3},
+                ],
+            },
+        )
