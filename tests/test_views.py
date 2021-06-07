@@ -151,7 +151,7 @@ class LogsViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.headers["Content-Type"], "text/plain")
         self.assertEqual(response.content, b"foo\n")
 
-    def _test_gives_404_response_when_there_are_no_logs(self):
+    def test_gives_404_response_when_there_are_no_logs(self):
         build_model = BuildModelFactory.create()
 
         response = self.client.get(f"/logs/{build_model.name}/{build_model.number}/")
