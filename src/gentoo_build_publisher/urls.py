@@ -7,6 +7,7 @@ from gentoo_build_publisher import views
 urlpatterns = [
     path("publish/<build_name>/<int:build_number>/", views.publish, name="publish"),
     path("pull/<build_name>/<int:build_number>/", views.pull, name="pull"),
+    path("delete/<build_name>/<int:build_number>/", views.delete, name="delete"),
     path("latest/<build_name>/", views.latest, name="latest"),
     path("builds/<build_name>/", views.list_builds, name="list_builds"),
     path("logs/<build_name>/<int:build_number>/", views.logs, name="logs"),
