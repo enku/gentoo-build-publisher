@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from gentoo_build_publisher import Jenkins
+from gentoo_build_publisher import JenkinsBuild
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
@@ -34,23 +34,23 @@ def test_data(filename):
         return file_obj.read()
 
 
-class MockJenkins(Jenkins):
-    """Jenkins with requests mocked out"""
+class MockJenkinsBuild(JenkinsBuild):
+    """JenkinsBuild with requests mocked out"""
 
     mock_get = None
     get_build_logs_mock_get = None
 
-    def download_artifact(self, build):
+    def download_artifact(self):
         with mock.patch("gentoo_build_publisher.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: iter([test_data("build.tar.gz")])
             )
             self.mock_get = mock_get
-            return super().download_artifact(build)
+            return super().download_artifact()
 
-    def get_build_logs(self, build):
+    def get_logs(self):
         with mock.patch("gentoo_build_publisher.requests.get") as mock_get:
             mock_get.return_value.text = "foo\n"
             self.get_build_logs_mock_get = mock_get
 
-            return super().get_build_logs(build)
+            return super().get_logs()

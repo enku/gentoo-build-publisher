@@ -31,7 +31,7 @@ def pull_build(self, name: str, number: int):
         buildman.model.task_id = self.request.id
         buildman.model.save()
 
-        logs = buildman.jenkins.get_build_logs(buildman.build)
+        logs = buildman.jenkins_build.get_logs()
         BuildLog.objects.create(build_model=buildman.model, logs=logs)
 
         try:

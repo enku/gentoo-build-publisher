@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 from django.utils import timezone
 from yarl import URL
 
-from gentoo_build_publisher import Build, Jenkins, Settings, Storage
+from gentoo_build_publisher import Build, JenkinsBuild, Settings, Storage
 from gentoo_build_publisher.models import BuildModel, BuildNote
 
 
@@ -16,7 +16,7 @@ class BuildMan:
         self,
         build: Union[Build, BuildModel],
         *,
-        jenkins: Optional[Jenkins] = None,
+        jenkins_build: Optional[JenkinsBuild] = None,
         storage: Optional[Storage] = None
     ):
         if isinstance(build, Build):
@@ -33,10 +33,12 @@ class BuildMan:
         self.name = self.build.name
         self.number = self.build.number
 
-        if jenkins is None:
-            self.jenkins = Jenkins.from_settings(Settings.from_environ())
+        if jenkins_build is None:
+            self.jenkins_build = JenkinsBuild.from_settings(
+                self.build, Settings.from_environ()
+            )
         else:
-            self.jenkins = jenkins
+            self.jenkins_build = jenkins_build
 
         if storage is None:
             self.storage = Storage.from_settings(Settings.from_environ())
@@ -56,7 +58,7 @@ class BuildMan:
                 number=self.number,
                 defaults={"submitted": timezone.now()},
             )
-        self.storage.publish(self.build, self.jenkins)
+        self.storage.publish(self.build, self.jenkins_build)
 
     def published(self) -> bool:
         """Return True if this Build is published"""
@@ -70,7 +72,7 @@ class BuildMan:
                 number=self.number,
                 defaults={"submitted": timezone.now()},
             )
-        return self.storage.pull(self.build, self.jenkins)
+        return self.storage.pull(self.build, self.jenkins_build)
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
@@ -107,14 +109,14 @@ class BuildMan:
             "note": note,
             "number": self.number,
             "published": self.published(),
-            "url": str(self.jenkins.build_url(self.build)),
+            "url": str(self.jenkins_build.artifact_url()),
             "submitted": submitted,
             "completed": completed,
         }
 
     def logs_url(self) -> URL:
-        """Return the Jenkins logs url for this Build"""
-        return self.jenkins.logs_url(self.build)
+        """Return the JenkinsBuild logs url for this Build"""
+        return self.jenkins_build.logs_url()
 
     def get_path(self, item: Build.Content) -> PosixPath:
         """Return the path of the content type for this Build's storage"""

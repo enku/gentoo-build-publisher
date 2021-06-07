@@ -65,32 +65,39 @@ class Build:
 
 
 @dataclass
-class Jenkins:
-    """Interface to Jenkins"""
+class JenkinsBuild:
+    """A Build's interface to JenkinsBuild"""
 
+    build: Build
     base_url: URL
     user: Optional[str] = None
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
 
-    def build_url(self, build: Build) -> URL:
+    def artifact_url(self) -> URL:
         """Return the artifact url for build"""
         return (
             self.base_url
             / "job"
-            / build.name
-            / str(build.number)
+            / self.build.name
+            / str(self.build.number)
             / "artifact"
             / self.artifact_name
         )
 
-    def logs_url(self, build: Build) -> URL:
+    def logs_url(self) -> URL:
         """Return the url for the build's console logs"""
-        return self.base_url / "job" / build.name / str(build.number) / "consoleText"
+        return (
+            self.base_url
+            / "job"
+            / self.build.name
+            / str(self.build.number)
+            / "consoleText"
+        )
 
-    def download_artifact(self, build: Build) -> Generator[bytes, None, None]:
+    def download_artifact(self) -> Generator[bytes, None, None]:
         """Download and yield the build artifact in chunks of bytes"""
-        url = self.build_url(build)
+        url = self.artifact_url()
         response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()
 
@@ -99,18 +106,19 @@ class Jenkins:
             for i in response.iter_content(chunk_size=2048, decode_unicode=False)
         )
 
-    def get_build_logs(self, build: Build) -> str:
+    def get_logs(self) -> str:
         """Get and return the build's jenkins logs"""
-        url = self.logs_url(build)
+        url = self.logs_url()
         response = requests.get(str(url), auth=self.auth)
         response.raise_for_status()
 
         return response.text
 
     @classmethod
-    def from_settings(cls, settings: Settings):
-        """Return a Jenkins instance given settings"""
+    def from_settings(cls, build: Build, settings: Settings):
+        """Return a JenkinsBuild instance given settings"""
         return cls(
+            build=build,
             base_url=URL(settings.JENKINS_BASE_URL),
             artifact_name=settings.JENKINS_ARTIFACT_NAME,
             user=settings.JENKINS_USER,
@@ -154,8 +162,8 @@ class Storage:
         """
         return self.path / item.value / str(build)
 
-    def download_artifact(self, build: Build, jenkins: Jenkins):
-        """Download the artifact from Jenkins
+    def download_artifact(self, build: Build, jenkins_build: JenkinsBuild):
+        """Download the artifact from JenkinsBuild
 
         * extract repos to build.repos_dir
         * extract binpkgs to build.binpkgs_dir
@@ -167,7 +175,7 @@ class Storage:
         dirpath.mkdir(parents=True, exist_ok=True)
 
         with artifact_path.open("wb") as artifact_file:
-            for chunk in jenkins.download_artifact(build):
+            for chunk in jenkins_build.download_artifact():
                 artifact_file.write(chunk)
 
         with tarfile.open(artifact_path, mode="r") as tar_file:
@@ -180,10 +188,10 @@ class Storage:
 
         shutil.rmtree(dirpath)
 
-    def pull(self, build: Build, jenkins: Jenkins):
+    def pull(self, build: Build, jenkins_build: JenkinsBuild):
         """Pull and unpack the artifact"""
         if not self.pulled(build):
-            self.download_artifact(build, jenkins)
+            self.download_artifact(build, jenkins_build)
 
     def pulled(self, build: Build) -> bool:
         """Returns True if build has been pulled
@@ -192,9 +200,9 @@ class Storage:
         """
         return all(self.get_path(build, item).exists() for item in build.Content)
 
-    def publish(self, build: Build, jenkins: Jenkins):
+    def publish(self, build: Build, jenkins_build: JenkinsBuild):
         """Make this build 'active'"""
-        self.pull(build, jenkins)
+        self.pull(build, jenkins_build)
 
         for item in build.Content:
             path = self.path / item.value / build.name

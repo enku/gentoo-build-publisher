@@ -6,7 +6,7 @@ from gentoo_build_publisher import Settings, Storage
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildModel
 
-from . import MockJenkins
+from . import MockJenkinsBuild
 
 
 class BuildModelFactory(factory.django.DjangoModelFactory):
@@ -28,8 +28,10 @@ class BuildManFactory(factory.Factory):
         rename = {"build_attr": "build"}
 
     build_attr = factory.LazyFunction(BuildModelFactory.create)
-    jenkins = factory.LazyFunction(
-        lambda: MockJenkins.from_settings(Settings.from_environ())
+    jenkins_build = factory.LazyAttribute(
+        lambda obj: MockJenkinsBuild.from_settings(
+            obj.build_attr, Settings.from_environ()
+        )
     )
     storage = factory.LazyFunction(
         lambda: Storage.from_settings(Settings.from_environ())

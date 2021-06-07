@@ -126,8 +126,8 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
             pull_build(buildman.name, buildman.number)
 
         url = str(buildman.logs_url())
-        buildman.jenkins.get_build_logs_mock_get.assert_called_once()
-        call_args = buildman.jenkins.get_build_logs_mock_get.call_args
+        buildman.jenkins_build.get_build_logs_mock_get.assert_called_once()
+        call_args = buildman.jenkins_build.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
         build_log = BuildLog.objects.get(build_model=buildman.model)
