@@ -12,7 +12,7 @@ config := $(notdir $(wildcard $(machine)/configs/*))
 config_targets := $(config:=.copy_config)
 emerge_opts := --buildpkg-exclude=sys-kernel/gentoo-sources --color=n --deep --jobs=4 --keep-going=n --newuse --nospinner --oneshot --update --verbose --with-bdeps=y
 repos_dir := /var/db/repos
-repos := gentoo marduk
+repos := $(shell cat $(machine)/repos)
 repos_targets := $(repos:=.add_repo)
 stage4 := stage4.tar.xz
 
