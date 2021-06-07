@@ -2,6 +2,7 @@
 # pylint: disable=no-self-use
 from django.contrib import admin
 
+from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
 
 
@@ -62,7 +63,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     def published(self, obj):
         """Return the admin published field"""
-        return obj.published()
+        return BuildMan(obj).published()
 
     published.boolean = True
 
@@ -86,7 +87,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "_publish" in request.POST:
-            obj.publish()
+            BuildMan(obj).publish()
 
         if "_keep" in request.POST:
             try:
@@ -104,7 +105,7 @@ class BuildModelAdmin(admin.ModelAdmin):
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not (KeptBuild.keep(obj) or obj.published())
+        return not (KeptBuild.keep(obj) or BuildMan(obj).published())
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}

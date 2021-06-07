@@ -7,11 +7,11 @@ from unittest import mock
 
 from django.test import TestCase
 
-from gentoo_build_publisher import Settings
+from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
-from . import MockJenkins, TempHomeMixin
-from .factories import BuildModelFactory
+from . import TempHomeMixin
+from .factories import BuildManFactory, BuildModelFactory
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
@@ -19,25 +19,13 @@ BASE_DIR = Path(__file__).resolve().parent / "data"
 class PublishViewTestCase(TempHomeMixin, TestCase):
     """Tests for the publish view"""
 
-    def test_publish_new(self):
-        """Should publish brand new builds"""
+    def test_publish(self):
+        """Should publish builds"""
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
             response = self.client.post("/publish/babette/193/")
 
         self.assertEqual(response.status_code, 200)
-        build_model = BuildModel.objects.get(name="babette", number=193)
-        mock_pb.delay.assert_called_once_with(build_model.pk)
-
-    def test_publish_existing(self):
-        """Should publish existing builds"""
-        build_model = BuildModelFactory.create()
-        build = build_model.build
-
-        with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = self.client.post(f"/publish/{build.name}/{build.number}/")
-
-        self.assertEqual(response.status_code, 200)
-        mock_pb.delay.assert_called_once_with(build_model.pk)
+        mock_pb.delay.assert_called_once_with("babette", 193)
 
 
 class PullViewTestCase(TempHomeMixin, TestCase):
@@ -164,20 +152,16 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
 
     def test_post_deletes_build(self):
         """Should delete the build when POSTed"""
-        build_model = BuildModelFactory.create()
-        build = build_model.build
-        storage = build_model.storage
-        jenkins = MockJenkins.from_settings(
-            Settings(
-                STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
-            )
-        )
+        buildman = BuildManFactory.build()
+        build = buildman.build
 
         # When we download the artifact
-        storage.publish(build, jenkins)
+        buildman.publish()
 
-        self.assertTrue(storage.get_path(build, build.Content.BINPKGS).exists())
-        self.assertTrue(storage.get_path(build, build.Content.REPOS).exists())
+        self.assertTrue(
+            buildman.storage.get_path(build, build.Content.BINPKGS).exists()
+        )
+        self.assertTrue(buildman.storage.get_path(build, build.Content.REPOS).exists())
 
         response = self.client.post(f"/delete/{build.name}/{build.number}/")
 
@@ -188,7 +172,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         self.assertFalse(query.exists())
 
         for item in build.Content:
-            self.assertFalse(storage.get_path(build, item).exists())
+            self.assertFalse(buildman.storage.get_path(build, item).exists())
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""
@@ -215,8 +199,10 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
 
         data = response.json()
         self.assertEqual(data["error"], None)
+        buildman_left = BuildMan(left_bm)
+        buildman_right = BuildMan(right_bm)
         self.assertEqual(
-            data["diff"]["builds"], [left_bm.as_dict(), right_bm.as_dict()]
+            data["diff"]["builds"], [buildman_left.as_dict(), buildman_right.as_dict()]
         )
 
         self.assertEqual(len(data["diff"]["items"]), 6)

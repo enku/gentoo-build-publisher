@@ -8,7 +8,9 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from gentoo_build_publisher import Build
 from gentoo_build_publisher.diff import dirdiff
+from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
@@ -17,14 +19,9 @@ from gentoo_build_publisher.tasks import publish_build, pull_build
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to publish a build"""
-    build_model, _ = BuildModel.objects.get_or_create(
-        name=build_name,
-        number=build_number,
-        defaults={"submitted": timezone.now()},
-    )
+    publish_build.delay(build_name, build_number)
 
-    publish_build.delay(build_model.id)
-    response = build_model.as_dict()
+    response = BuildMan(Build(name=build_name, number=build_number)).as_dict()
     response["error"] = None
 
     return JsonResponse(response)
@@ -41,7 +38,7 @@ def pull(_request: HttpRequest, build_name: str, build_number: int) -> JsonRespo
     )
 
     pull_build.delay(build_model.id)
-    response = build_model.as_dict()
+    response = BuildMan(build_model).as_dict()
     response["error"] = None
 
     return JsonResponse(response)
@@ -52,8 +49,9 @@ def pull(_request: HttpRequest, build_name: str, build_number: int) -> JsonRespo
 def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to delete a build"""
     build_model = get_object_or_404(BuildModel, name=build_name, number=build_number)
+    buildman = BuildMan(build_model)
 
-    build_model.delete()
+    buildman.delete()
 
     return JsonResponse({"deleted": True, "error": None})
 
@@ -69,7 +67,7 @@ def latest(_request: HttpRequest, build_name: str) -> JsonResponse:
             {"error": "No completed builds exist with that name"}, status=404
         )
 
-    response = builds[0].as_dict()
+    response = BuildMan(builds[0]).as_dict()
     response["error"] = None
 
     return JsonResponse(response)
@@ -87,7 +85,12 @@ def list_builds(_request: HttpRequest, build_name: str) -> JsonResponse:
             status=404,
         )
 
-    return JsonResponse({"error": None, "builds": [i.as_dict() for i in builds]})
+    return JsonResponse(
+        {
+            "error": None,
+            "builds": [BuildMan(i).as_dict() for i in builds],
+        }
+    )
 
 
 def logs(_request: HttpRequest, build_name: str, build_number: int) -> HttpResponse:
@@ -103,8 +106,8 @@ def diff_builds(
     _request: HttpRequest, build_name: str, left: int, right: int
 ) -> JsonResponse:
     """View to show the diff between two builds for the given machines"""
-    left_build = get_object_or_404(BuildModel, name=build_name, number=left)
-    right_build = get_object_or_404(BuildModel, name=build_name, number=right)
+    left_build = BuildMan(get_object_or_404(BuildModel, name=build_name, number=left))
+    right_build = BuildMan(get_object_or_404(BuildModel, name=build_name, number=right))
 
     left_path = left_build.storage.get_path(
         left_build.build, left_build.build.Content.BINPKGS

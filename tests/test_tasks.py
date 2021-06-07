@@ -7,52 +7,34 @@ from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
-from yarl import URL
 
-from gentoo_build_publisher import Storage
+from gentoo_build_publisher import Build
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
-from . import MockJenkins, TempHomeMixin
-from .factories import BuildModelFactory
+from . import TempHomeMixin
+from .factories import BuildManFactory, BuildModelFactory
 
 
-class BaseTestCase(TempHomeMixin, TestCase):
-    """Base TestCase to mock jenkins and tempfile storage"""
-
-    def setUp(self):
-        super().setUp()
-
-        # Mock storage for all tests
-        patch = mock.patch("gentoo_build_publisher.models.Storage.from_settings")
-        self.addCleanup(patch.stop)
-        mock_storage = patch.start()
-        self.storage = mock_storage.return_value = Storage(self.tmpdir)
-
-        # Mock jenkins for all tests
-        patch = mock.patch("gentoo_build_publisher.models.Jenkins.from_settings")
-        self.addCleanup(patch.stop)
-        mock_jenkins = patch.start()
-        self.jenkins = mock_jenkins.return_value = MockJenkins(
-            URL("http://jenkins.invalid/"), "user", "key"
-        )
-
-
-class PublishBuildTestCase(BaseTestCase):
+class PublishBuildTestCase(TempHomeMixin, TestCase):
     """Unit tests for tasks.publish_build"""
 
-    def test_publishes_build(self):
+    @mock.patch("gentoo_build_publisher.tasks.BuildMan")
+    def test_publishes_build(self, buildmanager_mock):
         """Should actually publish the build"""
-        build_model = BuildModelFactory.create()
+        build = Build(name="babette", number=193)
+        buildman = BuildManFactory(build=build)
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            publish_build(build_model.id)
+            publish_build("babette", 193)
 
-        self.assertIs(self.storage.published(build_model.build), True)
+        self.assertIs(buildman.published(), True)
+        buildmanager_mock.assert_called_with(build)
 
 
-class PurgeBuildTestCase(BaseTestCase):
+class PurgeBuildTestCase(TempHomeMixin, TestCase):
     """Tests for the purge_build task"""
 
     def test_deletes_old_build(self):
@@ -70,19 +52,37 @@ class PurgeBuildTestCase(BaseTestCase):
 
         self.assertIs(query.exists(), False)
 
-    def test_doesnt_delete_old_published_build(self):
-        """Should not delete old build if published"""
+    def test_does_not_delete_old_kept_build(self):
+        """Should remove purgable builds"""
         build_model = BuildModelFactory.create(
             number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
+        )
+        KeptBuild.objects.create(build_model=build_model)
+        BuildModelFactory.create(
+            number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
+        )
+
+        purge_build(build_model.name)
+
+        query = BuildModel.objects.filter(id=build_model.id)
+
+        self.assertIs(query.exists(), True)
+
+    def test_doesnt_delete_old_published_build(self):
+        """Should not delete old build if published"""
+        buildman = BuildManFactory.build(
+            build=BuildModelFactory.create(
+                number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
+            )
         )
         BuildModelFactory.create(
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )
 
-        self.storage.publish(build_model.build, self.jenkins)
-        purge_build(build_model.name)
+        buildman.publish()
+        purge_build(buildman.name)
 
-        query = BuildModel.objects.filter(id=build_model.id)
+        query = BuildModel.objects.filter(id=buildman.id)
 
         self.assertIs(query.exists(), True)
 
@@ -103,36 +103,40 @@ class PurgeBuildTestCase(BaseTestCase):
         self.assertIs(query.exists(), True)
 
 
-class PullBuildTestCase(BaseTestCase):
+@mock.patch("gentoo_build_publisher.tasks.BuildMan")
+class PullBuildTestCase(TempHomeMixin, TestCase):
     """Tests for the pull_build task"""
 
-    def test_pulls_build(self):
+    def test_pulls_build(self, buildmanager_mock):
         """Should actually pull the build"""
-        build_model = BuildModelFactory.create()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build(build_model.id)
+            pull_build(buildman.name, buildman.number)
 
-        self.assertIs(self.storage.pulled(build_model.build), True)
+        self.assertIs(buildman.pulled(), True)
 
-    def test_stores_build_logs(self):
+    def test_stores_build_logs(self, buildmanager_mock):
         """Should store the logs of the build"""
-        build_model = BuildModelFactory.create()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build(build_model.id)
+            pull_build(buildman.name, buildman.number)
 
-        url = str(build_model.jenkins.logs_url(build_model.build))
-        build_model.jenkins.get_build_logs_mock_get.assert_called_once()
-        call_args = build_model.jenkins.get_build_logs_mock_get.call_args
+        url = str(buildman.logs_url())
+        buildman.jenkins.get_build_logs_mock_get.assert_called_once()
+        call_args = buildman.jenkins.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
-        build_log = BuildLog.objects.get(build_model=build_model)
+        build_log = BuildLog.objects.get(build_model=buildman.model)
         self.assertEqual(build_log.logs, "foo\n")
 
-    def test_writes_built_pkgs_in_note(self):
-        BuildModelFactory.create()
-        build_model = BuildModelFactory.create()
+    def test_writes_built_pkgs_in_note(self, buildmanager_mock):
+        BuildManFactory.build()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             with mock.patch("gentoo_build_publisher.diff.dirdiff") as mock_dirdiff:
@@ -144,43 +148,46 @@ class PullBuildTestCase(BaseTestCase):
                         Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
                     ]
                 )
-                pull_build(build_model.id)
+                pull_build(buildman.name, buildman.number)
 
-        note = BuildNote.objects.get(build_model=build_model)
+        note = BuildNote.objects.get(build_model=buildman.model)
         self.assertEqual(
             note.note,
             "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
         )
 
-    def test_calls_purge_build(self):
+    def test_calls_purge_build(self, buildmanager_mock):
         """Should issue the purge_build task when setting is true"""
-        build_model = BuildModelFactory.create()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                pull_build(build_model.id)
+                pull_build(buildman.name, buildman.number)
 
-        mock_purge_build.delay.assert_called_with(build_model.name)
+        mock_purge_build.delay.assert_called_with(buildman.name)
 
-    def test_does_not_call_purge_build(self):
+    def test_does_not_call_purge_build(self, buildmanager_mock):
         """Should not issue the purge_build task when setting is false"""
-        build_model = BuildModelFactory.create()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                pull_build(build_model.id)
+                pull_build(buildman.name, buildman.number)
 
         mock_purge_build.delay.assert_not_called()
 
-    def test_updates_build_models_completed_field(self):
+    def test_updates_build_models_completed_field(self, buildmanager_mock):
         """Should update the completed field with the current timestamp"""
         now = timezone.now()
-        build_model = BuildModelFactory.create()
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             with mock.patch("gentoo_build_publisher.tasks.timezone.now") as mock_now:
                 mock_now.return_value = now
-                pull_build(build_model.id)
+                pull_build(buildman.name, buildman.number)
 
-        build_model.refresh_from_db()
-        self.assertEqual(build_model.completed, now)
+        buildman.model.refresh_from_db()
+        self.assertEqual(buildman.model.completed, now)

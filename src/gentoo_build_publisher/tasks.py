@@ -2,52 +2,59 @@
 from celery import shared_task
 from django.utils import timezone
 
+from gentoo_build_publisher import Build, Settings
 from gentoo_build_publisher.diff import diff_notes
+from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.purge import Purger
 
 
 @shared_task
-def publish_build(build_id: int):
+def publish_build(name: str, number: int):
     """Publish the build"""
-    pull_build.apply((build_id,))
-    build_model = BuildModel.objects.get(pk=build_id)
-    build_model.publish()
+    pull_build.apply((name, number))
+    buildman = BuildMan(Build(name=name, number=number))
+    buildman.publish()
 
 
 @shared_task(bind=True)
-def pull_build(self, build_id: int):
+def pull_build(self, name: str, number: int):
     """Pull the build into storage"""
-    build_model = BuildModel.objects.get(pk=build_id)
+    build = Build(name=name, number=number)
+    buildman = BuildMan(build)
 
-    if not build_model.storage.pulled(build_model.build):
-        build_model.task_id = self.request.id
-        build_model.save()
-        build_model.storage.pull(build_model.build, build_model.jenkins)
+    if not buildman.pulled():
+        buildman.pull()
 
-        logs = build_model.jenkins.get_build_logs(build_model.build)
-        BuildLog.objects.create(build_model=build_model, logs=logs)
+        assert buildman.model is not None
+
+        buildman.model.task_id = self.request.id
+        buildman.model.save()
+
+        logs = buildman.jenkins.get_build_logs(buildman.build)
+        BuildLog.objects.create(build_model=buildman.model, logs=logs)
 
         try:
-            prev_build = BuildModel.objects.filter(name=build_model.name).order_by(
+            prev_build = BuildModel.objects.filter(name=buildman.name).order_by(
                 "-submitted"
             )[1]
         except IndexError:
             pass
         else:
-            binpkgs = build_model.build.Content.BINPKGS
-            left = prev_build.storage.get_path(prev_build.build, binpkgs)
-            right = build_model.storage.get_path(build_model.build, binpkgs)
+            binpkgs = buildman.build.Content.BINPKGS
+            left = BuildMan(prev_build).get_path(binpkgs)
+            right = buildman.get_path(binpkgs)
             note = diff_notes(str(left), str(right), header="Packages built:\n")
 
             if note:
-                BuildNote.objects.create(build_model=build_model, note=note)
+                BuildNote.objects.create(build_model=buildman.model, note=note)
 
-        build_model.completed = timezone.now()
-        build_model.save()
+        buildman.model.completed = timezone.now()
+        buildman.model.save()
 
-    if build_model.settings.ENABLE_PURGE:
-        purge_build.delay(build_model.name)
+    settings = Settings.from_environ()
+    if settings.ENABLE_PURGE:
+        purge_build.delay(buildman.name)
 
 
 @shared_task
@@ -57,9 +64,5 @@ def purge_build(build_name: str):
     purger = Purger(builds, key=lambda b: timezone.make_naive(b.submitted))
 
     for build_model in purger.purge():  # type: BuildModel
-        if KeptBuild.keep(build_model) or build_model.storage.published(
-            build_model.build
-        ):
-            continue
-
-        build_model.delete()
+        if not KeptBuild.keep(build_model) and not BuildMan(build_model).published():
+            build_model.delete()
