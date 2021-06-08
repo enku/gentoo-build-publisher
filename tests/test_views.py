@@ -7,6 +7,7 @@ from unittest import mock
 
 from django.test import TestCase
 
+from gentoo_build_publisher import Build
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
@@ -37,8 +38,12 @@ class PullViewTestCase(TempHomeMixin, TestCase):
             response = self.client.post("/pull/babette/193/")
 
         self.assertEqual(response.status_code, 200)
-        build_model = BuildModel.objects.get(name="babette", number=193)
-        mock_pb.delay.assert_called_once_with(build_model.pk)
+        mock_pb.delay.assert_called_once_with("babette", 193)
+
+        buildman = BuildMan(Build(name="babette", number=193))
+        expected = buildman.as_dict()
+        expected["error"] = None
+        self.assertEqual(response.json(), expected)
 
 
 class ListBuildsViewTestCase(TempHomeMixin, TestCase):
