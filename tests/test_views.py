@@ -131,6 +131,36 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(json.loads(response.content), expected)
 
 
+class ShowBuildViewTestCase(TempHomeMixin, TestCase):
+    def test_returns_json_repr(self):
+        build_model = BuildModelFactory.create()
+
+        response = self.client.get(f"/build/{build_model.name}/{build_model.number}/")
+
+        self.assertEqual(response.status_code, 200)
+
+        expected = {
+            "completed": None,
+            "error": None,
+            "name": build_model.name,
+            "note": None,
+            "number": build_model.number,
+            "published": False,
+            "submitted": build_model.submitted.isoformat(),
+            "url": (
+                "https://jenkins.invalid/job/"
+                f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
+            ),
+        }
+
+        self.assertEqual(response.json(), expected)
+
+    def test_returns_returns_404(self):
+        response = self.client.get("/build/bogus/123/")
+
+        self.assertEqual(response.status_code, 404)
+
+
 class LogsViewTestCase(TempHomeMixin, TestCase):
     """Tests for the logs view"""
 

@@ -10,6 +10,7 @@ urlpatterns = [
     path("delete/<build_name>/<int:build_number>/", views.delete, name="delete"),
     path("latest/<build_name>/", views.latest, name="latest"),
     path("builds/<build_name>/", views.list_builds, name="list_builds"),
+    path("build/<build_name>/<int:build_number>/", views.show_build, name="show_build"),
     path("logs/<build_name>/<int:build_number>/", views.logs, name="logs"),
     path("diff/<build_name>/<int:left>/<int:right>/", views.diff_builds, name="diff"),
     path("machines/", views.list_machines, name="list_machines"),

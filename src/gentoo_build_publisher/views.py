@@ -4,7 +4,6 @@ View for gbp
 from django.db.models import Count
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -33,6 +32,17 @@ def pull(_request: HttpRequest, build_name: str, build_number: int) -> JsonRespo
     """View to pull a new build"""
     pull_build.delay(build_name, build_number)
     response = BuildMan(Build(name=build_name, number=build_number)).as_dict()
+    response["error"] = None
+
+    return JsonResponse(response)
+
+
+def show_build(
+    _request: HttpRequest, build_name: str, build_number: int
+) -> JsonResponse:
+    """View details of a build"""
+    build_model = get_object_or_404(BuildModel, name=build_name, number=build_number)
+    response = BuildMan(build_model).as_dict()
     response["error"] = None
 
     return JsonResponse(response)
