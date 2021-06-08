@@ -7,7 +7,7 @@ from unittest import mock
 
 from django.test import TestCase
 
-from gentoo_build_publisher import Build
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
@@ -224,7 +224,7 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
         right_path = str(BASE_DIR / "binpkgs" / "babette.147")
 
         with mock.patch(
-            "gentoo_build_publisher.StorageBuild.get_path"
+            "gentoo_build_publisher.storage.StorageBuild.get_path"
         ) as mock_get_path:
             mock_get_path.side_effect = (left_path, right_path)
 

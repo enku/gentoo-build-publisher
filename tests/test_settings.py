@@ -3,7 +3,7 @@
 from pathlib import PosixPath
 from unittest import TestCase
 
-from gentoo_build_publisher import Settings
+from gentoo_build_publisher.settings import Settings
 
 
 class SettingsTestCase(TestCase):

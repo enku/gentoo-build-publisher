@@ -8,7 +8,7 @@ from unittest import mock
 from django.test import TestCase
 from django.utils import timezone
 
-from gentoo_build_publisher import Build
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build

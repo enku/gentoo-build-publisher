@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from gentoo_build_publisher import Build
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.diff import dirdiff
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel

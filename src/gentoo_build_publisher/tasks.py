@@ -2,11 +2,12 @@
 from celery import shared_task
 from django.utils import timezone
 
-from gentoo_build_publisher import Build, Settings
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.purge import Purger
+from gentoo_build_publisher.settings import Settings
 
 
 @shared_task

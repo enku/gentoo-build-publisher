@@ -5,8 +5,11 @@ from typing import Any, Dict, Optional, Union
 from django.utils import timezone
 from yarl import URL
 
-from gentoo_build_publisher import Build, JenkinsBuild, Settings, StorageBuild
+from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.jenkins import JenkinsBuild
 from gentoo_build_publisher.models import BuildModel, BuildNote
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.storage import StorageBuild
 
 
 class BuildMan:

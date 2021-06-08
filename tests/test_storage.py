@@ -4,7 +4,9 @@ import os
 import tarfile
 from unittest import TestCase, mock
 
-from gentoo_build_publisher import Build, Settings, StorageBuild
+from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.storage import StorageBuild
 
 from . import MockJenkinsBuild, TempHomeMixin
 
@@ -29,7 +31,7 @@ class StorageBuildReprTestCase(TempHomeMixin, TestCase):
 
         self.assertEqual(
             repr(storage_build),
-            f"gentoo_build_publisher.StorageBuild({repr(self.tmpdir)})",
+            f"gentoo_build_publisher.storage.StorageBuild({repr(self.tmpdir)})",
         )
 
 
