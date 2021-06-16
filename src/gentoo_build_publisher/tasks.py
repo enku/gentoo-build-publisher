@@ -1,4 +1,6 @@
 """Celery tasks for Gentoo Build Publisher"""
+import logging
+import requests
 from celery import shared_task
 from django.utils import timezone
 
@@ -17,6 +19,9 @@ def publish_build(name: str, number: int):
     buildman.publish()
 
 
+logger = logging.getLogger(__name__)
+
+
 @shared_task(bind=True)
 def pull_build(self, name: str, number: int):
     """Pull the build into storage"""
@@ -24,7 +29,13 @@ def pull_build(self, name: str, number: int):
     buildman = BuildMan(build)
 
     if not buildman.pulled():
-        buildman.pull()
+        try:
+            buildman.pull()
+        except requests.HTTPError:
+            logger.exception("Failed to pull build %s", buildman.build)
+            if buildman.model:
+                buildman.model.delete()
+                return
 
         assert buildman.model is not None
 

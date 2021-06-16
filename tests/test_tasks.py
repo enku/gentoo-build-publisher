@@ -7,6 +7,7 @@ from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
+from requests import HTTPError
 
 from gentoo_build_publisher import Build
 from gentoo_build_publisher.diff import Change, Status
@@ -191,3 +192,16 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         buildman.model.refresh_from_db()
         self.assertEqual(buildman.model.completed, now)
+
+    def test_should_delete_model_when_download_fails(self, buildmanager_mock):
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
+
+        with mock.patch.object(
+            buildman.jenkins_build, "download_artifact"
+        ) as download_artifact_mock:
+            download_artifact_mock.side_effect = HTTPError
+            pull_build(buildman.name, buildman.number)
+
+        with self.assertRaises(BuildModel.DoesNotExist):
+            buildman.model.refresh_from_db()
