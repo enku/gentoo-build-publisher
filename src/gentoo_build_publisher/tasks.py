@@ -28,38 +28,38 @@ def pull_build(self, name: str, number: int):
     build = Build(name=name, number=number)
     buildman = BuildMan(build)
 
-    if not buildman.pulled():
-        try:
-            buildman.pull()
-        except requests.HTTPError:
-            logger.exception("Failed to pull build %s", buildman.build)
-            if buildman.model:
-                buildman.model.delete()
-                return
+    try:
+        buildman.pull()
+    except requests.HTTPError:
+        logger.exception("Failed to pull build %s", buildman.build)
+        if buildman.model:
+            buildman.model.delete()
+            return
 
-        assert buildman.model is not None
+    assert buildman.model is not None
 
-        buildman.model.task_id = self.request.id
-        buildman.model.save()
+    buildman.model.task_id = self.request.id
+    buildman.model.save()
 
-        logs = buildman.jenkins_build.get_logs()
-        BuildLog.objects.create(build_model=buildman.model, logs=logs)
+    logs = buildman.jenkins_build.get_logs()
+    BuildLog.objects.create(build_model=buildman.model, logs=logs)
 
-        try:
-            prev_build = BuildModel.objects.filter(name=buildman.name).order_by(
-                "-submitted"
-            )[1]
-        except IndexError:
-            pass
-        else:
-            binpkgs = buildman.build.Content.BINPKGS
-            left = BuildMan(prev_build).get_path(binpkgs)
-            right = buildman.get_path(binpkgs)
-            note = diff_notes(str(left), str(right), header="Packages built:\n")
+    try:
+        prev_build = BuildModel.objects.filter(name=buildman.name).order_by(
+            "-submitted"
+        )[1]
+    except IndexError:
+        pass
+    else:
+        binpkgs = buildman.build.Content.BINPKGS
+        left = BuildMan(prev_build).get_path(binpkgs)
+        right = buildman.get_path(binpkgs)
+        note = diff_notes(str(left), str(right), header="Packages built:\n")
 
-            if note:
-                BuildNote.objects.create(build_model=buildman.model, note=note)
+        if note:
+            BuildNote.objects.create(build_model=buildman.model, note=note)
 
+    if not buildman.model.completed:
         buildman.model.completed = timezone.now()
         buildman.model.save()
 
