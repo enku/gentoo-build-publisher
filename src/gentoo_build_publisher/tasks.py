@@ -73,4 +73,5 @@ def purge_build(build_name: str):
 
     for build_db in purger.purge():  # type: BuildDB
         if not build_db.keep and not BuildMan(build_db).published():
-            build_db.delete()
+            buildman = BuildMan(build_db)
+            buildman.delete()
