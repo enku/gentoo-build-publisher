@@ -9,12 +9,12 @@ from django.test import TestCase
 from django.utils import timezone
 from requests import HTTPError
 
-from gentoo_build_publisher import Build
+from gentoo_build_publisher import Build, Settings, StorageBuild
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
-from . import TempHomeMixin
+from . import MockJenkinsBuild, TempHomeMixin
 from .factories import BuildManFactory, BuildModelFactory
 
 
@@ -47,11 +47,21 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )
 
+        build = Build(name=build_model.name, number=build_model.number)
+        settings = Settings.from_environ()
+        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
+        storage_build = StorageBuild(build, self.tmpdir)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
+
         purge_build(build_model.name)
 
         query = BuildModel.objects.filter(id=build_model.id)
 
         self.assertIs(query.exists(), False)
+
+        for item in Build.Content:
+            path = storage_build.get_path(item)
+            self.assertIs(path.exists(), False, path)
 
     def test_does_not_delete_old_kept_build(self):
         """Should remove purgable builds"""

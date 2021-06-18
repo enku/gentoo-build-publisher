@@ -76,4 +76,5 @@ def purge_build(build_name: str):
 
     for build_model in purger.purge():  # type: BuildModel
         if not KeptBuild.keep(build_model) and not BuildMan(build_model).published():
-            build_model.delete()
+            buildman = BuildMan(build_model)
+            buildman.delete()
