@@ -8,6 +8,7 @@ from unittest import mock
 from django.test import TestCase
 
 from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
@@ -204,8 +205,11 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         query = BuildModel.objects.filter(name=build.name, number=build.number)
         self.assertFalse(query.exists())
 
-        for item in build.Content:
-            self.assertFalse(buildman.storage_build.get_path(item).exists())
+        exists = [
+            i for i in build.Content if buildman.storage_build.get_path(i).exists()
+        ]
+
+        self.assertFalse(exists)
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""
@@ -234,8 +238,8 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
 
         data = response.json()
         self.assertEqual(data["error"], None)
-        buildman_left = BuildMan(left_bm)
-        buildman_right = BuildMan(right_bm)
+        buildman_left = BuildMan(BuildDB(left_bm))
+        buildman_right = BuildMan(BuildDB(right_bm))
         self.assertEqual(
             data["diff"]["builds"], [buildman_left.as_dict(), buildman_right.as_dict()]
         )

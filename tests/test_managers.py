@@ -2,8 +2,6 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from django.test import TestCase
 
-from gentoo_build_publisher.models import BuildNote
-
 from . import TempHomeMixin
 from .factories import BuildManFactory
 
@@ -20,7 +18,7 @@ class BuildManTestCase(TempHomeMixin, TestCase):
             "note": None,
             "number": buildman.number,
             "published": False,
-            "submitted": buildman.model.submitted.isoformat(),
+            "submitted": buildman.db.submitted.isoformat(),
             "completed": None,
             "url": (
                 "https://jenkins.invalid/job/"
@@ -31,8 +29,8 @@ class BuildManTestCase(TempHomeMixin, TestCase):
 
     def test_as_dict_with_buildnote(self):
         buildman = BuildManFactory.build()
-
-        BuildNote.objects.create(build_model=buildman.model, note="This is a test")
+        buildman.db.note = "This is a test"
+        buildman.db.save()
 
         as_dict = buildman.as_dict()
 
@@ -41,7 +39,7 @@ class BuildManTestCase(TempHomeMixin, TestCase):
             "note": "This is a test",
             "number": buildman.number,
             "published": False,
-            "submitted": buildman.model.submitted.isoformat(),
+            "submitted": buildman.db.submitted.isoformat(),
             "completed": None,
             "url": (
                 "https://jenkins.invalid/job/"

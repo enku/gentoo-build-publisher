@@ -5,9 +5,9 @@ from celery import shared_task
 from django.utils import timezone
 
 from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.managers import BuildMan
-from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 
@@ -33,36 +33,32 @@ def pull_build(self, name: str, number: int):
         buildman.pull()
     except requests.HTTPError:
         logger.exception("Failed to pull build %s", buildman.build)
-        if buildman.model:
-            buildman.model.delete()
-            return
+        if buildman.db:
+            buildman.db.delete()
 
-    assert buildman.model is not None
+        return
 
-    buildman.model.task_id = self.request.id
-    buildman.model.save()
+    assert buildman.db is not None
 
     logs = buildman.jenkins_build.get_logs()
-    BuildLog.objects.create(build_model=buildman.model, logs=logs)
 
-    try:
-        prev_build = BuildModel.objects.filter(name=buildman.name).order_by(
-            "-submitted"
-        )[1]
-    except IndexError:
-        pass
-    else:
+    buildman.db.task_id = self.request.id
+    buildman.db.logs = logs
+    buildman.db.save()
+
+    prev_build = BuildDB.previous_build(buildman.db)
+
+    if prev_build is not None:
         binpkgs = buildman.build.Content.BINPKGS
         left = BuildMan(prev_build).get_path(binpkgs)
         right = buildman.get_path(binpkgs)
         note = diff_notes(str(left), str(right), header="Packages built:\n")
 
         if note:
-            BuildNote.objects.create(build_model=buildman.model, note=note)
+            buildman.db.note = note
 
-    if not buildman.model.completed:
-        buildman.model.completed = timezone.now()
-        buildman.model.save()
+    buildman.db.completed = timezone.now()
+    buildman.db.save()
 
     settings = Settings.from_environ()
     if settings.ENABLE_PURGE:
@@ -72,9 +68,9 @@ def pull_build(self, name: str, number: int):
 @shared_task
 def purge_build(build_name: str):
     """Purge old builds for build_name"""
-    builds = BuildModel.objects.filter(name=build_name)
-    purger = Purger(builds, key=lambda b: timezone.make_naive(b.submitted))
+    build_dbs = BuildDB.builds(name=build_name)
+    purger = Purger(build_dbs, key=lambda b: timezone.make_naive(b.submitted))
 
-    for build_model in purger.purge():  # type: BuildModel
-        if not KeptBuild.keep(build_model) and not BuildMan(build_model).published():
-            build_model.delete()
+    for build_db in purger.purge():  # type: BuildDB
+        if not build_db.keep and not BuildMan(build_db).published():
+            build_db.delete()

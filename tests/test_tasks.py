@@ -11,7 +11,7 @@ from requests import HTTPError
 
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.diff import Change, Status
-from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
+from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
 from . import TempHomeMixin
@@ -131,11 +131,13 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         call_args = buildman.jenkins_build.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
-        build_log = BuildLog.objects.get(build_model=buildman.model)
-        self.assertEqual(build_log.logs, "foo\n")
+        self.assertEqual(buildman.db.logs, "foo\n")
 
     def test_writes_built_pkgs_in_note(self, buildmanager_mock):
-        BuildManFactory.build()
+        prev_build = BuildManFactory.build()
+        prev_build.db.model.completed = timezone.now()
+        prev_build.db.model.save()
+
         buildman = BuildManFactory.build()
         buildmanager_mock.return_value = buildman
 
@@ -151,9 +153,10 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
                 )
                 pull_build(buildman.name, buildman.number)
 
-        note = BuildNote.objects.get(build_model=buildman.model)
+        buildman.db.refresh()
+
         self.assertEqual(
-            note.note,
+            buildman.db.note,
             "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
         )
 
@@ -190,10 +193,10 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
                 mock_now.return_value = now
                 pull_build(buildman.name, buildman.number)
 
-        buildman.model.refresh_from_db()
-        self.assertEqual(buildman.model.completed, now)
+        buildman.db.model.refresh_from_db()
+        self.assertEqual(buildman.db.model.completed, now)
 
-    def test_should_delete_model_when_download_fails(self, buildmanager_mock):
+    def test_should_delete_db_model_when_download_fails(self, buildmanager_mock):
         buildman = BuildManFactory.build()
         buildmanager_mock.return_value = buildman
 
@@ -204,4 +207,4 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
             pull_build(buildman.name, buildman.number)
 
         with self.assertRaises(BuildModel.DoesNotExist):
-            buildman.model.refresh_from_db()
+            buildman.db.model.refresh_from_db()

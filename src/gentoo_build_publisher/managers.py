@@ -2,35 +2,34 @@
 from pathlib import PosixPath
 from typing import Any, Dict, Optional, Union
 
-from django.utils import timezone
 from yarl import URL
 
 from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.jenkins import JenkinsBuild
-from gentoo_build_publisher.models import BuildModel, BuildNote
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
 
 class BuildMan:
-    """Pulls a build's db model, jenkins and storage all together"""
+    """Pulls a build's db, jenkins and storage all together"""
 
     def __init__(
         self,
-        build: Union[Build, BuildModel],
+        build: Union[Build, BuildDB],
         *,
         jenkins_build: Optional[JenkinsBuild] = None,
         storage_build: Optional[StorageBuild] = None
     ):
         if isinstance(build, Build):
             self.build = build
-            self.model: Optional[BuildModel] = None
-        elif isinstance(build, BuildModel):
+            self._db: Optional[BuildDB] = None
+        elif isinstance(build, BuildDB):
             self.build = Build(name=build.name, number=build.number)
-            self.model = build
+            self._db = build
         else:
             raise TypeError(
-                "build argument must be one of [Build, BuildModel]"
+                "build argument must be one of [Build, BuildDB]"
             )  # pragma: no cover
 
         self.name = self.build.name
@@ -52,8 +51,19 @@ class BuildMan:
 
     @property
     def id(self):  # pylint: disable=invalid-name
-        """Return the BuildModel id or None if there is no model"""
-        return self.model.id if self.model is not None else None
+        """Return the BuildDB id or None if there is no database model"""
+        return self.db.id if self.db is not None else None
+
+    @property
+    def db(self):  # pylint: disable=invalid-name
+        """The database object (or None)"""
+        if not self._db:
+            try:
+                self._db = BuildDB.get(self.build)
+            except BuildDB.NotFound:
+                pass
+
+        return self._db
 
     def publish(self):
         """Publish the build"""
@@ -66,12 +76,11 @@ class BuildMan:
 
     def pull(self):
         """pull the Build to storage"""
-        if self.model is None:
-            self.model, _ = BuildModel.objects.get_or_create(
-                name=self.name,
-                number=self.number,
-                defaults={"submitted": timezone.now()},
-            )
+        if self._db is None:
+            try:
+                self._db = BuildDB.get(self.build)
+            except BuildDB.NotFound:
+                self._db = BuildDB.create(Build)
 
         if not self.storage_build.pulled():
             self.storage_build.extract_artifact(self.jenkins_build.download_artifact())
@@ -82,8 +91,8 @@ class BuildMan:
 
     def delete(self):
         """Delete this build"""
-        if self.model is not None:
-            self.model.delete()
+        if self.db is not None:
+            self.db.delete()
 
         self.storage_build.delete()
 
@@ -93,18 +102,12 @@ class BuildMan:
         completed: Optional[str] = None
         note: Optional[str] = None
 
-        if self.model is not None:
-            submitted = self.model.submitted.isoformat()
+        if self.db is not None:
+            submitted = self.db.submitted.isoformat()
             completed = (
-                self.model.completed.isoformat()
-                if self.model.completed is not None
-                else None
+                self.db.completed.isoformat() if self.db.completed is not None else None
             )
-
-            try:
-                note = self.model.buildnote.note  # pylint: disable=no-member
-            except BuildNote.DoesNotExist:
-                pass
+            note = self.db.note
 
         return {
             "name": self.name,
