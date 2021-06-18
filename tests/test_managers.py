@@ -2,8 +2,12 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from django.test import TestCase
 
+from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.settings import Settings
+
 from . import TempHomeMixin
-from .factories import BuildManFactory
+from .factories import BuildManFactory, MockJenkinsBuild
 
 
 class BuildManTestCase(TempHomeMixin, TestCase):
@@ -55,3 +59,15 @@ class BuildManTestCase(TempHomeMixin, TestCase):
         buildman.publish()
 
         self.assertIs(buildman.storage_build.published(), True)
+
+    def test_pull_without_db(self):
+        """pull creates db instance and pulls from jenkins"""
+        build = Build(name="babette", number=193)
+        settings = Settings.from_environ()
+        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
+        buildman = BuildMan(build, jenkins_build=jenkins_build)
+
+        buildman.pull()
+
+        self.assertIs(buildman.storage_build.pulled(), True)
+        self.assertIsNot(buildman.db, None)

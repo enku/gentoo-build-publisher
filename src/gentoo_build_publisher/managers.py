@@ -80,7 +80,7 @@ class BuildMan:
             try:
                 self._db = BuildDB.get(self.build)
             except BuildDB.NotFound:
-                self._db = BuildDB.create(Build)
+                self._db = BuildDB.create(self.build)
 
         if not self.storage_build.pulled():
             self.storage_build.extract_artifact(self.jenkins_build.download_artifact())
