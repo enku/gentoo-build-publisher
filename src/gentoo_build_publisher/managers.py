@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 
 from yarl import URL
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.jenkins import JenkinsBuild
 from gentoo_build_publisher.settings import Settings
@@ -123,6 +123,6 @@ class BuildMan:
         """Return the JenkinsBuild logs url for this Build"""
         return self.jenkins_build.logs_url()
 
-    def get_path(self, item: Build.Content) -> PosixPath:
+    def get_path(self, item: Content) -> PosixPath:
         """Return the path of the content type for this Build's storage"""
         return self.storage_build.get_path(item)

@@ -7,7 +7,7 @@ import tarfile
 from pathlib import PosixPath
 from typing import Iterator
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 
 
@@ -30,7 +30,7 @@ class StorageBuild:
         """Instatiate from settings"""
         return cls(build, my_settings.STORAGE_PATH)
 
-    def get_path(self, item: Build.Content) -> PosixPath:
+    def get_path(self, item: Content) -> PosixPath:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
@@ -59,7 +59,7 @@ class StorageBuild:
         with tarfile.open(artifact_path, mode="r") as tar_file:
             tar_file.extractall(dirpath)
 
-        for item in Build.Content:
+        for item in Content:
             src = dirpath / item.value
             dst = self.get_path(item)
             os.renames(src, dst)
@@ -71,14 +71,14 @@ class StorageBuild:
 
         By "pulled" we mean all Build components exist on the filesystem
         """
-        return all(self.get_path(item).exists() for item in Build.Content)
+        return all(self.get_path(item).exists() for item in Content)
 
     def publish(self):
         """Make this build 'active'"""
         if not self.pulled():
             raise FileNotFoundError("The build has not been pulled")
 
-        for item in Build.Content:
+        for item in Content:
             path = self.path / item.value / self.build.name
             self.symlink(str(self.build), str(path))
 
@@ -91,7 +91,7 @@ class StorageBuild:
         return all(
             (symlink := self.path / item.value / self.build.name).exists()
             and os.path.realpath(symlink) == str(self.get_path(item))
-            for item in Build.Content
+            for item in Content
         )
 
     def delete(self):
@@ -99,7 +99,7 @@ class StorageBuild:
 
         Does not fix dangling symlinks.
         """
-        for item in Build.Content:
+        for item in Content:
             shutil.rmtree(self.get_path(item), ignore_errors=True)
 
     @staticmethod

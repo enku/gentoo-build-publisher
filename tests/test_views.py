@@ -7,7 +7,7 @@ from unittest import mock
 
 from django.test import TestCase
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
@@ -194,8 +194,8 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         # When we download the artifact
         buildman.publish()
 
-        self.assertTrue(buildman.storage_build.get_path(build.Content.BINPKGS).exists())
-        self.assertTrue(buildman.storage_build.get_path(build.Content.REPOS).exists())
+        self.assertTrue(buildman.storage_build.get_path(Content.BINPKGS).exists())
+        self.assertTrue(buildman.storage_build.get_path(Content.REPOS).exists())
 
         response = self.client.post(f"/delete/{build.name}/{build.number}/")
 
@@ -205,9 +205,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         query = BuildModel.objects.filter(name=build.name, number=build.number)
         self.assertFalse(query.exists())
 
-        exists = [
-            i for i in build.Content if buildman.storage_build.get_path(i).exists()
-        ]
+        exists = [i for i in Content if buildman.storage_build.get_path(i).exists()]
 
         self.assertFalse(exists)
 

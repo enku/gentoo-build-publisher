@@ -1,10 +1,11 @@
 """Celery tasks for Gentoo Build Publisher"""
 import logging
+
 import requests
 from celery import shared_task
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.managers import BuildMan
@@ -49,7 +50,7 @@ def pull_build(self, name: str, number: int):
     prev_build = BuildDB.previous_build(buildman.db)
 
     if prev_build is not None:
-        binpkgs = buildman.build.Content.BINPKGS
+        binpkgs = Content.BINPKGS
         left = BuildMan(prev_build).get_path(binpkgs)
         right = buildman.get_path(binpkgs)
         note = diff_notes(str(left), str(right), header="Packages built:\n")

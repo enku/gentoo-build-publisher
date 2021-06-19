@@ -4,7 +4,7 @@ import os
 import tarfile
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
@@ -64,8 +64,8 @@ class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
         storage_build.extract_artifact(jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.get_path(Build.Content.REPOS).is_dir(), True)
-        self.assertIs(storage_build.get_path(Build.Content.BINPKGS).is_dir(), True)
+        self.assertIs(storage_build.get_path(Content.REPOS).is_dir(), True)
+        self.assertIs(storage_build.get_path(Content.BINPKGS).is_dir(), True)
 
     def test_extract_artifact_creates_etc_portage_dir(self):
         """Should extract artifacts and move to etc-portage/"""
@@ -74,7 +74,7 @@ class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
         storage_build.extract_artifact(jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.get_path(Build.Content.ETC_PORTAGE).is_dir(), True)
+        self.assertIs(storage_build.get_path(Content.ETC_PORTAGE).is_dir(), True)
 
     def test_extract_artifact_creates_var_lib_portage_dir(self):
         """Should extract artifacts and move to var-lib-portage/"""
@@ -83,9 +83,7 @@ class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
         storage_build.extract_artifact(jenkins_build.download_artifact())
 
-        self.assertIs(
-            storage_build.get_path(Build.Content.VAR_LIB_PORTAGE).is_dir(), True
-        )
+        self.assertIs(storage_build.get_path(Content.VAR_LIB_PORTAGE).is_dir(), True)
 
 
 class StorageBuildPublishTestCase(TempHomeMixin, TestCase):

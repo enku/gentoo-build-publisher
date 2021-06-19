@@ -10,14 +10,15 @@ class Build:
     name: str
     number: int
 
-    @unique
-    class Content(Enum):
-        """Each build (should) contain these contents"""
-
-        REPOS = "repos"
-        BINPKGS = "binpkgs"
-        ETC_PORTAGE = "etc-portage"
-        VAR_LIB_PORTAGE = "var-lib-portage"
-
     def __str__(self):
         return f"{self.name}.{self.number}"
+
+
+@unique
+class Content(Enum):
+    """Each build (should) contain these contents"""
+
+    REPOS = "repos"
+    BINPKGS = "binpkgs"
+    ETC_PORTAGE = "etc-portage"
+    VAR_LIB_PORTAGE = "var-lib-portage"

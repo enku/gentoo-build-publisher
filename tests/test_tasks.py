@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.utils import timezone
 from requests import HTTPError
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
@@ -61,7 +61,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
 
         self.assertIs(query.exists(), False)
 
-        for item in Build.Content:
+        for item in Content:
             path = storage_build.get_path(item)
             self.assertIs(path.exists(), False, path)
 
