@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import tarfile
 from pathlib import PosixPath
-from typing import Iterator
+from typing import Iterator, Optional
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
@@ -37,8 +38,17 @@ class StorageBuild:
         """
         return self.path / item.value / str(self.build)
 
-    def extract_artifact(self, byte_stream: Iterator[bytes]):
-        """Pull and unpack the artifact"""
+    def extract_artifact(
+        self,
+        byte_stream: Iterator[bytes],
+        previous_build: Optional[StorageBuild] = None,
+    ):
+        """Pull and unpack the artifact
+
+        If `previous_build` is given, then the rsync program will be used and it's
+        `--link-dest` option will used to hard link with the previous build's content,
+        preserving space.  See the `rsync(1)` documentation for details.
+        """
         if self.pulled():
             return
 
@@ -62,6 +72,23 @@ class StorageBuild:
         for item in Content:
             src = dirpath / item.value
             dst = self.get_path(item)
+
+            if previous_build:
+                previous_path = previous_build.get_path(item)
+
+                if previous_path.exists():
+                    command = [
+                        "rsync",
+                        "--archive",
+                        "--quiet",
+                        f"--link-dest={previous_path}",
+                        "--",
+                        f"{src}/",
+                        f"{dst}/",
+                    ]
+                    subprocess.run(command, check=True)
+                    continue
+
             os.renames(src, dst)
 
         shutil.rmtree(dirpath)

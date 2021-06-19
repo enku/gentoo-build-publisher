@@ -1,6 +1,8 @@
 """Tests for the storage type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import os
+import shutil
+import subprocess
 import tarfile
 from unittest import TestCase, mock
 
@@ -217,3 +219,44 @@ class StorageExtractArtifactTestCase(TempHomeMixin, TestCase):
         storage_build.extract_artifact(jenkins_build.download_artifact())
 
         self.assertIs(storage_build.pulled(), True)
+
+    def test_uses_rsync_linkdest_if_previous_build_exists(self):
+        previous_build = Build(name="babette", number=19)
+        previous_storage_build = StorageBuild(previous_build, self.tmpdir)
+        jenkins_build = MockJenkinsBuild.from_settings(previous_build, TEST_SETTINGS)
+        previous_storage_build.extract_artifact(jenkins_build.download_artifact())
+        shutil.rmtree(previous_storage_build.get_path(Content.REPOS))
+
+        current_build = Build(name="babette", number=20)
+        current_storage_build = StorageBuild(current_build, self.tmpdir)
+
+        with mock.patch(
+            "gentoo_build_publisher.storage.subprocess.run", wraps=subprocess.run
+        ) as run_mock:
+            current_storage_build.extract_artifact(
+                jenkins_build.download_artifact(), previous_build=previous_storage_build
+            )
+
+        self.assertEqual(run_mock.call_count, len(Content) - 1)
+
+        for item in Content:
+            dst_path = current_storage_build.get_path(item)
+            self.assertIs(dst_path.exists(), True)
+
+            if item is Content.REPOS:
+                continue
+
+            link_dest_path = previous_storage_build.get_path(item)
+
+            run_mock.assert_any_call(
+                [
+                    "rsync",
+                    "--archive",
+                    "--quiet",
+                    f"--link-dest={link_dest_path}",
+                    "--",
+                    f"{self.tmpdir}/tmp/babette/20/{item.value}/",
+                    f"{dst_path}/",
+                ],
+                check=True,
+            )

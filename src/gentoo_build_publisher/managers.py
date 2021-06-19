@@ -23,7 +23,7 @@ class BuildMan:
         build: Union[Build, BuildDB],
         *,
         jenkins_build: Optional[JenkinsBuild] = None,
-        storage_build: Optional[StorageBuild] = None
+        storage_build: Optional[StorageBuild] = None,
     ):
         if isinstance(build, Build):
             self.build = build
@@ -89,7 +89,15 @@ class BuildMan:
                 self._db = BuildDB.create(self.build)
 
         if not self.storage_build.pulled():
-            self.storage_build.extract_artifact(self.jenkins_build.download_artifact())
+            if previous_build_db := self.db.previous_build():
+                previous_storage_build = type(self)(previous_build_db)
+            else:
+                previous_storage_build = None
+
+            self.storage_build.extract_artifact(
+                self.jenkins_build.download_artifact(),
+                previous_build=previous_storage_build,
+            )
 
         prev_build = BuildDB.previous_build(self.db)
 
