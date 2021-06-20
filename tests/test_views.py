@@ -8,7 +8,6 @@ from unittest import mock
 from django.test import TestCase
 
 from gentoo_build_publisher.build import Build, Content
-from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
@@ -220,29 +219,39 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
     """Tests for the diff_builds view"""
 
     def test(self):
-        left_bm = BuildModelFactory.create(name="babette", number=132)
-        right_bm = BuildModelFactory.create(name="babette", number=147)
-        left_path = str(BASE_DIR / "binpkgs" / "babette.132")
-        right_path = str(BASE_DIR / "binpkgs" / "babette.147")
+        # Given the first build with tar-1.34
+        left_bm = BuildManFactory.build()
+        path = left_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
+        path.mkdir(parents=True)
+        somefile = path / "tar-1.34-1.xpak"
+        somefile.write_text("test")
 
-        with mock.patch(
-            "gentoo_build_publisher.storage.StorageBuild.get_path"
-        ) as mock_get_path:
-            mock_get_path.side_effect = (left_path, right_path)
+        # Given the second build with tar-1.35
+        right_bm = BuildManFactory.build()
+        path = right_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
+        path.mkdir(parents=True)
+        somefile = path / "tar-1.35-1.xpak"
+        somefile.write_text("test")
 
-            response = self.client.get("/diff/babette/132/147/")
+        # When we call get the diff view given the 2 builds
+        url = f"/diff/{left_bm.name}/{left_bm.number}/{right_bm.number}/"
+        response = self.client.get(url)
 
+        # Then we get a 200 status
         self.assertEqual(response.status_code, 200)
 
         data = response.json()
         self.assertEqual(data["error"], None)
-        buildman_left = BuildMan(BuildDB(left_bm))
-        buildman_right = BuildMan(BuildDB(right_bm))
+
+        # And the differences are given between the two builds
         self.assertEqual(
-            data["diff"]["builds"], [buildman_left.as_dict(), buildman_right.as_dict()]
+            data["diff"]["builds"], [left_bm.as_dict(), right_bm.as_dict()]
         )
 
-        self.assertEqual(len(data["diff"]["items"]), 6)
+        self.assertEqual(
+            data["diff"]["items"],
+            [[-1, "app-arch/tar-1.34-1"], [1, "app-arch/tar-1.35-1"]],
+        )
 
 
 class MachinesViewTestCase(TempHomeMixin, TestCase):
