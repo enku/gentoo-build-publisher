@@ -14,20 +14,30 @@ class BuildManTestCase(TempHomeMixin, TestCase):
     def test_as_dict(self):
         """build.as_dict() should return the expected dict"""
         buildman = BuildManFactory.build()
+        buildman.db.keep = True
+        buildman.db.save()
 
         as_dict = buildman.as_dict()
 
         expected = {
             "name": buildman.name,
-            "note": None,
             "number": buildman.number,
-            "published": False,
-            "submitted": buildman.db.submitted.isoformat(),
-            "completed": None,
-            "url": (
-                "https://jenkins.invalid/job/"
-                f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
-            ),
+            "db": {
+                "note": None,
+                "keep": True,
+                "submitted": buildman.db.submitted.isoformat(),
+                "completed": None,
+            },
+            "storage": {
+                "published": False,
+                "pulled": False,
+            },
+            "jenkins": {
+                "url": (
+                    "https://jenkins.invalid/job/"
+                    f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
+                ),
+            }
         }
         self.assertEqual(as_dict, expected)
 
@@ -40,15 +50,23 @@ class BuildManTestCase(TempHomeMixin, TestCase):
 
         expected = {
             "name": buildman.name,
-            "note": "This is a test",
             "number": buildman.number,
-            "published": False,
-            "submitted": buildman.db.submitted.isoformat(),
-            "completed": None,
-            "url": (
-                "https://jenkins.invalid/job/"
-                f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
-            ),
+            "db": {
+                "note": "This is a test",
+                "completed": None,
+                "submitted": buildman.db.submitted.isoformat(),
+                "keep": False,
+            },
+            "jenkins": {
+                "url": (
+                    "https://jenkins.invalid/job/"
+                    f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
+                ),
+            },
+            "storage": {
+                "published": False,
+                "pulled": False,
+            }
         }
         self.assertEqual(as_dict, expected)
 

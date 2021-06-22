@@ -8,6 +8,7 @@ from unittest import mock
 from django.test import TestCase
 
 from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
@@ -115,18 +116,9 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         response = self.client.get("/latest/babette/")
 
         self.assertEqual(response.status_code, 200)
-        name = self.latest.name
-        number = self.latest.number
-        expected = {
-            "error": None,
-            "name": name,
-            "note": None,
-            "number": number,
-            "published": False,
-            "submitted": self.latest.submitted.isoformat(),
-            "completed": self.latest.completed.isoformat(),
-            "url": f"https://jenkins.invalid/job/{name}/{number}/artifact/build.tar.gz",
-        }
+
+        expected = BuildMan(BuildDB(self.latest)).as_dict()
+        expected["error"] = None
 
         self.assertEqual(json.loads(response.content), expected)
 
@@ -140,17 +132,25 @@ class ShowBuildViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         expected = {
-            "completed": None,
-            "error": None,
             "name": build_model.name,
-            "note": None,
             "number": build_model.number,
-            "published": False,
-            "submitted": build_model.submitted.isoformat(),
-            "url": (
-                "https://jenkins.invalid/job/"
-                f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
-            ),
+            "error": None,
+            "storage": {
+                "published": False,
+                "pulled": False,
+            },
+            "db": {
+                "completed": None,
+                "keep": False,
+                "note": None,
+                "submitted": build_model.submitted.isoformat(),
+            },
+            "jenkins": {
+                "url": (
+                    "https://jenkins.invalid/job/"
+                    f"{build_model.name}/{build_model.number}/artifact/build.tar.gz"
+                ),
+            },
         }
 
         self.assertEqual(response.json(), expected)

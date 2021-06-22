@@ -98,25 +98,31 @@ class BuildMan:
 
     def as_dict(self) -> Dict[str, Any]:
         """Convert build instance attributes to a dict"""
-        submitted: Optional[str] = None
-        completed: Optional[str] = None
-        note: Optional[str] = None
-
         if self.db is not None:
-            submitted = self.db.submitted.isoformat()
-            completed = (
-                self.db.completed.isoformat() if self.db.completed is not None else None
-            )
-            note = self.db.note
+            db_dict = {
+                "submitted": self.db.submitted.isoformat(),
+                "completed": (
+                    self.db.completed.isoformat()
+                    if self.db.completed is not None
+                    else None
+                ),
+                "note": self.db.note,
+                "keep": self.db.keep,
+            }
+        else:
+            db_dict = {}
 
         return {
             "name": self.name,
-            "note": note,
             "number": self.number,
-            "published": self.published(),
-            "url": str(self.jenkins_build.artifact_url()),
-            "submitted": submitted,
-            "completed": completed,
+            "storage": {
+                "published": self.published(),
+                "pulled": self.pulled(),
+            },
+            "db": db_dict,
+            "jenkins": {
+                "url": str(self.jenkins_build.artifact_url()),
+            },
         }
 
     def logs_url(self) -> URL:
