@@ -16,9 +16,14 @@ from gentoo_build_publisher.tasks import publish_build, pull_build
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to publish a build"""
-    publish_build.delay(build_name, build_number)
+    buildman = BuildMan(Build(name=build_name, number=build_number))
 
-    response = BuildMan(Build(name=build_name, number=build_number)).as_dict()
+    if buildman.pulled():
+        buildman.publish()
+    else:
+        publish_build.delay(build_name, build_number)
+
+    response = buildman.as_dict()
     response["error"] = None
 
     return JsonResponse(response)

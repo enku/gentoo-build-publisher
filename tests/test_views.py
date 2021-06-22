@@ -29,6 +29,17 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         mock_pb.delay.assert_called_once_with("babette", 193)
 
+    def test_should_not_schedule_task_if_already_pulled(self):
+        build = BuildManFactory.build()
+        build.pull()
+
+        with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
+            response = self.client.post(f"/publish/{build.name}/{build.number}/")
+
+        self.assertEqual(response.status_code, 200)
+        mock_pb.delay.assert_not_called()
+        self.assertTrue(build.published())
+
 
 class PullViewTestCase(TempHomeMixin, TestCase):
     """Tests for the pull view"""
