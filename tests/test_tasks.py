@@ -158,7 +158,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         with mock.patch.object(
             buildman.jenkins_build, "download_artifact"
         ) as download_artifact_mock:
-            download_artifact_mock.side_effect = HTTPError
+            download_artifact_mock.side_effect = (HTTPError, None)
             pull_build.s(buildman.name, buildman.number).apply()
 
         with self.assertRaises(BuildModel.DoesNotExist):

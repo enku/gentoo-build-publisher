@@ -2,6 +2,7 @@
 import logging
 
 import requests
+import requests.exceptions
 from celery import shared_task
 from django.utils import timezone
 
@@ -10,6 +11,13 @@ from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
+
+
+PULL_RETRYABLE_EXCEPTIONS = (
+    EOFError,
+    requests.exceptions.ConnectionError,
+    requests.exceptions.HTTPError,
+)
 
 
 @shared_task
@@ -31,10 +39,12 @@ def pull_build(self, name: str, number: int):
 
     try:
         buildman.pull()
-    except requests.HTTPError:
+    except PULL_RETRYABLE_EXCEPTIONS as error:
         logger.exception("Failed to pull build %s", buildman.build)
         if buildman.db:
             buildman.db.delete()
+
+        self.retry(exc=error)
 
         return
 
