@@ -5,9 +5,8 @@ import requests
 from celery import shared_task
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
@@ -39,30 +38,10 @@ def pull_build(self, name: str, number: int):
 
         return
 
-    assert buildman.db is not None
-
-    logs = buildman.jenkins_build.get_logs()
-
     buildman.db.task_id = self.request.id
-    buildman.db.logs = logs
     buildman.db.save()
 
-    prev_build = BuildDB.previous_build(buildman.db)
-
-    if prev_build is not None:
-        binpkgs = Content.BINPKGS
-        left = BuildMan(prev_build).get_path(binpkgs)
-        right = buildman.get_path(binpkgs)
-        note = diff_notes(str(left), str(right), header="Packages built:\n")
-
-        if note:
-            buildman.db.note = note
-
-    buildman.db.completed = timezone.now()
-    buildman.db.save()
-
-    settings = Settings.from_environ()
-    if settings.ENABLE_PURGE:
+    if Settings.from_environ().ENABLE_PURGE:
         purge_build.delay(buildman.name)
 
 

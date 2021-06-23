@@ -1,4 +1,5 @@
 """Managers"""
+from datetime import datetime, timezone
 from pathlib import PosixPath
 from typing import Any, Dict, Optional, Union
 
@@ -6,9 +7,12 @@ from yarl import URL
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.jenkins import JenkinsBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
+
+utcnow = datetime.utcnow
 
 
 class BuildMan:
@@ -67,7 +71,9 @@ class BuildMan:
 
     def publish(self):
         """Publish the build"""
-        self.pull()
+        if not self.pulled():
+            self.pull()
+
         self.storage_build.publish()
 
     def published(self) -> bool:
@@ -84,6 +90,21 @@ class BuildMan:
 
         if not self.storage_build.pulled():
             self.storage_build.extract_artifact(self.jenkins_build.download_artifact())
+
+        prev_build = BuildDB.previous_build(self.db)
+
+        if prev_build is not None:
+            binpkgs = Content.BINPKGS
+            left = BuildMan(prev_build).get_path(binpkgs)
+            right = self.get_path(binpkgs)
+            note = diff_notes(str(left), str(right), header="Packages built:\n")
+
+            if note:
+                self.db.note = note
+
+        self.db.logs = self.jenkins_build.get_logs()
+        self.db.completed = utcnow().replace(tzinfo=timezone.utc)
+        self.db.save()
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""

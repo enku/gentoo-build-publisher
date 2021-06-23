@@ -10,7 +10,6 @@ from django.utils import timezone
 from requests import HTTPError
 
 from gentoo_build_publisher.build import Build, Content
-from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
@@ -130,48 +129,6 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         self.assertIs(buildman.pulled(), True)
 
-    def test_stores_build_logs(self, buildmanager_mock):
-        """Should store the logs of the build"""
-        buildman = BuildManFactory.build()
-        buildmanager_mock.return_value = buildman
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build.s(buildman.name, buildman.number).apply()
-
-        url = str(buildman.logs_url())
-        buildman.jenkins_build.get_build_logs_mock_get.assert_called_once()
-        call_args = buildman.jenkins_build.get_build_logs_mock_get.call_args
-        self.assertEqual(call_args[0][0], url)
-
-        self.assertEqual(buildman.db.logs, "foo\n")
-
-    def test_writes_built_pkgs_in_note(self, buildmanager_mock):
-        prev_build = BuildManFactory.build()
-        prev_build.db.model.completed = timezone.now()
-        prev_build.db.model.save()
-
-        buildman = BuildManFactory.build()
-        buildmanager_mock.return_value = buildman
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            with mock.patch("gentoo_build_publisher.diff.dirdiff") as mock_dirdiff:
-                mock_dirdiff.return_value = iter(
-                    [
-                        Change(item="app-crypt/gpgme-1.14.0-1", status=Status.REMOVED),
-                        Change(item="app-crypt/gpgme-1.14.0-2", status=Status.ADDED),
-                        Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
-                        Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
-                    ]
-                )
-                pull_build.s(buildman.name, buildman.number).apply()
-
-        buildman.db.refresh()
-
-        self.assertEqual(
-            buildman.db.note,
-            "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
-        )
-
     def test_calls_purge_build(self, buildmanager_mock):
         """Should issue the purge_build task when setting is true"""
         buildman = BuildManFactory.build()
@@ -193,20 +150,6 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
                 pull_build.s(buildman.name, buildman.number).apply()
 
         mock_purge_build.delay.assert_not_called()
-
-    def test_updates_build_models_completed_field(self, buildmanager_mock):
-        """Should update the completed field with the current timestamp"""
-        now = timezone.now()
-        buildman = BuildManFactory.build()
-        buildmanager_mock.return_value = buildman
-
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            with mock.patch("gentoo_build_publisher.tasks.timezone.now") as mock_now:
-                mock_now.return_value = now
-                pull_build.s(buildman.name, buildman.number).apply()
-
-        buildman.db.model.refresh_from_db()
-        self.assertEqual(buildman.db.model.completed, now)
 
     def test_should_delete_db_model_when_download_fails(self, buildmanager_mock):
         buildman = BuildManFactory.build()
