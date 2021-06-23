@@ -31,7 +31,7 @@ class PublishBuildTestCase(TempHomeMixin, TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            publish_build("babette", 193)
+            publish_build.s("babette", 193).apply()
 
         self.assertIs(buildman.published(), True)
         buildmanager_mock.assert_called_with(build)
@@ -55,7 +55,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
         storage_build = StorageBuild(build, self.tmpdir)
         storage_build.extract_artifact(jenkins_build.download_artifact())
 
-        purge_build(build_model.name)
+        purge_build.s(build_model.name).apply()
 
         query = BuildModel.objects.filter(id=build_model.id)
 
@@ -75,7 +75,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )
 
-        purge_build(build_model.name)
+        purge_build.s(build_model.name).apply()
 
         query = BuildModel.objects.filter(id=build_model.id)
 
@@ -93,7 +93,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
         )
 
         buildman.publish()
-        purge_build(buildman.name)
+        purge_build.s(buildman.name).apply()
 
         query = BuildModel.objects.filter(id=buildman.id)
 
@@ -109,7 +109,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
             number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
         )
 
-        purge_build(build_model.name)
+        purge_build.s(build_model.name).apply()
 
         query = BuildModel.objects.filter(id=build_model.id)
 
@@ -126,7 +126,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build(buildman.name, buildman.number)
+            pull_build.s(buildman.name, buildman.number).apply()
 
         self.assertIs(buildman.pulled(), True)
 
@@ -136,7 +136,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build(buildman.name, buildman.number)
+            pull_build.s(buildman.name, buildman.number).apply()
 
         url = str(buildman.logs_url())
         buildman.jenkins_build.get_build_logs_mock_get.assert_called_once()
@@ -163,7 +163,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
                         Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
                     ]
                 )
-                pull_build(buildman.name, buildman.number)
+                pull_build.s(buildman.name, buildman.number).apply()
 
         buildman.db.refresh()
 
@@ -179,7 +179,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                pull_build(buildman.name, buildman.number)
+                pull_build.s(buildman.name, buildman.number).apply()
 
         mock_purge_build.delay.assert_called_with(buildman.name)
 
@@ -190,7 +190,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                pull_build(buildman.name, buildman.number)
+                pull_build.s(buildman.name, buildman.number).apply()
 
         mock_purge_build.delay.assert_not_called()
 
@@ -203,7 +203,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             with mock.patch("gentoo_build_publisher.tasks.timezone.now") as mock_now:
                 mock_now.return_value = now
-                pull_build(buildman.name, buildman.number)
+                pull_build.s(buildman.name, buildman.number).apply()
 
         buildman.db.model.refresh_from_db()
         self.assertEqual(buildman.db.model.completed, now)
@@ -216,7 +216,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
             buildman.jenkins_build, "download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = HTTPError
-            pull_build(buildman.name, buildman.number)
+            pull_build.s(buildman.name, buildman.number).apply()
 
         with self.assertRaises(BuildModel.DoesNotExist):
             buildman.db.model.refresh_from_db()
