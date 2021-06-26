@@ -9,7 +9,7 @@ from gentoo_build_publisher.models import BuildModel
 
 @receiver(post_delete, sender=BuildModel, dispatch_uid="buildmodel-deleted")
 def build_model_deleted(
-    sender, signal, instance, using
+    sender, signal, instance, using, **kwargs
 ):  # pylint: disable=unused-argument
     """Signal handler for when a BuildModel is deleted"""
     buildman = BuildMan(Build(name=instance.name, number=instance.number))

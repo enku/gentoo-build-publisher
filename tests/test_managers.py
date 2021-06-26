@@ -43,7 +43,7 @@ class BuildManTestCase(TempHomeMixin, TestCase):
                     "https://jenkins.invalid/job/"
                     f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
                 ),
-            }
+            },
         }
         self.assertEqual(as_dict, expected)
 
@@ -72,7 +72,7 @@ class BuildManTestCase(TempHomeMixin, TestCase):
             "storage": {
                 "published": False,
                 "pulled": False,
-            }
+            },
         }
         self.assertEqual(as_dict, expected)
 
