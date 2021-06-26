@@ -21,26 +21,17 @@ class JenkinsBuild:
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
 
+    def url(self) -> URL:
+        """Return the Jenkins url for the build"""
+        return self.base_url / "job" / self.build.name / str(self.build.number)
+
     def artifact_url(self) -> URL:
         """Return the artifact url for build"""
-        return (
-            self.base_url
-            / "job"
-            / self.build.name
-            / str(self.build.number)
-            / "artifact"
-            / self.artifact_name
-        )
+        return self.url() / "artifact" / self.artifact_name
 
     def logs_url(self) -> URL:
         """Return the url for the build's console logs"""
-        return (
-            self.base_url
-            / "job"
-            / self.build.name
-            / str(self.build.number)
-            / "consoleText"
-        )
+        return self.url() / "consoleText"
 
     def download_artifact(self) -> Generator[bytes, None, None]:
         """Download and yield the build artifact in chunks of bytes"""
