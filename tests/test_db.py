@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from gentoo_build_publisher.build import Build
-from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.db import BuildDB, MachineInfo
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 
 from .factories import BuildDBFactory, BuildModelFactory
@@ -261,3 +261,33 @@ class BuildDBTestCase(TestCase):
         assert next_build.name == build_db.name
 
         self.assertEqual(build_db.next_build(), next_build)
+
+
+class MachineInfoTest(TestCase):
+    def test_as_dict_no_last_build(self):
+        machine_info = MachineInfo(name="babette", build_count=16, last_build=None)
+
+        as_dict = machine_info.as_dict()
+
+        self.assertEqual(as_dict, {"builds": 16, "last_build": None, "name": "babette"})
+
+    def test_as_dict_last_last_build(self):
+        last_build = BuildDBFactory.create(build_model__name="babette")
+
+        machine_info = MachineInfo(
+            name="babette", build_count=16, last_build=last_build
+        )
+
+        as_dict = machine_info.as_dict()
+
+        self.assertEqual(
+            as_dict,
+            {
+                "builds": 16,
+                "last_build": {
+                    "number": last_build.number,
+                    "submitted": last_build.submitted,
+                },
+                "name": "babette",
+            },
+        )

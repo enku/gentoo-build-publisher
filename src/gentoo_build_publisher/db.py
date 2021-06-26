@@ -5,7 +5,7 @@ import datetime as dt
 from dataclasses import dataclass
 from typing import Iterator, List, Optional, Type, TypeVar
 
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.utils import timezone
 
 from gentoo_build_publisher.build import Build
@@ -20,10 +20,20 @@ class MachineInfo:
 
     name: str
     build_count: int
+    last_build: Optional[BuildDB]
 
     def as_dict(self) -> dict:
         """Return dataclass as a dictionary"""
-        return {"name": self.name, "builds": self.build_count}
+        return {
+            "name": self.name,
+            "builds": self.build_count,
+            "last_build": {
+                "number": self.last_build.number,
+                "submitted": self.last_build.submitted,
+            }
+            if self.last_build is not None
+            else None,
+        }
 
 
 class BuildDB:
@@ -211,9 +221,19 @@ class BuildDB:
             BuildModel.objects.values("name")
             .order_by("name")
             .annotate(builds=Count("name"))
+            .annotate(last_build=Max("number"))
         )
 
-        return [MachineInfo(name=i["name"], build_count=i["builds"]) for i in machines]
+        return [
+            MachineInfo(
+                name=i["name"],
+                build_count=i["builds"],
+                last_build=cls(
+                    BuildModel.objects.get(name=i["name"], number=i["last_build"])
+                ),
+            )
+            for i in machines
+        ]
 
     def previous_build(self, completed: bool = True) -> Optional[BuildDB]:
         """Return the previous build in the db or None"""
