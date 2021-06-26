@@ -2,6 +2,7 @@
 View for gbp
 """
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -9,7 +10,18 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import dirdiff
 from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import publish_build, pull_build
+
+
+def index(request: HttpRequest) -> HttpResponse:
+    """Index view"""
+    machines = BuildDB.list_machines()
+    machines.sort(key=lambda i: i.name)
+    settings = Settings.from_environ()
+    context = {"jenkins_base_url": settings.JENKINS_BASE_URL, "machines": machines}
+
+    return render(request, "gentoo_build_publisher/index.html", context)
 
 
 @require_POST
