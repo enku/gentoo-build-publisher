@@ -29,7 +29,7 @@ class BuildDBFactory(factory.Factory):
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         model = BuildDB
 
-    build_model = factory.LazyFunction(BuildModelFactory.create)
+    build_model = factory.SubFactory(BuildModelFactory)
 
 
 class BuildManFactory(factory.Factory):
@@ -39,7 +39,7 @@ class BuildManFactory(factory.Factory):
         model = BuildMan
         rename = {"build_attr": "build"}
 
-    build_attr = factory.LazyFunction(BuildDBFactory.create)
+    build_attr = factory.SubFactory(BuildDBFactory)
     jenkins_build = factory.LazyAttribute(
         lambda obj: MockJenkinsBuild.from_settings(
             obj.build_attr, Settings.from_environ()

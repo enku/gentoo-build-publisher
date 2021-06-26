@@ -18,7 +18,7 @@ class BuildDBTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build_db = BuildDBFactory.build()
+        self.build_db = BuildDBFactory.create()
 
     def test_id_property(self):
         self.assertEqual(self.build_db.id, self.build_db.model.id)

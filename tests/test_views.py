@@ -230,14 +230,14 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
 
     def test(self):
         # Given the first build with tar-1.34
-        left_bm = BuildManFactory.build()
+        left_bm = BuildManFactory.create()
         path = left_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
         path.mkdir(parents=True)
         somefile = path / "tar-1.34-1.xpak"
         somefile.write_text("test")
 
         # Given the second build with tar-1.35
-        right_bm = BuildManFactory.build()
+        right_bm = BuildManFactory.create()
         path = right_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
         path.mkdir(parents=True)
         somefile = path / "tar-1.35-1.xpak"
