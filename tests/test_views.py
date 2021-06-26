@@ -1,6 +1,5 @@
 """Unit tests for gbp views"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
@@ -119,7 +118,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
         self.assertEqual(
-            json.loads(response.content),
+            response.json(),
             {"error": "No completed builds exist with that name"},
         )
 
@@ -131,7 +130,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         expected = BuildMan(BuildDB(self.latest)).as_dict()
         expected["error"] = None
 
-        self.assertEqual(json.loads(response.content), expected)
+        self.assertEqual(response.json(), expected)
 
 
 class ShowBuildViewTestCase(TempHomeMixin, TestCase):
