@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.diff import Change, Status
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.settings import Settings
 
 from . import TempHomeMixin
@@ -146,3 +146,62 @@ class BuildManTestCase(TempHomeMixin, TestCase):
             buildman.db.note,
             "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
         )
+
+
+class MachineInfoTestCase(TempHomeMixin, TestCase):
+    """Tests for the MachineInfo thingie"""
+
+    def test(self):
+        # Given the "foo" builds, one of which is published
+        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        first_build.publish()
+        last_build = BuildManFactory.create(build_attr__build_model__name="foo")
+
+        # Given the "other" builds
+        BuildManFactory.create_batch(3, build_attr__build_model__name="bar")
+
+        # When we get MachineInfo for foo
+        machine_info = MachineInfo("foo")
+
+        # Then it contains the expected attributes
+        self.assertEqual(machine_info.name, "foo")
+        self.assertEqual(machine_info.build_count, 2)
+        self.assertEqual(machine_info.last_build.number, last_build.number)
+        self.assertEqual(machine_info.published.number, first_build.number)
+
+    def test_empty_db(self):
+        # When we get MachineInfo for foo
+        machine_info = MachineInfo("foo")
+
+        # Then it contains the expected attributes
+        self.assertEqual(machine_info.name, "foo")
+        self.assertEqual(machine_info.build_count, 0)
+        self.assertEqual(machine_info.last_build, None)
+        self.assertEqual(machine_info.published, None)
+
+    def test_as_dict(self):
+        # Given the "foo" builds, one of which is published
+        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        first_build.publish()
+        last_build = BuildManFactory.create(build_attr__build_model__name="foo")
+
+        # When we get MachineInfo for foo
+        machine_info = MachineInfo("foo")
+
+        # And call it's .as_dict() method
+        as_dict = machine_info.as_dict()
+
+        # Then it contains the expected value
+        expected = {
+            "builds": 2,
+            "last_build": {
+                "number": last_build.number,
+                "submitted": last_build.db.submitted,
+            },
+            "name": "foo",
+            "published": {
+                "number": first_build.number,
+                "submitted": first_build.db.submitted,
+            },
+        }
+        self.assertEqual(as_dict, expected)

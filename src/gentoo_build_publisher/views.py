@@ -9,15 +9,14 @@ from django.views.decorators.http import require_POST
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import dirdiff
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
 
 def index(request: HttpRequest) -> HttpResponse:
     """Index view"""
-    machines = BuildDB.list_machines()
-    machines.sort(key=lambda i: i.name)
+    machines = [MachineInfo(i) for i in BuildDB.list_machines()]
     settings = Settings.from_environ()
     context = {"jenkins_base_url": settings.JENKINS_BASE_URL, "machines": machines}
 
@@ -159,7 +158,6 @@ def diff_builds(
 
 def list_machines(_request: HttpRequest) -> JsonResponse:
     """List the machines and build counts"""
-    machines = BuildDB.list_machines()
-    machines.sort(key=lambda i: i.name)
+    machines = [MachineInfo(i) for i in BuildDB.list_machines()]
 
     return JsonResponse({"error": None, "machines": [i.as_dict() for i in machines]})

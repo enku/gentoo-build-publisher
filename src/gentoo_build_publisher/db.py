@@ -2,38 +2,14 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass
 from typing import Iterator, List, Optional, Type, TypeVar
 
-from django.db.models import Count, Max
 from django.utils import timezone
 
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 
 T = TypeVar("T", bound="BuildDB")  # pylint: disable=invalid-name
-
-
-@dataclass
-class MachineInfo:
-    """Data type for machine metadata"""
-
-    name: str
-    build_count: int
-    last_build: Optional[BuildDB]
-
-    def as_dict(self) -> dict:
-        """Return dataclass as a dictionary"""
-        return {
-            "name": self.name,
-            "builds": self.build_count,
-            "last_build": {
-                "number": self.last_build.number,
-                "submitted": self.last_build.submitted,
-            }
-            if self.last_build is not None
-            else None,
-        }
 
 
 class BuildDB:
@@ -215,25 +191,15 @@ class BuildDB:
         return (cls(build_model) for build_model in build_models)
 
     @classmethod
-    def list_machines(cls) -> List[MachineInfo]:
-        """Return a list of machines in the database"""
+    def list_machines(cls) -> List[str]:
+        """Return a list of machine names"""
         machines = (
-            BuildModel.objects.values("name")
+            BuildModel.objects.values_list("name", flat=True)
+            .distinct()
             .order_by("name")
-            .annotate(builds=Count("name"))
-            .annotate(last_build=Max("number"))
         )
 
-        return [
-            MachineInfo(
-                name=i["name"],
-                build_count=i["builds"],
-                last_build=cls(
-                    BuildModel.objects.get(name=i["name"], number=i["last_build"])
-                ),
-            )
-            for i in machines
-        ]
+        return list(machines)
 
     def previous_build(self, completed: bool = True) -> Optional[BuildDB]:
         """Return the previous build in the db or None"""

@@ -12,7 +12,12 @@
       <div class="row">
         <table class="table">
           <thead>
-            <tr><th>Machine</th><th>Builds</th><th>Last Build</th><th>Submitted</th></tr>
+            <tr>
+              <th>Machine</th>
+              <th>Builds</th>
+              <th colspan="2">Last Build</th>
+              <th colspan="2">Published</th>
+            </tr>
           </thead>
           <tbody>
             {% for machine in machines %}
@@ -20,8 +25,23 @@
               <td>{{ machine.name }}</td>
               <td>{{ machine.build_count }}</td>
               {% if machine.last_build %}
-              <td><a href="{{ jenkins_base_url }}/job/{{ machine.name }}/{{ machine.last_build.number }}/">{{ machine.last_build.number }}</a></td>
-              <td>{{ machine.last_build.submitted }}</td>
+              <td class="text-end">
+                <a class="text-decoration-none" href="{{ jenkins_base_url }}/job/{{ machine.name }}/{{ machine.last_build.number }}/">{{ machine.last_build.number }}</a>
+              </td>
+              <td>
+                <small class="text-muted">{{ machine.last_build.db.submitted }}</small>
+              </td>
+              {% else %}
+              <td></td>
+              <td></td>
+              {% endif %}
+              {% if machine.published %}
+              <td class="text-end">
+                <a class="text-decoration-none" href="{{ jenkins_base_url }}/job/{{ machine.name }}/{{ machine.published.number }}/">{{ machine.published.number }}</a>
+              </td>
+              <td>
+                <small class="text-muted">{{ machine.published.db.submitted }}</small>
+              </td>
               {% else %}
               <td></td>
               <td></td>

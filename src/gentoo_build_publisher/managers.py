@@ -161,3 +161,63 @@ class BuildMan:
     def get_path(self, item: Content) -> PosixPath:
         """Return the path of the content type for this Build's storage"""
         return self.storage_build.get_path(item)
+
+
+class MachineInfo:  # pylint: disable=too-few-public-methods
+    """Data type for machine metadata
+
+    Has the following attributes:
+
+        name: str
+        build_count: int
+        last_build: Optional[BuildMan]
+        published: Optional[BuildMan]
+    """
+
+    def __init__(self, machine_name: str):
+        builddbs = list(BuildDB.builds(name=machine_name))
+
+        try:
+            last_build = max(builddbs, key=lambda i: i.number)
+        except ValueError:
+            last_build = None
+
+        published = None
+
+        for builddb in builddbs:
+            buildman = BuildMan(builddb)
+
+            if buildman.published():
+                published = buildman
+                break
+
+        self.name: str = machine_name
+        self.build_count: int = len(builddbs)
+        self.last_build: Optional[BuildMan] = (
+            BuildMan(last_build) if last_build else None
+        )
+        self.published: Optional[BuildMan] = published
+
+    def as_dict(self) -> Dict[str, Any]:
+        """Return dataclass as a dictionary"""
+        last_build: Optional[dict] = None
+        published: Optional[dict] = None
+
+        if self.last_build:
+            last_build = {
+                "number": self.last_build.number,
+                "submitted": self.last_build.db.submitted,
+            }
+
+        if self.published:
+            published = {
+                "number": self.published.number,
+                "submitted": self.published.db.submitted,
+            }
+
+        return {
+            "builds": self.build_count,
+            "last_build": last_build,
+            "name": self.name,
+            "published": published,
+        }
