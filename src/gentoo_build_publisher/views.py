@@ -10,17 +10,14 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import dirdiff
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
-from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
 
 def index(request: HttpRequest) -> HttpResponse:
     """Index view"""
     machines = [MachineInfo(i) for i in BuildDB.list_machines()]
-    settings = Settings.from_environ()
-    context = {"jenkins_base_url": settings.JENKINS_BASE_URL, "machines": machines}
 
-    return render(request, "gentoo_build_publisher/index.html", context)
+    return render(request, "gentoo_build_publisher/index.html", {"machines": machines})
 
 
 @require_POST

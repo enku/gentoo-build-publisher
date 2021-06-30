@@ -26,7 +26,7 @@
               <td>{{ machine.build_count }}</td>
               {% if machine.last_build %}
               <td class="text-end">
-                <a class="text-decoration-none" href="{{ jenkins_base_url }}/job/{{ machine.name }}/{{ machine.last_build.number }}/">{{ machine.last_build.number }}</a>
+                <a class="text-decoration-none" href="{{ machine.last_build.jenkins_build.url }}">{{ machine.last_build.number }}</a>
               </td>
               <td>
                 <small class="text-muted">{{ machine.last_build.db.submitted }}</small>
@@ -37,7 +37,7 @@
               {% endif %}
               {% if machine.published %}
               <td class="text-end">
-                <a class="text-decoration-none" href="{{ jenkins_base_url }}/job/{{ machine.name }}/{{ machine.published.number }}/">{{ machine.published.number }}</a>
+                <a class="text-decoration-none" href="{{ machine.published.jenkins_build.url }}">{{ machine.published.number }}</a>
               </td>
               <td>
                 <small class="text-muted">{{ machine.published.db.submitted }}</small>
