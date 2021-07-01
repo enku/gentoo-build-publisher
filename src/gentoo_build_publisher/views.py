@@ -4,7 +4,7 @@ View for gbp
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
@@ -20,7 +20,26 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, "gentoo_build_publisher/index.html", {"machines": machines})
 
 
-@require_POST
+@require_http_methods(["DELETE", "GET", "POST"])
+@csrf_exempt
+def api_build(request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
+    """Main api view for a particular build
+
+    Dispatches to sub views depending on the request method.
+    """
+    method = request.method
+
+    if method == "DELETE":
+        return delete(request, build_name, build_number)
+
+    if method == "GET":
+        return show_build(request, build_name, build_number)
+
+    # POST
+    return pull(request, build_name, build_number)
+
+
+@require_http_methods(["POST"])
 @csrf_exempt
 def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to publish a build"""
@@ -37,8 +56,6 @@ def publish(_request: HttpRequest, build_name: str, build_number: int) -> JsonRe
     return JsonResponse(response)
 
 
-@require_POST
-@csrf_exempt
 def pull(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to pull a new build"""
     pull_build.delay(build_name, build_number)
@@ -62,8 +79,6 @@ def show_build(
     return JsonResponse(response, status=status_code)
 
 
-@require_POST
-@csrf_exempt
 def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonResponse:
     """View to delete a build"""
     build = Build(name=build_name, number=build_number)

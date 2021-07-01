@@ -23,7 +23,7 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
     def test_publish(self):
         """Should publish builds"""
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = self.client.post("/publish/babette/193/")
+            response = self.client.post("/api/builds/babette/193/publish")
 
         self.assertEqual(response.status_code, 200)
         mock_pb.delay.assert_called_once_with("babette", 193)
@@ -33,7 +33,9 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
         build.pull()
 
         with mock.patch("gentoo_build_publisher.views.publish_build") as mock_pb:
-            response = self.client.post(f"/publish/{build.name}/{build.number}/")
+            response = self.client.post(
+                f"/api/builds/{build.name}/{build.number}/publish"
+            )
 
         self.assertEqual(response.status_code, 200)
         mock_pb.delay.assert_not_called()
@@ -46,7 +48,7 @@ class PullViewTestCase(TempHomeMixin, TestCase):
     def test_publish_new(self):
         """Should publish brand new builds"""
         with mock.patch("gentoo_build_publisher.views.pull_build") as mock_pb:
-            response = self.client.post("/pull/babette/193/")
+            response = self.client.post("/api/builds/babette/193")
 
         self.assertEqual(response.status_code, 200)
         mock_pb.delay.assert_called_once_with("babette", 193)
@@ -76,7 +78,7 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
         )
 
     def test_when_no_builds_should_respond_with_404(self):
-        response = self.client.get("/builds/bogus/")
+        response = self.client.get("/api/builds/bogus/")
 
         self.assertEqual(response.status_code, 404)
 
@@ -86,7 +88,7 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
         )
 
     def test_should_return_the_list_of_completed_builds(self):
-        response = self.client.get("/builds/babette/")
+        response = self.client.get("/api/builds/babette/")
 
         self.assertEqual(response.status_code, 200)
 
@@ -113,7 +115,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         )
 
     def test_when_no_builds_should_respond_with_404(self):
-        response = self.client.get("/latest/bogus/")
+        response = self.client.get("/api/builds/bogus/latest")
 
         self.assertEqual(response.status_code, 404)
 
@@ -123,7 +125,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         )
 
     def test_should_return_the_latest_submitted_completed(self):
-        response = self.client.get("/latest/babette/")
+        response = self.client.get("/api/builds/babette/latest")
 
         self.assertEqual(response.status_code, 200)
 
@@ -137,7 +139,9 @@ class ShowBuildViewTestCase(TempHomeMixin, TestCase):
     def test_returns_json_repr(self):
         build_model = BuildModelFactory.create()
 
-        response = self.client.get(f"/build/{build_model.name}/{build_model.number}/")
+        response = self.client.get(
+            f"/api/builds/{build_model.name}/{build_model.number}"
+        )
 
         self.assertEqual(response.status_code, 200)
 
@@ -166,7 +170,7 @@ class ShowBuildViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.json(), expected)
 
     def test_returns_returns_404(self):
-        response = self.client.get("/build/bogus/123/")
+        response = self.client.get("/build/bogus/123")
 
         self.assertEqual(response.status_code, 404)
 
@@ -178,7 +182,9 @@ class LogsViewTestCase(TempHomeMixin, TestCase):
         build_model = BuildModelFactory.create()
         BuildLog.objects.create(build_model=build_model, logs="foo\n")
 
-        response = self.client.get(f"/logs/{build_model.name}/{build_model.number}/")
+        response = self.client.get(
+            f"/api/builds/{build_model.name}/{build_model.number}/log"
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
@@ -187,7 +193,9 @@ class LogsViewTestCase(TempHomeMixin, TestCase):
     def test_gives_404_response_when_there_are_no_logs(self):
         build_model = BuildModelFactory.create()
 
-        response = self.client.get(f"/logs/{build_model.name}/{build_model.number}/")
+        response = self.client.get(
+            f"/api/builds/{build_model.name}/{build_model.number}/log"
+        )
 
         self.assertEqual(response.status_code, 404)
 
@@ -206,7 +214,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         self.assertTrue(buildman.storage_build.get_path(Content.BINPKGS).exists())
         self.assertTrue(buildman.storage_build.get_path(Content.REPOS).exists())
 
-        response = self.client.post(f"/delete/{build.name}/{build.number}/")
+        response = self.client.delete(f"/api/builds/{build.name}/{build.number}")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"deleted": True, "error": None})
@@ -220,9 +228,10 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
 
     def test_build_does_not_exist(self):
         """Should return a 404 response when build does not exist"""
-        response = self.client.post("/delete/3000/")
+        response = self.client.delete("/api/builds/bogus/3000")
 
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {"error": "Not found"})
 
 
 class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
@@ -244,7 +253,7 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
         somefile.write_text("test")
 
         # When we call get the diff view given the 2 builds
-        url = f"/diff/{left_bm.name}/{left_bm.number}/{right_bm.number}/"
+        url = f"/api/builds/{left_bm.name}/diff/{left_bm.number}/{right_bm.number}"
         response = self.client.get(url)
 
         # Then we get a 200 status
@@ -269,7 +278,7 @@ class MachinesViewTestCase(TempHomeMixin, TestCase):
         BuildModelFactory.create_batch(2, name="babette")
         BuildModelFactory.create_batch(3, name="lighthouse")
 
-        response = self.client.get("/machines/")
+        response = self.client.get("/api/machines/")
 
         self.assertEqual(response.status_code, 200)
 
