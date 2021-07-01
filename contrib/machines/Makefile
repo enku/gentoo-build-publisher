@@ -86,7 +86,7 @@ $(archive): world gbp.json
 
 .PHONY: push
 push: $(archive)  ## Push artifact (to GBP)
-	curl -X POST https://gbp/pull/$(machine)/$(build)/
+	curl -X POST https://gbp/api/$(machine)/$(build)
 
 
 .PHONY: %.machine
