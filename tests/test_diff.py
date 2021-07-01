@@ -103,11 +103,13 @@ class TestChanges(TestCase):
         items = set(gen)
 
         expected = {
-            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
-            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
-            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/bar", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/baz", status=diff.Status.ADDED),
             diff.Change(item="sys-apps/less-590-1", status=diff.Status.CHANGED),
+            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
             diff.Change(item="sys-apps/portage-3.0.18-2", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
         }
         self.assertEqual(items, expected)
 
@@ -124,10 +126,12 @@ class TestDirDiff(TestCase):
         items = set(gen)
 
         expected = {
-            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
-            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
-            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/bar", status=diff.Status.REMOVED),
+            diff.Change(item="sys-apps/baz", status=diff.Status.ADDED),
             diff.Change(item="sys-apps/less-590-1", status=diff.Status.CHANGED),
+            diff.Change(item="sys-apps/portage-3.0.18-1", status=diff.Status.REMOVED),
             diff.Change(item="sys-apps/portage-3.0.18-2", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/sandbox-2.23-1", status=diff.Status.ADDED),
+            diff.Change(item="sys-apps/sandbox-2.24-1", status=diff.Status.REMOVED),
         }
         self.assertEqual(items, expected)

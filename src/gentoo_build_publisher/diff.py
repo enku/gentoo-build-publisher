@@ -81,6 +81,7 @@ def changes(
             path = f"{subcmp.left}/{item}"
 
             if os.path.isdir(path):
+                yield from subtree(left, path, Status.REMOVED)
                 continue
 
             yield Change(item=path_to_pkg(left, path), status=Status.REMOVED)
@@ -89,6 +90,7 @@ def changes(
             path = f"{subcmp.right}/{item}"
 
             if os.path.isdir(path):
+                yield from subtree(right, path, Status.ADDED)
                 continue
 
             yield Change(item=path_to_pkg(right, path), status=Status.ADDED)
@@ -98,12 +100,23 @@ def changes(
             path2 = f"{subcmp.right}/{item}"
 
             if os.path.isdir(path1) and os.path.isdir(path2):
+                yield from subtree(left, path1, Status.REMOVED)
+                yield from subtree(right, path2, Status.ADDED)
                 continue
 
             yield Change(item=path_to_pkg(left, path1), status=Status.CHANGED)
             yield Change(item=path_to_pkg(right, path2), status=Status.CHANGED)
 
         yield from changes(left, right, subcmp)
+
+
+def subtree(root: str, path: str, status: Status) -> Generator[Change, None, None]:
+    """Yield an entire subtree as added or removed"""
+    for dirpath, _, filenames in os.walk(path):
+        for filename in filenames:
+            path = os.path.join(dirpath, filename)
+
+            yield Change(path_to_pkg(root, path), status=status)
 
 
 def dirdiff(left: str, right: str) -> Generator[Change, None, None]:
