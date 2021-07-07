@@ -122,40 +122,54 @@ doing such tasks and I'm currently working on a command-line interface.
 
 ```bash
 $ gbp list babette
-[  ]   104 04/25/21 06:51:19
-[  ]   109 04/30/21 07:27:04
-[PN]   132 05/21/21 11:27:50
-[  ]   142 05/31/21 07:00:30
-[  ]   143 06/01/21 17:51:28
-[  ]   144 06/02/21 06:49:41
-[  ]   145 06/03/21 09:49:21
-[  ]   146 06/04/21 06:53:53
-[  ]   147 06/05/21 06:49:36
+[K  ]   104 04/25/21 06:51:19
+[   ]   109 04/30/21 07:27:04
+[K N]   132 05/21/21 11:27:50
+[ PN]   157 06/16/21 08:10:04
+[   ]   167 06/27/21 08:02:12
+[   ]   168 06/29/21 11:00:41
+[  N]   169 06/30/21 06:38:53
+[  N]   170 07/01/21 06:52:48
+[   ]   171 07/02/21 06:34:30
 
-$ gbp show babette 132
-Build: babette/132
-Submitted: Fri May 21 11:27:50 2021 -0700
-Completed: Fri May 21 11:28:44 2021 -0700
-Published: True
+gbp show babette 172
+Build: babette/172
+Submitted: Sat Jul  3 06:31:58 2021 -0700
+Completed: Sat Jul  3 06:34:39 2021 -0700
+Published: no
+Keep: no
 
-  This is where babette is now
+    Packages built:
 
-$ gbp diff babette 132 147
-diff -r babette/132 babette/147
---- a/babette/132 Fri May 21 11:27:50 2021 -0700
-+++ b/babette/147 Sat Jun  5 06:49:36 2021 -0700
--app-crypt/gpgme-1.14.0-1
-+app-crypt/gpgme-1.14.0-2
--app-editors/vim-8.2.0814-r100-2
-+app-editors/vim-8.2.0814-r100-3
--app-misc/pax-utils-1.2.9-1
-+app-misc/pax-utils-1.3.1-2
-...
+    * app-vim/gentoo-syntax-20210428-1
+    * dev-python/idna-3.2-1
 
-$ gbp publish babette 147
+$ gbp diff babette 157 172
+diff -r babette/157 babette/172
+--- a/babette/157 Wed Jun 16 08:10:04 2021 -0700
++++ b/babette/172 Sat Jul  3 06:31:58 2021 -0700
+-app-admin/sudo-1.9.6_p1-r1-1
++app-admin/sudo-1.9.6_p1-r2-1
+-app-misc/screen-4.8.0-r2-1
++app-misc/screen-4.8.0-r3-1
+-app-vim/gentoo-syntax-20201216-1
++app-vim/gentoo-syntax-20210428-1
+-dev-lang/perl-5.32.1-1
++dev-lang/perl-5.32.1-2
++dev-libs/libffi-3.3-r2-1
+-dev-python/idna-3.1-2
++dev-python/idna-3.2-1
+[...]
+
+$ gbp publish babette 172
 ```
 
-In the above example, the `PN` output for build `132` signifies that this build
+In the above example, the `PN` output for build `157` signifies that this build
 is currently published (`P`) and there is a user note for that build (`N`).
-The user note can be shown with the `gbp show` command.  `gbp diff` shows the
-differences between two builds (packages added/changed/removed)
+The user note can be shown with the `gbp show` command.  If a build contains
+newly created packages, then Gentoo Build Publisher will automatically create a
+user note listing the newly built packages for that build when it is pulled
+from Jenkins. `gbp diff` shows the differences between two builds (packages
+added/changed/removed). Builds are purged based on how old they are, but you
+can mark builds to keep.  The `K` next to a build means that it has been marked
+for keeping.
