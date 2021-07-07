@@ -33,8 +33,9 @@ class BuildMan:
             self._db = build
         else:
             raise TypeError(
-                "build argument must be one of [Build, BuildDB]"
-            )  # pragma: no cover
+                "build argument must be one of [Build, BuildDB]."
+                f" Got {type(build).__name__}."
+            )
 
         self.name = self.build.name
         self.number = self.build.number

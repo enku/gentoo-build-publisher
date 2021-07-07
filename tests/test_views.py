@@ -17,6 +17,16 @@ from .factories import BuildManFactory, BuildModelFactory
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
+class IndexViewTestCase(TempHomeMixin, TestCase):
+    """Tests for the index view"""
+
+    def test(self):
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "gentoo_build_publisher/index.html")
+
+
 class PublishViewTestCase(TempHomeMixin, TestCase):
     """Tests for the publish view"""
 

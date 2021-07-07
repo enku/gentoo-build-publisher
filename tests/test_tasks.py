@@ -151,6 +151,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         mock_purge_build.delay.assert_not_called()
 
+    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(self, buildmanager_mock):
         buildman = BuildManFactory.build()
         buildmanager_mock.return_value = buildman

@@ -17,6 +17,15 @@ utc = datetime.timezone.utc
 
 
 class BuildManTestCase(TempHomeMixin, TestCase):
+    def test_instantiate_with_wrong_class(self):
+        with self.assertRaises(TypeError) as context:
+            BuildMan(1)
+
+        error = context.exception
+
+        expected = ("build argument must be one of [Build, BuildDB]. Got int.",)
+        self.assertEqual(error.args, expected)
+
     def test_as_dict(self):
         """build.as_dict() should return the expected dict"""
         buildman = BuildManFactory.build()
