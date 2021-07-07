@@ -132,7 +132,7 @@ def diff_notes(left: str, right: str, header: str = "") -> str:
     If there are no changes, return an empty string
     """
     changeset = list(set(i for i in dirdiff(left, right) if i.status.is_a_build()))
-    changeset.sort(key=lambda i: i.item)
+    changeset.sort(key=lambda i: (i.item, i.status))
 
     note = "\n".join(f"* {i.item}" for i in changeset)
 
