@@ -12,7 +12,6 @@ from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 
-
 PULL_RETRYABLE_EXCEPTIONS = (
     EOFError,
     requests.exceptions.ConnectionError,

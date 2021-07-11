@@ -3,7 +3,6 @@ Django models for Gentoo Build Publisher
 """
 from __future__ import annotations
 
-
 from django.db import models
 
 
