@@ -144,7 +144,8 @@ class BuildDB:
 
     def delete(self):
         """Delete this Build from the db"""
-        self.model.delete()
+        if self.model.pk is not None:
+            self.model.delete()
 
     @classmethod
     def create(

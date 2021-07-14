@@ -121,6 +121,12 @@ class BuildDBTestCase(TestCase):
         with self.assertRaises(BuildNote.DoesNotExist):
             BuildNote.objects.get(build_model=build_model)
 
+    def test_delete_should_not_delete_when_model_has_no_pk(self):
+        build_model = BuildModel(name="babette", number=286)
+        build_db = BuildDB(build_model)
+
+        build_db.delete()
+
     def test_save_keep(self):
         build_db = self.build_db
         build_db.keep = True
