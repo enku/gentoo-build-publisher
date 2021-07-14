@@ -12,6 +12,7 @@ from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 
+PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
 PULL_RETRYABLE_EXCEPTIONS = (
     EOFError,
     requests.exceptions.ConnectionError,
@@ -24,9 +25,16 @@ logger = logging.getLogger(__name__)
 @shared_task
 def publish_build(name: str, number: int):
     """Publish the build"""
-    pull_build.apply((name, number))
+    try:
+        pull_build.apply((name, number), throw=True)
+    except PUBLISH_FATAL_EXCEPTIONS:
+        logger.error("Build %s/%s failed to pull. Not publishing", name, number)
+        return False
+
     buildman = BuildMan(Build(name=name, number=number))
     buildman.publish()
+
+    return True
 
 
 @shared_task(bind=True)

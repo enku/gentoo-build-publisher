@@ -30,10 +30,23 @@ class PublishBuildTestCase(TempHomeMixin, TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            publish_build.s("babette", 193).apply()
+            result = publish_build.s("babette", 193).apply()
 
         self.assertIs(buildman.published(), True)
         buildmanager_mock.assert_called_with(build)
+        self.assertIs(result.result, True)
+
+    @mock.patch("gentoo_build_publisher.tasks.logger.error")
+    def test_should_give_up_when_publish_raises_HTTPError(self, log_error_mock):
+        with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
+            apply_mock.side_effect = HTTPError
+            result = publish_build.s("babette", 193).apply()
+
+        self.assertIs(result.result, False)
+
+        log_error_mock.assert_called_with(
+            "Build %s/%s failed to pull. Not publishing", "babette", 193
+        )
 
 
 class PurgeBuildTestCase(TempHomeMixin, TestCase):
