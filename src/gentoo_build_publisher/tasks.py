@@ -43,6 +43,11 @@ def pull_build(self, name: str, number: int):
         if buildman.db:
             buildman.db.delete()
 
+        # If this is an error due to 404 response don't retry
+        if isinstance(error, requests.exceptions.HTTPError):
+            if hasattr(error, "response") and error.response.status_code == 404:
+                raise
+
         self.retry(exc=error)
 
         return

@@ -164,3 +164,21 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
 
         with self.assertRaises(BuildModel.DoesNotExist):
             buildman.db.model.refresh_from_db()
+
+    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
+    def test_should_not_retry_on_404_response(self, buildmanager_mock):
+        buildman = BuildManFactory.build()
+        buildmanager_mock.return_value = buildman
+
+        with mock.patch.object(
+            buildman.jenkins_build, "download_artifact"
+        ) as download_artifact_mock:
+            error = HTTPError()
+            error.response = mock.Mock()
+            error.response.status_code = 404
+            download_artifact_mock.side_effect = error
+
+            with mock.patch.object(pull_build, "retry") as retry_mock:
+                pull_build.s(buildman.name, buildman.number).apply()
+
+        retry_mock.assert_not_called()
