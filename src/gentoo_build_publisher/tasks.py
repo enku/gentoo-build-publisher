@@ -18,6 +18,8 @@ PULL_RETRYABLE_EXCEPTIONS = (
     requests.exceptions.HTTPError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @shared_task
 def publish_build(name: str, number: int):
@@ -25,9 +27,6 @@ def publish_build(name: str, number: int):
     pull_build.apply((name, number))
     buildman = BuildMan(Build(name=name, number=number))
     buildman.publish()
-
-
-logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True)
