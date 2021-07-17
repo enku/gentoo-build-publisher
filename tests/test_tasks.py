@@ -37,7 +37,7 @@ class PublishBuildTestCase(TempHomeMixin, TestCase):
         self.assertIs(result.result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
-    def test_should_give_up_when_publish_raises_HTTPError(self, log_error_mock):
+    def test_should_give_up_when_publish_raises_httperror(self, log_error_mock):
         with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
             apply_mock.side_effect = HTTPError
             result = publish_build.s("babette", 193).apply()
