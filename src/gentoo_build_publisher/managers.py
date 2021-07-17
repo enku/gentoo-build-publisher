@@ -171,7 +171,7 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
         name: str
         build_count: int
-        last_build: Optional[BuildMan]
+        latest_build: Optional[BuildMan]
         published: Optional[BuildMan]
     """
 
@@ -179,9 +179,9 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         builddbs = list(BuildDB.builds(name=machine_name))
 
         try:
-            last_build = max(builddbs, key=lambda i: i.number)
+            latest_build = max(builddbs, key=lambda i: i.number)
         except ValueError:
-            last_build = None
+            latest_build = None
 
         published = None
 
@@ -194,20 +194,20 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
         self.name: str = machine_name
         self.build_count: int = len(builddbs)
-        self.last_build: Optional[BuildMan] = (
-            BuildMan(last_build) if last_build else None
+        self.latest_build: Optional[BuildMan] = (
+            BuildMan(latest_build) if latest_build else None
         )
         self.published: Optional[BuildMan] = published
 
     def as_dict(self) -> Dict[str, Any]:
         """Return dataclass as a dictionary"""
-        last_build: Optional[dict] = None
+        latest_build: Optional[dict] = None
         published: Optional[dict] = None
 
-        if self.last_build:
-            last_build = {
-                "number": self.last_build.number,
-                "submitted": self.last_build.db.submitted,
+        if self.latest_build:
+            latest_build = {
+                "number": self.latest_build.number,
+                "submitted": self.latest_build.db.submitted,
             }
 
         if self.published:
@@ -218,7 +218,7 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
         return {
             "builds": self.build_count,
-            "last_build": last_build,
+            "latest_build": latest_build,
             "name": self.name,
             "published": published,
         }

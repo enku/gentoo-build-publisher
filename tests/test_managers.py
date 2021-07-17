@@ -164,7 +164,7 @@ class MachineInfoTestCase(TempHomeMixin, TestCase):
         # Given the "foo" builds, one of which is published
         first_build = BuildManFactory.create(build_attr__build_model__name="foo")
         first_build.publish()
-        last_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        latest_build = BuildManFactory.create(build_attr__build_model__name="foo")
 
         # Given the "other" builds
         BuildManFactory.create_batch(3, build_attr__build_model__name="bar")
@@ -175,7 +175,7 @@ class MachineInfoTestCase(TempHomeMixin, TestCase):
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
-        self.assertEqual(machine_info.last_build.number, last_build.number)
+        self.assertEqual(machine_info.latest_build.number, latest_build.number)
         self.assertEqual(machine_info.published.number, first_build.number)
 
     def test_empty_db(self):
@@ -185,14 +185,14 @@ class MachineInfoTestCase(TempHomeMixin, TestCase):
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 0)
-        self.assertEqual(machine_info.last_build, None)
+        self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published, None)
 
     def test_as_dict(self):
         # Given the "foo" builds, one of which is published
         first_build = BuildManFactory.create(build_attr__build_model__name="foo")
         first_build.publish()
-        last_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        latest_build = BuildManFactory.create(build_attr__build_model__name="foo")
 
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
@@ -203,9 +203,9 @@ class MachineInfoTestCase(TempHomeMixin, TestCase):
         # Then it contains the expected value
         expected = {
             "builds": 2,
-            "last_build": {
-                "number": last_build.number,
-                "submitted": last_build.db.submitted,
+            "latest_build": {
+                "number": latest_build.number,
+                "submitted": latest_build.db.submitted,
             },
             "name": "foo",
             "published": {
