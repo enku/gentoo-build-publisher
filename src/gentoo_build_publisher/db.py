@@ -11,6 +11,8 @@ from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptB
 
 T = TypeVar("T", bound="BuildDB")  # pylint: disable=invalid-name
 
+RELATED = ("buildlog", "buildnote", "keptbuild")
+
 
 class BuildDB:
     """Abstraction of the Django ORM"""
@@ -22,21 +24,17 @@ class BuildDB:
         self.model = build_model
 
         try:
-            self.note: Optional[str] = BuildNote.objects.get(
-                build_model=build_model
-            ).note
+            self.note: Optional[str] = build_model.buildnote.note
         except BuildNote.DoesNotExist:
             self.note = None
 
         try:
-            self.logs: Optional[str] = BuildLog.objects.get(
-                build_model=build_model
-            ).logs
+            self.logs: Optional[str] = build_model.buildlog.logs
         except BuildLog.DoesNotExist:
             self.logs = None
 
         try:
-            KeptBuild.objects.get(build_model=build_model)
+            build_model.keptbuild
         except KeptBuild.DoesNotExist:
             self.keep = False
         else:
@@ -171,7 +169,9 @@ class BuildDB:
         If the record does not exist in the database, cls.DoesNotExist is raised.
         """
         try:
-            model = BuildModel.objects.get(name=build.name, number=build.number)
+            model = BuildModel.objects.select_related(*RELATED).get(
+                name=build.name, number=build.number
+            )
         except BuildModel.DoesNotExist as error:
             raise cls.NotFound from error
 
@@ -187,7 +187,11 @@ class BuildDB:
 
             >>> BuildDB.builds(name="babette")
         """
-        build_models = BuildModel.objects.filter(**filters).order_by("-submitted")
+        build_models = (
+            BuildModel.objects.select_related(*RELATED)
+            .filter(**filters)
+            .order_by("-submitted")
+        )
 
         return (cls(build_model) for build_model in build_models)
 
@@ -211,7 +215,7 @@ class BuildDB:
         else:
             query = BuildModel.objects.filter(name=self.name, number__lt=self.number)
 
-        query = query.order_by("-number")
+        query = query.select_related(*RELATED).order_by("-number")
 
         try:
             build_model = query[0]
@@ -227,7 +231,7 @@ class BuildDB:
         if completed:
             query = query.filter(completed__isnull=False)
 
-        query = query.order_by("number")
+        query = query.select_related(*RELATED).order_by("number")
 
         try:
             build_model = query[0]
