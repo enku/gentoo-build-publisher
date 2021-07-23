@@ -278,3 +278,12 @@ class BuildDBTestCase(TestCase):
         machines = BuildDB.list_machines()
 
         self.assertEqual(machines, ["babette", "lighthouse"])
+
+    def test_count_name(self):
+        BuildDBFactory.create(build_model__name="lighthouse")
+        BuildDBFactory.create(build_model__name="babette")
+        BuildDBFactory.create(build_model__name="babette")
+
+        self.assertEqual(BuildDB.count(), 4)
+        self.assertEqual(BuildDB.count("lighthouse"), 1)
+        self.assertEqual(BuildDB.count("bogus"), 0)

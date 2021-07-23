@@ -240,6 +240,33 @@ class BuildDB:
 
         return type(self)(build_model)
 
+    @classmethod
+    def latest_build(cls, name: str) -> Optional[BuildDB]:
+        """Return the latest build for the given machine name.
+
+        If no builds exist for the given machine name, return None.
+        """
+        try:
+            build_model = (
+                BuildModel.objects.filter(name=name)
+                .order_by("-number")
+                .select_related(*RELATED)
+            )[0]
+        except IndexError:
+            return None
+
+        return cls(build_model)
+
+    @staticmethod
+    def count(name: Optional[str] = None) -> int:
+        """Return the total number of builds
+
+        If `name` is given, return the total number of builds for the given machine
+        """
+        filter_ = {"name": name} if name else {}
+
+        return BuildModel.objects.filter(**filter_).count()
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented

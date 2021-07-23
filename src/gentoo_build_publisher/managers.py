@@ -176,24 +176,22 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
     """
 
     def __init__(self, machine_name: str):
-        builddbs = list(BuildDB.builds(name=machine_name))
-
-        try:
-            latest_build = max(builddbs, key=lambda i: i.number)
-        except ValueError:
-            latest_build = None
-
+        latest_build = BuildDB.latest_build(machine_name)
         published = None
 
-        for builddb in builddbs:
-            buildman = BuildMan(builddb)
+        if latest_build is not None:
+            current_build = latest_build.number
 
-            if buildman.published():
-                published = buildman
-                break
+            while current_build:
+                buildman = BuildMan(Build(machine_name, current_build))
+                if buildman.published():
+                    published = buildman
+                    break
+
+                current_build -= 1
 
         self.name: str = machine_name
-        self.build_count: int = len(builddbs)
+        self.build_count: int = BuildDB.count(machine_name)
         self.latest_build: Optional[BuildMan] = (
             BuildMan(latest_build) if latest_build else None
         )
