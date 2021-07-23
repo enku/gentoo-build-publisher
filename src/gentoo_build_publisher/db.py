@@ -241,14 +241,20 @@ class BuildDB:
         return type(self)(build_model)
 
     @classmethod
-    def latest_build(cls, name: str) -> Optional[BuildDB]:
+    def latest_build(cls, name: str, completed: bool=False) -> Optional[BuildDB]:
         """Return the latest build for the given machine name.
 
+        If `completed` is `True`, only consider completed builds.
         If no builds exist for the given machine name, return None.
         """
+        filter_ = {"name": name}
+
+        if completed:
+            filter_["completed__isnull"] = False
+
         try:
             build_model = (
-                BuildModel.objects.filter(name=name)
+                BuildModel.objects.filter(**filter_)
                 .order_by("-number")
                 .select_related(*RELATED)
             )[0]

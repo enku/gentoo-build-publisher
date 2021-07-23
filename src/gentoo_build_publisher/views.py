@@ -92,12 +92,10 @@ def delete(_request: HttpRequest, build_name: str, build_number: int) -> JsonRes
 
 
 def latest(_request: HttpRequest, build_name: str) -> JsonResponse:
-    """View to return the latest build for a machine"""
-    builds = BuildDB.builds(name=build_name, completed__isnull=False)
+    """View to return the latest completed build for a machine"""
+    build_db = BuildDB.latest_build(build_name, completed=True)
 
-    try:
-        build_db = next(builds)
-    except StopIteration:
+    if build_db is None or build_db.completed is None:
         return JsonResponse(
             {"error": "No completed builds exist with that name"}, status=404
         )
