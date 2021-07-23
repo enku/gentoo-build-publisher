@@ -118,7 +118,8 @@ machines whose builds I want to push to the publisher.  See the
 
 My Jenkins job does not publish a build by default. I (can) later publish the
 build so that my machines can consume them.  There is a REST interface for
-doing such tasks and I'm currently working on a command-line interface.
+doing such tasks as well as a [command-line
+interface](https://github.com/enku/gbpcli):
 
 ```bash
 $ gbp list babette
