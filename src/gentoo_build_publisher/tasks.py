@@ -4,12 +4,9 @@ import logging
 import requests
 import requests.exceptions
 from celery import shared_task
-from django.utils import timezone
 
 from gentoo_build_publisher.build import Build
-from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
-from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
@@ -69,10 +66,4 @@ def pull_build(self, name: str, number: int):
 @shared_task
 def purge_build(build_name: str):
     """Purge old builds for build_name"""
-    build_dbs = BuildDB.builds(name=build_name)
-    purger = Purger(build_dbs, key=lambda b: timezone.make_naive(b.submitted))
-
-    for build_db in purger.purge():  # type: BuildDB
-        if not build_db.keep and not BuildMan(build_db).published():
-            buildman = BuildMan(build_db)
-            buildman.delete()
+    BuildMan.purge(build_name)

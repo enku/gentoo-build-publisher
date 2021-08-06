@@ -9,6 +9,7 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.jenkins import JenkinsBuild
+from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
@@ -162,6 +163,17 @@ class BuildMan:
     def get_path(self, item: Content) -> PosixPath:
         """Return the path of the content type for this Build's storage"""
         return self.storage_build.get_path(item)
+
+    @classmethod
+    def purge(cls, machine: str):
+        """Purge old builds for machine"""
+        build_dbs = BuildDB.builds(name=machine)
+        purger = Purger(build_dbs, key=lambda b: b.submitted.replace(tzinfo=None))
+
+        for build_db in purger.purge():  # type: BuildDB
+            if not build_db.keep and not cls(build_db).published():
+                buildman = cls(build_db)
+                buildman.delete()
 
 
 class MachineInfo:  # pylint: disable=too-few-public-methods

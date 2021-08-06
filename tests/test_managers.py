@@ -5,13 +5,15 @@ from unittest import mock
 
 from django.test import TestCase
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
+from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.storage import StorageBuild
 
 from . import TempHomeMixin
-from .factories import BuildManFactory, MockJenkinsBuild
+from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
 
 utc = datetime.timezone.utc
 
@@ -155,6 +157,81 @@ class BuildManTestCase(TempHomeMixin, TestCase):
             buildman.db.note,
             "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
         )
+
+    def test_purge_deletes_old_build(self):
+        """Should remove purgable builds"""
+        build_model = BuildModelFactory.create(
+            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+        )
+        BuildModelFactory.create(
+            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        )
+
+        build = Build(name=build_model.name, number=build_model.number)
+        settings = Settings.from_environ()
+        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
+        storage_build = StorageBuild(build, self.tmpdir)
+        storage_build.extract_artifact(jenkins_build.download_artifact())
+
+        BuildMan.purge(build_model.name)
+
+        query = BuildModel.objects.filter(id=build_model.id)
+
+        self.assertIs(query.exists(), False)
+
+        for item in Content:
+            path = storage_build.get_path(item)
+            self.assertIs(path.exists(), False, path)
+
+    def test_purge_does_not_delete_old_kept_build(self):
+        """Should remove purgable builds"""
+        build_model = BuildModelFactory.create(
+            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+        )
+        KeptBuild.objects.create(build_model=build_model)
+        BuildModelFactory.create(
+            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        )
+
+        BuildMan.purge(build_model.name)
+
+        query = BuildModel.objects.filter(id=build_model.id)
+
+        self.assertIs(query.exists(), True)
+
+    def test_purge_doesnt_delete_old_published_build(self):
+        """Should not delete old build if published"""
+        buildman = BuildManFactory.build(
+            build=BuildModelFactory.create(
+                number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+            )
+        )
+        BuildModelFactory.create(
+            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        )
+
+        buildman.publish()
+        BuildMan.purge(buildman.name)
+
+        query = BuildModel.objects.filter(id=buildman.id)
+
+        self.assertIs(query.exists(), True)
+
+    def test_purge_doesnt_delete_build_when_keptbuild_exists(self):
+        """Should not delete build when KeptBuild exists for the BuildModel"""
+        build_model = BuildModelFactory.create(
+            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+        )
+        KeptBuild.objects.create(build_model=build_model)
+        BuildModelFactory.create(
+            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        )
+
+        BuildMan.purge(build_model.name)
+
+        query = BuildModel.objects.filter(id=build_model.id)
+
+        self.assertIs(query.exists(), True)
 
 
 class MachineInfoTestCase(TempHomeMixin, TestCase):

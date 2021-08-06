@@ -2,21 +2,17 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 # pylint: disable=no-value-for-parameter,no-self-use
 import os
-from datetime import datetime
 from unittest import mock
 
 from django.test import TestCase
-from django.utils import timezone
 from requests import HTTPError
 
-from gentoo_build_publisher.build import Build, Content
-from gentoo_build_publisher.models import BuildModel, KeptBuild
-from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
 
-from . import MockJenkinsBuild, TempHomeMixin
-from .factories import BuildManFactory, BuildModelFactory
+from . import TempHomeMixin
+from .factories import BuildManFactory
 
 
 class PublishBuildTestCase(TempHomeMixin, TestCase):
@@ -52,80 +48,11 @@ class PublishBuildTestCase(TempHomeMixin, TestCase):
 class PurgeBuildTestCase(TempHomeMixin, TestCase):
     """Tests for the purge_build task"""
 
-    def test_deletes_old_build(self):
-        """Should remove purgable builds"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
-        )
-        BuildModelFactory.create(
-            number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
-        )
+    @mock.patch("gentoo_build_publisher.tasks.BuildMan.purge")
+    def test(self, purge_mock):
+        purge_build.s("foo").apply()
 
-        build = Build(name=build_model.name, number=build_model.number)
-        settings = Settings.from_environ()
-        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
-        storage_build = StorageBuild(build, self.tmpdir)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
-
-        purge_build.s(build_model.name).apply()
-
-        query = BuildModel.objects.filter(id=build_model.id)
-
-        self.assertIs(query.exists(), False)
-
-        for item in Content:
-            path = storage_build.get_path(item)
-            self.assertIs(path.exists(), False, path)
-
-    def test_does_not_delete_old_kept_build(self):
-        """Should remove purgable builds"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
-        )
-        KeptBuild.objects.create(build_model=build_model)
-        BuildModelFactory.create(
-            number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
-        )
-
-        purge_build.s(build_model.name).apply()
-
-        query = BuildModel.objects.filter(id=build_model.id)
-
-        self.assertIs(query.exists(), True)
-
-    def test_doesnt_delete_old_published_build(self):
-        """Should not delete old build if published"""
-        buildman = BuildManFactory.build(
-            build=BuildModelFactory.create(
-                number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
-            )
-        )
-        BuildModelFactory.create(
-            number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
-        )
-
-        buildman.publish()
-        purge_build.s(buildman.name).apply()
-
-        query = BuildModel.objects.filter(id=buildman.id)
-
-        self.assertIs(query.exists(), True)
-
-    def test_doesnt_delete_build_when_keptbuild_exists(self):
-        """Should not delete build when KeptBuild exists for the BuildModel"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=timezone.make_aware(datetime(1970, 1, 1))
-        )
-        KeptBuild.objects.create(build_model=build_model)
-        BuildModelFactory.create(
-            number=2, submitted=timezone.make_aware(datetime(1970, 12, 31))
-        )
-
-        purge_build.s(build_model.name).apply()
-
-        query = BuildModel.objects.filter(id=build_model.id)
-
-        self.assertIs(query.exists(), True)
+        purge_mock.assert_called_once_with("foo")
 
 
 @mock.patch("gentoo_build_publisher.tasks.BuildMan")
