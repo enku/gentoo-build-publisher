@@ -241,7 +241,7 @@ class BuildDB:
         return type(self)(build_model)
 
     @classmethod
-    def latest_build(cls, name: str, completed: bool=False) -> Optional[BuildDB]:
+    def latest_build(cls, name: str, completed: bool = False) -> Optional[BuildDB]:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
