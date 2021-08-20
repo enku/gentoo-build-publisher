@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import PosixPath
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 
@@ -21,7 +21,7 @@ class Settings(BaseModel):
     STORAGE_PATH: PosixPath
 
     @classmethod
-    def from_dict(cls, prefix: str, data_dict: Dict[str, Any]) -> Settings:
+    def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
         """Return Settings instantiated from a dict"""
         return cls(
             **{

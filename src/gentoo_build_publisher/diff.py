@@ -5,9 +5,9 @@ similar purpose.
 """
 import filecmp
 import os
-from enum import Enum
-from typing import Generator, Tuple
 from dataclasses import dataclass
+from enum import Enum
+from typing import Generator
 
 
 class Status(Enum):
@@ -29,7 +29,7 @@ class Change:
     item: str
     status: Status
 
-    def tuple(self) -> Tuple[int, str]:
+    def tuple(self) -> tuple[int, str]:
         """Return Change as a JSON-compatible tuple"""
         return (self.status.value, self.item)
 

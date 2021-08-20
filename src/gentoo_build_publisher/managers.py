@@ -1,7 +1,7 @@
 """Managers"""
 from datetime import datetime, timezone
 from pathlib import PosixPath
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from yarl import URL
 
@@ -127,7 +127,7 @@ class BuildMan:
 
         self.storage_build.delete()
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Convert build instance attributes to a dict"""
         if self.db is not None:
             db_dict = {
@@ -209,7 +209,7 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         )
         self.published: Optional[BuildMan] = published
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return dataclass as a dictionary"""
         latest_build: Optional[dict] = None
         published: Optional[dict] = None

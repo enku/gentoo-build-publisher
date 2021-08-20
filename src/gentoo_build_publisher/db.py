@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Iterator, List, Optional, Type, TypeVar
+from typing import Any, Iterator, Optional, Type, TypeVar
 
 from django.utils import timezone
 
@@ -196,7 +196,7 @@ class BuildDB:
         return (cls(build_model) for build_model in build_models)
 
     @classmethod
-    def list_machines(cls) -> List[str]:
+    def list_machines(cls) -> list[str]:
         """Return a list of machine names"""
         machines = (
             BuildModel.objects.values_list("name", flat=True)
@@ -247,7 +247,7 @@ class BuildDB:
         If `completed` is `True`, only consider completed builds.
         If no builds exist for the given machine name, return None.
         """
-        filter_ = {"name": name}
+        filter_: dict[str, Any] = {"name": name}
 
         if completed:
             filter_["completed__isnull"] = False
@@ -269,7 +269,7 @@ class BuildDB:
 
         If `name` is given, return the total number of builds for the given machine
         """
-        filter_ = {"name": name} if name else {}
+        filter_: dict[str, Any] = {"name": name} if name else {}
 
         return BuildModel.objects.filter(**filter_).count()
 

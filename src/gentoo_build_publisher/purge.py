@@ -5,7 +5,7 @@ give a proper attribution.  It's originally a backup purging strategy but I want
 able to use it for purging builds or anything else for that matter.
 """
 import datetime
-from typing import Callable, Iterable, List, Optional, Set, TypeVar
+from typing import Callable, Iterable, Optional, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 KeyFunc = Callable[[T], datetime.datetime]
@@ -30,9 +30,9 @@ class Purger:
         self.start = start
         self.end = end if end is not None else datetime.datetime.now()
 
-    def purge(self) -> List[T]:
+    def purge(self) -> list[T]:
         """Return a list of items to purge"""
-        keep: Set[T] = set()
+        keep: set[T] = set()
 
         keep.update(self.yesterday_plus())
         keep.update(self.one_per_day_last_week())
@@ -44,8 +44,8 @@ class Purger:
         return sorted(set(self.items) - keep, key=self.key)
 
     def filter_range(
-        self, items: List[T], start: datetime.datetime, end: datetime.datetime
-    ) -> List[T]:
+        self, items: list[T], start: datetime.datetime, end: datetime.datetime
+    ) -> list[T]:
         """
         Given a list of items, return a subset of items between start and end
         (inclusive).
@@ -57,7 +57,7 @@ class Purger:
 
         return lst
 
-    def append_latest(self, items: List[T], append_to: List[T]) -> Optional[T]:
+    def append_latest(self, items: list[T], append_to: list[T]) -> Optional[T]:
         """
         If items is a non-empty list of datetime T items, take the one with the later
         datetime and append it to append_to.  If items is empty, do nothing.
@@ -90,7 +90,7 @@ class Purger:
         )
         return next_month - datetime.timedelta(days=1)
 
-    def yesterday_plus(self) -> List[T]:
+    def yesterday_plus(self) -> list[T]:
         """Return every datetime object in items from yesterday up."""
         lst = []
         yesterday = self.end - datetime.timedelta(hours=24)
@@ -102,9 +102,9 @@ class Purger:
 
         return lst
 
-    def one_per_day_last_week(self) -> List[T]:
+    def one_per_day_last_week(self) -> list[T]:
         """Return one item for every day within the past week."""
-        lst: List[T] = []
+        lst: list[T] = []
         last_week = self.end - datetime.timedelta(days=7)
         last_week = last_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -116,12 +116,12 @@ class Purger:
 
         return lst
 
-    def one_per_week_last_month(self) -> List[T]:
+    def one_per_week_last_month(self) -> list[T]:
         """
         Return a the subset of items comprising of at most one from each week last
         month. If multiple datetimes fit within the week, use the later.
         """
-        lst: List[T] = []
+        lst: list[T] = []
         today = self.end.replace(hour=0, minute=0, second=0, microsecond=0)
         last_month = today - datetime.timedelta(days=31)
         start_of_month = last_month.replace(day=1)
@@ -148,12 +148,12 @@ class Purger:
 
         return lst
 
-    def one_per_month_last_year(self) -> List[T]:
+    def one_per_month_last_year(self) -> list[T]:
         """
         Return a list of which include a maximum of one for each month of the past year.
         If multiple datetimes fit the criteria for a month, use the latest.
         """
-        lst: List[T] = []
+        lst: list[T] = []
         last_year = self.end - datetime.timedelta(days=365)
         last_year = last_year.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -169,7 +169,7 @@ class Purger:
 
         return lst
 
-    def one_per_year(self) -> List[T]:
+    def one_per_year(self) -> list[T]:
         """
         Return a subset consisting of at most one item per year. If multiple items
         satisfy a given year, use the later.
@@ -186,7 +186,7 @@ class Purger:
 
         return lst
 
-    def past(self) -> List[T]:
+    def past(self) -> list[T]:
         """Return a subset consisting of all items before start time
 
         If start is None the list is empty

@@ -1,6 +1,6 @@
 """Jenkins api for Gentoo Build Publisher"""
 from dataclasses import dataclass
-from typing import Generator, Optional, Tuple
+from typing import Generator, Optional
 
 import requests
 from yarl import URL
@@ -8,7 +8,7 @@ from yarl import URL
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.settings import Settings
 
-AuthTuple = Tuple[str, str]
+AuthTuple = tuple[str, str]
 
 
 @dataclass
