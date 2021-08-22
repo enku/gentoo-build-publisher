@@ -1,6 +1,6 @@
 """Jenkins api for Gentoo Build Publisher"""
 from dataclasses import dataclass
-from typing import Generator, Optional
+from typing import Iterator, Optional
 
 import requests
 from yarl import URL
@@ -33,16 +33,13 @@ class JenkinsBuild:
         """Return the url for the build's console logs"""
         return self.url() / "consoleText"
 
-    def download_artifact(self) -> Generator[bytes, None, None]:
+    def download_artifact(self) -> Iterator[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.artifact_url()
         response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()
 
-        return (
-            bytes(i)
-            for i in response.iter_content(chunk_size=2048, decode_unicode=False)
-        )
+        return response.iter_content(chunk_size=2048, decode_unicode=False)
 
     def get_logs(self) -> str:
         """Get and return the build's jenkins logs"""
