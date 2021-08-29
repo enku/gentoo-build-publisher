@@ -12,22 +12,29 @@ AuthTuple = tuple[str, str]
 
 
 @dataclass
-class JenkinsBuild:
-    """A Build's interface to JenkinsBuild"""
+class JenkinsConfig:
+    """Configuration for JenkinsBuild"""
 
-    build: Build
     base_url: URL
     user: Optional[str] = None
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
 
+
+@dataclass
+class JenkinsBuild:
+    """A Build's interface to JenkinsBuild"""
+
+    build: Build
+    jenkins: JenkinsConfig
+
     def url(self) -> URL:
         """Return the Jenkins url for the build"""
-        return self.base_url / "job" / self.build.name / str(self.build.number)
+        return self.jenkins.base_url / "job" / self.build.name / str(self.build.number)
 
     def artifact_url(self) -> URL:
         """Return the artifact url for build"""
-        return self.url() / "artifact" / self.artifact_name
+        return self.url() / "artifact" / self.jenkins.artifact_name
 
     def logs_url(self) -> URL:
         """Return the url for the build's console logs"""
@@ -52,13 +59,13 @@ class JenkinsBuild:
     @classmethod
     def from_settings(cls, build: Build, settings: Settings):
         """Return a JenkinsBuild instance given settings"""
-        return cls(
-            build=build,
+        jenkins = JenkinsConfig(
             base_url=URL(settings.JENKINS_BASE_URL),
-            artifact_name=settings.JENKINS_ARTIFACT_NAME,
             user=settings.JENKINS_USER,
+            artifact_name=settings.JENKINS_ARTIFACT_NAME,
             api_key=settings.JENKINS_API_KEY,
         )
+        return cls(build=build, jenkins=jenkins)
 
     @property
     def auth(self) -> Optional[AuthTuple]:
@@ -66,7 +73,7 @@ class JenkinsBuild:
 
         Either a 2-tuple or `None`
         """
-        if self.user is None or self.api_key is None:
+        if self.jenkins.user is None or self.jenkins.api_key is None:
             return None
 
-        return (self.user, self.api_key)
+        return (self.jenkins.user, self.jenkins.api_key)

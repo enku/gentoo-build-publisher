@@ -7,10 +7,17 @@ from unittest import TestCase, mock
 from yarl import URL
 
 from gentoo_build_publisher.build import Build
-from gentoo_build_publisher.jenkins import JenkinsBuild
+from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsConfig
 from gentoo_build_publisher.settings import Settings
 
 from . import MockJenkinsBuild, test_data
+
+JENKINS_CONFIG = JenkinsConfig(
+    base_url=URL("https://jenkins.invalid"),
+    api_key="foo",
+    user="jenkins",
+    artifact_name="build.tar.gz",
+)
 
 
 class JenkinsBuildTestCase(TestCase):
@@ -21,9 +28,7 @@ class JenkinsBuildTestCase(TestCase):
         # Given the JenkinsBuild instance
         jenkins_build = JenkinsBuild(
             build=Build(name="babette", number=193),
-            base_url=URL("https://jenkins.invalid"),
-            api_key="foo",
-            user="jenkins",
+            jenkins=JENKINS_CONFIG,
         )
 
         # When we call .build_url
@@ -40,10 +45,7 @@ class JenkinsBuildTestCase(TestCase):
         # Given the JenkinsBuild instance
         jenkins_build = MockJenkinsBuild(
             build=Build(name="babette", number=193),
-            base_url=URL("https://jenkins.invalid"),
-            api_key="foo",
-            user="jenkins",
-            artifact_name="build.tar.gz",
+            jenkins=JENKINS_CONFIG,
         )
 
         # When we call download_artifact on the build
@@ -66,8 +68,7 @@ class JenkinsBuildTestCase(TestCase):
         # Given the JenkinsBuild instance having no user/api_key
         jenkins_build = MockJenkinsBuild(
             build=Build(name="babette", number=193),
-            base_url=URL("https://jenkins.invalid"),
-            artifact_name="build.tar.gz",
+            jenkins=JENKINS_CONFIG,
         )
 
         # When we call download_artifact on the build
@@ -76,7 +77,7 @@ class JenkinsBuildTestCase(TestCase):
         # Then it requests the artifact with no auth
         jenkins_build.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            auth=None,
+            auth=jenkins_build.auth,
             stream=True,
         )
 
@@ -99,8 +100,10 @@ class JenkinsBuildTestCase(TestCase):
 
         # Then we get a JenkinsBuild instance with attributes from my_settings
         self.assertIsInstance(jenkins_build, JenkinsBuild)
-        self.assertEqual(jenkins_build.base_url, URL("https://foo.bar.invalid/jenkins"))
-        self.assertEqual(jenkins_build.api_key, "super secret key")
-        self.assertEqual(jenkins_build.user, "admin")
-        self.assertEqual(jenkins_build.artifact_name, "stuff.tar")
+        self.assertEqual(
+            jenkins_build.jenkins.base_url, URL("https://foo.bar.invalid/jenkins")
+        )
+        self.assertEqual(jenkins_build.jenkins.api_key, "super secret key")
+        self.assertEqual(jenkins_build.jenkins.user, "admin")
+        self.assertEqual(jenkins_build.jenkins.artifact_name, "stuff.tar")
         self.assertEqual(jenkins_build.build, build)
