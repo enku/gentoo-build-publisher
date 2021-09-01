@@ -66,7 +66,7 @@ class StorageBuild:
             for chunk in byte_stream:
                 artifact_file.write(chunk)
 
-        with tarfile.open(artifact_path, mode="r") as tar_file:
+        with tarfile.open(artifact_path, mode="r", bufsize=2 * 1024 * 1024) as tar_file:
             tar_file.extractall(dirpath)
 
         for item in Content:

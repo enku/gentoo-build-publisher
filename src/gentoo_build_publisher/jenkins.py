@@ -19,6 +19,7 @@ class JenkinsConfig:
     user: Optional[str] = None
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
+    download_chunk_size: int = 2 * 1024 * 1024
 
 
 @dataclass
@@ -46,7 +47,9 @@ class JenkinsBuild:
         response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()
 
-        return response.iter_content(chunk_size=2048, decode_unicode=False)
+        return response.iter_content(
+            chunk_size=self.jenkins.download_chunk_size, decode_unicode=False
+        )
 
     def get_logs(self) -> str:
         """Get and return the build's jenkins logs"""
@@ -64,6 +67,7 @@ class JenkinsBuild:
             user=settings.JENKINS_USER,
             artifact_name=settings.JENKINS_ARTIFACT_NAME,
             api_key=settings.JENKINS_API_KEY,
+            download_chunk_size=settings.JENKINS_DOWNLOAD_CHUNK_SIZE,
         )
         return cls(build=build, jenkins=jenkins)
 

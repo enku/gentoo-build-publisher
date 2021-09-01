@@ -17,6 +17,7 @@ class Settings(BaseModel):
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_API_KEY: Optional[str] = None
     JENKINS_BASE_URL: AnyHttpUrl
+    JENKINS_DOWNLOAD_CHUNK_SIZE: int = 2 * 1024 * 1024
     JENKINS_USER: Optional[str] = None
     STORAGE_PATH: PosixPath
 
