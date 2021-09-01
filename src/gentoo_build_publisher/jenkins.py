@@ -1,4 +1,5 @@
 """Jenkins api for Gentoo Build Publisher"""
+import logging
 from dataclasses import dataclass
 from typing import Iterator, Optional
 
@@ -9,6 +10,7 @@ from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.settings import Settings
 
 AuthTuple = tuple[str, str]
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,6 +45,7 @@ class JenkinsBuild:
 
     def download_artifact(self) -> Iterator[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
+        logger.info("Downloading build: %s", self.build)
         url = self.artifact_url()
         response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()

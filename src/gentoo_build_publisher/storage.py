@@ -1,6 +1,7 @@
 """Storage (filesystem) interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
@@ -10,6 +11,9 @@ from typing import Iterator, Optional
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class StorageBuild:
@@ -66,6 +70,7 @@ class StorageBuild:
             for chunk in byte_stream:
                 artifact_file.write(chunk)
 
+        logger.info("Extracting build: %s", self.build)
         with tarfile.open(artifact_path, mode="r", bufsize=2 * 1024 * 1024) as tar_file:
             tar_file.extractall(dirpath)
 
@@ -92,6 +97,7 @@ class StorageBuild:
             os.renames(src, dst)
 
         shutil.rmtree(dirpath)
+        logger.info("Extracted build: %s", self.build)
 
     def pulled(self) -> bool:
         """Returns True if build has been pulled

@@ -1,5 +1,6 @@
 """Tests for gentoo build publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -8,6 +9,8 @@ from unittest import mock
 from gentoo_build_publisher.jenkins import JenkinsBuild
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
+
+logging.basicConfig(handlers=[logging.NullHandler()])
 
 
 class TempHomeMixin:  # pylint: disable=too-few-public-methods

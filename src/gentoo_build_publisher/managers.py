@@ -1,4 +1,5 @@
 """Managers"""
+import logging
 from datetime import datetime, timezone
 from pathlib import PosixPath
 from typing import Any, Optional, Union
@@ -13,6 +14,7 @@ from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
+logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow
 
 
@@ -91,6 +93,7 @@ class BuildMan:
                 self._db = BuildDB.create(self.build)
 
         if not self.storage_build.pulled():
+            logger.info("Pulling build: %s", self.build)
             if previous_build_db := self.db.previous_build():
                 previous_storage_build = type(self)(previous_build_db)
             else:
@@ -115,6 +118,7 @@ class BuildMan:
         self.db.logs = self.jenkins_build.get_logs()
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)
         self.db.save()
+        logging.info("Pulled build %s", self.build)
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
@@ -122,6 +126,7 @@ class BuildMan:
 
     def delete(self):
         """Delete this build"""
+        logging.info("Deleting build: %s", self.build)
         if self.db is not None:
             self.db.delete()
 
@@ -167,6 +172,7 @@ class BuildMan:
     @classmethod
     def purge(cls, machine: str):
         """Purge old builds for machine"""
+        logging.info("Purging builds for %s", machine)
         build_dbs = BuildDB.builds(name=machine)
         purger = Purger(build_dbs, key=lambda b: b.submitted.replace(tzinfo=None))
 
