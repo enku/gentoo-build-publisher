@@ -9,6 +9,7 @@ import tarfile
 from pathlib import PosixPath
 from typing import Iterator, Optional
 
+from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 
@@ -71,7 +72,9 @@ class StorageBuild:
                 artifact_file.write(chunk)
 
         logger.info("Extracting build: %s", self.build)
-        with tarfile.open(artifact_path, mode="r", bufsize=2 * 1024 * 1024) as tar_file:
+        with tarfile.open(
+            artifact_path, mode="r", bufsize=JENKINS_DEFAULT_CHUNK_SIZE
+        ) as tar_file:
             tar_file.extractall(dirpath)
 
         for item in Content:

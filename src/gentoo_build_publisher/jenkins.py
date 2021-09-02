@@ -6,6 +6,7 @@ from typing import Iterator, Optional
 import requests
 from yarl import URL
 
+from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.settings import Settings
 
@@ -21,7 +22,7 @@ class JenkinsConfig:
     user: Optional[str] = None
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
-    download_chunk_size: int = 2 * 1024 * 1024
+    download_chunk_size: int = JENKINS_DEFAULT_CHUNK_SIZE
 
 
 @dataclass

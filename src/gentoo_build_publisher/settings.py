@@ -7,6 +7,8 @@ from typing import Any, Optional
 
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 
+from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
+
 
 # NOTE: Using pydantic's BaseSettings was considered here but was considered too much
 # "magic" and explicitly calling .from_environ() preferred.
@@ -17,7 +19,7 @@ class Settings(BaseModel):
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_API_KEY: Optional[str] = None
     JENKINS_BASE_URL: AnyHttpUrl
-    JENKINS_DOWNLOAD_CHUNK_SIZE: int = 2 * 1024 * 1024
+    JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: Optional[str] = None
     STORAGE_PATH: PosixPath
 
