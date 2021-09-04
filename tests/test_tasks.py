@@ -9,7 +9,12 @@ from requests import HTTPError
 
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.tasks import publish_build, pull_build, purge_build
+from gentoo_build_publisher.tasks import (
+    publish_build,
+    pull_build,
+    purge_build,
+    delete_build,
+)
 
 from . import TempHomeMixin
 from .factories import BuildManFactory
@@ -122,3 +127,18 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
                 pull_build.s(buildman.name, buildman.number).apply()
 
         retry_mock.assert_not_called()
+
+
+class DeleteBuildTestCase(TempHomeMixin, TestCase):
+    """Unit tests for tasks_delete_build"""
+
+    def test_should_delete_the_build(self):
+        build = Build(name="babette", number=193)
+        BuildManFactory(build=build)
+
+        with mock.patch("gentoo_build_publisher.tasks.BuildMan") as buildman_mock:
+            delete_build.s("babette", 193).apply()
+
+        buildman_mock.assert_called_once_with(Build(name="babette", number=193))
+        task_buildman = buildman_mock.return_value
+        task_buildman.delete.assert_called_once_with()

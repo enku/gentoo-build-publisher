@@ -68,3 +68,13 @@ def pull_build(self, name: str, number: int):
 def purge_build(build_name: str):
     """Purge old builds for build_name"""
     BuildMan.purge(build_name)
+
+
+@shared_task
+def delete_build(name: str, number: int):
+    """Delete the given build from the db"""
+    build = Build(name=name, number=number)
+    logger.info("Deleting build: %s", build)
+
+    buildman = BuildMan(build)
+    buildman.delete()
