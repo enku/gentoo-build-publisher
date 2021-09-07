@@ -126,7 +126,6 @@ class BuildMan:
 
     def delete(self):
         """Delete this build"""
-        logging.info("Deleting build: %s", self.build)
         if self.db is not None:
             self.db.delete()
 

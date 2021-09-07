@@ -78,3 +78,4 @@ def delete_build(name: str, number: int):
 
     buildman = BuildMan(build)
     buildman.delete()
+    logger.info("Deleted build: %s", build)
