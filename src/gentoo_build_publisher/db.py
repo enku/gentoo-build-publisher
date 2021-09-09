@@ -107,16 +107,9 @@ class BuildDB:
         self.model.save()
 
         if self.note:
-            build_note, _ = BuildNote.objects.get_or_create(build_model=self.model)
-            build_note.note = self.note
-            build_note.save()
+            BuildNote.upsert(self.model, self.note)
         else:
-            try:
-                build_note = BuildNote.objects.get(build_model=self.model)
-            except BuildNote.DoesNotExist:
-                pass
-            else:
-                build_note.delete()
+            BuildNote.remove(self.model)
 
         if self.logs:
             build_log, _ = BuildLog.objects.get_or_create(build_model=self.model)

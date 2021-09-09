@@ -3,7 +3,11 @@ Django models for Gentoo Build Publisher
 """
 from __future__ import annotations
 
+from typing import Type, TypeVar
+
 from django.db import models
+
+T = TypeVar("T")  # pylint: disable=invalid-name
 
 
 class BuildModel(models.Model):
@@ -75,6 +79,37 @@ class BuildNote(models.Model):
 
     build_model = models.OneToOneField(BuildModel, on_delete=models.CASCADE)
     note = models.TextField()
+
+    @classmethod
+    def upsert(cls: Type[T], build_model: BuildModel, note_text: str) -> T:
+        """Save the text for the build_model's note.
+
+        Return the BuildNote instance.
+        """
+        build_note, _ = cls.objects.get_or_create(  # type: ignore
+            build_model=build_model
+        )
+        build_note.note = note_text
+        build_note.save()
+
+        return build_note
+
+    @classmethod
+    def remove(cls, build_model: BuildModel) -> bool:
+        """Delete note for build_model.
+
+        Returns True if note was deleted.
+
+        Returns False if there was no note to delete.
+        """
+        try:
+            build_note = cls.objects.get(build_model=build_model)
+        except cls.DoesNotExist:
+            return False
+
+        build_note.delete()
+
+        return True
 
     def __str__(self) -> str:
         return f"Notes for build {self.build_model}"

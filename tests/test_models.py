@@ -47,3 +47,31 @@ class BuildNoteTestCase(TempHomeMixin, TestCase):
         build_note = BuildNote(build_model=build_model, note="Test note")
 
         self.assertEqual(str(build_note), f"Notes for build {build_model}")
+
+    def test_upsert_saves_note_text(self):
+        build_model = BuildModelFactory.create()
+        note_text = "hello, world"
+
+        build_note = BuildNote.upsert(build_model, note_text)
+
+        self.assertEqual(build_note.note, note_text)
+
+    def test_remove_method_returns_false_when_no_note_exists(self):
+        build_model = BuildModelFactory.create()
+
+        deleted = BuildNote.remove(build_model)
+
+        self.assertIs(deleted, False)
+
+    def test_remove_method_returns_true_when_note_exists(self):
+        build_model = BuildModelFactory.create()
+        build_note = BuildNote.objects.create(
+            build_model=build_model, note="hello world"
+        )
+
+        deleted = BuildNote.remove(build_model)
+
+        self.assertIs(deleted, True)
+
+        with self.assertRaises(BuildNote.DoesNotExist):
+            build_note.refresh_from_db()
