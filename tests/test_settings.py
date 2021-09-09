@@ -24,7 +24,7 @@ class SettingsTestCase(TestCase):
         )
 
         with self.assertRaises(AttributeError):
-            settings.IS  # pylint: disable=pointless-statement
+            settings.IS  # pylint: disable=no-member,pointless-statement
 
     def test_init_with_invalid_value(self):
         """Should raise ValueError when given setting not defined in DEFAULTS"""

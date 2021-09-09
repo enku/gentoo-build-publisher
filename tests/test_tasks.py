@@ -10,10 +10,10 @@ from requests import HTTPError
 from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.tasks import (
+    delete_build,
     publish_build,
     pull_build,
     purge_build,
-    delete_build,
 )
 
 from . import TempHomeMixin

@@ -13,7 +13,6 @@ from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 
-
 logger = logging.getLogger(__name__)
 
 
