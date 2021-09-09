@@ -7,7 +7,7 @@ from typing import Type, TypeVar
 
 from django.db import models
 
-T = TypeVar("T")  # pylint: disable=invalid-name
+T = TypeVar("T", bound=models.Model)  # pylint: disable=invalid-name
 
 
 class BuildModel(models.Model):
@@ -70,6 +70,24 @@ class KeptBuild(models.Model):
         except cls.DoesNotExist:
             return False
 
+    @classmethod
+    def upsert(cls: Type[T], build_model: BuildModel) -> T:
+        """Get or create a KeptBuild for the given build_model
+
+        Return the KeptBuild instance.
+        """
+        return upsert_1to1(cls, build_model)
+
+    @classmethod
+    def remove(cls, build_model: BuildModel) -> bool:
+        """Delete KeptBuild for build_model.
+
+        Returns True if KeptBuild was deleted.
+
+        Returns False if there was no KeptBuild to delete.
+        """
+        return remove_1to1(cls, build_model)
+
     def __str__(self) -> str:
         return str(self.build_model)
 
@@ -86,13 +104,7 @@ class BuildNote(models.Model):
 
         Return the BuildNote instance.
         """
-        build_note, _ = cls.objects.get_or_create(  # type: ignore
-            build_model=build_model
-        )
-        build_note.note = note_text
-        build_note.save()
-
-        return build_note
+        return upsert_1to1(cls, build_model, note=note_text)
 
     @classmethod
     def remove(cls, build_model: BuildModel) -> bool:
@@ -102,14 +114,7 @@ class BuildNote(models.Model):
 
         Returns False if there was no note to delete.
         """
-        try:
-            build_note = cls.objects.get(build_model=build_model)
-        except cls.DoesNotExist:
-            return False
-
-        build_note.delete()
-
-        return True
+        return remove_1to1(cls, build_model)
 
     def __str__(self) -> str:
         return f"Notes for build {self.build_model}"
@@ -127,13 +132,7 @@ class BuildLog(models.Model):
 
         Return the BuildLog instance.
         """
-        build_log, _ = cls.objects.get_or_create(  # type: ignore
-            build_model=build_model
-        )
-        build_log.logs = logs
-        build_log.save()
-
-        return build_log
+        return upsert_1to1(cls, build_model, logs=logs)
 
     @classmethod
     def remove(cls, build_model: BuildModel) -> bool:
@@ -143,11 +142,35 @@ class BuildLog(models.Model):
 
         Returns False if there was no log to delete.
         """
-        try:
-            build_log = cls.objects.get(build_model=build_model)
-        except cls.DoesNotExist:
-            return False
+        return remove_1to1(cls, build_model)
 
-        build_log.delete()
 
-        return True
+def upsert_1to1(model: Type[T], build_model: BuildModel, **attrs) -> T:
+    """Save the attrs for the build_model's Model.
+
+    Return the Model instance.
+    """
+    obj = model.objects.get_or_create(build_model=build_model)[0]  # type: ignore
+
+    for field, value in attrs.items():
+        setattr(obj, field, value)
+    obj.save()
+
+    return obj
+
+
+def remove_1to1(model: Type[T], build_model: BuildModel) -> bool:
+    """Delete model for build_model.
+
+    Returns True if model was deleted.
+
+    Returns False if there was no model to delete.
+    """
+    try:
+        obj = model.objects.get(build_model=build_model)
+    except model.DoesNotExist:
+        return False
+
+    obj.delete()
+
+    return True

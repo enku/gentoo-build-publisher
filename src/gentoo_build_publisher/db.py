@@ -13,6 +13,19 @@ T = TypeVar("T", bound="BuildDB")  # pylint: disable=invalid-name
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 
+ATTR_TO_1TO1 = {
+    "keep": (KeptBuild, []),
+    "logs": (BuildLog, ["logs"]),
+    "note": (BuildNote, ["note"]),
+    #  ^        ^           ^
+    #  |        |           |
+    #  |        |           + Fields to pass to the model's .upsert() method
+    #  |        |
+    #  |        +  Corresponding Django db model
+    #  |
+    #  + BuildDB attribute name
+}
+
 
 class BuildDB:
     """Abstraction of the Django ORM"""
@@ -106,25 +119,12 @@ class BuildDB:
 
         self.model.save()
 
-        if self.note:
-            BuildNote.upsert(self.model, self.note)
-        else:
-            BuildNote.remove(self.model)
-
-        if self.logs:
-            BuildLog.upsert(self.model, self.logs)
-        else:
-            BuildLog.remove(self.model)
-
-        if self.keep:
-            KeptBuild.objects.get_or_create(build_model=self.model)
-        else:
-            try:
-                kept_build = KeptBuild.objects.get(build_model=self.model)
-            except KeptBuild.DoesNotExist:
-                pass
+        for attr, (model, fields) in ATTR_TO_1TO1.items():
+            if getattr(self, attr):
+                model.upsert(self.model, *[getattr(self, field) for field in fields])
             else:
-                kept_build.delete()
+                model.remove(self.model)  # pylint: disable=no-member
+                                          # disabled due to bug with pylint
 
     def delete(self):
         """Delete this Build from the db"""
