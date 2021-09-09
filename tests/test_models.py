@@ -2,7 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from django.test import TestCase
 
-from gentoo_build_publisher.models import BuildNote, KeptBuild
+from gentoo_build_publisher.models import BuildLog, BuildNote, KeptBuild
 
 from . import TempHomeMixin
 from .factories import BuildModelFactory
@@ -75,3 +75,33 @@ class BuildNoteTestCase(TempHomeMixin, TestCase):
 
         with self.assertRaises(BuildNote.DoesNotExist):
             build_note.refresh_from_db()
+
+
+class BuildLogTestCase(TempHomeMixin, TestCase):
+    """Unit tests for the BuildLog model"""
+
+    def test_upsert_saves_note_text(self):
+        build_model = BuildModelFactory.create()
+        logs = "This is\na test"
+
+        build_log = BuildLog.upsert(build_model, logs)
+
+        self.assertEqual(build_log.logs, logs)
+
+    def test_remove_method_returns_false_when_no_log_exists(self):
+        build_model = BuildModelFactory.create()
+
+        deleted = BuildLog.remove(build_model)
+
+        self.assertIs(deleted, False)
+
+    def test_remove_method_returns_true_when_log_exists(self):
+        build_model = BuildModelFactory.create()
+        build_log = BuildLog.objects.create(build_model=build_model, logs="hello world")
+
+        deleted = BuildLog.remove(build_model)
+
+        self.assertIs(deleted, True)
+
+        with self.assertRaises(BuildLog.DoesNotExist):
+            build_log.refresh_from_db()

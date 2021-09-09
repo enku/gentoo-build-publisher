@@ -112,16 +112,9 @@ class BuildDB:
             BuildNote.remove(self.model)
 
         if self.logs:
-            build_log, _ = BuildLog.objects.get_or_create(build_model=self.model)
-            build_log.logs = self.logs
-            build_log.save()
+            BuildLog.upsert(self.model, self.logs)
         else:
-            try:
-                build_log = BuildLog.objects.get(build_model=self.model)
-            except BuildLog.DoesNotExist:
-                pass
-            else:
-                build_log.delete()
+            BuildLog.remove(self.model)
 
         if self.keep:
             KeptBuild.objects.get_or_create(build_model=self.model)

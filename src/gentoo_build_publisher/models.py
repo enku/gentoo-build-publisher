@@ -120,3 +120,34 @@ class BuildLog(models.Model):
 
     build_model = models.OneToOneField(BuildModel, on_delete=models.CASCADE)
     logs = models.TextField()
+
+    @classmethod
+    def upsert(cls: Type[T], build_model: BuildModel, logs: str) -> T:
+        """Save the text for the build_model's logs.
+
+        Return the BuildLog instance.
+        """
+        build_log, _ = cls.objects.get_or_create(  # type: ignore
+            build_model=build_model
+        )
+        build_log.logs = logs
+        build_log.save()
+
+        return build_log
+
+    @classmethod
+    def remove(cls, build_model: BuildModel) -> bool:
+        """Delete log for build_model
+
+        Returns True if log was deleted.
+
+        Returns False if there was no log to delete.
+        """
+        try:
+            build_log = cls.objects.get(build_model=build_model)
+        except cls.DoesNotExist:
+            return False
+
+        build_log.delete()
+
+        return True
