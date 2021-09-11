@@ -233,6 +233,41 @@ class BuildManTestCase(TempHomeMixin, TestCase):
 
         self.assertIs(query.exists(), True)
 
+    def test_update_build_metadata_when_no_previous_build(self):
+        buildman = BuildManFactory.create()
+        settings = Settings.from_environ()
+        MockJenkinsBuild.from_settings(buildman.build, settings)
+
+        buildman.update_build_metadata()
+        self.assertEqual(buildman.db.logs, "foo\n")
+        self.assertIsNot(buildman.db.completed, None)
+
+    def test_update_build_metadata_with_previous_build(self):
+        previous_buildman = BuildManFactory.create()
+        previous_buildman.pull()
+        bindir = (
+            previous_buildman.storage_build.get_path(Content.BINPKGS)
+            / "sys-fs/btrfs-progs"
+        )
+        bindir.mkdir(parents=True)
+        binpkg = bindir / "btrfs-progs-5.13.1-1.xpak"
+        binpkg.touch()
+
+        buildman = BuildManFactory.create()
+        buildman.storage_build.extract_artifact(
+            buildman.jenkins_build.download_artifact()
+        )
+        # Artificially create a "binpkgs"
+        bindir = buildman.storage_build.get_path(Content.BINPKGS) / "sys-fs/btrfs-progs"
+        bindir.mkdir(parents=True)
+        binpkg = bindir / "btrfs-progs-5.14-1.xpak"
+        binpkg.touch()
+
+        buildman.update_build_metadata(previous_buildman.db)
+        self.assertEqual(
+            buildman.db.note, "Packages built:\n\n* sys-fs/btrfs-progs-5.14-1"
+        )
+
 
 class MachineInfoTestCase(TempHomeMixin, TestCase):
     """Tests for the MachineInfo thingie"""

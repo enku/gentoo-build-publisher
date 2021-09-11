@@ -86,36 +86,41 @@ class BuildMan:
 
     def pull(self):
         """pull the Build to storage"""
-        if self._db is None:
-            self._db = BuildDB.get_or_create(self.build)
+        if self.storage_build.pulled():
+            return
 
-        if not self.storage_build.pulled():
-            logger.info("Pulling build: %s", self.build)
-            if previous_build_db := self.db.previous_build():
-                previous_storage_build = type(self)(previous_build_db)
-            else:
-                previous_storage_build = None
+        self._db = self._db or BuildDB.get_or_create(self.build)
+        previous_build_db = BuildDB.previous_build(self._db)
 
-            self.storage_build.extract_artifact(
-                self.jenkins_build.download_artifact(),
-                previous_build=previous_storage_build,
-            )
+        if previous_build_db:
+            previous_storage_build = type(self)(previous_build_db)
+        else:
+            previous_storage_build = None
 
-        prev_build = BuildDB.previous_build(self.db)
+        logger.info("Pulling build: %s", self.build)
 
-        if prev_build is not None:
+        self.storage_build.extract_artifact(
+            self.jenkins_build.download_artifact(),
+            previous_build=previous_storage_build,
+        )
+
+        logging.info("Pulled build %s", self.build)
+
+        self.update_build_metadata(previous_build_db)
+
+    def update_build_metadata(self, previous_build_db: Optional[BuildDB] = None):
+        """Update the build's db attributes (based on storage, etc.)"""
+        self._db = self._db or BuildDB.get_or_create(self.build)
+
+        if previous_build_db:
             binpkgs = Content.BINPKGS
-            left = BuildMan(prev_build).get_path(binpkgs)
+            left = BuildMan(previous_build_db).get_path(binpkgs)
             right = self.get_path(binpkgs)
-            note = diff_notes(str(left), str(right), header="Packages built:\n")
-
-            if note:
-                self.db.note = note
+            self.db.note = diff_notes(str(left), str(right), header="Packages built:\n")
 
         self.db.logs = self.jenkins_build.get_logs()
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)
         self.db.save()
-        logging.info("Pulled build %s", self.build)
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
