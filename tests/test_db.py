@@ -194,6 +194,25 @@ class BuildDBTestCase(TestCase):
         with self.assertRaises(BuildDB.NotFound):
             BuildDB.get(Build(name="bogus", number=555))
 
+    def test_get_or_create_exists(self):
+        build_db = BuildDBFactory.create()
+        build = Build(build_db.name, build_db.number)
+
+        result = BuildDB.get_or_create(build)
+
+        self.assertEqual(result, build_db)
+
+    def test_get_or_create_does_not_exist(self):
+        build = Build(name="foo", number=555)
+
+        with self.assertRaises(BuildDB.NotFound):
+            BuildDB.get(build)
+
+        result = BuildDB.get_or_create(build)
+
+        self.assertIsInstance(result, BuildDB)
+        self.assertEqual(result, BuildDB.get(build))
+
     def test_builds(self):
         BuildDB.create(Build(name="foo", number=555))
         BuildDB.create(Build(name="foo", number=556))

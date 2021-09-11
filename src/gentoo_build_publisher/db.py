@@ -164,6 +164,14 @@ class BuildDB:
         return cls(model)
 
     @classmethod
+    def get_or_create(cls: Type[T], build: Build) -> T:
+        """Factory to retrieve a db record or create one if one doesn't exist"""
+        try:
+            return cls.get(build)
+        except cls.NotFound:
+            return cls.create(build)
+
+    @classmethod
     def builds(cls, **filters) -> Iterator:
         """Query the datbase and return an iterable of BuildDB objects
 

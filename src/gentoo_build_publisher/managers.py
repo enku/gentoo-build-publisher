@@ -87,10 +87,7 @@ class BuildMan:
     def pull(self):
         """pull the Build to storage"""
         if self._db is None:
-            try:
-                self._db = BuildDB.get(self.build)
-            except BuildDB.NotFound:
-                self._db = BuildDB.create(self.build)
+            self._db = BuildDB.get_or_create(self.build)
 
         if not self.storage_build.pulled():
             logger.info("Pulling build: %s", self.build)
