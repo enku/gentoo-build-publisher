@@ -88,31 +88,35 @@ class BuildMan:
 
     def pull(self):
         """pull the Build to storage"""
-        if self.storage_build.pulled():
+        if self.pulled():
             return
 
-        self._db = self._db or BuildDB.get_or_create(self.build)
+        build = self.build
+        storage = self.storage_build
+        jenkins = self.jenkins_build
+
+        self._db = self._db or BuildDB.get_or_create(build)
         previous_build_db = BuildDB.previous_build(self._db)
 
         if previous_build_db:
-            previous_storage_build = type(self)(previous_build_db)
+            previous_build_storage = type(self)(previous_build_db)
         else:
-            previous_storage_build = None
+            previous_build_storage = None
 
-        logger.info("Pulling build: %s", self.build)
+        logger.info("Pulling build: %s", build)
 
-        chunk_size = self.jenkins_build.jenkins.download_chunk_size
+        chunk_size = jenkins.jenkins.download_chunk_size
         with tempfile.TemporaryFile(buffering=chunk_size) as temp:
-            logger.info("Downloading build: %s", self.build)
-            io.write_chunks(temp, self.jenkins_build.download_artifact())
+            logger.info("Downloading build: %s", build)
+            io.write_chunks(temp, jenkins.download_artifact())
 
-            logger.info("Downloaded build: %s", self.build)
+            logger.info("Downloaded build: %s", build)
             temp.seek(0)
 
             byte_stream = io.read_chunks(temp, chunk_size)
-            self.storage_build.extract_artifact(byte_stream, previous_storage_build)
+            storage.extract_artifact(byte_stream, previous_build_storage)
 
-        logging.info("Pulled build %s", self.build)
+        logging.info("Pulled build %s", build)
 
         self.update_build_metadata(previous_build_db)
 
