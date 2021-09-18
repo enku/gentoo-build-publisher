@@ -5,9 +5,9 @@ similar purpose.
 """
 import filecmp
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generator
 
 
 class Status(Enum):
@@ -71,9 +71,7 @@ def path_to_pkg(prefix: str, path: str) -> str:
     return f"{category}/{package}"
 
 
-def changes(
-    left: str, right: str, dircmp: filecmp.dircmp
-) -> Generator[Change, None, None]:
+def changes(left: str, right: str, dircmp: filecmp.dircmp) -> Iterator[Change]:
     """Recursive generator for file comparisions"""
     for subcmp in dircmp.subdirs.values():
 
@@ -110,7 +108,7 @@ def changes(
         yield from changes(left, right, subcmp)
 
 
-def subtree(root: str, path: str, status: Status) -> Generator[Change, None, None]:
+def subtree(root: str, path: str, status: Status) -> Iterator[Change]:
     """Yield an entire subtree as added or removed"""
     for dirpath, _, filenames in os.walk(path):
         for filename in filenames:
@@ -119,7 +117,7 @@ def subtree(root: str, path: str, status: Status) -> Generator[Change, None, Non
             yield Change(path_to_pkg(root, path), status=status)
 
 
-def dirdiff(left: str, right: str) -> Generator[Change, None, None]:
+def dirdiff(left: str, right: str) -> Iterator[Change]:
     """Generate differences between to directory paths"""
     dircmp = filecmp.dircmp(left, right)
 
