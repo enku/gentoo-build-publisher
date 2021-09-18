@@ -1,11 +1,13 @@
 """Managers"""
 import logging
+import tempfile
 from datetime import datetime, timezone
 from pathlib import PosixPath
 from typing import Any, Optional, Union
 
 from yarl import URL
 
+from gentoo_build_publisher import io
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import diff_notes
@@ -99,10 +101,16 @@ class BuildMan:
 
         logger.info("Pulling build: %s", self.build)
 
-        self.storage_build.extract_artifact(
-            self.jenkins_build.download_artifact(),
-            previous_build=previous_storage_build,
-        )
+        chunk_size = self.jenkins_build.jenkins.download_chunk_size
+        with tempfile.TemporaryFile(buffering=chunk_size) as temp:
+            logger.info("Downloading build: %s", self.build)
+            io.write_chunks(temp, self.jenkins_build.download_artifact())
+
+            logger.info("Downloaded build: %s", self.build)
+            temp.seek(0)
+
+            byte_stream = io.read_chunks(temp, chunk_size)
+            self.storage_build.extract_artifact(byte_stream, previous_storage_build)
 
         logging.info("Pulled build %s", self.build)
 

@@ -46,7 +46,6 @@ class JenkinsBuild:
 
     def download_artifact(self) -> Iterator[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
-        logger.info("Downloading build: %s", self.build)
         url = self.artifact_url()
         response = requests.get(str(url), auth=self.auth, stream=True)
         response.raise_for_status()
