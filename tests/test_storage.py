@@ -4,20 +4,20 @@ import os
 import shutil
 import subprocess
 import tarfile
-from unittest import TestCase, mock
+from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
-from . import MockJenkinsBuild, TempHomeMixin
+from . import MockJenkinsBuild, TestCase
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
 )
 
 
-class StorageBuildInitTestCase(TempHomeMixin, TestCase):
+class StorageBuildInitTestCase(TestCase):
     def test_creates_dir_if_not_exists(self):
         os.rmdir(self.tmpdir)
         build = Build(name="babette", number=19)
@@ -26,7 +26,7 @@ class StorageBuildInitTestCase(TempHomeMixin, TestCase):
         self.assertIs(os.path.isdir(self.tmpdir), True)
 
 
-class StorageBuildReprTestCase(TempHomeMixin, TestCase):
+class StorageBuildReprTestCase(TestCase):
     def test(self):
         build = Build(name="babette", number=19)
         storage_build = StorageBuild(build, self.tmpdir)
@@ -37,7 +37,7 @@ class StorageBuildReprTestCase(TempHomeMixin, TestCase):
         )
 
 
-class StorageBuildFromSettings(TempHomeMixin, TestCase):
+class StorageBuildFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self):
         """Should intantiate StorageBuild from settings"""
@@ -56,7 +56,7 @@ class StorageBuildFromSettings(TempHomeMixin, TestCase):
         self.assertEqual(storage_build.path, self.tmpdir)
 
 
-class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
+class StorageBuildDownloadArtifactTestCase(TestCase):
     """Tests for StorageBuild.download_artifact"""
 
     def test_extract_artifact_moves_repos_and_binpkgs(self):
@@ -88,7 +88,7 @@ class StorageBuildDownloadArtifactTestCase(TempHomeMixin, TestCase):
         self.assertIs(storage_build.get_path(Content.VAR_LIB_PORTAGE).is_dir(), True)
 
 
-class StorageBuildPublishTestCase(TempHomeMixin, TestCase):
+class StorageBuildPublishTestCase(TestCase):
     """Tests for StorageBuild.publish"""
 
     def test_publish_raises_exception_repos_dir_does_not_exit(self):
@@ -105,7 +105,7 @@ class StorageBuildPublishTestCase(TempHomeMixin, TestCase):
             storage_build.publish()
 
 
-class StorageBuildPublishedTestCase(TempHomeMixin, TestCase):
+class StorageBuildPublishedTestCase(TestCase):
     """Tests for StorageBuild.published"""
 
     def test_published_true(self):
@@ -170,7 +170,7 @@ class StorageBuildPublishedTestCase(TempHomeMixin, TestCase):
         self.assertFalse(storage_build1.published())
 
 
-class StorageBuildDeleteTestCase(TempHomeMixin, TestCase):
+class StorageBuildDeleteTestCase(TestCase):
     """Tests for StorageBuild.delete"""
 
     def test_deletes_expected_directories(self):
@@ -192,7 +192,7 @@ class StorageBuildDeleteTestCase(TempHomeMixin, TestCase):
                 self.assertIs(os.path.exists(directory), False)
 
 
-class StorageExtractArtifactTestCase(TempHomeMixin, TestCase):
+class StorageExtractArtifactTestCase(TestCase):
     """Tests for StorageBuild.extract_artifact"""
 
     def test_does_not_extract_already_pulled_build(self):

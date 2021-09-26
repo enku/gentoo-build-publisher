@@ -4,7 +4,6 @@
 import os
 from unittest import mock
 
-from django.test import TestCase
 from requests import HTTPError
 
 from gentoo_build_publisher.build import Build
@@ -16,11 +15,11 @@ from gentoo_build_publisher.tasks import (
     purge_build,
 )
 
-from . import TempHomeMixin
+from . import TestCase
 from .factories import BuildManFactory
 
 
-class PublishBuildTestCase(TempHomeMixin, TestCase):
+class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
     @mock.patch("gentoo_build_publisher.tasks.BuildMan")
@@ -50,7 +49,7 @@ class PublishBuildTestCase(TempHomeMixin, TestCase):
         )
 
 
-class PurgeBuildTestCase(TempHomeMixin, TestCase):
+class PurgeBuildTestCase(TestCase):
     """Tests for the purge_build task"""
 
     @mock.patch("gentoo_build_publisher.tasks.BuildMan.purge")
@@ -61,7 +60,7 @@ class PurgeBuildTestCase(TempHomeMixin, TestCase):
 
 
 @mock.patch("gentoo_build_publisher.tasks.BuildMan")
-class PullBuildTestCase(TempHomeMixin, TestCase):
+class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
     def test_pulls_build(self, buildmanager_mock):
@@ -129,7 +128,7 @@ class PullBuildTestCase(TempHomeMixin, TestCase):
         retry_mock.assert_not_called()
 
 
-class DeleteBuildTestCase(TempHomeMixin, TestCase):
+class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
     def test_should_delete_the_build(self):

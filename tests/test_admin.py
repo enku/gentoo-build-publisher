@@ -4,17 +4,16 @@
 from unittest import mock
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
 
 from gentoo_build_publisher.models import BuildNote, KeptBuild
 
-from . import TempHomeMixin
+from . import TestCase
 from .factories import BuildModelFactory
 
 User = get_user_model()
 
 
-class BuildModelListViewFilterTestCase(TempHomeMixin, TestCase):
+class BuildModelListViewFilterTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -47,7 +46,7 @@ class BuildModelListViewFilterTestCase(TempHomeMixin, TestCase):
         self.assertContains(response, "3 Builds")
 
 
-class BuildModelChangeViewTestCase(TempHomeMixin, TestCase):
+class BuildModelChangeViewTestCase(TestCase):
     def setUp(self):
         super().setUp()
 

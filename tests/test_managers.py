@@ -3,8 +3,6 @@
 import datetime
 from unittest import mock
 
-from django.test import TestCase
-
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
@@ -12,13 +10,13 @@ from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
-from . import TempHomeMixin
+from . import TestCase
 from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
 
 utc = datetime.timezone.utc
 
 
-class BuildManTestCase(TempHomeMixin, TestCase):
+class BuildManTestCase(TestCase):
     def test_instantiate_with_wrong_class(self):
         with self.assertRaises(TypeError) as context:
             BuildMan(1)
@@ -269,7 +267,7 @@ class BuildManTestCase(TempHomeMixin, TestCase):
         )
 
 
-class MachineInfoTestCase(TempHomeMixin, TestCase):
+class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
     def test(self):

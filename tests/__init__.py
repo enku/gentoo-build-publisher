@@ -6,6 +6,8 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
+import django.test
+
 from gentoo_build_publisher.jenkins import JenkinsBuild
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -13,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent / "data"
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
-class TempHomeMixin:  # pylint: disable=too-few-public-methods
+class TestCase(django.test.TestCase):
     def setUp(self):
         super().setUp()
 

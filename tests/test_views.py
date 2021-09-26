@@ -4,20 +4,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
-from django.test import TestCase
-
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
-from . import TempHomeMixin
+from . import TestCase
 from .factories import BuildManFactory, BuildModelFactory
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
 
-class IndexViewTestCase(TempHomeMixin, TestCase):
+class IndexViewTestCase(TestCase):
     """Tests for the index view"""
 
     def test(self):
@@ -27,7 +25,7 @@ class IndexViewTestCase(TempHomeMixin, TestCase):
         self.assertTemplateUsed(response, "gentoo_build_publisher/index.html")
 
 
-class PublishViewTestCase(TempHomeMixin, TestCase):
+class PublishViewTestCase(TestCase):
     """Tests for the publish view"""
 
     def test_publish(self):
@@ -52,7 +50,7 @@ class PublishViewTestCase(TempHomeMixin, TestCase):
         self.assertTrue(build.published())
 
 
-class PullViewTestCase(TempHomeMixin, TestCase):
+class PullViewTestCase(TestCase):
     """Tests for the pull view"""
 
     def test_publish_new(self):
@@ -69,7 +67,7 @@ class PullViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.json(), expected)
 
 
-class ListBuildsViewTestCase(TempHomeMixin, TestCase):
+class ListBuildsViewTestCase(TestCase):
     """Tests for the list_builds view"""
 
     def setUp(self):
@@ -106,7 +104,7 @@ class ListBuildsViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(len(data["builds"]), 2)
 
 
-class LatestViewTestCase(TempHomeMixin, TestCase):
+class LatestViewTestCase(TestCase):
     """Tests for the latest view"""
 
     def setUp(self):
@@ -145,7 +143,7 @@ class LatestViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.json(), expected)
 
 
-class ShowBuildViewTestCase(TempHomeMixin, TestCase):
+class ShowBuildViewTestCase(TestCase):
     def test_returns_json_repr(self):
         build_model = BuildModelFactory.create()
 
@@ -185,7 +183,7 @@ class ShowBuildViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class LogsViewTestCase(TempHomeMixin, TestCase):
+class LogsViewTestCase(TestCase):
     """Tests for the logs view"""
 
     def test_returns_logs_when_there_are_logs(self):
@@ -210,7 +208,7 @@ class LogsViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class DeleteViewTestCase(TempHomeMixin, TestCase):
+class DeleteViewTestCase(TestCase):
     """Tests for the delete view"""
 
     def test_post_deletes_build(self):
@@ -244,7 +242,7 @@ class DeleteViewTestCase(TempHomeMixin, TestCase):
         self.assertEqual(response.json(), {"error": "Not found"})
 
 
-class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
+class DiffBuildsViewTestCase(TestCase):
     """Tests for the diff_builds view"""
 
     def test(self):
@@ -283,7 +281,7 @@ class DiffBuildsViewTestCase(TempHomeMixin, TestCase):
         )
 
 
-class MachinesViewTestCase(TempHomeMixin, TestCase):
+class MachinesViewTestCase(TestCase):
     def test(self):
         BuildModelFactory.create_batch(2, name="babette")
         BuildModelFactory.create_batch(3, name="lighthouse")

@@ -1,14 +1,12 @@
 """Unit tests for gbp models"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-from django.test import TestCase
-
 from gentoo_build_publisher.models import BuildLog, BuildNote, KeptBuild
 
-from . import TempHomeMixin
+from . import TestCase
 from .factories import BuildModelFactory
 
 
-class BuildModelTestCase(TempHomeMixin, TestCase):
+class BuildModelTestCase(TestCase):
     """Unit tests for the BuildModel"""
 
     def test_str(self):
@@ -28,7 +26,7 @@ class BuildModelTestCase(TempHomeMixin, TestCase):
         self.assertEqual(string, "BuildModel(name='test', number=1)")
 
 
-class KeptBuildTestCase(TempHomeMixin, TestCase):
+class KeptBuildTestCase(TestCase):
     """Unit tests for KeptBuild"""
 
     def test_str(self):
@@ -38,7 +36,7 @@ class KeptBuildTestCase(TempHomeMixin, TestCase):
         self.assertEqual(str(kept_build), str(build_model))
 
 
-class BuildNoteTestCase(TempHomeMixin, TestCase):
+class BuildNoteTestCase(TestCase):
     """Unit tests for BuildNote"""
 
     def test_str(self):
@@ -77,7 +75,7 @@ class BuildNoteTestCase(TempHomeMixin, TestCase):
             build_note.refresh_from_db()
 
 
-class BuildLogTestCase(TempHomeMixin, TestCase):
+class BuildLogTestCase(TestCase):
     """Unit tests for the BuildLog model"""
 
     def test_upsert_saves_note_text(self):
