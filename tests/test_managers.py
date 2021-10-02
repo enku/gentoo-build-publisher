@@ -5,7 +5,7 @@ from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.diff import Change, Status
-from gentoo_build_publisher.managers import BuildMan, MachineInfo
+from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
@@ -324,3 +324,21 @@ class MachineInfoTestCase(TestCase):
             },
         }
         self.assertEqual(as_dict, expected)
+
+
+class ScheduleBuildTestCase(TestCase):
+    """Tests for the schedule_build function"""
+
+    def test(self):
+        name = "babette"
+        settings = Settings.from_environ()
+        mock_path = "gentoo_build_publisher.managers.schedule_jenkins_build"
+
+        with mock.patch(mock_path) as mock_jenkins_build:
+            mock_jenkins_build.return_value = (
+                "https://jenkins.invalid/queue/item/31528/"
+            )
+            response = schedule_build(name)
+
+        self.assertEqual(response, "https://jenkins.invalid/queue/item/31528/")
+        mock_jenkins_build.assert_called_once_with(name, settings)

@@ -12,6 +12,7 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.jenkins import JenkinsBuild
+from gentoo_build_publisher.jenkins import schedule_build as schedule_jenkins_build
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
@@ -252,3 +253,9 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
             "name": self.name,
             "published": published,
         }
+
+
+def schedule_build(name: str) -> str:
+    """Schedule a build on jenkins for the given machine name"""
+    settings = Settings.from_environ()
+    return schedule_jenkins_build(name, settings)

@@ -17,7 +17,7 @@ from graphql.type.definition import GraphQLResolveInfo
 from gentoo_build_publisher import diff
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan, MachineInfo
+from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.tasks import publish_build
 
 Object = dict[str, Any]
@@ -113,6 +113,11 @@ def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
         publish_build.delay(name, number)
 
     return MachineInfo(name)
+
+
+@mutation.field("scheduleBuild")
+def resolve_mutation_schedule_build(*_, name: str) -> str:
+    return schedule_build(name)
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

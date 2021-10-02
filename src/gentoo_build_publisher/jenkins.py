@@ -1,7 +1,7 @@
 """Jenkins api for Gentoo Build Publisher"""
 import logging
 from dataclasses import dataclass
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Type, TypeVar
 
 import requests
 from yarl import URL
@@ -14,6 +14,9 @@ AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
 
+_T = TypeVar("_T", bound="JenkinsConfig")
+
+
 @dataclass
 class JenkinsConfig:
     """Configuration for JenkinsBuild"""
@@ -23,6 +26,17 @@ class JenkinsConfig:
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
     download_chunk_size: int = JENKINS_DEFAULT_CHUNK_SIZE
+
+    @classmethod
+    def from_settings(cls: Type[_T], settings: Settings) -> _T:
+        """Return config given settings"""
+        return cls(
+            base_url=URL(settings.JENKINS_BASE_URL),
+            user=settings.JENKINS_USER,
+            artifact_name=settings.JENKINS_ARTIFACT_NAME,
+            api_key=settings.JENKINS_API_KEY,
+            download_chunk_size=settings.JENKINS_DOWNLOAD_CHUNK_SIZE,
+        )
 
 
 @dataclass
@@ -65,13 +79,7 @@ class JenkinsBuild:
     @classmethod
     def from_settings(cls, build: Build, settings: Settings):
         """Return a JenkinsBuild instance given settings"""
-        jenkins = JenkinsConfig(
-            base_url=URL(settings.JENKINS_BASE_URL),
-            user=settings.JENKINS_USER,
-            artifact_name=settings.JENKINS_ARTIFACT_NAME,
-            api_key=settings.JENKINS_API_KEY,
-            download_chunk_size=settings.JENKINS_DOWNLOAD_CHUNK_SIZE,
-        )
+        jenkins = JenkinsConfig.from_settings(settings)
         return cls(build=build, jenkins=jenkins)
 
     @property
@@ -80,7 +88,27 @@ class JenkinsBuild:
 
         Either a 2-tuple or `None`
         """
-        if self.jenkins.user is None or self.jenkins.api_key is None:
-            return None
+        return auth(self.jenkins)
 
-        return (self.jenkins.user, self.jenkins.api_key)
+
+def schedule_build(name: str, settings: Settings) -> str:
+    """Schedule a build on Jenkins"""
+    jenkins_config = JenkinsConfig.from_settings(settings)
+    url = jenkins_config.base_url / "job" / name / "build"
+    response = requests.post(str(url), auth=auth(jenkins_config))
+    response.raise_for_status()
+
+    # All that Jenkins gives us is the location of the queued request.  Let's return
+    # that.
+    return response.headers["location"]
+
+
+def auth(jenkins_config: JenkinsConfig) -> Optional[AuthTuple]:
+    """The auth used for requests
+
+    Either a 2-tuple or `None`
+    """
+    if jenkins_config.user is None or jenkins_config.api_key is None:
+        return None
+
+    return (jenkins_config.user, jenkins_config.api_key)

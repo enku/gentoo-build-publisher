@@ -411,3 +411,44 @@ class PublishMutationTestCase(TestCase):
             execute(query)
 
         publish_delay.assert_called_once_with("babette", 193)
+
+
+class ScheduleBuildMutationTestCase(TestCase):
+    """Tests for the build mutation"""
+
+    maxDiff = None
+
+    def test(self):
+        query = 'mutation { scheduleBuild(name: "babette") }'
+        schedule_build_path = "gentoo_build_publisher.graphql.schedule_build"
+        with mock.patch(schedule_build_path) as mock_schedule_build:
+            mock_schedule_build.return_value = (
+                "https://jenkins.invalid/queue/item/31528/"
+            )
+            result = execute(query)
+
+        self.assertEqual(
+            result,
+            {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
+        )
+        mock_schedule_build.assert_called_once_with("babette")
+
+    def test_should_return_error_when_schedule_build_fails(self):
+        query = 'mutation { scheduleBuild(name: "babette") }'
+        schedule_build_path = "gentoo_build_publisher.graphql.schedule_build"
+        with mock.patch(schedule_build_path) as mock_schedule_build:
+            mock_schedule_build.side_effect = Exception("The end is near")
+            result = execute(query)
+
+        expected = {
+            "data": {"scheduleBuild": None},
+            "errors": [
+                {
+                    "locations": [{"column": 12, "line": 1}],
+                    "message": "The end is near",
+                    "path": ["scheduleBuild"],
+                }
+            ],
+        }
+        self.assertEqual(result, expected)
+        mock_schedule_build.assert_called_once_with("babette")
