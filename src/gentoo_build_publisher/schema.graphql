@@ -1,0 +1,54 @@
+scalar DateTime
+
+input BuildInput {
+  name: String!
+  number: Int!
+}
+
+type Build {
+  name: String!
+  number: Int!
+  submitted: DateTime!
+  completed: DateTime
+  published: Boolean
+  pulled: Boolean
+  notes: String
+  keep: Boolean!
+  logs: String
+}
+
+type MachineSummary {
+  name: String!
+  builds: Int
+  latestBuild: Build
+  publishedBuild: Build
+}
+
+enum StatusEnum {
+    REMOVED
+    CHANGED
+    ADDED
+}
+
+type Change {
+  item: String!
+  status: StatusEnum!
+}
+
+type DiffStat {
+  left: Build!
+  right: Build!
+  items: [Change!]!
+}
+
+type Query {
+  build(name: String!, number: Int!): Build
+  builds(name: String!): [Build!]!
+  diff(left: BuildInput!, right: BuildInput!): DiffStat
+  latest(name: String!): Build
+  machines: [MachineSummary!]!
+}
+
+type Mutation {
+  publish(name: String!, number: Int!): MachineSummary
+}
