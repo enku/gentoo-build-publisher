@@ -10,7 +10,8 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
-from . import MockJenkinsBuild, TestCase
+from . import PACKAGE_INDEX, MockJenkinsBuild, TestCase
+from .factories import BuildManFactory
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
@@ -260,3 +261,26 @@ class StorageExtractArtifactTestCase(TestCase):
                 ],
                 check=True,
             )
+
+
+class StorageBuildGetPackagesTestCase(TestCase):
+    """tests for the StorageBuild.get_packages() method"""
+
+    def setUp(self):
+        super().setUp()
+
+        build = BuildManFactory.create()
+        build.pull()
+        self.storage_build = build.storage_build
+
+    def test_should_return_list_of_packages_from_index(self):
+        packages = self.storage_build.get_packages()
+
+        self.assertEqual(packages, PACKAGE_INDEX)
+
+    def test_should_raise_lookuperror_when_index_file_missing(self):
+        index_file = self.storage_build.get_path(Content.BINPKGS) / "Packages"
+        index_file.unlink()
+
+        with self.assertRaises(LookupError):
+            self.storage_build.get_packages()

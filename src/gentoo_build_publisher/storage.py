@@ -146,3 +146,25 @@ class StorageBuild:
             raise EnvironmentError(f"{target} exists but is not a symlink")
 
         os.symlink(source, target)
+
+    def package_index_file(self):
+        """Return a file object for the Packages index file"""
+        package_index_path = self.get_path(Content.BINPKGS) / "Packages"
+
+        if not package_index_path.exists():
+            logger.warning("Build %s is missing package index", self.build)
+            raise LookupError(f"{package_index_path} is missing")
+
+        return package_index_path.open(encoding="utf-8")
+
+    def get_packages(self) -> list[str]:
+        """Return the list of packages for this build"""
+        packages = []
+
+        with self.package_index_file() as package_index_file:
+            for line in package_index_file:
+                if line.startswith("CPV: "):
+                    package = line[5:].rstrip()
+                    packages.append(package)
+
+        return packages

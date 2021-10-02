@@ -12,6 +12,7 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne.contrib.django.scalars import datetime_scalar
+from graphql.type.definition import GraphQLResolveInfo
 
 from gentoo_build_publisher import diff
 from gentoo_build_publisher.build import Build, Content
@@ -37,6 +38,17 @@ build.set_field("logs", lambda build_man, _: build_man.db.logs)
 build.set_field("notes", lambda build_man, _: build_man.db.note)
 build.set_field("published", lambda build_man, _: build_man.published())
 build.set_field("pulled", lambda build_man, _: build_man.pulled())
+
+
+@build.field("packages")
+def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
+    if not build_man.pulled():
+        return None
+
+    try:
+        return build_man.get_packages()
+    except LookupError:
+        return None
 
 
 machine_summary.set_alias("builds", "build_count")
@@ -81,6 +93,14 @@ def resolve_query_diff(*_, left: Object, right: Object) -> Optional[Object]:
     items = diff.dirdiff(str(left_path), str(right_path))
 
     return {"left": left_build, "right": right_build, "items": [*items]}
+
+
+@query.field("packages")
+def resolve_query_packages(
+    _, info: GraphQLResolveInfo, name: str, number: int
+) -> Optional[list[str]]:
+    build_man = BuildMan(Build(name=name, number=number))
+    return resolve_build_packages(build_man, info)
 
 
 @mutation.field("publish")

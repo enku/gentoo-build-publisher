@@ -58,6 +58,7 @@ class BuildMan:
             )
         else:
             self.storage_build = storage_build
+        self.get_packages = self.storage_build.get_packages
 
     @property
     def id(self):  # pylint: disable=invalid-name

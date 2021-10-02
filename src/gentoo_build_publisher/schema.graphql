@@ -15,6 +15,7 @@ type Build {
   notes: String
   keep: Boolean!
   logs: String
+  packages: [String!]
 }
 
 type MachineSummary {
@@ -47,6 +48,7 @@ type Query {
   diff(left: BuildInput!, right: BuildInput!): DiffStat
   latest(name: String!): Build
   machines: [MachineSummary!]!
+  packages(name: String!, number: Int!): [String!]
 }
 
 type Mutation {

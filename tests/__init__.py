@@ -12,6 +12,15 @@ from gentoo_build_publisher.jenkins import JenkinsBuild
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
+# This is the list of packages (in order) stored in the artifact fixture
+PACKAGE_INDEX: list[str] = [
+    "acct-group/sgx-0",
+    "app-admin/perl-cleaner-2.30",
+    "app-arch/unzip-6.0_p26",
+    "app-crypt/gpgme-1.14.0",
+]
+
+
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
