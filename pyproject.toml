@@ -12,3 +12,7 @@ build-backend = "setuptools.build_meta"
 [tool.coverage.run]
 source = ["gentoo_build_publisher"]
 omit = ["src/gentoo_build_publisher/migrations/*"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
