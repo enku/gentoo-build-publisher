@@ -10,7 +10,8 @@ container := $(machine)-root
 chroot := buildah run $(container) --
 config := $(notdir $(wildcard $(machine)/configs/*))
 config_targets := $(config:=.copy_config)
-emerge_opts := --buildpkg-exclude=sys-kernel/gentoo-sources --color=n --deep --jobs=4 --keep-going=n --newuse --nospinner --oneshot --update --verbose --with-bdeps=y
+universal_emerge_opts := --color=n --keep-going=n --nospinner --with-bdeps=y
+emerge_opts := $(universal_emerge_opts) --changed-deps=y --deep --jobs=4 --newuse --oneshot --update --verbose
 repos_dir := /var/db/repos
 repos := $(shell cat $(machine)/repos)
 repos_targets := $(repos:=.add_repo)
@@ -57,10 +58,10 @@ chroot: $(repos_targets) $(config_targets)  ## Build the chroot in the container
 
 
 world: chroot  ## Update @world and remove unneeded pkgs & binpkgs
-	$(chroot) emerge $(emerge_opts) --usepkg=y --with-bdeps=y @world gentoolkit
-	$(chroot) emerge $(emerge_opts) --usepkg=n @preserved-rebuild
-	$(chroot) eclean-pkg --deep --quiet
-	$(chroot) emerge --depclean --quiet --with-bdeps=y
+	$(chroot) emerge $(emerge_opts) --usepkg=y @world gentoolkit
+	$(chroot) emerge $(universal_emerge_opts) --changed-deps=n --usepkg=n --getbinpkg=n @preserved-rebuild
+	$(chroot) eclean-pkg --changed-deps --deep --quiet
+	$(chroot) emerge $(universal_emerge_opts) --depclean --quiet
 	touch $@
 
 
@@ -86,7 +87,7 @@ $(archive): world gbp.json
 
 .PHONY: push
 push: $(archive)  ## Push artifact (to GBP)
-	curl -X POST https://gbp/api/builds/$(machine)/$(build)
+	curl -X POST $(GBP_URL)/api/builds/$(machine)/$(build)
 
 
 .PHONY: %.machine
