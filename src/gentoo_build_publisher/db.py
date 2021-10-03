@@ -123,8 +123,7 @@ class BuildDB:
             if getattr(self, attr):
                 model.upsert(self.model, *[getattr(self, field) for field in fields])
             else:
-                model.remove(self.model)  # pylint: disable=no-member
-                                          # disabled due to bug with pylint
+                model.remove(self.model)  # bug with pylint: disable=no-member
 
     def delete(self):
         """Delete this Build from the db"""
