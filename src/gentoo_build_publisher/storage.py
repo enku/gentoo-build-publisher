@@ -10,7 +10,7 @@ from pathlib import PosixPath
 from typing import Iterator, Optional
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import Build, Content, Package
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -157,14 +157,37 @@ class StorageBuild:
 
         return package_index_path.open(encoding="utf-8")
 
-    def get_packages(self) -> list[str]:
+    def get_packages(self) -> list[Package]:
         """Return the list of packages for this build"""
         packages = []
 
         with self.package_index_file() as package_index_file:
-            for line in package_index_file:
-                if line.startswith("CPV: "):
-                    package = line[5:].rstrip()
-                    packages.append(package)
+            # Skip preamble (for now)
+            while package_index_file.readline().rstrip():
+                pass
+
+            while True:
+                lines = []
+                while line := package_index_file.readline().rstrip():
+                    lines.append(line)
+                if not lines:
+                    break
+
+                package_info = {}
+                for line in lines:
+                    key, _, value = line.partition(":")
+                    key = key.rstrip().lower()
+                    value = value.lstrip()
+                    package_info[key] = value
+
+                packages.append(
+                    Package(
+                        package_info["cpv"],
+                        package_info["repo"],
+                        package_info["path"],
+                        int(package_info["build_id"]),
+                        int(package_info["size"]),
+                    )
+                )
 
         return packages

@@ -276,7 +276,13 @@ class StorageBuildGetPackagesTestCase(TestCase):
     def test_should_return_list_of_packages_from_index(self):
         packages = self.storage_build.get_packages()
 
-        self.assertEqual(packages, PACKAGE_INDEX)
+        self.assertEqual(len(packages), len(PACKAGE_INDEX))
+        package = packages[0]
+        self.assertEqual(package.cpv, "acct-group/sgx-0")
+        self.assertEqual(package.repo, "gentoo")
+        self.assertEqual(package.path, "acct-group/sgx/sgx-0-1.xpak")
+        self.assertEqual(package.build_id, 1)
+        self.assertEqual(package.size, 11362)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
         index_file = self.storage_build.get_path(Content.BINPKGS) / "Packages"

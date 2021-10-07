@@ -46,7 +46,7 @@ def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
         return None
 
     try:
-        return build_man.get_packages()
+        return [package.cpv for package in build_man.get_packages()]
     except LookupError:
         return None
 
