@@ -9,7 +9,7 @@ from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildLog, BuildModel
 
-from . import TestCase
+from . import TestCase, package_entry
 from .factories import BuildManFactory, BuildModelFactory
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -248,17 +248,15 @@ class DiffBuildsViewTestCase(TestCase):
     def test(self):
         # Given the first build with tar-1.34
         left_bm = BuildManFactory.create()
-        path = left_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
-        path.mkdir(parents=True)
-        somefile = path / "tar-1.34-1.xpak"
-        somefile.write_text("test")
+        binpkgs = left_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs.mkdir(parents=True)
+        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
         right_bm = BuildManFactory.create()
-        path = right_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
-        path.mkdir(parents=True)
-        somefile = path / "tar-1.35-1.xpak"
-        somefile.write_text("test")
+        binpkgs = right_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs.mkdir(parents=True)
+        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
 
         # When we call get the diff view given the 2 builds
         url = f"/api/builds/{left_bm.name}/diff/{left_bm.number}/{right_bm.number}"

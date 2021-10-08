@@ -33,3 +33,31 @@ class Package:
     path: str
     build_id: int
     size: int
+
+    def cpvb(self) -> str:
+        """return cpv + build id"""
+        return f"{self.cpv}-{self.build_id}"
+
+
+class Status(Enum):
+    """Change item status (added, changed, removed)"""
+
+    REMOVED = -1
+    CHANGED = 0
+    ADDED = 1
+
+    def is_a_build(self):
+        """Return true if this is a "build" change"""
+        return self is not Status.REMOVED
+
+
+@dataclass(frozen=True)
+class Change:
+    """A changed item (file or directory)"""
+
+    item: str
+    status: Status
+
+    def tuple(self) -> tuple[int, str]:
+        """Return Change as a JSON-compatible tuple"""
+        return (self.status.value, self.item)

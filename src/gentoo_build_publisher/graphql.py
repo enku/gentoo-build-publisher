@@ -14,8 +14,7 @@ from ariadne import (
 from ariadne.contrib.django.scalars import datetime_scalar
 from graphql.type.definition import GraphQLResolveInfo
 
-from gentoo_build_publisher import diff
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import Build, Status
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.tasks import publish_build
@@ -23,7 +22,7 @@ from gentoo_build_publisher.tasks import publish_build
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
-    EnumType("StatusEnum", diff.Status),
+    EnumType("StatusEnum", Status),
     datetime_scalar,
     build := ObjectType("Build"),
     machine_summary := ObjectType("MachineSummary"),
@@ -87,10 +86,7 @@ def resolve_query_diff(*_, left: Object, right: Object) -> Optional[Object]:
     if not (left_build.db and right_build.db):
         return None
 
-    left_path = left_build.storage_build.get_path(Content.BINPKGS)
-    right_path = right_build.storage_build.get_path(Content.BINPKGS)
-
-    items = diff.dirdiff(str(left_path), str(right_path))
+    items = BuildMan.diff_binpkgs(left_build, right_build)
 
     return {"left": left_build, "right": right_build, "items": [*items]}
 

@@ -68,3 +68,29 @@ class MockJenkinsBuild(JenkinsBuild):
             self.get_build_logs_mock_get = mock_get
 
             return super().get_logs()
+
+
+def package_entry(
+    cpv: str | list[str], build_id: int = 1, repo: str = "gentoo", size: int = 0
+) -> str:
+    if isinstance(cpv, str):
+        cpvs = [cpv]
+    else:
+        cpvs = cpv
+
+    strings = []
+
+    for _cpv in cpvs:
+        cat, rest = _cpv.rsplit("/", 1)
+        pkg, version = rest.split("-", 1)
+
+        strings.append(
+            "\n"
+            f"BUILD_ID: {build_id}\n"
+            f"CPV: {_cpv}\n"
+            f"SIZE: {size}\n"
+            f"REPO: {repo}\n"
+            f"PATH: {cat}/{pkg}/{pkg}-{version}-{build_id}.xpak\n"
+        )
+
+    return "".join(["Ignore Preamble\n", *strings])

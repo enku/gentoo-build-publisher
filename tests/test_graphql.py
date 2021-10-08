@@ -8,7 +8,7 @@ from django.test.client import Client
 
 from gentoo_build_publisher.build import Content
 
-from . import PACKAGE_INDEX, TestCase
+from . import PACKAGE_INDEX, TestCase, package_entry
 from .factories import BuildManFactory, BuildModelFactory
 
 
@@ -131,19 +131,15 @@ class DiffQueryTestCase(TestCase):
 
         # Given the first build with tar-1.34
         self.left_bm = BuildManFactory.create()
-        path = self.left_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
-        path.mkdir(parents=True)
-        somefile = path / "tar-1.34-1.xpak"
-        somefile.write_text("test")
+        binpkgs = self.left_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs.mkdir(parents=True)
+        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
         self.right_bm = BuildManFactory.create()
-        path = (
-            self.right_bm.storage_build.get_path(Content.BINPKGS) / "app-arch" / "tar"
-        )
-        path.mkdir(parents=True)
-        somefile = path / "tar-1.35-1.xpak"
-        somefile.write_text("test")
+        binpkgs = self.right_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs.mkdir(parents=True)
+        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
 
     def test(self):
         # When we call get the diff view given the 2 builds

@@ -4,13 +4,12 @@ import datetime
 from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
-from gentoo_build_publisher.diff import Change, Status
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
-from . import TestCase
+from . import TestCase, package_entry
 from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
 
 utc = datetime.timezone.utc
@@ -135,25 +134,21 @@ class BuildManTestCase(TestCase):
         prev_build = BuildManFactory.build()
         prev_build.db.model.completed = now
         prev_build.db.model.save()
+        prev_build.get_path(Content.BINPKGS).mkdir(parents=True)
+        (prev_build.get_path(Content.BINPKGS) / "Packages").write_text("")
 
         buildman = BuildManFactory.build()
-
-        with mock.patch("gentoo_build_publisher.diff.dirdiff") as mock_dirdiff:
-            mock_dirdiff.return_value = iter(
-                [
-                    Change(item="app-crypt/gpgme-1.14.0-1", status=Status.REMOVED),
-                    Change(item="app-crypt/gpgme-1.14.0-2", status=Status.ADDED),
-                    Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
-                    Change(item="sys-apps/sandbox-2.24-1", status=Status.CHANGED),
-                ]
-            )
-            buildman.pull()
-
+        buildman.pull()
         buildman.db.refresh()
 
         self.assertEqual(
             buildman.db.note,
-            "Packages built:\n\n* app-crypt/gpgme-1.14.0-2\n* sys-apps/sandbox-2.24-1",
+            "Packages built:\n"
+            "\n"
+            "* acct-group/sgx-0-1\n"
+            "* app-admin/perl-cleaner-2.30-1\n"
+            "* app-arch/unzip-6.0_p26-1\n"
+            "* app-crypt/gpgme-1.14.0-1",
         )
 
     def test_purge_deletes_old_build(self):
@@ -243,23 +238,18 @@ class BuildManTestCase(TestCase):
     def test_update_build_metadata_with_previous_build(self):
         previous_buildman = BuildManFactory.create()
         previous_buildman.pull()
-        bindir = (
-            previous_buildman.storage_build.get_path(Content.BINPKGS)
-            / "sys-fs/btrfs-progs"
+        package_index = (
+            previous_buildman.storage_build.get_path(Content.BINPKGS) / "Packages"
         )
-        bindir.mkdir(parents=True)
-        binpkg = bindir / "btrfs-progs-5.13.1-1.xpak"
-        binpkg.touch()
+        package_index.write_text(package_entry("sys-fs/btrfs-progs-5.13"))
 
         buildman = BuildManFactory.create()
         buildman.storage_build.extract_artifact(
             buildman.jenkins_build.download_artifact()
         )
-        # Artificially create a "binpkgs"
-        bindir = buildman.storage_build.get_path(Content.BINPKGS) / "sys-fs/btrfs-progs"
-        bindir.mkdir(parents=True)
-        binpkg = bindir / "btrfs-progs-5.14-1.xpak"
-        binpkg.touch()
+        # Artificially update a package
+        package_index = buildman.storage_build.get_path(Content.BINPKGS) / "Packages"
+        package_index.write_text(package_entry("sys-fs/btrfs-progs-5.14"))
 
         buildman.update_build_metadata(previous_buildman.db)
         self.assertEqual(

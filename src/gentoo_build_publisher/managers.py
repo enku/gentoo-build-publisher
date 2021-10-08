@@ -1,16 +1,18 @@
 """Managers"""
+from __future__ import annotations
+
 import logging
 import tempfile
 from datetime import datetime, timezone
+from difflib import Differ
 from pathlib import PosixPath
-from typing import Any, Optional, Union
+from typing import Any, Iterator, Optional, Union
 
 from yarl import URL
 
 from gentoo_build_publisher import io
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import Build, Change, Content, Status
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.diff import diff_notes
 from gentoo_build_publisher.jenkins import JenkinsBuild
 from gentoo_build_publisher.jenkins import schedule_build as schedule_jenkins_build
 from gentoo_build_publisher.purge import Purger
@@ -127,10 +129,8 @@ class BuildMan:
         self._db = self._db or BuildDB.get_or_create(self.build)
 
         if previous_build_db:
-            binpkgs = Content.BINPKGS
-            left = BuildMan(previous_build_db).get_path(binpkgs)
-            right = self.get_path(binpkgs)
-            self.db.note = diff_notes(str(left), str(right), header="Packages built:\n")
+            left = BuildMan(previous_build_db)
+            self.db.note = diff_notes(left, self, header="Packages built:\n")
 
         self.db.logs = self.jenkins_build.get_logs()
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)
@@ -196,6 +196,23 @@ class BuildMan:
                 buildman = cls(build_db)
                 buildman.delete()
 
+    @staticmethod
+    def diff_binpkgs(left: BuildMan, right: BuildMan) -> Iterator[Change]:
+        """Compare two package's binpkgs and generate the differences"""
+        left_packages = [f"{package.cpvb()}\n" for package in left.get_packages()]
+        right_packages = [f"{package.cpvb()}\n" for package in right.get_packages()]
+        code_map = {"-": "REMOVED", "+": "ADDED"}
+
+        differ = Differ()
+        diff = differ.compare(left_packages, right_packages)
+
+        for item in diff:
+            if (code := item[0]) not in code_map:
+                continue
+            cpvb = item[2:].rstrip()
+
+            yield Change(cpvb, Status[code_map[code]])
+
 
 class MachineInfo:  # pylint: disable=too-few-public-methods
     """Data type for machine metadata
@@ -259,3 +276,21 @@ def schedule_build(name: str) -> str:
     """Schedule a build on jenkins for the given machine name"""
     settings = Settings.from_environ()
     return schedule_jenkins_build(name, settings)
+
+
+def diff_notes(left: BuildMan, right: BuildMan, header: str = "") -> str:
+    """Return package diff as a string of notes
+
+    If there are no changes, return an empty string
+    """
+    changeset = [
+        item for item in BuildMan.diff_binpkgs(left, right) if item.status.is_a_build()
+    ]
+    changeset.sort(key=lambda i: i.item)
+
+    note = "\n".join(f"* {i.item}" for i in changeset)
+
+    if note and header:
+        note = f"{header}\n{note}"
+
+    return note

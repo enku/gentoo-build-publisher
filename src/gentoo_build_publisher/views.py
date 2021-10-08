@@ -6,9 +6,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.diff import dirdiff
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.tasks import publish_build, pull_build
 
@@ -150,10 +149,7 @@ def diff_builds(
     if not right_build.db:
         return JsonResponse({"error": "right build not found"}, status=404)
 
-    left_path = left_build.storage_build.get_path(Content.BINPKGS)
-    right_path = right_build.storage_build.get_path(Content.BINPKGS)
-
-    items = dirdiff(str(left_path), str(right_path))
+    items = BuildMan.diff_binpkgs(left_build, right_build)
 
     return JsonResponse(
         {
