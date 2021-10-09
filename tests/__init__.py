@@ -4,6 +4,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
+from typing import Union
 from unittest import mock
 
 import django.test
@@ -71,7 +72,7 @@ class MockJenkinsBuild(JenkinsBuild):
 
 
 def package_entry(
-    cpv: str | list[str], build_id: int = 1, repo: str = "gentoo", size: int = 0
+    cpv: Union[str, list[str]], build_id: int = 1, repo: str = "gentoo", size: int = 0
 ) -> str:
     if isinstance(cpv, str):
         cpvs = [cpv]
