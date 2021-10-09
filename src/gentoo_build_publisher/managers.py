@@ -6,7 +6,7 @@ import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
 from pathlib import PosixPath
-from typing import Any, Iterator, Optional, Union
+from typing import Iterator, Optional, Union
 
 from yarl import URL
 
@@ -147,35 +147,6 @@ class BuildMan:
 
         self.storage_build.delete()
 
-    def as_dict(self) -> dict[str, Any]:
-        """Convert build instance attributes to a dict"""
-        if self.db is not None:
-            db_dict = {
-                "submitted": self.db.submitted.isoformat(),
-                "completed": (
-                    self.db.completed.isoformat()
-                    if self.db.completed is not None
-                    else None
-                ),
-                "note": self.db.note,
-                "keep": self.db.keep,
-            }
-        else:
-            db_dict = {}
-
-        return {
-            "name": self.name,
-            "number": self.number,
-            "storage": {
-                "published": self.published(),
-                "pulled": self.pulled(),
-            },
-            "db": db_dict,
-            "jenkins": {
-                "url": str(self.jenkins_build.artifact_url()),
-            },
-        }
-
     def logs_url(self) -> URL:
         """Return the JenkinsBuild logs url for this Build"""
         return self.jenkins_build.logs_url()
@@ -246,30 +217,6 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
             BuildMan(latest_build) if latest_build else None
         )
         self.published: Optional[BuildMan] = published
-
-    def as_dict(self) -> dict[str, Any]:
-        """Return dataclass as a dictionary"""
-        latest_build: Optional[dict] = None
-        published: Optional[dict] = None
-
-        if self.latest_build:
-            latest_build = {
-                "number": self.latest_build.number,
-                "submitted": self.latest_build.db.submitted,
-            }
-
-        if self.published:
-            published = {
-                "number": self.published.number,
-                "submitted": self.published.db.submitted,
-            }
-
-        return {
-            "builds": self.build_count,
-            "latest_build": latest_build,
-            "name": self.name,
-            "published": published,
-        }
 
 
 def schedule_build(name: str) -> str:

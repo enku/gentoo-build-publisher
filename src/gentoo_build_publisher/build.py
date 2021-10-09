@@ -57,7 +57,3 @@ class Change:
 
     item: str
     status: Status
-
-    def tuple(self) -> tuple[int, str]:
-        """Return Change as a JSON-compatible tuple"""
-        return (self.status.value, self.item)

@@ -25,65 +25,6 @@ class BuildManTestCase(TestCase):
         expected = ("build argument must be one of [Build, BuildDB]. Got int.",)
         self.assertEqual(error.args, expected)
 
-    def test_as_dict(self):
-        """build.as_dict() should return the expected dict"""
-        buildman = BuildManFactory.build()
-        buildman.db.keep = True
-        buildman.db.save()
-
-        as_dict = buildman.as_dict()
-
-        expected = {
-            "name": buildman.name,
-            "number": buildman.number,
-            "db": {
-                "note": None,
-                "keep": True,
-                "submitted": buildman.db.submitted.isoformat(),
-                "completed": None,
-            },
-            "storage": {
-                "published": False,
-                "pulled": False,
-            },
-            "jenkins": {
-                "url": (
-                    "https://jenkins.invalid/job/"
-                    f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
-                ),
-            },
-        }
-        self.assertEqual(as_dict, expected)
-
-    def test_as_dict_with_buildnote(self):
-        buildman = BuildManFactory.build()
-        buildman.db.note = "This is a test"
-        buildman.db.save()
-
-        as_dict = buildman.as_dict()
-
-        expected = {
-            "name": buildman.name,
-            "number": buildman.number,
-            "db": {
-                "note": "This is a test",
-                "completed": None,
-                "submitted": buildman.db.submitted.isoformat(),
-                "keep": False,
-            },
-            "jenkins": {
-                "url": (
-                    "https://jenkins.invalid/job/"
-                    f"{buildman.name}/{buildman.number}/artifact/build.tar.gz"
-                ),
-            },
-            "storage": {
-                "published": False,
-                "pulled": False,
-            },
-        }
-        self.assertEqual(as_dict, expected)
-
     def test_publish(self):
         """.publish should publish the build artifact"""
         buildman = BuildManFactory.build()
@@ -287,33 +228,6 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.build_count, 0)
         self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published, None)
-
-    def test_as_dict(self):
-        # Given the "foo" builds, one of which is published
-        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
-        first_build.publish()
-        latest_build = BuildManFactory.create(build_attr__build_model__name="foo")
-
-        # When we get MachineInfo for foo
-        machine_info = MachineInfo("foo")
-
-        # And call it's .as_dict() method
-        as_dict = machine_info.as_dict()
-
-        # Then it contains the expected value
-        expected = {
-            "builds": 2,
-            "latest_build": {
-                "number": latest_build.number,
-                "submitted": latest_build.db.submitted,
-            },
-            "name": "foo",
-            "published": {
-                "number": first_build.number,
-                "submitted": first_build.db.submitted,
-            },
-        }
-        self.assertEqual(as_dict, expected)
 
 
 class ScheduleBuildTestCase(TestCase):
