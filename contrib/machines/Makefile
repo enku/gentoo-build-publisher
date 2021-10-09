@@ -87,7 +87,10 @@ $(archive): world gbp.json
 
 .PHONY: push
 push: $(archive)  ## Push artifact (to GBP)
-	curl -X POST $(GBP_URL)/api/builds/$(machine)/$(build)
+	curl $(GBP_URL)/graphql \
+		-H "Content-Type: application/json" \
+		-H "Accept: application/json" \
+		--data-binary '{"query":"mutation { pull(name: \"$(machine)\", number: $(build)) { latestBuild { number } } }"}'
 
 
 .PHONY: %.machine
