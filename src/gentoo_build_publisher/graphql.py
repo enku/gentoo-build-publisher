@@ -17,7 +17,7 @@ from graphql.type.definition import GraphQLResolveInfo
 from gentoo_build_publisher.build import Build, Status
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
-from gentoo_build_publisher.tasks import publish_build
+from gentoo_build_publisher.tasks import publish_build, pull_build
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
@@ -108,6 +108,12 @@ def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
     else:
         publish_build.delay(name, number)
 
+    return MachineInfo(name)
+
+
+@mutation.field("pull")
+def resolve_mutation_pull(*_, name: str, number: int) -> MachineInfo:
+    pull_build.delay(name, number)
     return MachineInfo(name)
 
 

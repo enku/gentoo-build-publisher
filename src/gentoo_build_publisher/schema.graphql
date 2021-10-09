@@ -53,5 +53,6 @@ type Query {
 
 type Mutation {
   publish(name: String!, number: Int!): MachineSummary
+  pull(name: String!, number: Int!): MachineSummary
   scheduleBuild(name: String!): String
 }

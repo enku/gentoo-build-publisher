@@ -409,6 +409,28 @@ class PublishMutationTestCase(TestCase):
         publish_delay.assert_called_once_with("babette", 193)
 
 
+class PullMutationTestCase(TestCase):
+    """Tests for the pull mutation"""
+
+    def test(self):
+        """Should publish builds"""
+        build = BuildManFactory.create()
+        query = """mutation Pull ($name: String!, $number: Int!) {
+            pull(name: $name, number: $number) {
+                publishedBuild {
+                    number
+                }
+            }
+        }"""
+        with mock.patch("gentoo_build_publisher.graphql.pull_build") as mock_pull:
+            result = execute(
+                query, variables={"name": build.name, "number": build.number}
+            )
+
+        assert_data(self, result, {"pull": {"publishedBuild": None}})
+        mock_pull.delay.assert_called_once_with(build.name, build.number)
+
+
 class ScheduleBuildMutationTestCase(TestCase):
     """Tests for the build mutation"""
 
