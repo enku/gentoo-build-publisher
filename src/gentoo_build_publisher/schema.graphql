@@ -26,9 +26,9 @@ type MachineSummary {
 }
 
 enum StatusEnum {
-    REMOVED
-    CHANGED
-    ADDED
+  REMOVED
+  CHANGED
+  ADDED
 }
 
 type Change {
