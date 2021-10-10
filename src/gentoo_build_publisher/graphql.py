@@ -122,4 +122,30 @@ def resolve_mutation_schedule_build(*_, name: str) -> str:
     return schedule_build(name)
 
 
+@mutation.field("keepBuild")
+def resolve_mutation_keepbuild(*_, name: str, number: int) -> Optional[BuildMan]:
+    build_man = BuildMan(Build(name=name, number=number))
+
+    if not build_man.db:
+        return None
+
+    build_man.db.keep = True
+    build_man.db.save()
+
+    return build_man
+
+
+@mutation.field("releaseBuild")
+def resolve_mutation_releasebuild(*_, name: str, number: int) -> Optional[BuildMan]:
+    build_man = BuildMan(Build(name=name, number=number))
+
+    if not build_man.db:
+        return None
+
+    build_man.db.keep = False
+    build_man.db.save()
+
+    return build_man
+
+
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

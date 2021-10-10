@@ -470,3 +470,65 @@ class ScheduleBuildMutationTestCase(TestCase):
         }
         self.assertEqual(result, expected)
         mock_schedule_build.assert_called_once_with("babette")
+
+
+class KeepBuildMutationTestCase(TestCase):
+    """Tests for the keep mutation"""
+
+    maxDiff = None
+
+    def test_should_keep_existing_build(self):
+        build = BuildManFactory.create()
+        query = """mutation KeepBuild($name: String!, $number: Int!) {
+           keepBuild(name: $name, number: $number) {
+                keep
+            }
+        }
+        """
+
+        result = execute(query, variables={"name": build.name, "number": build.number})
+
+        assert_data(self, result, {"keepBuild": {"keep": True}})
+
+    def test_should_return_none_when_build_doesnt_exist(self):
+        query = """mutation KeepBuild($name: String!, $number: Int!) {
+           keepBuild(name: $name, number: $number) {
+                keep
+            }
+        }
+        """
+
+        result = execute(query, variables={"name": "bogus", "number": 309})
+
+        assert_data(self, result, {"keepBuild": None})
+
+
+class ReleaseBuildMutationTestCase(TestCase):
+    """Tests for the unkeep mutation"""
+
+    def test_should_release_existing_build(self):
+        build = BuildManFactory.create()
+        build.db.keep = True
+        build.db.save()
+        query = """mutation ReleaseBuild($name: String!, $number: Int!) {
+           releaseBuild(name: $name, number: $number) {
+                keep
+            }
+        }
+        """
+
+        result = execute(query, variables={"name": build.name, "number": build.number})
+
+        assert_data(self, result, {"releaseBuild": {"keep": False}})
+
+    def test_should_return_none_when_build_doesnt_exist(self):
+        query = """mutation ReleaseBuild($name: String!, $number: Int!) {
+           releaseBuild(name: $name, number: $number) {
+                keep
+            }
+        }
+        """
+
+        result = execute(query, variables={"name": "bogus", "number": 309})
+
+        assert_data(self, result, {"releaseBuild": None})

@@ -55,4 +55,6 @@ type Mutation {
   publish(name: String!, number: Int!): MachineSummary
   pull(name: String!, number: Int!): MachineSummary
   scheduleBuild(name: String!): String
+  keepBuild(name: String!, number: Int!): Build
+  releaseBuild(name: String!, number: Int!): Build
 }
