@@ -14,14 +14,14 @@ The idea is to combine best practices with CI/CD and other tools to deliver
 successful, consistent "builds" to your Gentoo machine(s).
 
 In case you didn't know, [Gentoo Linux](https://www.gentoo.org/) is a
-source-based rolling-release meta-distribution that you can twist and mold into
-pretty much anything you like. That's just a verbose way of saying Gentoo is
-awesome.
+source-based rolling-release meta-distribution that you can twist and mold
+into pretty much anything you like. That's just a verbose way of saying Gentoo
+is awesome.
 
-If you run a Gentoo system, say a laptop, and you may be updating your system
+If you run a Gentoo system, say a laptop, you may be updating your system
 using the standard `emerge --sync` followed by a world update.  This pulls in
-the latest ebuilds from the Gentoo repo and if there are any updates applicable
-to your system then they get built on your system.
+the latest ebuilds from the Gentoo repo and if there are any updates
+applicable to your system then they get built on your system.
 
 Except sometimes they don't.
 
@@ -30,44 +30,7 @@ there's an update to a piece of software that is buggy and you want to revert.
 Sometimes a build takes a long time and you don't want to wait.
 
 Well since Gentoo is the distribution you build yourself, CI/CD seems like a
-natural fit. For years I would have a Jenkins instance that ran "builds" for my
-Gentoo systems. Each Gentoo job consisted of a systemd container.  These
-containers were "shadows" of my real systems and the Jenkins job would
-bind-mount a portage repo and binpkgs directory inside and do a world update.
-The binpkgs directory was shared via nginx and the portage tree was shared via
-rsync. This worked well but there were a few annoying issues:
-
-* The job that updated the portage tree and the job that updated the binpkgs
-  were not always in sync.  If a world update took 5 hours, for example, the
-  hourly portage tree poller might have synced 5 times.  Moreover if I sync
-  against my "real" machine hours later it may be even more out of sync.
-
-* It's certainly possible that my "real" machines could sync while the Jenkins
-  job is still building causing any not-yet-built binpkgs to want to build on
-  my real machine.
-
-* If the build failed in Jenkins for any reason when I go to sync from my real
-  machine I will have a system in a inconsistent state.  Likely packages will
-  want to build on my real machine and will fail again.
-
-* Although possible with a little elbow grease, there's no easy way to revert
-  back to a previous build.
-
-* If I changed a config (USE flags, world file, etc.) on my real machine I'd
-  have to find a way of getting the change into the shadow container.
-
-The last issue I later solved by having my the `/etc/portage` and
-`/var/lib/portage` of all my real machines in version control and having the
-shadows pull from a repo.
-
-Most, if not all, of the other issues stem from the fact that I was not taking
-advantage of a fundamental CI/CD feature: build artifacts. The portage tree and
-binpkgs were "live".  They changed independent of the "build" and if a build
-failed the partially-completed parts were always shared. I concluded that the
-thing that created the builds, Jenkins, needed to archive successful builds and
-there needs to be another thing that only publishes the builds.
-
-Enter Gentoo Build Publisher.
+natural fit. Enter Gentoo Build Publisher.
 
 Gentoo Build Pubisher is the combination of an rsync server (for ebuild repos
 and machine configs) and HTTP server (for binpkgs) for successful builds.  For
@@ -79,8 +42,8 @@ for repo syncs and binpkgs.
 
 * You need a Jenkins instance
 * Create "repos" jobs in Jenkins.  These jobs should poll their respective
-  repos (e.g. [gentoo](https://anongit.gentoo.org/git/repo/sync/gentoo.git) and
-  publish archive an artifact (say `gentoo-repo.tar.gz`) from it.
+  repos (e.g. [gentoo](https://anongit.gentoo.org/git/repo/sync/gentoo.git)
+  and publish archive an artifact (say `gentoo-repo.tar.gz`) from it.
 * For your machine type, say database, you create a Jenkins job. This job
   should create a container from a
   [stage3](https://hub.docker.com/r/gentoo/stage3) image (I actually use the
@@ -105,8 +68,8 @@ for repo syncs and binpkgs.
 
 * If the job fails, it will not be pulled.
 
-* Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls binary
-  packages from https://gbp/binpkgs/<machine>/
+* Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls
+  binary packages from https://gbp/binpkgs/<machine>/
 
 <p align="center">
 <img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
@@ -165,12 +128,17 @@ diff -r babette/157 babette/172
 $ gbp publish babette 172
 ```
 
-In the above example, the `PN` output for build `157` signifies that this build
-is currently published (`P`) and there is a user note for that build (`N`).
-The user note can be shown with the `gbp show` command.  If a build contains
-newly created packages, then Gentoo Build Publisher will automatically create a
-user note listing the newly built packages for that build when it is pulled
-from Jenkins. `gbp diff` shows the differences between two builds (packages
-added/changed/removed). Builds are purged based on how old they are, but you
-can mark builds to keep.  The `K` next to a build means that it has been marked
-for keeping.
+In the above example, the `PN` output for build `157` signifies that this
+build is currently published (`P`) and there is a user note for that build
+(`N`).  The user note can be shown with the `gbp show` command.  If a build
+contains newly created packages, then Gentoo Build Publisher will
+automatically create a user note listing the newly built packages for that
+build when it is pulled from Jenkins. `gbp diff` shows the differences between
+two builds (packages added/changed/removed). Builds are purged based on how
+old they are, but you can mark builds to keep.  The `K` next to a build means
+that it has been marked for keeping. To mark a build for keeping on the
+command line, simply:
+
+```bash
+$ gbp keep babette 172
+```
