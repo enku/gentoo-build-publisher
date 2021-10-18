@@ -8,7 +8,7 @@ from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.storage import RSYNC_FLAGS, StorageBuild
 
 from . import PACKAGE_INDEX, MockJenkinsBuild, TestCase
 from .factories import BuildManFactory
@@ -252,8 +252,7 @@ class StorageExtractArtifactTestCase(TestCase):
             run_mock.assert_any_call(
                 [
                     "rsync",
-                    "--archive",
-                    "--quiet",
+                    *RSYNC_FLAGS,
                     f"--link-dest={link_dest_path}",
                     "--",
                     f"{self.tmpdir}/tmp/babette/20/{item.value}/",

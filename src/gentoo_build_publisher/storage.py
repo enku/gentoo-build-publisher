@@ -15,6 +15,8 @@ from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
 
+RSYNC_FLAGS = ["--archive", "--inplace", "--no-inc-recursive", "--quiet"]
+
 
 class StorageBuild:
     """A Build stored on the filesystem"""
@@ -86,8 +88,7 @@ class StorageBuild:
                 if previous_path.exists():
                     command = [
                         "rsync",
-                        "--archive",
-                        "--quiet",
+                        *RSYNC_FLAGS,
                         f"--link-dest={previous_path}",
                         "--",
                         f"{src}/",
