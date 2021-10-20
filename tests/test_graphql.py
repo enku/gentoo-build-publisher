@@ -532,3 +532,58 @@ class ReleaseBuildMutationTestCase(TestCase):
         result = execute(query, variables={"name": "bogus", "number": 309})
 
         assert_data(self, result, {"releaseBuild": None})
+
+
+class CreateNoteMutationTestCase(TestCase):
+    """Tests for the createNote mutation"""
+
+    def test_set_text(self):
+        build = BuildManFactory.create()
+        note_text = "Hello, world!"
+        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
+           createNote(name: $name, number: $number, note: $note) {
+                notes
+            }
+        }
+        """
+
+        result = execute(
+            query,
+            variables={"name": build.name, "number": build.number, "note": note_text},
+        )
+
+        assert_data(self, result, {"createNote": {"notes": note_text}})
+        build.db.refresh()
+        self.assertEqual(build.db.note, note_text)
+
+    def test_set_none(self):
+        build = BuildManFactory.create()
+        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
+           createNote(name: $name, number: $number, note: $note) {
+                notes
+            }
+        }
+        """
+
+        result = execute(
+            query,
+            variables={"name": build.name, "number": build.number, "note": None},
+        )
+
+        assert_data(self, result, {"createNote": {"notes": None}})
+        build.db.refresh()
+        self.assertEqual(build.db.note, None)
+
+    def test_should_return_none_when_build_doesnt_exist(self):
+        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
+           createNote(name: $name, number: $number, note: $note) {
+                notes
+            }
+        }
+        """
+
+        result = execute(
+            query, variables={"name": "bogus", "number": 309, "note": None}
+        )
+
+        assert_data(self, result, {"createNote": None})

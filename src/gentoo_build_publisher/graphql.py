@@ -148,4 +148,19 @@ def resolve_mutation_releasebuild(*_, name: str, number: int) -> Optional[BuildM
     return build_man
 
 
+@mutation.field("createNote")
+def resolve_mutation_createote(
+    *_, name: str, number: int, note: Optional[str] = None
+) -> Optional[BuildMan]:
+    build_man = BuildMan(Build(name=name, number=number))
+
+    if not build_man.db:
+        return None
+
+    build_man.db.note = note
+    build_man.db.save()
+
+    return build_man
+
+
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)
