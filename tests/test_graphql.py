@@ -504,7 +504,7 @@ class KeepBuildMutationTestCase(TestCase):
 
 
 class ReleaseBuildMutationTestCase(TestCase):
-    """Tests for the unkeep mutation"""
+    """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self):
         build = BuildManFactory.create()
