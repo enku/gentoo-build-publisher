@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 import tarfile
 from pathlib import PosixPath
 from typing import Iterator, Optional
@@ -14,8 +13,6 @@ from gentoo_build_publisher.build import Build, Content, Package
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
-
-RSYNC_FLAGS = ["--archive", "--inplace", "--no-inc-recursive", "--quiet"]
 
 
 class StorageBuild:
@@ -51,9 +48,10 @@ class StorageBuild:
     ):
         """Pull and unpack the artifact
 
-        If `previous_build` is given, then the rsync program will be used and it's
-        `--link-dest` option will used to hard link with the previous build's content,
-        preserving space.  See the `rsync(1)` documentation for details.
+        If `previous_build` is given, then if a file exists in that location it will be
+        hard linked to the extracted tree instead of being copied from the artifact.
+        This is similiar to the "--link-dest" argument in rsync and is used to save disk
+        space.
         """
         if self.pulled():
             return
@@ -83,21 +81,14 @@ class StorageBuild:
             dst = self.get_path(item)
 
             if previous_build:
-                previous_path = previous_build.get_path(item)
-
-                if previous_path.exists():
-                    command = [
-                        "rsync",
-                        *RSYNC_FLAGS,
-                        f"--link-dest={previous_path}",
-                        "--",
-                        f"{src}/",
-                        f"{dst}/",
-                    ]
-                    subprocess.run(command, check=True)
-                    continue
-
-            os.renames(src, dst)
+                shutil.copytree(
+                    src,
+                    dst,
+                    symlinks=True,
+                    copy_function=copy_or_link(previous_build.get_path(item), dst),
+                )
+            else:
+                os.renames(src, dst)
 
         shutil.rmtree(dirpath)
         logger.info("Extracted build: %s", self.build)
@@ -192,3 +183,28 @@ class StorageBuild:
                 )
 
         return packages
+
+
+def quick_check(file1: str, file2: str) -> bool:
+    """Do an rsync-style quick check. Return true if files appear identical"""
+    try:
+        stat1 = os.stat(file1, follow_symlinks=False)
+        stat2 = os.stat(file2, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+
+    return stat1.st_mtime == stat2.st_mtime and stat1.st_size == stat2.st_size
+
+
+def copy_or_link(link_dest: PosixPath, dst_root: PosixPath):
+    """Create a copytree copy_function that uses rsync's link_dest logic"""
+
+    def copy(src: str, dst: str, follow_symlinks=True):
+        relative = PosixPath(dst).relative_to(dst_root)
+        target = str(link_dest / relative)
+        if quick_check(src, target):
+            os.link(target, dst, follow_symlinks=follow_symlinks)
+        else:
+            shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
+
+    return copy
