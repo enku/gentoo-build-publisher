@@ -587,3 +587,64 @@ class CreateNoteMutationTestCase(TestCase):
         )
 
         assert_data(self, result, {"createNote": None})
+
+
+class SearchNotesQueryTestCase(TestCase):
+    """tests for the searchNotes query"""
+
+    query = """query SearchNotes($name: String!, $key: String!) {
+       searchNotes(name: $name, key: $key) {
+            name
+            notes
+        }
+    }
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        build1 = BuildManFactory.create()
+        build1.db.note = "test foo"
+        build1.db.save()
+        build2 = BuildManFactory.create()
+        build2.db.note = "test bar"
+        build2.db.save()
+
+    def test_single_match(self):
+        result = execute(self.query, variables={"name": "babette", "key": "foo"})
+
+        assert_data(
+            self, result, {"searchNotes": [{"name": "babette", "notes": "test foo"}]}
+        )
+
+    def test_multiple_match(self):
+        result = execute(self.query, variables={"name": "babette", "key": "test"})
+
+        assert_data(
+            self,
+            result,
+            {
+                "searchNotes": [
+                    {"name": "babette", "notes": "test bar"},
+                    {"name": "babette", "notes": "test foo"},
+                ]
+            },
+        )
+
+    def test_only_matches_given_machine(self):
+        build = BuildManFactory.create(build_attr__build_model__name="lighthouse")
+        build.db.note = "test foo"
+        build.db.save()
+
+        result = execute(self.query, variables={"name": "lighthouse", "key": "test"})
+
+        assert_data(
+            self,
+            result,
+            {"searchNotes": [{"name": "lighthouse", "notes": "test foo"}]},
+        )
+
+    def test_when_named_machine_does_not_exist(self):
+        result = execute(self.query, variables={"name": "bogus", "key": "test"})
+
+        assert_data(self, result, {"searchNotes": []})

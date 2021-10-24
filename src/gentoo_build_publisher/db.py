@@ -256,6 +256,17 @@ class BuildDB:
 
         return cls(build_model)
 
+    @classmethod
+    def search_notes(cls, machine: str, key: str) -> Iterator[BuildDB]:
+        """search notes for given machine"""
+        build_models = (
+            BuildModel.objects.select_related(*RELATED)
+            .filter(name=machine, buildnote__note__icontains=key)
+            .order_by("-submitted")
+        )
+
+        return (cls(build_model) for build_model in build_models)
+
     @staticmethod
     def count(name: Optional[str] = None) -> int:
         """Return the total number of builds

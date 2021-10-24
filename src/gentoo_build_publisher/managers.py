@@ -167,6 +167,11 @@ class BuildMan:
                 buildman = cls(build_db)
                 buildman.delete()
 
+    @classmethod
+    def search_notes(cls, machine: str, key: str) -> Iterator[BuildMan]:
+        """search notes for given machine"""
+        return (cls(build_db) for build_db in BuildDB.search_notes(machine, key))
+
     @staticmethod
     def diff_binpkgs(left: BuildMan, right: BuildMan) -> Iterator[Change]:
         """Compare two package's binpkgs and generate the differences"""

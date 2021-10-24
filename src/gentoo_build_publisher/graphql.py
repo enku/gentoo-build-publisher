@@ -99,6 +99,11 @@ def resolve_query_packages(
     return resolve_build_packages(build_man, info)
 
 
+@query.field("searchNotes")
+def resolve_query_searchnotes(*_, name: str, key: str) -> list[BuildMan]:
+    return [*BuildMan.search_notes(name, key)]
+
+
 @mutation.field("publish")
 def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
     build_man = BuildMan(Build(name=name, number=number))

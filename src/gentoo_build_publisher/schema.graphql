@@ -49,6 +49,7 @@ type Query {
   latest(name: String!): Build
   machines: [MachineSummary!]!
   packages(name: String!, number: Int!): [String!]
+  searchNotes(name: String!, key: String!): [Build!]!
 }
 
 type Mutation {
