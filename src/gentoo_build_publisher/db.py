@@ -285,6 +285,3 @@ class BuildDB:
 
     def __hash__(self):
         return hash(self.model)
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.model!r})"
