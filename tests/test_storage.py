@@ -1,12 +1,13 @@
 """Tests for the storage type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
+import datetime
 import os
 import tarfile
 from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.storage import StorageBuild, quick_check
 
 from . import PACKAGE_INDEX, MockJenkinsBuild, TestCase
 from .factories import BuildManFactory
@@ -267,3 +268,44 @@ class StorageBuildGetPackagesTestCase(TestCase):
 
         with self.assertRaises(LookupError):
             self.storage_build.get_packages()
+
+
+class QuickCheckTestCase(TestCase):
+    """Tests for the quick_check() helper method"""
+
+    def test(self):
+        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
+        file1 = self.create_file("foo", b"test", timestamp)
+        file2 = self.create_file("bar", b"xxxx", timestamp)
+
+        result = quick_check(file1, file2)
+
+        self.assertIs(result, True)
+
+    def test_should_return_false_when_file_does_not_exist(self):
+        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
+        file1 = self.create_file("foo", b"test", timestamp)
+        file2 = self.tmpdir / "bogus"
+
+        result = quick_check(file1, file2)
+
+        self.assertIs(result, False)
+
+    def test_should_return_false_when_mtimes_differ(self):
+        timestamp1 = datetime.datetime(2021, 10, 30, 7, 10, 39)
+        timestamp2 = datetime.datetime(2021, 10, 30, 7, 10, 40)
+        file1 = self.create_file("foo", b"test", timestamp1)
+        file2 = self.create_file("bar", b"test", timestamp2)
+
+        result = quick_check(file1, file2)
+
+        self.assertIs(result, False)
+
+    def test_should_return_false_when_sizes_differ(self):
+        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
+        file1 = self.create_file("foo", b"test", timestamp)
+        file2 = self.create_file("bar", b"tst", timestamp)
+
+        result = quick_check(file1, file2)
+
+        self.assertIs(result, False)
