@@ -104,6 +104,20 @@ class StorageBuildPublishTestCase(TestCase):
             # When we call publish
             storage_build.publish()
 
+    def test_raise_exception_when_symlink_target_exists_and_not_symlink(self):
+        # Given the source and target which is not a symlink
+        source = self.create_file("source")
+        target = self.create_file("target")
+
+        # Then an exception is raised
+        with self.assertRaises(EnvironmentError) as cxt:
+            # When we call synlink on source and target
+            StorageBuild.symlink(source, target)
+
+        exception = cxt.exception
+
+        self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
+
 
 class StorageBuildPublishedTestCase(TestCase):
     """Tests for StorageBuild.published"""
