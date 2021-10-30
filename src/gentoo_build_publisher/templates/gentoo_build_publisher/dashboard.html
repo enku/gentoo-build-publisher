@@ -1,0 +1,153 @@
+<!doctype html>{% load static gbp %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'gbp/gbp.css' %}">
+    <title>Gentoo Build Publisher</title>
+  </head>
+  <body>
+
+    <header>
+      <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+          <a href="#" class="navbar-brand d-flex align-items-center">
+            <img src="https://www.gentoo.org/assets/img/logo/gentoo-signet.svg" width="40">
+            <strong>&nbsp;Gentoo Build Publisher</strong>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main role="main">
+
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4" align="center">
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ build_count }}</text></svg>
+            <h2>Builds</h2>
+          </div>
+          <div class="col-lg-4" align="center">
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ machines|length }}</text></svg>
+            <h2>Machines</h2>
+          </div>
+          <div class="col-lg-4" align="center">
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>{{ package_count }}</title><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ package_count|numberize:0 }}</text></svg>
+            <h2>Packages</h2>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Build Distribution</h4>
+          <canvas id="myChart" width="500" height="500"></canvas>
+        </div>
+        <div class="col-md-6">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Builds / Time</h4>
+          <canvas id="botChart" width="500" height="500"></canvas>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 order-md-2 mb-4">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Recent Unpublished</h4>
+          <ul class="list-group mb-3">
+            {% for build in latest_builds %}
+            {% if not build.published and build in built_recently %}
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">{{ build.name }}</h6>
+                <small class="text-muted">{{ build.number }}</small>
+              </div>
+              {% with build.name|addstr:"."|addstr:build.number as key %}
+              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
+              {% endwith %}
+            </li>
+            {% endif %}
+            {% endfor %}
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total</span>
+              <strong>{{ unpublished_builds_count }}</strong>
+              </li>
+          </ul>
+        </div>
+
+        <div class="col-md-4 order-md-2 mb-4">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Latest Published</h4>
+          <ul class="list-group mb-3">
+            {% for build in latest_builds %}
+            {% if build.published %}
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">{{ build.name }}</h6>
+                <small class="text-muted">{{ build.number }}</small>
+              </div>
+              {% with build.name|addstr:"."|addstr:build.number as key %}
+              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
+              {% endwith %}
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="col-md-4 order-md-2 mb-4">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Work Queue</h4>
+          <ul class="list-group mb-3">
+            {% for build in builds_to_do %}
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">{{ build.name }}</h6>
+                <small class="text-muted">{{ build.number }}</small>
+              </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">Nothing to do!</h6>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <h4 class="d-flex justify-content-between align-items-center">Storage / Machine</h4>
+          <canvas id="packageSizeChart" width="500" height="500"></canvas>
+        </div>
+        <div class="col-md-4 order-md-2 mb-4">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">Recent Packages</h4>
+          <ul class="list-group mb-3">
+            {% for package, machines in recent_packages.items %}
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div title="Machines" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ machines|join:"&lt;br/&gt;" }}' data-bs-html="true">
+                <h6 class="my-0">{{ package }}</h6>
+                <small class="text-muted">{{ machines|length }} machine{{ machines|pluralize }}</small>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+    </main>
+
+    <footer>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.0/dist/chart.min.js" integrity="sha256-7lWo7cjrrponRJcS6bc8isfsPDwSKoaYfGIHgSheQkk=" crossorigin="anonymous"></script>
+    {{ machine_dist|json_script:'machineDist' }}
+    {{ builds_over_time|json_script:'bot' }}
+    {{ machines|json_script:'machines' }}
+    {{ bot_days|json_script:'botDays' }}
+    {{ machine_colors|json_script:'machineColors' }}
+    {{ total_package_size|json_script:'packageSizes' }}
+    <script src="{% static 'gbp/gbp.js' %}"></script>
+  </body>
+</html>

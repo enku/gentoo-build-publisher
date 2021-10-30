@@ -7,7 +7,7 @@ from gentoo_build_publisher import views
 from gentoo_build_publisher.graphql import schema
 
 urlpatterns = [
-    path("", views.index),
+    path("", views.dashboard),
     path("admin/", admin.site.urls),
     path("graphql", GraphQLView.as_view(schema=schema), name="graphql"),
 ]

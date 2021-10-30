@@ -206,6 +206,12 @@ class BuildMan:
 
             yield Change(cpvb, Status[code_map[code]])
 
+    def __str__(self) -> str:
+        return str(self.build)
+
+    def __eq__(self, other) -> bool:
+        return self.build == other.build
+
 
 class MachineInfo:  # pylint: disable=too-few-public-methods
     """Data type for machine metadata

@@ -3,4 +3,5 @@
 /build/
 /dist/
 /htmlcov/
+/node_modules/
 gentoo_build_publisher.egg-info/
