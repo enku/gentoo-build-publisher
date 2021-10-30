@@ -105,6 +105,7 @@ def package_entry(
             f"SIZE: {size}\n"
             f"REPO: {repo}\n"
             f"PATH: {cat}/{pkg}/{pkg}-{version}-{build_id}.xpak\n"
+            f"BUILD_TIME: 1622722899\n"
         )
 
     return "".join(["Ignore Preamble\n", *strings])

@@ -1,6 +1,7 @@
 """Storage (filesystem) interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
+import datetime as dt
 import logging
 import os
 import shutil
@@ -179,6 +180,7 @@ class StorageBuild:
                         package_info["path"],
                         int(package_info["build_id"]),
                         int(package_info["size"]),
+                        dt.datetime.fromtimestamp(int(package_info["build_time"])),
                     )
                 )
 
