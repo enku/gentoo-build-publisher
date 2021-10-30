@@ -42,6 +42,19 @@ class TestCase(django.test.TestCase):
         self.addCleanup(patch.stop)
         patch.start()
 
+    def create_file(self, name, content=b"", mtime=None):
+        path = self.tmpdir / name
+
+        with path.open("wb") as outfile:
+            outfile.write(content)
+
+        if mtime is not None:
+            stat = os.stat(path)
+            atime = stat.st_atime
+            os.utime(path, times=(atime, mtime.timestamp()))
+
+        return path
+
 
 def test_data(filename):
     """Return all the data in filename"""
