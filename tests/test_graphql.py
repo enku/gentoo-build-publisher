@@ -648,3 +648,26 @@ class SearchNotesQueryTestCase(TestCase):
         result = execute(self.query, variables={"name": "bogus", "key": "test"})
 
         assert_data(self, result, {"searchNotes": []})
+
+
+class WorkingTestCase(TestCase):
+    query = """{
+        working {
+            name
+            number
+        }
+    }
+    """
+
+    def test(self):
+        BuildManFactory.create().pull()
+        BuildManFactory.create(build_attr__build_model__name="lighthouse").pull()
+        working = BuildManFactory.create()
+
+        result = execute(self.query)
+
+        assert_data(
+            self,
+            result,
+            {"working": [{"name": working.name, "number": working.number}]},
+        )

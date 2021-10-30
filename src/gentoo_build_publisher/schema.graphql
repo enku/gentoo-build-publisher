@@ -50,6 +50,7 @@ type Query {
   machines: [MachineSummary!]!
   packages(name: String!, number: Int!): [String!]
   searchNotes(name: String!, key: String!): [Build!]!
+  working: [Build!]!
 }
 
 type Mutation {

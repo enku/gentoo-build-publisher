@@ -104,6 +104,13 @@ def resolve_query_searchnotes(*_, name: str, key: str) -> list[BuildMan]:
     return [*BuildMan.search_notes(name, key)]
 
 
+@query.field("working")
+def resolve_working(*_) -> list[BuildMan]:
+    builddbs = BuildDB.builds(completed=None)
+
+    return [BuildMan(builddb) for builddb in builddbs]
+
+
 @mutation.field("publish")
 def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
     build_man = BuildMan(Build(name=name, number=number))
