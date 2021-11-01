@@ -1,9 +1,5 @@
 <p align="center">
-<img src="docs/media/Jenkins.png" alt="Jenkins build" width="100%">
-</p>
-
-<p align="center">
-<img src="docs/media/admin.png" alt="Jenkins build" width="100%">
+<img src="docs/media/dashboard.png" alt="Gentoo Build Publisher dashboard" width="100%">
 </p>
 
 # Gentoo Build Publisher
