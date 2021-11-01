@@ -40,32 +40,30 @@ for repo syncs and binpkgs.
 * Create "repos" jobs in Jenkins.  These jobs should poll their respective
   repos (e.g. [gentoo](https://anongit.gentoo.org/git/repo/sync/gentoo.git)
   and publish archive an artifact (say `gentoo-repo.tar.gz`) from it.
-* For your machine type, say database, you create a Jenkins job. This job
+* For your machine type, say `database`, you create a Jenkins job. This job
   should create a container from a
   [stage3](https://hub.docker.com/r/gentoo/stage3) image (I actually use the
-  systemd image).  Then it could add the artifacts from the repos above into
+  systemd image).  Then it should add the artifacts from the repos above into
   the container's `/var/db/repos` directory.  You also need your machine's
   "profile" in a repo. This should be the repo that's pulled by your Jenkins
   job.  Unpack that as well in your Jenkins workspace. The "profile" should
   contain such things as your machine's `/etc/portage` and `/var/lib/portage`
   contents. If this all sounds rather complicated, check the `contrib`
-  directory of the gentoo-build-publisher source for a (hopefully) working
-  example.
-* Your Jenkins job then uses `buildah run` to emerge world the container.
+  directory of the gentoo-build-publisher source for a working example.
+* Your Jenkins job then uses `buildah run` to `emerge @world` in the
+  container.
 * Upon success the job should pack the `repos` and `binpkgs` and other config
   into a tar archive
   (`build.tar.gz`).
 * Your job should have a post-build task that calls the Gentoo Build Publisher.
   It will then pull the specified archive.
-
 * Once a Jenkins job has been pulled by Gentoo Build Publisher it can be
   published so that actual machines can use it (e.g. rsync for repos, http for
   binpkgs).
-
 * If the job fails, it will not be pulled.
-
-* Your real machine syncs from, e.g. rsync://gbp/repos/<machine>/ and pulls
-  binary packages from https://gbp/binpkgs/<machine>/
+* Your real machine, e.g. `database`, syncs from, e.g.
+  rsync://gbp/repos/database/ and pulls binary packages from
+  https://gbp/binpkgs/database/
 
 <p align="center">
 <img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
