@@ -1,5 +1,4 @@
 """Basic Build interface for Gentoo Build Publisher"""
-import datetime as dt
 from dataclasses import dataclass
 from enum import Enum, unique
 
@@ -34,7 +33,7 @@ class Package:
     path: str
     build_id: int
     size: int
-    build_time: dt.datetime
+    build_time: int
 
     def cpvb(self) -> str:
         """return cpv + build id"""

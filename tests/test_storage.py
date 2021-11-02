@@ -275,9 +275,7 @@ class StorageBuildGetPackagesTestCase(TestCase):
         self.assertEqual(package.path, "acct-group/sgx/sgx-0-1.xpak")
         self.assertEqual(package.build_id, 1)
         self.assertEqual(package.size, 11362)
-        self.assertEqual(
-            package.build_time, datetime.datetime.fromtimestamp(1622722899)
-        )
+        self.assertEqual(package.build_time, 1622722899)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
         index_file = self.storage_build.get_path(Content.BINPKGS) / "Packages"
