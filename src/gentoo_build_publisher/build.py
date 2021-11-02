@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from enum import Enum, unique
 
+from dataclasses_json import dataclass_json
+
 
 @dataclass
 class Build:
@@ -58,3 +60,25 @@ class Change:
 
     item: str
     status: Status
+
+
+@dataclass_json
+@dataclass
+class PackageMetadata:
+    """data structure for a build's package metadata"""
+
+    total: int
+    size: int
+    built: list[Package]
+
+
+@dataclass_json
+@dataclass
+class GBPMetadata:
+    """data structure combining Jenkins and package metadata
+
+    The manager writes this to each build's binpkg directory as gbp.json.
+    """
+
+    build_duration: int
+    packages: PackageMetadata

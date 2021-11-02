@@ -1,11 +1,18 @@
 """Tests for the storage type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
+import json
 import os
 import tarfile
 from unittest import mock
 
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import (
+    Build,
+    Content,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild, quick_check
 
@@ -283,6 +290,119 @@ class StorageBuildGetPackagesTestCase(TestCase):
 
         with self.assertRaises(LookupError):
             self.storage_build.get_packages()
+
+
+class StorageBuildGetMetadataTestCase(TestCase):
+    """tests for the StorageBuild.get_metadata() method"""
+
+    def setUp(self):
+        super().setUp()
+
+        build = BuildManFactory.create()
+        build.pull()
+        self.storage_build = build.storage_build
+
+    def test_should_return_gbpmetadata_when_gbp_json_exists(self):
+        metadata = self.storage_build.get_metadata()
+
+        expected = GBPMetadata(
+            build_duration=124,
+            packages=PackageMetadata(
+                total=4,
+                size=889824,
+                built=[
+                    Package(
+                        cpv="acct-group/sgx-0",
+                        repo="gentoo",
+                        path="acct-group/sgx/sgx-0-1.xpak",
+                        build_id=1,
+                        size=11362,
+                        build_time=1622722899,
+                    ),
+                    Package(
+                        cpv="app-admin/perl-cleaner-2.30",
+                        repo="gentoo",
+                        path="app-admin/perl-cleaner/perl-cleaner-2.30-1.xpak",
+                        build_id=1,
+                        size=17686,
+                        build_time=1621623613,
+                    ),
+                    Package(
+                        cpv="app-crypt/gpgme-1.14.0",
+                        repo="gentoo",
+                        path="app-crypt/gpgme/gpgme-1.14.0-1.xpak",
+                        build_id=1,
+                        size=640649,
+                        build_time=1622585986,
+                    ),
+                ],
+            ),
+        )
+        self.assertEqual(metadata, expected)
+
+    def test_should_raise_lookuperror_when_file_does_not_exist(self):
+        path = self.storage_build.get_path(Content.BINPKGS) / "gbp.json"
+        path.unlink()
+
+        with self.assertRaises(LookupError) as context:
+            self.storage_build.get_metadata()
+
+        exception = context.exception
+        self.assertEqual(exception.args, ("gbp.json does not exist",))
+
+
+class StorageBuildSetMetadataTestCase(TestCase):
+    """tests for the StorageBuild.set_metadata() method"""
+
+    def setUp(self):
+        super().setUp()
+        build = BuildManFactory.create()
+        build.pull()
+        self.storage_build = build.storage_build
+        self.path = self.storage_build.get_path(Content.BINPKGS) / "gbp.json"
+
+        if self.path.exists():
+            self.path.unlink()
+
+    def test(self):
+        package_metadata = PackageMetadata(
+            total=666,
+            size=666,
+            built=[
+                Package(
+                    "sys-foo/bar-1.0",
+                    repo="marduk",
+                    path="",
+                    build_id=1,
+                    size=666,
+                    build_time=0,
+                )
+            ],
+        )
+        gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
+        self.storage_build.set_metadata(gbp_metadata)
+
+        with self.path.open("r") as json_file:
+            result = json.load(json_file)
+
+        expected = {
+            "build_duration": 666,
+            "packages": {
+                "built": [
+                    {
+                        "build_id": 1,
+                        "build_time": 0,
+                        "cpv": "sys-foo/bar-1.0",
+                        "path": "",
+                        "repo": "marduk",
+                        "size": 666,
+                    }
+                ],
+                "size": 666,
+                "total": 666,
+            },
+        }
+        self.assertEqual(result, expected)
 
 
 class QuickCheckTestCase(TestCase):

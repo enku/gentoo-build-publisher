@@ -9,7 +9,7 @@ from pathlib import PosixPath
 from typing import Iterator, Optional
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import Build, Content, Package
+from gentoo_build_publisher.build import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -184,6 +184,25 @@ class StorageBuild:
                 )
 
         return packages
+
+    def get_metadata(self) -> GBPMetadata:
+        """Read binpkg/gbp.json and return GBPMetadata instance
+
+        If the file does not exist (e.g. not pulled), raise LookupError
+        """
+        path = self.get_path(Content.BINPKGS) / "gbp.json"
+
+        if not path.exists():
+            raise LookupError("gbp.json does not exist")
+
+        with path.open("r") as gbp_json:
+            return GBPMetadata.from_json(gbp_json.read())  # type: ignore # pylint: disable=no-member
+
+    def set_metadata(self, metadata: GBPMetadata):
+        """Save metadata to "gbp.json" in the binpkgs directory"""
+        path = self.get_path(Content.BINPKGS) / "gbp.json"
+        with path.open("w") as gbp_json:
+            gbp_json.write(metadata.to_json())  # type: ignore # pylint: disable=no-member
 
 
 def quick_check(file1: str, file2: str) -> bool:

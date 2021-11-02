@@ -9,7 +9,7 @@ from unittest import mock
 
 import django.test
 
-from gentoo_build_publisher.jenkins import JenkinsBuild
+from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsMetadata
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
@@ -82,6 +82,9 @@ class MockJenkinsBuild(JenkinsBuild):
             self.get_build_logs_mock_get = mock_get
 
             return super().get_logs()
+
+    def get_metadata(self):
+        return JenkinsMetadata(duration=124, timestamp=1620525666000)
 
 
 def package_entry(

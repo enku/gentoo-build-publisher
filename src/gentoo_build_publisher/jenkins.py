@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Iterator, Optional, Type, TypeVar
 
 import requests
+from dataclasses_json import dataclass_json
 from yarl import URL
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
@@ -37,6 +38,18 @@ class JenkinsConfig:
             api_key=settings.JENKINS_API_KEY,
             download_chunk_size=settings.JENKINS_DOWNLOAD_CHUNK_SIZE,
         )
+
+
+@dataclass_json
+@dataclass
+class JenkinsMetadata:
+    """data structure for Jenkins build
+
+    Comes from the Jenkins API, e.g. http://jenkins/job/babette/123/api/json
+    """
+
+    duration: int
+    timestamp: int  # Jenkins timestamps are in milliseconds
 
 
 @dataclass
@@ -75,6 +88,16 @@ class JenkinsBuild:
         response.raise_for_status()
 
         return response.text
+
+    def get_metadata(self) -> JenkinsMetadata:
+        """Query Jenkins for build's metadata"""
+        url = self.url() / "api" / "json"
+        response = requests.get(str(url), auth=self.auth)
+        response.raise_for_status()
+
+        return JenkinsMetadata.from_dict(  # type: ignore  # pylint: disable=no-member
+            response.json()
+        )
 
     @classmethod
     def from_settings(cls, build: Build, settings: Settings):

@@ -1,13 +1,19 @@
 """Tests for the JenkinsBuild type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring,no-self-use
 import io
+import json
 import os
 from unittest import TestCase, mock
 
 from yarl import URL
 
 from gentoo_build_publisher.build import Build
-from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsConfig, schedule_build
+from gentoo_build_publisher.jenkins import (
+    JenkinsBuild,
+    JenkinsConfig,
+    JenkinsMetadata,
+    schedule_build,
+)
 from gentoo_build_publisher.settings import Settings
 
 from . import MockJenkinsBuild, test_data
@@ -107,6 +113,25 @@ class JenkinsBuildTestCase(TestCase):
         self.assertEqual(jenkins_build.jenkins.user, "admin")
         self.assertEqual(jenkins_build.jenkins.artifact_name, "stuff.tar")
         self.assertEqual(jenkins_build.build, build)
+
+    @mock.patch("gentoo_build_publisher.jenkins.requests.get")
+    def test_get_metadata(self, mock_requests_get):
+        mock_response = test_data("jenkins_build.json")
+        mock_requests_get.return_value.json.return_value = json.loads(mock_response)
+        jenkins_build = JenkinsBuild(
+            build=Build(name="babette", number=291),
+            jenkins=JENKINS_CONFIG,
+        )
+
+        metadata = jenkins_build.get_metadata()
+
+        self.assertEqual(
+            metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)
+        )
+        mock_requests_get.assert_called_once_with(
+            "https://jenkins.invalid/job/babette/291/api/json", auth=("jenkins", "foo")
+        )
+        mock_requests_get.return_value.json.assert_called_once_with()
 
 
 class ScheduleBuildTestCase(TestCase):

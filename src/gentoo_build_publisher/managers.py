@@ -11,9 +11,17 @@ from typing import Iterator, Optional, Union
 from yarl import URL
 
 from gentoo_build_publisher import io
-from gentoo_build_publisher.build import Build, Change, Content, Status
+from gentoo_build_publisher.build import (
+    Build,
+    Change,
+    Content,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+    Status,
+)
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.jenkins import JenkinsBuild
+from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsMetadata
 from gentoo_build_publisher.jenkins import schedule_build as schedule_jenkins_build
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
@@ -136,6 +144,14 @@ class BuildMan:
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)
         self.db.save()
 
+        try:
+            packages = self.storage_build.get_packages()
+        except LookupError:
+            return
+
+        jenkins_metadata = self.jenkins_build.get_metadata()
+        self.storage_build.set_metadata(gbp_metadata(jenkins_metadata, packages))
+
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
         return self.storage_build.pulled()
@@ -246,3 +262,21 @@ def diff_notes(left: BuildMan, right: BuildMan, header: str = "") -> str:
         note = f"{header}\n{note}"
 
     return note
+
+
+def gbp_metadata(
+    jenkins_metadata: JenkinsMetadata, packages: list[Package]
+) -> GBPMetadata:
+    """Generate GBPMetadata given JenkinsMetadata and Packages"""
+    return GBPMetadata(
+        build_duration=jenkins_metadata.duration,
+        packages=PackageMetadata(
+            total=len(packages),
+            size=sum(package.size for package in packages),
+            built=[
+                package
+                for package in packages
+                if package.build_time >= jenkins_metadata.timestamp / 1000
+            ],
+        ),
+    )
