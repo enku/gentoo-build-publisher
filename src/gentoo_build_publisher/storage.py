@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tarfile
+import tempfile
 from pathlib import PosixPath
 from typing import Iterator, Optional
 
@@ -21,7 +22,8 @@ class StorageBuild:
     def __init__(self, build: Build, path: PosixPath):
         self.build = build
         self.path = path
-        (self.path / "tmp").mkdir(parents=True, exist_ok=True)
+        self.tmpdir = self.path / "tmp"
+        self.tmpdir.mkdir(parents=True, exist_ok=True)
 
     def __repr__(self):
         cls = type(self)
@@ -56,42 +58,35 @@ class StorageBuild:
         if self.pulled():
             return
 
-        artifact_path = (
-            self.path
-            / "tmp"
-            / self.build.name
-            / str(self.build.number)
-            / "build.tar.gz"
-        )
-        dirpath = artifact_path.parent
-        dirpath.mkdir(parents=True, exist_ok=True)
-
-        with artifact_path.open("wb") as artifact_file:
+        with tempfile.NamedTemporaryFile(dir=self.tmpdir, suffix="tar.gz") as artifact:
             for chunk in byte_stream:
-                artifact_file.write(chunk)
+                artifact.write(chunk)
 
-        logger.info("Extracting build: %s", self.build)
-        with tarfile.open(
-            artifact_path, mode="r", bufsize=JENKINS_DEFAULT_CHUNK_SIZE
-        ) as tar_file:
+            artifact.flush()
+
+            logger.info("Extracting build: %s", self.build)
+            bufsize = JENKINS_DEFAULT_CHUNK_SIZE
+
+            with tarfile.open(artifact.name, mode="r", bufsize=bufsize) as tar_file:
+                self._extract(tar_file, previous_build)
+
+            logger.info("Extracted build: %s", self.build)
+
+    def _extract(self, tar_file, previous_build):
+        with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
-        for item in Content:
-            src = dirpath / item.value
-            dst = self.get_path(item)
+            dirpath = PosixPath(dirpath)
 
-            if previous_build:
-                shutil.copytree(
-                    src,
-                    dst,
-                    symlinks=True,
-                    copy_function=copy_or_link(previous_build.get_path(item), dst),
-                )
-            else:
-                os.renames(src, dst)
+            for item in Content:
+                src = dirpath / item.value
+                dst = self.get_path(item)
 
-        shutil.rmtree(dirpath)
-        logger.info("Extracted build: %s", self.build)
+                if previous_build:
+                    copy = copy_or_link(previous_build.get_path(item), dst)
+                    shutil.copytree(src, dst, symlinks=True, copy_function=copy)
+                else:
+                    os.renames(src, dst)
 
     def pulled(self) -> bool:
         """Returns True if build has been pulled

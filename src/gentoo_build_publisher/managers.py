@@ -118,7 +118,8 @@ class BuildMan:
         logger.info("Pulling build: %s", build)
 
         chunk_size = jenkins.jenkins.download_chunk_size
-        with tempfile.TemporaryFile(buffering=chunk_size) as temp:
+        tmpdir = str(self.storage_build.path / "tmp")
+        with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
             logger.info("Downloading build: %s", build)
             io.write_chunks(temp, jenkins.download_artifact())
 
