@@ -14,8 +14,7 @@ from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
 
-COLOR_START = Color(*getattr(settings, "BUILD_PUBLISHER_COLOR_START", (80, 69, 117)))
-COLOR_END = Color(*getattr(settings, "BUILD_PUBLISHER_COLOR_END", (221, 218, 236)))
+GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 
 gradient = Color.gradient
 
@@ -156,6 +155,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     }
     machines = [MachineInfo(i) for i in BuildDB.list_machines()]
     machines.sort(key=lambda m: m.build_count, reverse=True)
+    color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
+    color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
     context: DashboardContext = {
         "bot_days": [datetime.strftime("%A") for datetime in bot_days],
         "build_count": BuildDB.count(),
@@ -165,7 +166,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         "built_recently": [],
         "latest_builds": [],
         "machine_colors": [
-            str(color) for color in gradient(COLOR_START, COLOR_END, len(machines))
+            str(color) for color in gradient(color_start, color_end, len(machines))
         ],
         "machine_dist": [machine.build_count for machine in machines],
         "machines": [machine.name for machine in machines],
