@@ -20,10 +20,6 @@ main {
   margin: 2ex 0;
 }
 
-.bg-dark {
-  background-color: #504575 !important;
-}
-
 @media (min-width: 768px) {
   .bd-placeholder-img-lg {
     font-size: 3.5rem;

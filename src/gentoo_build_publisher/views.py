@@ -3,6 +3,7 @@ import datetime as dt
 from collections import defaultdict
 from typing import Optional, TypedDict
 
+from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -13,8 +14,8 @@ from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
 
-COLOR_START = Color(84, 72, 122)
-COLOR_END = Color(221, 218, 236)
+COLOR_START = Color(*getattr(settings, "BUILD_PUBLISHER_COLOR_START", (80, 69, 117)))
+COLOR_END = Color(*getattr(settings, "BUILD_PUBLISHER_COLOR_END", (221, 218, 236)))
 
 gradient = Color.gradient
 

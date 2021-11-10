@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'gbp/gbp.css' %}">
+    <style>
+      .bg-dark {
+        background-color: {{ machine_colors.0 }} !important;
+      }
+    </style>
     <title>Gentoo Build Publisher</title>
   </head>
   <body>
@@ -25,15 +30,15 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-4" align="center">
-            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ build_count }}</text></svg>
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="{{ machine_colors.0 }}"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ build_count }}</text></svg>
             <h2>Builds</h2>
           </div>
           <div class="col-lg-4" align="center">
-            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ machines|length }}</text></svg>
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="{{ machine_colors.0 }}"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ machines|length }}</text></svg>
             <h2>Machines</h2>
           </div>
           <div class="col-lg-4" align="center">
-            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>{{ package_count }}</title><rect width="100%" height="100%" fill="#504575"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ package_count|numberize:0 }}</text></svg>
+            <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>{{ package_count }}</title><rect width="100%" height="100%" fill="{{ machine_colors.0 }}"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">{{ package_count|numberize:0 }}</text></svg>
             <h2>Packages</h2>
           </div>
         </div>
@@ -70,7 +75,7 @@
             <li class="list-group-item d-flex justify-content-between">
               <span>Total</span>
               <strong>{{ unpublished_builds_count }}</strong>
-              </li>
+            </li>
           </ul>
         </div>
 
