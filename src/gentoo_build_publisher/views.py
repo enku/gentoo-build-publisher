@@ -6,12 +6,12 @@ from typing import Optional, TypedDict
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from gentoo_build_publisher.build import GBPMetadata, Package
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
-
 
 COLOR_START = Color(84, 72, 122)
 COLOR_END = Color(221, 218, 236)
@@ -147,7 +147,8 @@ def package_metadata(buildman: BuildMan, context: DashboardContext):
 
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
-    now = dt.datetime.now(dt.timezone.utc)
+    now = timezone.localtime()
+    current_timezone = timezone.get_current_timezone()
     bot_days = [now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)]
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
@@ -178,8 +179,9 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         buildman = BuildMan(builddb)
         package_metadata(buildman, context)
 
-        if builddb.submitted.date() >= bot_days[0]:
-            builds_over_time[builddb.submitted.date()][buildman.name] += 1
+        day_submitted = builddb.submitted.astimezone(current_timezone).date()
+        if day_submitted >= bot_days[0]:
+            builds_over_time[day_submitted][buildman.name] += 1
 
     (
         context["latest_builds"],
