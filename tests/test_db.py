@@ -1,6 +1,5 @@
 """Tests for the db module"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-import uuid
 from datetime import datetime
 
 from django.test import TestCase
@@ -72,25 +71,6 @@ class BuildDBTestCase(TestCase):
 
         self.assertEqual(
             build_model.completed, timezone.make_aware(datetime(1970, 1, 1))
-        )
-
-    def test_task_id_getter(self):
-        build_model = BuildModelFactory.create(
-            task_id="5288c012-fa72-42ef-ab4b-437b2110d75c"
-        )
-
-        build_db = BuildDB(build_model=build_model)
-
-        self.assertEqual(build_db.task_id, "5288c012-fa72-42ef-ab4b-437b2110d75c")
-
-    def test_task_id_setter(self):
-        self.build_db.task_id = "5288c012-fa72-42ef-ab4b-437b2110d75c"
-        self.build_db.save()
-
-        build_model = BuildModel.objects.get(id=self.build_db.id)
-
-        self.assertEqual(
-            build_model.task_id, uuid.UUID("5288c012-fa72-42ef-ab4b-437b2110d75c")
         )
 
     def test_refesh(self):

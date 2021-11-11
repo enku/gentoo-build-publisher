@@ -25,9 +25,6 @@ class BuildModel(models.Model):
     # When this build's publish task completed
     completed = models.DateTimeField(null=True)
 
-    # The build's task id
-    task_id = models.UUIDField(null=True)
-
     keptbuild: KeptBuild
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring

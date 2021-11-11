@@ -94,18 +94,6 @@ class BuildDB:
     def completed(self, value: Optional[dt.datetime]):
         self.model.completed = value
 
-    @property
-    def task_id(self) -> Optional[str]:
-        """Property for the Build's celery task id"""
-        if self.model.task_id is None:
-            return None
-
-        return str(self.model.task_id)
-
-    @task_id.setter
-    def task_id(self, value: Optional[str]):
-        self.model.task_id = value
-
     def refresh(self):
         """Refresh from the database"""
         self.model.refresh_from_db()
@@ -115,7 +103,6 @@ class BuildDB:
         """Save changes back to the database"""
         self.model.submitted = self.submitted
         self.model.completed = self.completed
-        self.model.task_id = self.task_id
 
         self.model.save()
 

@@ -57,9 +57,6 @@ def pull_build(self, name: str, number: int):
 
         return
 
-    buildman.db.task_id = self.request.id
-    buildman.db.save()
-
     if Settings.from_environ().ENABLE_PURGE:
         purge_build.delay(buildman.name)
 

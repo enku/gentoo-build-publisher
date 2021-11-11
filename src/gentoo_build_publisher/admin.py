@@ -58,7 +58,6 @@ class BuildModelAdmin(admin.ModelAdmin):
         "submitted",
         "completed",
         "published",
-        "task_id",
         "keep",
     ]
 
