@@ -34,6 +34,14 @@ Jenkins it is a gateway to publish builds. For my real machines it the source
 for repo syncs and binpkgs.
 
 
+## Table Of Contents
+
+- [Procedure](#procedure)
+- [Software](#software)
+- [Command Line Interface](#cli)
+- [Articles](#articles)
+
+
 ## Procedure
 
 * You need a Jenkins instance
@@ -76,7 +84,19 @@ machines whose builds I want to push to the publisher.  See the
 My Jenkins job does not publish a build by default. I (can) later publish the
 build so that my machines can consume them.  There is a GraphQL interface for
 doing such tasks as well as a [command-line
-interface](https://github.com/enku/gbpcli):
+interface](https://github.com/enku/gbpcli).
+
+# Software
+
+This project hosts the application called gentoo-build-publisher. Combined
+with Jenkins, the above procedure,`rsyncd`, a web server to serve binary
+packages (e.g. nginx) and a [command-line interface](#cli) you can get all the
+advantages of a source-based Linux distribution like Gentoo combined with the
+advantages of binary distros plus even more.
+
+# CLI
+
+The command-line interface can inspect, publish and pull builds:
 
 ```bash
 $ gbp list babette
@@ -136,3 +156,11 @@ command line, simply:
 ```bash
 $ gbp keep babette 172
 ```
+
+# Articles
+
+Below are some articles I've written that explain some aspects of Build
+Publisher in detail.
+
+- [Introducing Gentoo Build Publisher](https://lunarcowboy.com/introducing-gentoo-build-publisher.html): June 2021
+- [Exploring the Gentoo Build Publisher Dashboard](https://lunarcowboy.com/exploring-the-gentoo-build-publisher-dashboard.html): November 2021
