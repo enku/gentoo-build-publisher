@@ -83,7 +83,7 @@ class JenkinsBuildTestCase(TestCase):
         # Then it requests the artifact with no auth
         jenkins_build.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            auth=jenkins_build.auth,
+            auth=jenkins_build.jenkins.auth(),
             stream=True,
         )
 
