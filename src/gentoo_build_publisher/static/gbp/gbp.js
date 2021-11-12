@@ -89,11 +89,16 @@ function packageSizesChart() {
   return new Chart(pkgSizesCtx, pkgSizesConfig);
 }
 
-const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-popoverTriggerList.map(
-  (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl),
-);
+/* Intialize the dashboard */
+function initialize() {
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+  popoverTriggerList.map(
+    (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl),
+  );
 
-machineDistributionChart();
-buildsOverTimeChart();
-packageSizesChart();
+  machineDistributionChart();
+  buildsOverTimeChart();
+  packageSizesChart();
+}
+
+document.addEventListener('DOMContentLoaded', initialize);
