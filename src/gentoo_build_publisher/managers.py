@@ -131,15 +131,11 @@ class BuildMan:
 
         logging.info("Pulled build %s", build)
 
-        self.update_build_metadata(previous_build_db)
+        self.update_build_metadata()
 
-    def update_build_metadata(self, previous_build_db: Optional[BuildDB] = None):
+    def update_build_metadata(self):
         """Update the build's db attributes (based on storage, etc.)"""
         self._db = self._db or BuildDB.get_or_create(self.build)
-
-        if previous_build_db:
-            left = BuildMan(previous_build_db)
-            self.db.note = diff_notes(left, self, header="Packages built:\n")
 
         self.db.logs = self.jenkins_build.get_logs()
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)

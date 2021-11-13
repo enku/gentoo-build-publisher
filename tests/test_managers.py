@@ -9,7 +9,7 @@ from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import StorageBuild
 
-from . import TestCase, package_entry
+from . import TestCase
 from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
 
 utc = datetime.timezone.utc
@@ -69,28 +69,6 @@ class BuildManTestCase(TestCase):
 
         buildman.db.model.refresh_from_db()
         self.assertEqual(buildman.db.model.completed, now.replace(tzinfo=utc))
-
-    def test_pull_writes_built_pkgs_in_note(self):
-        now = datetime.datetime.now().replace(tzinfo=utc)
-        prev_build = BuildManFactory.build()
-        prev_build.db.model.completed = now
-        prev_build.db.model.save()
-        prev_build.get_path(Content.BINPKGS).mkdir(parents=True)
-        (prev_build.get_path(Content.BINPKGS) / "Packages").write_text("")
-
-        buildman = BuildManFactory.build()
-        buildman.pull()
-        buildman.db.refresh()
-
-        self.assertEqual(
-            buildman.db.note,
-            "Packages built:\n"
-            "\n"
-            "* acct-group/sgx-0-1\n"
-            "* app-admin/perl-cleaner-2.30-1\n"
-            "* app-arch/unzip-6.0_p26-1\n"
-            "* app-crypt/gpgme-1.14.0-1",
-        )
 
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
@@ -167,7 +145,7 @@ class BuildManTestCase(TestCase):
 
         self.assertIs(query.exists(), True)
 
-    def test_update_build_metadata_when_no_previous_build(self):
+    def test_update_build_metadata(self):
         buildman = BuildManFactory.create()
         settings = Settings.from_environ()
         MockJenkinsBuild.from_settings(buildman.build, settings)
@@ -175,27 +153,6 @@ class BuildManTestCase(TestCase):
         buildman.update_build_metadata()
         self.assertEqual(buildman.db.logs, "foo\n")
         self.assertIsNot(buildman.db.completed, None)
-
-    def test_update_build_metadata_with_previous_build(self):
-        previous_buildman = BuildManFactory.create()
-        previous_buildman.pull()
-        package_index = (
-            previous_buildman.storage_build.get_path(Content.BINPKGS) / "Packages"
-        )
-        package_index.write_text(package_entry("sys-fs/btrfs-progs-5.13"))
-
-        buildman = BuildManFactory.create()
-        buildman.storage_build.extract_artifact(
-            buildman.jenkins_build.download_artifact()
-        )
-        # Artificially update a package
-        package_index = buildman.storage_build.get_path(Content.BINPKGS) / "Packages"
-        package_index.write_text(package_entry("sys-fs/btrfs-progs-5.14"))
-
-        buildman.update_build_metadata(previous_buildman.db)
-        self.assertEqual(
-            buildman.db.note, "Packages built:\n\n* sys-fs/btrfs-progs-5.14-1"
-        )
 
 
 class MachineInfoTestCase(TestCase):
