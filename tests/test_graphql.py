@@ -288,7 +288,7 @@ class MachinesQueryTestCase(TestCase):
         query = """{
             machines {
                 name
-                builds
+                buildCount
                 latestBuild {
                     name
                 }
@@ -303,13 +303,13 @@ class MachinesQueryTestCase(TestCase):
         expected = [
             {
                 "name": "babette",
-                "builds": 3,
+                "buildCount": 3,
                 "latestBuild": {"name": "babette"},
                 "publishedBuild": {"number": buildman.number},
             },
             {
                 "name": "lighthouse",
-                "builds": 3,
+                "buildCount": 3,
                 "latestBuild": {"name": "lighthouse"},
                 "publishedBuild": None,
             },
