@@ -32,12 +32,16 @@ class BuildQueryTestCase(TestCase):
 
     def test(self):
         build = BuildManFactory.create()
+        build.pull()
         query = """query Build($name: String!, $number: Int!) {
             build(name: $name, number: $number) {
                 name
                 number
                 pulled
                 published
+                packagesBuilt {
+                    cpv
+                }
             }
         }
         """
@@ -48,8 +52,13 @@ class BuildQueryTestCase(TestCase):
             "build": {
                 "name": build.name,
                 "number": build.number,
-                "pulled": False,
+                "pulled": True,
                 "published": False,
+                "packagesBuilt": [
+                    {"cpv": "acct-group/sgx-0"},
+                    {"cpv": "app-admin/perl-cleaner-2.30"},
+                    {"cpv": "app-crypt/gpgme-1.14.0"},
+                ],
             }
         }
 

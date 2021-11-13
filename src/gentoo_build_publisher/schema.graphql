@@ -5,6 +5,13 @@ input BuildInput {
   number: Int!
 }
 
+type Package {
+   cpv: String!
+   repo: String!
+   size: Int!
+   buildTime: Int!
+}
+
 type Build {
   name: String!
   number: Int!
@@ -16,6 +23,7 @@ type Build {
   keep: Boolean!
   logs: String
   packages: [String!]
+  packagesBuilt: [Package!]
 }
 
 type MachineSummary {

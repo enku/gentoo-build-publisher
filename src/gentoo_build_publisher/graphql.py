@@ -12,9 +12,10 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne.contrib.django.scalars import datetime_scalar
+from graphql import GraphQLError
 from graphql.type.definition import GraphQLResolveInfo
 
-from gentoo_build_publisher.build import Build, Status
+from gentoo_build_publisher.build import Build, Package, Status
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.tasks import publish_build, pull_build
@@ -50,7 +51,19 @@ def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
         return None
 
 
-machine_summary.set_alias("builds", "build_count")
+@build.field("packagesBuilt")
+def result_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]]:
+    if not build_man.pulled():
+        return None
+
+    try:
+        gbp_metadata = build_man.storage_build.get_metadata()
+    except LookupError as error:
+        raise GraphQLError("Packages built unknown") from error
+
+    return gbp_metadata.packages.built
+
+
 machine_summary.set_alias("publishedBuild", "published")
 
 
