@@ -66,6 +66,10 @@ def result_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]
 
 machine_summary.set_alias("publishedBuild", "published")
 
+@machine_summary.field("builds")
+def resolve_machinesummary_builds(machine_info: MachineInfo, _) -> list[BuildMan]:
+    return machine_info.builds()
+
 
 @query.field("machines")
 def resolve_query_machines(*_) -> list[MachineInfo]:

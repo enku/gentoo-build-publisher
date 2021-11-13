@@ -279,7 +279,9 @@ class MachinesQueryTestCase(TestCase):
         babette_builds = BuildManFactory.create_batch(
             3, build_attr__build_model__name="babette"
         )
-        BuildManFactory.create_batch(3, build_attr__build_model__name="lighthouse")
+        lighthouse_builds = BuildManFactory.create_batch(
+            3, build_attr__build_model__name="lighthouse"
+        )
 
         # publish a build
         buildman = babette_builds[-1]
@@ -295,6 +297,9 @@ class MachinesQueryTestCase(TestCase):
                 publishedBuild {
                     number
                 }
+                builds {
+                    number
+                }
             }
         }"""
 
@@ -304,12 +309,14 @@ class MachinesQueryTestCase(TestCase):
             {
                 "name": "babette",
                 "buildCount": 3,
+                "builds": [{"number": i.number} for i in reversed(babette_builds)],
                 "latestBuild": {"name": "babette"},
                 "publishedBuild": {"number": buildman.number},
             },
             {
                 "name": "lighthouse",
                 "buildCount": 3,
+                "builds": [{"number": i.number} for i in reversed(lighthouse_builds)],
                 "latestBuild": {"name": "lighthouse"},
                 "publishedBuild": None,
             },

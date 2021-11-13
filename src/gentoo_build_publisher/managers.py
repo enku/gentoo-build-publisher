@@ -242,6 +242,12 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         )
         self.published: Optional[BuildMan] = published
 
+    def builds(self) -> list[BuildMan]:
+        """Return the builds for the given machine"""
+        builddbs = BuildDB.builds(name=self.name)
+
+        return [BuildMan(i) for i in builddbs]
+
 
 def schedule_build(name: str) -> str:
     """Schedule a build on jenkins for the given machine name"""

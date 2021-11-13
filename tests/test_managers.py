@@ -186,6 +186,21 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published, None)
 
+    def test_builds_method(self):
+        # Given the "foo" builds
+        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        second_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        third_build = BuildManFactory.create(build_attr__build_model__name="foo")
+
+        # Given the MachineInfo for foo
+        machine_info = MachineInfo("foo")
+
+        # When we call its .builds method
+        builds = machine_info.builds()
+
+        # Then we get the list of builds in reverse chronological order
+        self.assertEqual(builds, [third_build, second_build, first_build])
+
 
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""

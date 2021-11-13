@@ -29,6 +29,7 @@ type Build {
 type MachineSummary {
   name: String!
   buildCount: Int
+  builds: [Build!]!
   latestBuild: Build
   publishedBuild: Build
 }
