@@ -83,6 +83,8 @@ class StorageBuild:
                 dst = self.get_path(item)
 
                 if dst.exists():
+                    msg = "Extract destination already exists: %s. Removing"
+                    logger.warning(msg, dst)
                     shutil.rmtree(dst)
 
                 if previous_build:
