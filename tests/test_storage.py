@@ -94,6 +94,23 @@ class StorageBuildDownloadArtifactTestCase(TestCase):
 
         self.assertIs(storage_build.get_path(Content.VAR_LIB_PORTAGE).is_dir(), True)
 
+    def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
+        # Given the extractable build
+        build = BuildManFactory.create()
+
+        # When when one of the target paths already exist
+        path = build.storage_build.get_path(Content.BINPKGS)
+        path.mkdir(parents=True)
+        orphan = path / "this should not be here"
+        orphan.touch()
+
+        # And we extract the build
+        build.storage_build.extract_artifact(build.jenkins_build.download_artifact())
+
+        # Then the orpaned path is removed
+        self.assertIs(path.exists(), True)
+        self.assertIs(orphan.exists(), False)
+
 
 class StorageBuildPublishTestCase(TestCase):
     """Tests for StorageBuild.publish"""

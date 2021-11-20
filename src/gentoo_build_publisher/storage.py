@@ -82,6 +82,9 @@ class StorageBuild:
                 src = dirpath / item.value
                 dst = self.get_path(item)
 
+                if dst.exists():
+                    shutil.rmtree(dst)
+
                 if previous_build:
                     copy = copy_or_link(previous_build.get_path(item), dst)
                     shutil.copytree(src, dst, symlinks=True, copy_function=copy)
