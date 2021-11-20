@@ -64,6 +64,54 @@ class BuildQueryTestCase(TestCase):
 
         assert_data(self, result, expected)
 
+    def test_packages(self):
+        # given the pulled build with packages
+        build = BuildManFactory.create()
+        build.pull()
+
+        # when we query the build's packages
+        query = """query Build($name: String!, $number: Int!) {
+            build(name: $name, number: $number) {
+                packages
+            }
+        }"""
+        result = execute(query, {"name": build.name, "number": build.number})
+
+        # Then we get the list of packages in the build
+        assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
+
+    def test_packages_when_not_pulled_returns_none(self):
+        # given the unpulled package
+        build = BuildManFactory.create()
+
+        # when we query the build's packages
+        query = """query Build($name: String!, $number: Int!) {
+            build(name: $name, number: $number) {
+                packages
+            }
+        }"""
+        result = execute(query, {"name": build.name, "number": build.number})
+
+        # Then none is returned
+        assert_data(self, result, {"build": {"packages": None}})
+
+    def test_packages_should_return_none_when_package_index_missing(self):
+        # given the pulled build with index file missing
+        build = BuildManFactory.create()
+        build.pull()
+        (build.storage_build.get_path(Content.BINPKGS) / "Packages").unlink()
+
+        # when we query the build's packages
+        query = """query Build($name: String!, $number: Int!) {
+            build(name: $name, number: $number) {
+                packages
+            }
+        }"""
+        result = execute(query, {"name": build.name, "number": build.number})
+
+        # Then none is returned
+        assert_data(self, result, {"build": {"packages": None}})
+
 
 class BuildsQueryTestCase(TestCase):
     """Tests for the builds query"""
@@ -338,54 +386,6 @@ class MachinesQueryTestCase(TestCase):
         assert_data(
             self, result, {"machines": [{"name": "babette"}, {"name": "lighthouse"}]}
         )
-
-
-class PackagesQueryTestCase(TestCase):
-    """Tests for the packages query"""
-
-    maxDiff = None
-
-    def test(self):
-        # given the pulled build with packages
-        build = BuildManFactory.create()
-        build.pull()
-
-        # when we query the build's packages
-        query = """query Packages($name: String!, $number: Int!) {
-            packages(name: $name, number: $number)
-        }"""
-        result = execute(query, {"name": build.name, "number": build.number})
-
-        # Then we get the list of packages in the build
-        assert_data(self, result, {"packages": PACKAGE_INDEX})
-
-    def test_when_not_pulled_returns_none(self):
-        # given the unpulled package
-        build = BuildManFactory.create()
-
-        # when we query the build's packages
-        query = """query Packages($name: String!, $number: Int!) {
-            packages(name: $name, number: $number)
-        }"""
-        result = execute(query, {"name": build.name, "number": build.number})
-
-        # Then none is returned
-        assert_data(self, result, {"packages": None})
-
-    def test_should_return_none_when_package_index_missing(self):
-        # given the pulled build with index file missing
-        build = BuildManFactory.create()
-        build.pull()
-        (build.storage_build.get_path(Content.BINPKGS) / "Packages").unlink()
-
-        # when we query the build's packages
-        query = """query Packages($name: String!, $number: Int!) {
-            packages(name: $name, number: $number)
-        }"""
-        result = execute(query, {"name": build.name, "number": build.number})
-
-        # Then none is returned
-        assert_data(self, result, {"packages": None})
 
 
 class PublishMutationTestCase(TestCase):

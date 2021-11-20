@@ -13,7 +13,6 @@ from ariadne import (
 )
 from ariadne.contrib.django.scalars import datetime_scalar
 from graphql import GraphQLError
-from graphql.type.definition import GraphQLResolveInfo
 
 from gentoo_build_publisher.build import Build, Package, Status
 from gentoo_build_publisher.db import BuildDB
@@ -66,6 +65,7 @@ def result_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]
 
 machine_summary.set_alias("publishedBuild", "published")
 
+
 @machine_summary.field("builds")
 def resolve_machinesummary_builds(machine_info: MachineInfo, _) -> list[BuildMan]:
     return machine_info.builds()
@@ -106,14 +106,6 @@ def resolve_query_diff(*_, left: Object, right: Object) -> Optional[Object]:
     items = BuildMan.diff_binpkgs(left_build, right_build)
 
     return {"left": left_build, "right": right_build, "items": [*items]}
-
-
-@query.field("packages")
-def resolve_query_packages(
-    _, info: GraphQLResolveInfo, name: str, number: int
-) -> Optional[list[str]]:
-    build_man = BuildMan(Build(name=name, number=number))
-    return resolve_build_packages(build_man, info)
 
 
 @query.field("searchNotes")
