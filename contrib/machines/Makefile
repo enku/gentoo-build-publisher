@@ -2,6 +2,7 @@
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := world
 
+GBP_URL ?= http://gbp/
 machine ?= gbp
 build ?= 1
 
@@ -30,12 +31,8 @@ container: $(stage3-config)  ## Build the container
 
 
 # Watermark for this build
-gbp.json: .FORCE
+gbp.json: world
 	./gbp-meta.py $(machine) $(build) > $@
-
-
-.PHONY: .FORCE
-.FORCE:
 
 
 %.add_repo: %-repo.tar.gz container
@@ -62,7 +59,7 @@ world: chroot  ## Update @world and remove unneeded pkgs & binpkgs
 	$(chroot) emerge $(universal_emerge_opts) --changed-deps=n --usepkg=n --getbinpkg=n @preserved-rebuild
 	$(chroot) eclean-pkg --changed-deps --deep --quiet
 	$(chroot) emerge $(universal_emerge_opts) --depclean --quiet
-	touch $@
+	buildah unshare --mount CHROOT=$(container) sh -c 'touch -r $${CHROOT}/var/cache/binpkgs/Packages $@'
 
 
 container.img: world
@@ -85,12 +82,9 @@ $(archive): world gbp.json
 	gzip build.tar
 
 
-.PHONY: push
 push: $(archive)  ## Push artifact (to GBP)
-	curl $(GBP_URL)/graphql \
-		-H "Content-Type: application/json" \
-		-H "Accept: application/json" \
-		--data-binary '{"query":"mutation { pull(name: \"$(machine)\", number: $(build)) { latestBuild { number } } }"}'
+	gbp --url=$(GBP_URL) pull $(machine) $(build)
+	touch $@
 
 
 .PHONY: %.machine
@@ -121,7 +115,7 @@ clean-container:  ## Remove the container
 
 .PHONY: clean
 clean: clean-container  ## Clean project files
-	rm -rf build.tar $(archive) container container.img world *.add_repo chroot *.copy_config world $(stage4) gbp.json
+	rm -rf build.tar $(archive) container container.img world *.add_repo chroot *.copy_config $(stage4) gbp.json push
 
 
 .PHONY: help
