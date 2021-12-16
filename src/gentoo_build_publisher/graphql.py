@@ -51,7 +51,7 @@ def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
 
 
 @build.field("packagesBuilt")
-def result_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]]:
+def resolve_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]]:
     if not build_man.pulled():
         return None
 
@@ -170,7 +170,7 @@ def resolve_mutation_releasebuild(*_, name: str, number: int) -> Optional[BuildM
 
 
 @mutation.field("createNote")
-def resolve_mutation_createote(
+def resolve_mutation_createnote(
     *_, name: str, number: int, note: Optional[str] = None
 ) -> Optional[BuildMan]:
     build_man = BuildMan(Build(name=name, number=number))
