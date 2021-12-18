@@ -16,5 +16,8 @@
         "ecmaVersion": 2018
     },
     "rules": {
-    }
+    },
+    "plugins": [
+        "graphql"
+    ]
 }
