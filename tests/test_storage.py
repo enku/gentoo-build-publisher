@@ -6,6 +6,7 @@ import os
 import tarfile
 from unittest import mock
 
+from gentoo_build_publisher import utils
 from gentoo_build_publisher.build import (
     Build,
     Content,
@@ -404,6 +405,8 @@ class StorageBuildSetMetadataTestCase(TestCase):
 
         expected = {
             "build_duration": 666,
+            "gbp_hostname": utils.get_hostname(),
+            "gbp_version": utils.get_version(),
             "packages": {
                 "built": [
                     {
