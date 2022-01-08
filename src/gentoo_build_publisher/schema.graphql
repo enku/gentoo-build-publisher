@@ -58,6 +58,7 @@ type Query {
   latest(name: String!): Build
   machines: [MachineSummary!]!
   searchNotes(name: String!, key: String!): [Build!]!
+  version: String!
   working: [Build!]!
 }
 

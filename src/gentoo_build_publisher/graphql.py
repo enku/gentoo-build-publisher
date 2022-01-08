@@ -18,6 +18,7 @@ from gentoo_build_publisher.build import Build, Package, Status
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.tasks import publish_build, pull_build
+from gentoo_build_publisher.utils import get_version
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
@@ -111,6 +112,11 @@ def resolve_query_diff(*_, left: Object, right: Object) -> Optional[Object]:
 @query.field("searchNotes")
 def resolve_query_searchnotes(*_, name: str, key: str) -> list[BuildMan]:
     return [*BuildMan.search_notes(name, key)]
+
+
+@query.field("version")
+def resolve_query_version(*_) -> str:
+    return get_version()
 
 
 @query.field("working")

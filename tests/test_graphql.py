@@ -7,6 +7,7 @@ from unittest import mock
 from django.test.client import Client
 
 from gentoo_build_publisher.build import Content
+from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry
 from .factories import BuildManFactory, BuildModelFactory
@@ -687,3 +688,15 @@ class WorkingTestCase(TestCase):
             result,
             {"working": [{"name": working.name, "number": working.number}]},
         )
+
+
+class VersionTestCase(TestCase):
+    maxDiff = None
+
+    query = """query { version }"""
+
+    def test(self):
+        result = execute(self.query)
+        version = get_version()
+
+        assert_data(self, result, {"version": version})

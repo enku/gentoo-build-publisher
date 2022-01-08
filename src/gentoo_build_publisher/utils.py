@@ -1,6 +1,7 @@
 """Misc utilties"""
 import datetime as dt
 from dataclasses import dataclass
+from importlib.metadata import version
 from typing import Type, TypeVar
 
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
@@ -49,6 +50,11 @@ class Color:
         colors.append(end)
 
         return colors
+
+
+def get_version() -> str:
+    """Return package version"""
+    return version("gentoo_build_publisher")
 
 
 def lapsed(start: dt.datetime, end: dt.datetime) -> int:
