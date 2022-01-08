@@ -120,7 +120,7 @@ def resolve_query_version(*_) -> str:
 
 
 @query.field("working")
-def resolve_working(*_) -> list[BuildMan]:
+def resolve_query_working(*_) -> list[BuildMan]:
     builddbs = BuildDB.builds(completed=None)
 
     return [BuildMan(builddb) for builddb in builddbs]
