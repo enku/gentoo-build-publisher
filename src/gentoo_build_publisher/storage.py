@@ -6,7 +6,7 @@ import os
 import shutil
 import tarfile
 import tempfile
-from pathlib import PosixPath
+from pathlib import Path
 from typing import Iterator, Optional
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class StorageBuild:
     """A Build stored on the filesystem"""
 
-    def __init__(self, build: Build, path: PosixPath):
+    def __init__(self, build: Build, path: Path):
         self.build = build
         self.path = path
         self.tmpdir = self.path / "tmp"
@@ -36,7 +36,7 @@ class StorageBuild:
         """Instatiate from settings"""
         return cls(build, my_settings.STORAGE_PATH)
 
-    def get_path(self, item: Content) -> PosixPath:
+    def get_path(self, item: Content) -> Path:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
@@ -76,7 +76,7 @@ class StorageBuild:
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
-            dirpath = PosixPath(dirpath)
+            dirpath = Path(dirpath)
 
             for item in Content:
                 src = dirpath / item.value
@@ -216,11 +216,11 @@ def quick_check(file1: str, file2: str) -> bool:
     return stat1.st_mtime == stat2.st_mtime and stat1.st_size == stat2.st_size
 
 
-def copy_or_link(link_dest: PosixPath, dst_root: PosixPath):
+def copy_or_link(link_dest: Path, dst_root: Path):
     """Create a copytree copy_function that uses rsync's link_dest logic"""
 
     def copy(src: str, dst: str, follow_symlinks=True):
-        relative = PosixPath(dst).relative_to(dst_root)
+        relative = Path(dst).relative_to(dst_root)
         target = str(link_dest / relative)
         if quick_check(src, target):
             os.link(target, dst, follow_symlinks=follow_symlinks)

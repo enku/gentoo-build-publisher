@@ -5,7 +5,7 @@ import logging
 import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
-from pathlib import PosixPath
+from pathlib import Path
 from typing import Iterator, Optional, Union
 
 from yarl import URL
@@ -164,7 +164,7 @@ class BuildMan:
         """Return the JenkinsBuild logs url for this Build"""
         return self.jenkins_build.logs_url()
 
-    def get_path(self, item: Content) -> PosixPath:
+    def get_path(self, item: Content) -> Path:
         """Return the path of the content type for this Build's storage"""
         return self.storage_build.get_path(item)
 

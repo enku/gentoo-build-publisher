@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from pathlib import PosixPath
+from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
@@ -21,7 +21,7 @@ class Settings(BaseModel):
     JENKINS_BASE_URL: AnyHttpUrl
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: Optional[str] = None
-    STORAGE_PATH: PosixPath
+    STORAGE_PATH: Path
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:

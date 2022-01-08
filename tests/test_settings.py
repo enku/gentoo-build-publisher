@@ -1,6 +1,6 @@
 """Tests for GBP Settings"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-from pathlib import PosixPath
+from pathlib import Path
 from unittest import TestCase
 
 from gentoo_build_publisher.settings import Settings
@@ -18,7 +18,7 @@ class SettingsTestCase(TestCase):
 
         settings = Settings.from_dict(prefix, data_dict)
 
-        self.assertEqual(settings.STORAGE_PATH, PosixPath("/home/today"))
+        self.assertEqual(settings.STORAGE_PATH, Path("/home/today"))
         self.assertEqual(
             settings.JENKINS_USER, Settings.__fields__["JENKINS_USER"].default
         )
