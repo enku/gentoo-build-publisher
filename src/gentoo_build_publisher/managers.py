@@ -188,6 +188,9 @@ class BuildMan:
     @staticmethod
     def diff_binpkgs(left: BuildMan, right: BuildMan) -> Iterator[Change]:
         """Compare two package's binpkgs and generate the differences"""
+        if left == right:
+            return
+
         left_packages = [f"{package.cpvb()}\n" for package in left.get_packages()]
         right_packages = [f"{package.cpvb()}\n" for package in right.get_packages()]
         code_map = {"-": "REMOVED", "+": "ADDED"}

@@ -154,6 +154,18 @@ class BuildManTestCase(TestCase):
         self.assertEqual(buildman.db.logs, "foo\n")
         self.assertIsNot(buildman.db.completed, None)
 
+    def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
+        left = BuildManFactory.create()
+        left.get_packages = mock.Mock(wraps=left.get_packages)
+        right = left
+
+        # This should actually fail if not short-circuited because the builds have not
+        # been pulled
+        diff = [*BuildMan.diff_binpkgs(left, right)]
+
+        self.assertEqual(diff, [])
+        self.assertEqual(left.get_packages.call_count, 0)
+
 
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
