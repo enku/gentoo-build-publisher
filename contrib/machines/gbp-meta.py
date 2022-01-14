@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import datetime as dt
 import json
-import socket
+import platform
 import sys
 
 
@@ -9,7 +9,7 @@ def main():
     machine = sys.argv[1]
     build = int(sys.argv[2])
     date = dt.datetime.now(dt.timezone.utc)
-    hostname = socket.gethostname()
+    hostname = platform.node()
     print(
         json.dumps(
             {

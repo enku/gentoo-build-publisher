@@ -1,6 +1,6 @@
 """Misc utilties"""
 import datetime as dt
-import socket
+import platform
 from dataclasses import dataclass
 from importlib.metadata import version
 from typing import Type, TypeVar
@@ -55,7 +55,7 @@ class Color:
 
 def get_hostname() -> str:
     """Return the system's hostname"""
-    return socket.gethostname()
+    return platform.node()
 
 
 def get_version() -> str:
