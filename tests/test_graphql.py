@@ -113,6 +113,32 @@ class BuildQueryTestCase(TestCase):
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
+    def test_packagesbuild_should_return_error_when_gbpjson_missing(self):
+        # given the pulled build with gbp.json missing
+        build = BuildManFactory.create()
+        build.pull()
+        (build.storage_build.get_path(Content.BINPKGS) / "gbp.json").unlink()
+
+        # when we query the build's packagesBuild
+        query = """query Build($name: String!, $number: Int!) {
+            build(name: $name, number: $number) {
+                name
+                number
+                packagesBuilt {
+                    cpv
+                }
+            }
+        }"""
+        result = execute(query, {"name": build.name, "number": build.number})
+
+        self.assertEqual(
+            result["data"]["build"],
+            {"name": build.name, "number": build.number, "packagesBuilt": None},
+        )
+        self.assertEqual(len(result["errors"]), 1)
+        self.assertEqual(result["errors"][0]["message"], "Packages built unknown")
+        self.assertEqual(result["errors"][0]["path"], ["build", "packagesBuilt"])
+
 
 class BuildsQueryTestCase(TestCase):
     """Tests for the builds query"""
