@@ -53,9 +53,6 @@ def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
 
 @build.field("packagesBuilt")
 def resolve_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]]:
-    if not build_man.pulled():
-        return None
-
     try:
         gbp_metadata = build_man.storage_build.get_metadata()
     except LookupError as error:
