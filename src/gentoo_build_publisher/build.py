@@ -85,4 +85,4 @@ class GBPMetadata:
     build_duration: int
     packages: PackageMetadata
     gbp_hostname: str = utils.get_hostname()
-    gbp_version: str  = utils.get_version()
+    gbp_version: str = utils.get_version()
