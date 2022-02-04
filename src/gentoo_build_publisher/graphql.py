@@ -11,7 +11,7 @@ from ariadne import (
     make_executable_schema,
     snake_case_fallback_resolvers,
 )
-from ariadne.contrib.django.scalars import datetime_scalar
+from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
 from gentoo_build_publisher.build import Build, Package, Status

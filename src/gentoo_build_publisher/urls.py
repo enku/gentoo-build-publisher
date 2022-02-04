@@ -1,5 +1,5 @@
 """Default urlconf for gentoo_build_publisher"""
-from ariadne.contrib.django.views import GraphQLView
+from ariadne_django.views import GraphQLView
 from django.contrib import admin
 from django.urls import path
 
