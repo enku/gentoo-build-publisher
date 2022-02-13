@@ -8,7 +8,7 @@ from unittest import mock
 
 from gentoo_build_publisher import utils
 from gentoo_build_publisher.build import (
-    Build,
+    BuildID,
     Content,
     GBPMetadata,
     Package,
@@ -64,32 +64,32 @@ class StorageDownloadArtifactTestCase(TestCase):
 
     def test_extract_artifact_moves_repos_and_binpkgs(self):
         """Should extract artifacts and move to repos/ and binpkgs/"""
-        build = Build(name="babette", number=19)
+        build_id = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
 
-        self.assertIs(storage.get_path(build.id, Content.REPOS).is_dir(), True)
-        self.assertIs(storage.get_path(build.id, Content.BINPKGS).is_dir(), True)
+        self.assertIs(storage.get_path(build_id, Content.REPOS).is_dir(), True)
+        self.assertIs(storage.get_path(build_id, Content.BINPKGS).is_dir(), True)
 
     def test_extract_artifact_creates_etc_portage_dir(self):
         """Should extract artifacts and move to etc-portage/"""
-        build = Build(name="babette", number=19)
+        build_id = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
 
-        self.assertIs(storage.get_path(build.id, Content.ETC_PORTAGE).is_dir(), True)
+        self.assertIs(storage.get_path(build_id, Content.ETC_PORTAGE).is_dir(), True)
 
     def test_extract_artifact_creates_var_lib_portage_dir(self):
         """Should extract artifacts and move to var-lib-portage/"""
-        build = Build(name="babette", number=19)
+        build_id = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
 
         self.assertIs(
-            storage.get_path(build.id, Content.VAR_LIB_PORTAGE).is_dir(), True
+            storage.get_path(build_id, Content.VAR_LIB_PORTAGE).is_dir(), True
         )
 
     def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
@@ -118,7 +118,7 @@ class StoragePublishTestCase(TestCase):
     def test_publish_raises_exception_repos_dir_does_not_exist(self):
         """Should raise an exception if the build has not been pulled"""
         # Given the build
-        build = Build(name="babette", number=193)
+        build_id = BuildID("babette.193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -126,7 +126,7 @@ class StoragePublishTestCase(TestCase):
         # Then an exception is raised
         with self.assertRaises(FileNotFoundError):
             # When we call publish
-            storage.publish(build.id)
+            storage.publish(build_id)
 
     def test_raise_exception_when_symlink_target_exists_and_not_symlink(self):
         # Given the source and target which is not a symlink
@@ -149,7 +149,7 @@ class StoragePublishedTestCase(TestCase):
     def test_published_true(self):
         """.publshed should return True when published"""
         # Given the build
-        build = Build(name="babette", number=193)
+        build_id = BuildID("babette.193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -158,11 +158,11 @@ class StoragePublishedTestCase(TestCase):
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # When we publish the build
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
-        storage.publish(build.id)
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
+        storage.publish(build_id)
 
         # And call published(build)
-        published = storage.published(build.id)
+        published = storage.published(build_id)
 
         # Then it returns True
         self.assertTrue(published)
@@ -170,20 +170,20 @@ class StoragePublishedTestCase(TestCase):
     def test_published_false(self):
         """.publshed should return False when not published"""
         # Given the unpublished build
-        build = Build(name="babette", number=193)
+        build_id = BuildID("babette.193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
 
         # When we acess the `published` attribute
-        published = storage.published(build.id)
+        published = storage.published(build_id)
 
         # Then it returns False
         self.assertFalse(published)
 
     def test_other_published(self):
         # Given the first build published
-        build1 = Build(name="babette", number=192)
+        build1_id = BuildID("babette.192")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -192,31 +192,31 @@ class StoragePublishedTestCase(TestCase):
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # When we publish the first build
-        storage.extract_artifact(build1.id, jenkins.download_artifact(build1.id))
-        storage.publish(build1.id)
+        storage.extract_artifact(build1_id, jenkins.download_artifact(build1_id))
+        storage.publish(build1_id)
 
         # Given the second build published
-        build2 = Build(name="babette", number=193)
-        storage.extract_artifact(build2.id, jenkins.download_artifact(build2.id))
-        storage.publish(build2.id)
+        build2_id = BuildID("babette.193")
+        storage.extract_artifact(build2_id, jenkins.download_artifact(build2_id))
+        storage.publish(build2_id)
 
         # Then published returns True on the second build
-        self.assertTrue(storage.published(build2.id))
+        self.assertTrue(storage.published(build2_id))
 
         # And False on the first build
-        self.assertFalse(storage.published(build1.id))
+        self.assertFalse(storage.published(build1_id))
 
 
 class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
 
     def test_deletes_expected_directories(self):
-        build = Build(name="babette", number=19)
+        build = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build, jenkins.download_artifact(build))
 
-        storage.delete(build.id)
+        storage.delete(build)
 
         directories = [
             f"{storage.path}/binpkgs/{build}",
@@ -233,51 +233,51 @@ class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
 
     def test_does_not_extract_already_pulled_build(self):
-        build = Build(name="babette", number=19)
+        build_id = BuildID("build.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
-        assert storage.pulled(build.id)
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
+        assert storage.pulled(build_id)
 
         # extract won't be able to extract this
         byte_stream_mock = iter([b""])
 
         try:
-            storage.extract_artifact(build.id, byte_stream_mock)
+            storage.extract_artifact(build_id, byte_stream_mock)
         except tarfile.ReadError:
             self.fail("extract_artifact() should not have attempted to extract")
 
     def test_extracts_bytesteam_and_content(self):
-        build = Build(name="babette", number=19)
+        build_id = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
 
-        self.assertIs(storage.pulled(build.id), True)
+        self.assertIs(storage.pulled(build_id), True)
 
     def test_uses_hard_link_if_previous_build_exists(self):
-        previous_build = Build(name="babette", number=19)
+        previous_build_id = BuildID("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         storage.extract_artifact(
-            previous_build.id, jenkins.download_artifact(previous_build.id)
+            previous_build_id, jenkins.download_artifact(previous_build_id)
         )
 
-        current_build = Build(name="babette", number=20)
+        current_build_id = BuildID("babette.20")
 
         storage.extract_artifact(
-            current_build.id,
-            jenkins.download_artifact(current_build.id),
-            previous_build=previous_build.id,
+            current_build_id,
+            jenkins.download_artifact(current_build_id),
+            previous_build=previous_build_id,
         )
 
         for item in Content:
-            dst_path = storage.get_path(current_build.id, item)
+            dst_path = storage.get_path(current_build_id, item)
             self.assertIs(dst_path.exists(), True)
 
-        package_index = storage.get_path(current_build.id, Content.BINPKGS) / "Packages"
+        package_index = storage.get_path(current_build_id, Content.BINPKGS) / "Packages"
         self.assertEqual(package_index.stat().st_nlink, 2)
 
 

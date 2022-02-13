@@ -35,22 +35,6 @@ class BuildID(str):
         return cls(f"{name}.{number}")
 
 
-@dataclass
-class Build:
-    """A Representation of a Jenkins build artifact"""
-
-    name: str
-    number: int
-
-    def __str__(self) -> str:
-        return str(self.id)
-
-    @property
-    def id(self) -> BuildID:  # pylint: disable=invalid-name
-        """Return the BuildID associated with this build"""
-        return BuildID(f"{self.name}.{self.number}")
-
-
 @unique
 class Content(Enum):
     """Each build (should) contain these contents"""
