@@ -59,7 +59,7 @@ class GetBuildSummaryTestCase(TestCase):
         web.pull()
 
         # Make sure it doesn't fail when a gbp.json is missing
-        (web.storage_build.get_path(Content.BINPKGS) / "gbp.json").unlink()
+        (web.storage.get_path(web.build.id, Content.BINPKGS) / "gbp.json").unlink()
 
         machine_info = [MachineInfo(i) for i in machines]
 

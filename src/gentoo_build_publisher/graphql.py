@@ -54,7 +54,7 @@ def resolve_build_packages(build_man: BuildMan, _) -> Optional[list[str]]:
 @build.field("packagesBuilt")
 def resolve_build_packagesbuilt(build_man: BuildMan, _) -> Optional[list[Package]]:
     try:
-        gbp_metadata = build_man.storage_build.get_metadata()
+        gbp_metadata = build_man.storage.get_metadata(build_man.build.id)
     except LookupError as error:
         raise GraphQLError("Packages built unknown") from error
 

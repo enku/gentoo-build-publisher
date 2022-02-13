@@ -15,7 +15,7 @@ from gentoo_build_publisher.build import (
     PackageMetadata,
 )
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild, quick_check
+from gentoo_build_publisher.storage import Storage, quick_check
 
 from . import PACKAGE_INDEX, MockJenkinsBuild, TestCase
 from .factories import BuildManFactory
@@ -25,109 +25,108 @@ TEST_SETTINGS = Settings(
 )
 
 
-class StorageBuildInitTestCase(TestCase):
+class StorageInitTestCase(TestCase):
     def test_creates_dir_if_not_exists(self):
         os.rmdir(self.tmpdir)
-        build = Build(name="babette", number=19)
 
-        StorageBuild(build, self.tmpdir)
+        Storage(self.tmpdir)
         self.assertIs(os.path.isdir(self.tmpdir), True)
 
 
-class StorageBuildReprTestCase(TestCase):
+class StorageReprTestCase(TestCase):
     def test(self):
-        build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
 
         self.assertEqual(
-            repr(storage_build),
-            f"gentoo_build_publisher.storage.StorageBuild({repr(self.tmpdir)})",
+            repr(storage),
+            f"gentoo_build_publisher.storage.Storage({repr(self.tmpdir)})",
         )
 
 
-class StorageBuildFromSettings(TestCase):
+class StorageFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self):
-        """Should intantiate StorageBuild from settings"""
-        # Given the build
-        build = Build(name="babette", number=19)
-
+        """Should intantiate Storage from settings"""
         # Given the settings
         settings = TEST_SETTINGS.copy()
         settings.STORAGE_PATH = self.tmpdir
 
-        # When we instantiate StorageBuild.from_settings
-        storage_build = StorageBuild.from_settings(build, settings)
+        # When we instantiate Storage.from_settings
+        storage = Storage.from_settings(settings)
 
-        # Then we get a StorageBuild instance with attributes from settings
-        self.assertIsInstance(storage_build, StorageBuild)
-        self.assertEqual(storage_build.path, self.tmpdir)
+        # Then we get a Storage instance with attributes from settings
+        self.assertIsInstance(storage, Storage)
+        self.assertEqual(storage.path, self.tmpdir)
 
 
-class StorageBuildDownloadArtifactTestCase(TestCase):
-    """Tests for StorageBuild.download_artifact"""
+class StorageDownloadArtifactTestCase(TestCase):
+    """Tests for Storage.download_artifact"""
 
     def test_extract_artifact_moves_repos_and_binpkgs(self):
         """Should extract artifacts and move to repos/ and binpkgs/"""
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.get_path(Content.REPOS).is_dir(), True)
-        self.assertIs(storage_build.get_path(Content.BINPKGS).is_dir(), True)
+        self.assertIs(storage.get_path(build.id, Content.REPOS).is_dir(), True)
+        self.assertIs(storage.get_path(build.id, Content.BINPKGS).is_dir(), True)
 
     def test_extract_artifact_creates_etc_portage_dir(self):
         """Should extract artifacts and move to etc-portage/"""
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.get_path(Content.ETC_PORTAGE).is_dir(), True)
+        self.assertIs(storage.get_path(build.id, Content.ETC_PORTAGE).is_dir(), True)
 
     def test_extract_artifact_creates_var_lib_portage_dir(self):
         """Should extract artifacts and move to var-lib-portage/"""
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.get_path(Content.VAR_LIB_PORTAGE).is_dir(), True)
+        self.assertIs(
+            storage.get_path(build.id, Content.VAR_LIB_PORTAGE).is_dir(), True
+        )
 
     def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
         # Given the extractable build
         build = BuildManFactory.create()
 
         # When when one of the target paths already exist
-        path = build.storage_build.get_path(Content.BINPKGS)
+        path = build.storage.get_path(build.build.id, Content.BINPKGS)
         path.mkdir(parents=True)
         orphan = path / "this should not be here"
         orphan.touch()
 
         # And we extract the build
-        build.storage_build.extract_artifact(build.jenkins_build.download_artifact())
+        build.storage.extract_artifact(
+            build.build.id, build.jenkins_build.download_artifact()
+        )
 
         # Then the orpaned path is removed
         self.assertIs(path.exists(), True)
         self.assertIs(orphan.exists(), False)
 
 
-class StorageBuildPublishTestCase(TestCase):
-    """Tests for StorageBuild.publish"""
+class StoragePublishTestCase(TestCase):
+    """Tests for Storage.publish"""
 
-    def test_publish_raises_exception_repos_dir_does_not_exit(self):
+    def test_publish_raises_exception_repos_dir_does_not_exist(self):
         """Should raise an exception if the build has not been pulled"""
         # Given the build
         build = Build(name="babette", number=193)
 
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
+        # Given the storage
+        storage = Storage(self.tmpdir)
 
         # Then an exception is raised
         with self.assertRaises(FileNotFoundError):
             # When we call publish
-            storage_build.publish()
+            storage.publish(build.id)
 
     def test_raise_exception_when_symlink_target_exists_and_not_symlink(self):
         # Given the source and target which is not a symlink
@@ -137,33 +136,33 @@ class StorageBuildPublishTestCase(TestCase):
         # Then an exception is raised
         with self.assertRaises(EnvironmentError) as cxt:
             # When we call synlink on source and target
-            StorageBuild.symlink(source, target)
+            Storage.symlink(str(source), str(target))
 
         exception = cxt.exception
 
         self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
 
 
-class StorageBuildPublishedTestCase(TestCase):
-    """Tests for StorageBuild.published"""
+class StoragePublishedTestCase(TestCase):
+    """Tests for Storage.published"""
 
     def test_published_true(self):
         """.publshed should return True when published"""
         # Given the build
         build = Build(name="babette", number=193)
 
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
+        # Given the storage
+        storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
 
         # When we publish the build
-        storage_build.extract_artifact(jenkins_build.download_artifact())
-        storage_build.publish()
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        storage.publish(build.id)
 
         # And call published(build)
-        published = storage_build.published()
+        published = storage.published(build.id)
 
         # Then it returns True
         self.assertTrue(published)
@@ -173,11 +172,11 @@ class StorageBuildPublishedTestCase(TestCase):
         # Given the unpublished build
         build = Build(name="babette", number=193)
 
-        # Given the storage_build
-        storage_build = StorageBuild(build, self.tmpdir)
+        # Given the storage
+        storage = Storage(self.tmpdir)
 
         # When we acess the `published` attribute
-        published = storage_build.published()
+        published = storage.published(build.id)
 
         # Then it returns False
         self.assertFalse(published)
@@ -186,45 +185,44 @@ class StorageBuildPublishedTestCase(TestCase):
         # Given the first build published
         build1 = Build(name="babette", number=192)
 
-        # Given the storage_build
-        storage_build1 = StorageBuild(build1, self.tmpdir)
+        # Given the storage
+        storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
         jenkins_build = MockJenkinsBuild.from_settings(build1, TEST_SETTINGS)
 
         # When we publish the first build
-        storage_build1.extract_artifact(jenkins_build.download_artifact())
-        storage_build1.publish()
+        storage.extract_artifact(build1.id, jenkins_build.download_artifact())
+        storage.publish(build1.id)
 
         # Given the second build published
         build2 = Build(name="babette", number=193)
-        storage_build2 = StorageBuild(build2, self.tmpdir)
-        storage_build2.extract_artifact(jenkins_build.download_artifact())
-        storage_build2.publish()
+        storage.extract_artifact(build2.id, jenkins_build.download_artifact())
+        storage.publish(build2.id)
 
         # Then published returns True on the second build
-        self.assertTrue(storage_build2.published())
+        self.assertTrue(storage.published(build2.id))
 
         # And False on the first build
-        self.assertFalse(storage_build1.published())
+        self.assertFalse(storage.published(build1.id))
 
 
-class StorageBuildDeleteTestCase(TestCase):
-    """Tests for StorageBuild.delete"""
+class StorageDeleteTestCase(TestCase):
+    """Tests for Storage.delete"""
 
     def test_deletes_expected_directories(self):
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
-        storage_build.delete()
+        storage.delete(build.id)
 
         directories = [
-            f"{storage_build.path}/binpkgs/{build}",
-            f"{storage_build.path}/etc-portage/{build}",
-            f"{storage_build.path}/repos/{build}",
-            f"{storage_build.path}/var-lib-portage/{build}",
+            f"{storage.path}/binpkgs/{build}",
+            f"{storage.path}/etc-portage/{build}",
+            f"{storage.path}/repos/{build}",
+            f"{storage.path}/var-lib-portage/{build}",
         ]
         for directory in directories:
             with self.subTest(directory=directory):
@@ -232,66 +230,67 @@ class StorageBuildDeleteTestCase(TestCase):
 
 
 class StorageExtractArtifactTestCase(TestCase):
-    """Tests for StorageBuild.extract_artifact"""
+    """Tests for Storage.extract_artifact"""
 
     def test_does_not_extract_already_pulled_build(self):
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
 
-        storage_build.extract_artifact(jenkins_build.download_artifact())
-        assert storage_build.pulled()
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        assert storage.pulled(build.id)
 
         # extract won't be able to extract this
         byte_stream_mock = iter([b""])
 
         try:
-            storage_build.extract_artifact(byte_stream_mock)
+            storage.extract_artifact(build.id, byte_stream_mock)
         except tarfile.ReadError:
             self.fail("extract_artifact() should not have attempted to extract")
 
     def test_extracts_bytesteam_and_content(self):
         build = Build(name="babette", number=19)
-        storage_build = StorageBuild(build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
 
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
-        self.assertIs(storage_build.pulled(), True)
+        self.assertIs(storage.pulled(build.id), True)
 
     def test_uses_hard_link_if_previous_build_exists(self):
         previous_build = Build(name="babette", number=19)
-        previous_storage_build = StorageBuild(previous_build, self.tmpdir)
+        storage = Storage(self.tmpdir)
         jenkins_build = MockJenkinsBuild.from_settings(previous_build, TEST_SETTINGS)
-        previous_storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage.extract_artifact(previous_build.id, jenkins_build.download_artifact())
 
         current_build = Build(name="babette", number=20)
-        current_storage_build = StorageBuild(current_build, self.tmpdir)
 
-        current_storage_build.extract_artifact(
-            jenkins_build.download_artifact(), previous_build=previous_storage_build
+        storage.extract_artifact(
+            current_build.id,
+            jenkins_build.download_artifact(),
+            previous_build=previous_build.id,
         )
 
         for item in Content:
-            dst_path = current_storage_build.get_path(item)
+            dst_path = storage.get_path(current_build.id, item)
             self.assertIs(dst_path.exists(), True)
 
-        package_index = current_storage_build.get_path(Content.BINPKGS) / "Packages"
+        package_index = storage.get_path(current_build.id, Content.BINPKGS) / "Packages"
         self.assertEqual(package_index.stat().st_nlink, 2)
 
 
-class StorageBuildGetPackagesTestCase(TestCase):
-    """tests for the StorageBuild.get_packages() method"""
+class StorageGetPackagesTestCase(TestCase):
+    """tests for the Storage.get_packages() method"""
 
     def setUp(self):
         super().setUp()
 
-        build = BuildManFactory.create()
-        build.pull()
-        self.storage_build = build.storage_build
+        self.build = BuildManFactory.create()
+        self.build.pull()
+        self.storage = self.build.storage
 
     def test_should_return_list_of_packages_from_index(self):
-        packages = self.storage_build.get_packages()
+        packages = self.storage.get_packages(self.build.build.id)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
         package = packages[0]
@@ -303,25 +302,27 @@ class StorageBuildGetPackagesTestCase(TestCase):
         self.assertEqual(package.build_time, 1622722899)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
-        index_file = self.storage_build.get_path(Content.BINPKGS) / "Packages"
+        index_file = (
+            self.storage.get_path(self.build.build.id, Content.BINPKGS) / "Packages"
+        )
         index_file.unlink()
 
         with self.assertRaises(LookupError):
-            self.storage_build.get_packages()
+            self.storage.get_packages(self.build.build.id)
 
 
-class StorageBuildGetMetadataTestCase(TestCase):
-    """tests for the StorageBuild.get_metadata() method"""
+class StorageGetMetadataTestCase(TestCase):
+    """tests for the Storage.get_metadata() method"""
 
     def setUp(self):
         super().setUp()
 
-        build = BuildManFactory.create()
-        build.pull()
-        self.storage_build = build.storage_build
+        self.build = BuildManFactory.create()
+        self.build.pull()
+        self.storage = self.build.storage
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self):
-        metadata = self.storage_build.get_metadata()
+        metadata = self.storage.get_metadata(self.build.build.id)
 
         expected = GBPMetadata(
             build_duration=124,
@@ -359,25 +360,27 @@ class StorageBuildGetMetadataTestCase(TestCase):
         self.assertEqual(metadata, expected)
 
     def test_should_raise_lookuperror_when_file_does_not_exist(self):
-        path = self.storage_build.get_path(Content.BINPKGS) / "gbp.json"
+        path = self.storage.get_path(self.build.build.id, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
         with self.assertRaises(LookupError) as context:
-            self.storage_build.get_metadata()
+            self.storage.get_metadata(self.build.build.id)
 
         exception = context.exception
         self.assertEqual(exception.args, ("gbp.json does not exist",))
 
 
-class StorageBuildSetMetadataTestCase(TestCase):
-    """tests for the StorageBuild.set_metadata() method"""
+class StorageSetMetadataTestCase(TestCase):
+    """tests for the Storage.set_metadata() method"""
 
     def setUp(self):
         super().setUp()
-        build = BuildManFactory.create()
-        build.pull()
-        self.storage_build = build.storage_build
-        self.path = self.storage_build.get_path(Content.BINPKGS) / "gbp.json"
+        self.build = BuildManFactory.create()
+        self.build.pull()
+        self.storage = self.build.storage
+        self.path = (
+            self.storage.get_path(self.build.build.id, Content.BINPKGS) / "gbp.json"
+        )
 
         if self.path.exists():
             self.path.unlink()
@@ -398,7 +401,7 @@ class StorageBuildSetMetadataTestCase(TestCase):
             ],
         )
         gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
-        self.storage_build.set_metadata(gbp_metadata)
+        self.storage.set_metadata(self.build.build.id, gbp_metadata)
 
         with self.path.open("r") as json_file:
             result = json.load(json_file)

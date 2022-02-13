@@ -100,7 +100,7 @@ class BuildQueryTestCase(TestCase):
         # given the pulled build with index file missing
         build = BuildManFactory.create()
         build.pull()
-        (build.storage_build.get_path(Content.BINPKGS) / "Packages").unlink()
+        (build.storage.get_path(build.build.id, Content.BINPKGS) / "Packages").unlink()
 
         # when we query the build's packages
         query = """query Build($name: String!, $number: Int!) {
@@ -117,7 +117,7 @@ class BuildQueryTestCase(TestCase):
         # given the pulled build with gbp.json missing
         build = BuildManFactory.create()
         build.pull()
-        (build.storage_build.get_path(Content.BINPKGS) / "gbp.json").unlink()
+        (build.storage.get_path(build.build.id, Content.BINPKGS) / "gbp.json").unlink()
 
         # when we query the build's packagesBuild
         query = """query Build($name: String!, $number: Int!) {
@@ -215,13 +215,15 @@ class DiffQueryTestCase(TestCase):
 
         # Given the first build with tar-1.34
         self.left_bm = BuildManFactory.create()
-        binpkgs = self.left_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs = self.left_bm.storage.get_path(self.left_bm.build.id, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
         self.right_bm = BuildManFactory.create()
-        binpkgs = self.right_bm.storage_build.get_path(Content.BINPKGS)
+        binpkgs = self.right_bm.storage.get_path(
+            self.right_bm.build.id, Content.BINPKGS
+        )
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
 

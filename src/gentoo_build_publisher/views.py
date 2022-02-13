@@ -108,7 +108,10 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         build_id = str(latest_build)
         try:
             build_packages[build_id] = [
-                i.cpv for i in latest_build.storage_build.get_metadata().packages.built
+                i.cpv
+                for i in latest_build.storage.get_metadata(
+                    latest_build.build.id
+                ).packages.built
             ]
         except LookupError:
             build_packages[build_id] = []
@@ -124,7 +127,7 @@ def package_metadata(buildman: BuildMan, context: DashboardContext):
     metadata: Optional[GBPMetadata]
 
     try:
-        metadata = buildman.storage_build.get_metadata()
+        metadata = buildman.storage.get_metadata(buildman.build.id)
     except LookupError:
         metadata = None
 

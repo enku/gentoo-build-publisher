@@ -7,7 +7,7 @@ from gentoo_build_publisher.build import Build, Content
 from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.storage import Storage
 
 from . import TestCase
 from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
@@ -31,7 +31,7 @@ class BuildManTestCase(TestCase):
 
         buildman.publish()
 
-        self.assertIs(buildman.storage_build.published(), True)
+        self.assertIs(buildman.storage.published(buildman.build.id), True)
 
     def test_pull_without_db(self):
         """pull creates db instance and pulls from jenkins"""
@@ -42,7 +42,7 @@ class BuildManTestCase(TestCase):
 
         buildman.pull()
 
-        self.assertIs(buildman.storage_build.pulled(), True)
+        self.assertIs(buildman.storage.pulled(build.id), True)
         self.assertIsNot(buildman.db, None)
 
     def test_pull_stores_build_logs(self):
@@ -82,8 +82,8 @@ class BuildManTestCase(TestCase):
         build = Build(name=build_model.name, number=build_model.number)
         settings = Settings.from_environ()
         jenkins_build = MockJenkinsBuild.from_settings(build, settings)
-        storage_build = StorageBuild(build, self.tmpdir)
-        storage_build.extract_artifact(jenkins_build.download_artifact())
+        storage = Storage(self.tmpdir)
+        storage.extract_artifact(build.id, jenkins_build.download_artifact())
 
         BuildMan.purge(build_model.name)
 
@@ -92,7 +92,7 @@ class BuildManTestCase(TestCase):
         self.assertIs(query.exists(), False)
 
         for item in Content:
-            path = storage_build.get_path(item)
+            path = storage.get_path(build.id, item)
             self.assertIs(path.exists(), False, path)
 
     def test_purge_does_not_delete_old_kept_build(self):

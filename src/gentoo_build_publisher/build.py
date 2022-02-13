@@ -7,6 +7,27 @@ from dataclasses_json import dataclass_json
 from gentoo_build_publisher import utils
 
 
+class InvalidBuildID(ValueError):
+    """BuildID not in name.number format"""
+
+
+class BuildID(str):
+    """A build ID (name.number)"""
+
+    def __init__(self, _):
+        super().__init__()
+
+        if not all(parts := self.partition(".")):
+            raise InvalidBuildID(self)
+
+        self.name = parts[0]
+
+        try:
+            self.number = int(parts[2])
+        except ValueError as error:
+            raise InvalidBuildID(str(error)) from error
+
+
 @dataclass
 class Build:
     """A Representation of a Jenkins build artifact"""
@@ -14,8 +35,13 @@ class Build:
     name: str
     number: int
 
-    def __str__(self):
-        return f"{self.name}.{self.number}"
+    def __str__(self) -> str:
+        return str(self.id)
+
+    @property
+    def id(self) -> BuildID:  # pylint: disable=invalid-name
+        """Return the BuildID associated with this build"""
+        return BuildID(f"{self.name}.{self.number}")
 
 
 @unique

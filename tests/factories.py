@@ -2,12 +2,11 @@
 import factory
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Build
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.storage import Storage
 
 from . import MockJenkinsBuild
 
@@ -45,8 +44,6 @@ class BuildManFactory(factory.Factory):
             obj.build_attr, Settings.from_environ()
         )
     )
-    storage_build = factory.LazyAttribute(
-        lambda obj: StorageBuild.from_settings(
-            Build(obj.build_attr.name, obj.build_attr.number), Settings.from_environ()
-        )
+    storage = factory.LazyAttribute(
+        lambda _: Storage.from_settings(Settings.from_environ())
     )

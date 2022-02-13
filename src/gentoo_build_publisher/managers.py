@@ -25,7 +25,7 @@ from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsMetadata
 from gentoo_build_publisher.jenkins import schedule_build as schedule_jenkins_build
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import StorageBuild
+from gentoo_build_publisher.storage import Storage
 
 logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow
@@ -39,7 +39,7 @@ class BuildMan:
         build: Union[Build, BuildDB],
         *,
         jenkins_build: Optional[JenkinsBuild] = None,
-        storage_build: Optional[StorageBuild] = None,
+        storage: Optional[Storage] = None,
     ):
         if isinstance(build, Build):
             self.build = build
@@ -63,13 +63,10 @@ class BuildMan:
         else:
             self.jenkins_build = jenkins_build
 
-        if storage_build is None:
-            self.storage_build = StorageBuild.from_settings(
-                self.build, Settings.from_environ()
-            )
+        if storage is None:
+            self.storage = Storage.from_settings(Settings.from_environ())
         else:
-            self.storage_build = storage_build
-        self.get_packages = self.storage_build.get_packages
+            self.storage = storage
 
     @property
     def id(self):  # pylint: disable=invalid-name
@@ -92,11 +89,11 @@ class BuildMan:
         if not self.pulled():
             self.pull()
 
-        self.storage_build.publish()
+        self.storage.publish(self.build.id)
 
     def published(self) -> bool:
         """Return True if this Build is published"""
-        return self.storage_build.published()
+        return self.storage.published(self.build.id)
 
     def pull(self):
         """pull the Build to storage"""
@@ -104,21 +101,21 @@ class BuildMan:
             return
 
         build = self.build
-        storage = self.storage_build
+        storage = self.storage
         jenkins = self.jenkins_build
 
         self._db = self._db or BuildDB.get_or_create(build)
-        previous_build_db = BuildDB.previous_build(self._db)
+        previous = BuildDB.previous_build(self._db)
 
-        if previous_build_db:
-            previous_build_storage = type(self)(previous_build_db)
+        if previous:
+            previous_build = previous.build.id
         else:
-            previous_build_storage = None
+            previous_build = None
 
         logger.info("Pulling build: %s", build)
 
         chunk_size = jenkins.jenkins.download_chunk_size
-        tmpdir = str(self.storage_build.path / "tmp")
+        tmpdir = str(self.storage.tmpdir)
         with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
             logger.info("Downloading build: %s", build)
             io.write_chunks(temp, jenkins.download_artifact())
@@ -127,7 +124,7 @@ class BuildMan:
             temp.seek(0)
 
             byte_stream = io.read_chunks(temp, chunk_size)
-            storage.extract_artifact(byte_stream, previous_build_storage)
+            storage.extract_artifact(self.build.id, byte_stream, previous_build)
 
         logging.info("Pulled build %s", build)
 
@@ -142,31 +139,37 @@ class BuildMan:
         self.db.save()
 
         try:
-            packages = self.storage_build.get_packages()
+            packages = self.storage.get_packages(self.build.id)
         except LookupError:
             return
 
         jenkins_metadata = self.jenkins_build.get_metadata()
-        self.storage_build.set_metadata(gbp_metadata(jenkins_metadata, packages))
+        self.storage.set_metadata(
+            self.build.id, gbp_metadata(jenkins_metadata, packages)
+        )
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
-        return self.storage_build.pulled()
+        return self.storage.pulled(self.build.id)
 
     def delete(self):
         """Delete this build"""
         if self.db is not None:
             self.db.delete()
 
-        self.storage_build.delete()
+        self.storage.delete(self.build.id)
 
     def logs_url(self) -> URL:
         """Return the JenkinsBuild logs url for this Build"""
         return self.jenkins_build.logs_url()
 
+    def get_packages(self) -> list[Package]:
+        """Return the list of packages for this build"""
+        return self.storage.get_packages(self.build.id)
+
     def get_path(self, item: Content) -> Path:
         """Return the path of the content type for this Build's storage"""
-        return self.storage_build.get_path(item)
+        return self.storage.get_path(self.build.id, item)
 
     @classmethod
     def purge(cls, machine: str):
