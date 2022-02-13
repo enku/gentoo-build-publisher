@@ -21,8 +21,7 @@ from gentoo_build_publisher.build import (
     Status,
 )
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsMetadata
-from gentoo_build_publisher.jenkins import schedule_build as schedule_jenkins_build
+from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -38,7 +37,7 @@ class BuildMan:
         self,
         build: Union[Build, BuildDB],
         *,
-        jenkins_build: Optional[JenkinsBuild] = None,
+        jenkins: Optional[Jenkins] = None,
         storage: Optional[Storage] = None,
     ):
         if isinstance(build, Build):
@@ -56,12 +55,10 @@ class BuildMan:
         self.name = self.build.name
         self.number = self.build.number
 
-        if jenkins_build is None:
-            self.jenkins_build = JenkinsBuild.from_settings(
-                self.build, Settings.from_environ()
-            )
+        if jenkins is None:
+            self.jenkins = Jenkins.from_settings(Settings.from_environ())
         else:
-            self.jenkins_build = jenkins_build
+            self.jenkins = jenkins
 
         if storage is None:
             self.storage = Storage.from_settings(Settings.from_environ())
@@ -102,7 +99,7 @@ class BuildMan:
 
         build = self.build
         storage = self.storage
-        jenkins = self.jenkins_build
+        jenkins = self.jenkins
 
         self._db = self._db or BuildDB.get_or_create(build)
         previous = BuildDB.previous_build(self._db)
@@ -114,11 +111,11 @@ class BuildMan:
 
         logger.info("Pulling build: %s", build)
 
-        chunk_size = jenkins.jenkins.download_chunk_size
+        chunk_size = jenkins.config.download_chunk_size
         tmpdir = str(self.storage.tmpdir)
         with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
             logger.info("Downloading build: %s", build)
-            io.write_chunks(temp, jenkins.download_artifact())
+            io.write_chunks(temp, jenkins.download_artifact(self.build.id))
 
             logger.info("Downloaded build: %s", build)
             temp.seek(0)
@@ -134,7 +131,7 @@ class BuildMan:
         """Update the build's db attributes (based on storage, etc.)"""
         self._db = self._db or BuildDB.get_or_create(self.build)
 
-        self.db.logs = self.jenkins_build.get_logs()
+        self.db.logs = self.jenkins.get_logs(self.build.id)
         self.db.completed = utcnow().replace(tzinfo=timezone.utc)
         self.db.save()
 
@@ -143,7 +140,7 @@ class BuildMan:
         except LookupError:
             return
 
-        jenkins_metadata = self.jenkins_build.get_metadata()
+        jenkins_metadata = self.jenkins.get_metadata(self.build.id)
         self.storage.set_metadata(
             self.build.id, gbp_metadata(jenkins_metadata, packages)
         )
@@ -160,8 +157,8 @@ class BuildMan:
         self.storage.delete(self.build.id)
 
     def logs_url(self) -> URL:
-        """Return the JenkinsBuild logs url for this Build"""
-        return self.jenkins_build.logs_url()
+        """Return the Jenkins logs url for this Build"""
+        return self.jenkins.logs_url(self.build.id)
 
     def get_packages(self) -> list[Package]:
         """Return the list of packages for this build"""
@@ -170,6 +167,14 @@ class BuildMan:
     def get_path(self, item: Content) -> Path:
         """Return the path of the content type for this Build's storage"""
         return self.storage.get_path(self.build.id, item)
+
+    @staticmethod
+    def schedule_build(name: str) -> str:
+        """Schedule a build on jenkins for the given machine name"""
+        settings = Settings.from_environ()
+        jenkins = Jenkins.from_settings(settings)
+
+        return jenkins.schedule_build(name)
 
     @classmethod
     def purge(cls, machine: str):
@@ -253,12 +258,6 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         builddbs = BuildDB.builds(name=self.name)
 
         return [BuildMan(i) for i in builddbs]
-
-
-def schedule_build(name: str) -> str:
-    """Schedule a build on jenkins for the given machine name"""
-    settings = Settings.from_environ()
-    return schedule_jenkins_build(name, settings)
 
 
 def diff_notes(left: BuildMan, right: BuildMan, header: str = "") -> str:

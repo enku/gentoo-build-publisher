@@ -16,7 +16,7 @@ from graphql import GraphQLError
 
 from gentoo_build_publisher.build import Build, Package, Status
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
+from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
@@ -143,7 +143,7 @@ def resolve_mutation_pull(*_, name: str, number: int) -> MachineInfo:
 
 @mutation.field("scheduleBuild")
 def resolve_mutation_schedule_build(*_, name: str) -> str:
-    return schedule_build(name)
+    return BuildMan.schedule_build(name)
 
 
 @mutation.field("keepBuild")

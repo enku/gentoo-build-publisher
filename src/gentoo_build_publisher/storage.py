@@ -7,10 +7,10 @@ import shutil
 import tarfile
 import tempfile
 from pathlib import Path
-from typing import IO, Iterator, Optional
+from typing import IO, Iterator
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import Build, BuildID, Content, GBPMetadata, Package
+from gentoo_build_publisher.build import BuildID, Content, GBPMetadata, Package
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -78,10 +78,8 @@ class Storage:
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
-            dirpath = Path(dirpath)
-
             for item in Content:
-                src = dirpath / item.value
+                src = Path(dirpath) / item.value
                 dst = self.get_path(build_id, item)
 
                 if dst.exists():

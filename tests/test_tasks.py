@@ -101,7 +101,7 @@ class PullBuildTestCase(TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch.object(
-            buildman.jenkins_build, "download_artifact"
+            buildman.jenkins, "download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = (HTTPError, None)
             pull_build.s(buildman.name, buildman.number).apply()
@@ -115,7 +115,7 @@ class PullBuildTestCase(TestCase):
         buildmanager_mock.return_value = buildman
 
         with mock.patch.object(
-            buildman.jenkins_build, "download_artifact"
+            buildman.jenkins, "download_artifact"
         ) as download_artifact_mock:
             error = HTTPError()
             error.response = mock.Mock()

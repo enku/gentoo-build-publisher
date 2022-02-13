@@ -4,13 +4,13 @@ import datetime
 from unittest import mock
 
 from gentoo_build_publisher.build import Build, Content
-from gentoo_build_publisher.managers import BuildMan, MachineInfo, schedule_build
+from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 
 from . import TestCase
-from .factories import BuildManFactory, BuildModelFactory, MockJenkinsBuild
+from .factories import BuildManFactory, BuildModelFactory, MockJenkins
 
 utc = datetime.timezone.utc
 
@@ -37,8 +37,8 @@ class BuildManTestCase(TestCase):
         """pull creates db instance and pulls from jenkins"""
         build = Build(name="babette", number=193)
         settings = Settings.from_environ()
-        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
-        buildman = BuildMan(build, jenkins_build=jenkins_build)
+        jenkins = MockJenkins.from_settings(settings)
+        buildman = BuildMan(build, jenkins=jenkins)
 
         buildman.pull()
 
@@ -52,8 +52,8 @@ class BuildManTestCase(TestCase):
         buildman.pull()
 
         url = str(buildman.logs_url())
-        buildman.jenkins_build.get_build_logs_mock_get.assert_called_once()
-        call_args = buildman.jenkins_build.get_build_logs_mock_get.call_args
+        buildman.jenkins.get_build_logs_mock_get.assert_called_once()
+        call_args = buildman.jenkins.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
         self.assertEqual(buildman.db.logs, "foo\n")
@@ -81,9 +81,9 @@ class BuildManTestCase(TestCase):
 
         build = Build(name=build_model.name, number=build_model.number)
         settings = Settings.from_environ()
-        jenkins_build = MockJenkinsBuild.from_settings(build, settings)
+        jenkins = MockJenkins.from_settings(settings)
         storage = Storage(self.tmpdir)
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         BuildMan.purge(build_model.name)
 
@@ -148,7 +148,7 @@ class BuildManTestCase(TestCase):
     def test_update_build_metadata(self):
         buildman = BuildManFactory.create()
         settings = Settings.from_environ()
-        MockJenkinsBuild.from_settings(buildman.build, settings)
+        MockJenkins.from_settings(settings)
 
         buildman.update_build_metadata()
         self.assertEqual(buildman.db.logs, "foo\n")
@@ -220,13 +220,14 @@ class ScheduleBuildTestCase(TestCase):
     def test(self):
         name = "babette"
         settings = Settings.from_environ()
-        mock_path = "gentoo_build_publisher.managers.schedule_jenkins_build"
+        mock_path = "gentoo_build_publisher.managers.Jenkins.from_settings"
 
-        with mock.patch(mock_path) as mock_jenkins_build:
-            mock_jenkins_build.return_value = (
+        with mock.patch(mock_path) as mock_jenkins:
+            mock_jenkins.return_value.schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
             )
-            response = schedule_build(name)
+            response = BuildMan.schedule_build(name)
 
         self.assertEqual(response, "https://jenkins.invalid/queue/item/31528/")
-        mock_jenkins_build.assert_called_once_with(name, settings)
+        mock_jenkins.assert_called_once_with(settings)
+        mock_jenkins.return_value.schedule_build.assert_called_once_with(name)

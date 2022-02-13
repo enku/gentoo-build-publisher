@@ -8,7 +8,7 @@ from dataclasses_json import dataclass_json
 from yarl import URL
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.settings import Settings
 
 AuthTuple = tuple[str, str]
@@ -62,47 +62,46 @@ class JenkinsMetadata:
     timestamp: int  # Jenkins timestamps are in milliseconds
 
 
-@dataclass
-class JenkinsBuild:
-    """A Build's interface to JenkinsBuild"""
+class Jenkins:
+    """Interface to Jenkins"""
 
-    build: Build
-    jenkins: JenkinsConfig
+    def __init__(self, config: JenkinsConfig):
+        self.config = config
 
-    def url(self) -> URL:
+    def url(self, build_id: BuildID) -> URL:
         """Return the Jenkins url for the build"""
-        return self.jenkins.base_url / "job" / self.build.name / str(self.build.number)
+        return self.config.base_url / "job" / build_id.name / str(build_id.number)
 
-    def artifact_url(self) -> URL:
+    def artifact_url(self, build_id: BuildID) -> URL:
         """Return the artifact url for build"""
-        return self.url() / "artifact" / self.jenkins.artifact_name
+        return self.url(build_id) / "artifact" / self.config.artifact_name
 
-    def logs_url(self) -> URL:
+    def logs_url(self, build_id: BuildID) -> URL:
         """Return the url for the build's console logs"""
-        return self.url() / "consoleText"
+        return self.url(build_id) / "consoleText"
 
-    def download_artifact(self) -> Iterator[bytes]:
+    def download_artifact(self, build_id: BuildID) -> Iterator[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
-        url = self.artifact_url()
-        response = requests.get(str(url), auth=self.jenkins.auth(), stream=True)
+        url = self.artifact_url(build_id)
+        response = requests.get(str(url), auth=self.config.auth(), stream=True)
         response.raise_for_status()
 
         return response.iter_content(
-            chunk_size=self.jenkins.download_chunk_size, decode_unicode=False
+            chunk_size=self.config.download_chunk_size, decode_unicode=False
         )
 
-    def get_logs(self) -> str:
+    def get_logs(self, build_id: BuildID) -> str:
         """Get and return the build's jenkins logs"""
-        url = self.logs_url()
-        response = requests.get(str(url), auth=self.jenkins.auth())
+        url = self.logs_url(build_id)
+        response = requests.get(str(url), auth=self.config.auth())
         response.raise_for_status()
 
         return response.text
 
-    def get_metadata(self) -> JenkinsMetadata:
+    def get_metadata(self, build_id: BuildID) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
-        url = self.url() / "api" / "json"
-        response = requests.get(str(url), auth=self.jenkins.auth())
+        url = self.url(build_id) / "api" / "json"
+        response = requests.get(str(url), auth=self.config.auth())
         response.raise_for_status()
 
         return JenkinsMetadata.from_dict(  # type: ignore  # pylint: disable=no-member
@@ -110,19 +109,17 @@ class JenkinsBuild:
         )
 
     @classmethod
-    def from_settings(cls, build: Build, settings: Settings):
+    def from_settings(cls, settings: Settings):
         """Return a JenkinsBuild instance given settings"""
-        jenkins = JenkinsConfig.from_settings(settings)
-        return cls(build=build, jenkins=jenkins)
+        config = JenkinsConfig.from_settings(settings)
+        return cls(config)
 
+    def schedule_build(self, name: str) -> str:
+        """Schedule a build on Jenkins"""
+        url = self.config.base_url / "job" / name / "build"
+        response = requests.post(str(url), auth=self.config.auth())
+        response.raise_for_status()
 
-def schedule_build(name: str, settings: Settings) -> str:
-    """Schedule a build on Jenkins"""
-    jenkins_config = JenkinsConfig.from_settings(settings)
-    url = jenkins_config.base_url / "job" / name / "build"
-    response = requests.post(str(url), auth=jenkins_config.auth())
-    response.raise_for_status()
-
-    # All that Jenkins gives us is the location of the queued request.  Let's return
-    # that.
-    return response.headers["location"]
+        # All that Jenkins gives us is the location of the queued request.  Let's return
+        # that.
+        return response.headers["location"]

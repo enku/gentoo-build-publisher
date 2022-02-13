@@ -1,4 +1,4 @@
-"""Tests for the JenkinsBuild type"""
+"""Tests for the Jenkins interface"""
 # pylint: disable=missing-class-docstring,missing-function-docstring,no-self-use
 import io
 import json
@@ -7,16 +7,11 @@ from unittest import TestCase, mock
 
 from yarl import URL
 
-from gentoo_build_publisher.build import Build
-from gentoo_build_publisher.jenkins import (
-    JenkinsBuild,
-    JenkinsConfig,
-    JenkinsMetadata,
-    schedule_build,
-)
+from gentoo_build_publisher.build import Build, BuildID
+from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
 from gentoo_build_publisher.settings import Settings
 
-from . import MockJenkinsBuild, test_data
+from . import MockJenkins, test_data
 
 JENKINS_CONFIG = JenkinsConfig(
     base_url=URL("https://jenkins.invalid"),
@@ -26,19 +21,19 @@ JENKINS_CONFIG = JenkinsConfig(
 )
 
 
-class JenkinsBuildTestCase(TestCase):
-    """Tests for the JenkinsBuild api wrapper"""
+class JenkinsTestCase(TestCase):
+    """Tests for the Jenkins api wrapper"""
 
     def test_artiact_url(self):
         """.build_url() should return the url of the given build artifact"""
-        # Given the JenkinsBuild instance
-        jenkins_build = JenkinsBuild(
-            build=Build(name="babette", number=193),
-            jenkins=JENKINS_CONFIG,
-        )
+        # Given the build id
+        build_id = BuildID("babette.193")
+
+        # Given the Jenkins instance
+        jenkins = Jenkins(JENKINS_CONFIG)
 
         # When we call .build_url
-        build_url = jenkins_build.artifact_url()
+        build_url = jenkins.artifact_url(build_id)
 
         # Then we get the expected url
         self.assertEqual(
@@ -48,14 +43,14 @@ class JenkinsBuildTestCase(TestCase):
 
     def test_download_artifact(self):
         """.download_artifact should download the given build artifact"""
-        # Given the JenkinsBuild instance
-        jenkins_build = MockJenkinsBuild(
-            build=Build(name="babette", number=193),
-            jenkins=JENKINS_CONFIG,
-        )
+        # Given the build
+        build = Build(name="babette", number=193)
+
+        # Given the Jenkins instance
+        jenkins = MockJenkins(JENKINS_CONFIG)
 
         # When we call download_artifact on the build
-        stream = jenkins_build.download_artifact()
+        stream = jenkins.download_artifact(build.id)
 
         # Then it streams the build artifact's contents
         bytes_io = io.BytesIO()
@@ -64,26 +59,26 @@ class JenkinsBuildTestCase(TestCase):
 
         expected = test_data("build.tar.gz")
         self.assertEqual(bytes_io.getvalue(), expected)
-        jenkins_build.mock_get.assert_called_with(
+        jenkins.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
             auth=("jenkins", "foo"),
             stream=True,
         )
 
     def test_download_artifact_with_no_auth(self):
-        # Given the JenkinsBuild instance having no user/api_key
-        jenkins_build = MockJenkinsBuild(
-            build=Build(name="babette", number=193),
-            jenkins=JENKINS_CONFIG,
-        )
+        # Given the build
+        build = Build(name="babette", number=193)
+
+        # Given the Jenkins instance having no user/api_key
+        jenkins = MockJenkins(JENKINS_CONFIG)
 
         # When we call download_artifact on the build
-        jenkins_build.download_artifact()
+        jenkins.download_artifact(build.id)
 
         # Then it requests the artifact with no auth
-        jenkins_build.mock_get.assert_called_with(
+        jenkins.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            auth=jenkins_build.jenkins.auth(),
+            auth=jenkins.config.auth(),
             stream=True,
         )
 
@@ -99,31 +94,26 @@ class JenkinsBuildTestCase(TestCase):
             STORAGE_PATH="/dev/null",
         )
 
-        build = Build(name="babette", number=193)
+        # When we instantiate Jenkins.from_settings
+        jenkins = Jenkins.from_settings(settings)
 
-        # When we instantiate JenkinsBuild.from_settings
-        jenkins_build = JenkinsBuild.from_settings(build, settings)
-
-        # Then we get a JenkinsBuild instance with attributes from my_settings
-        self.assertIsInstance(jenkins_build, JenkinsBuild)
+        # Then we get a Jenkins instance with attributes from my_settings
+        self.assertIsInstance(jenkins, Jenkins)
         self.assertEqual(
-            jenkins_build.jenkins.base_url, URL("https://foo.bar.invalid/jenkins")
+            jenkins.config.base_url, URL("https://foo.bar.invalid/jenkins")
         )
-        self.assertEqual(jenkins_build.jenkins.api_key, "super secret key")
-        self.assertEqual(jenkins_build.jenkins.user, "admin")
-        self.assertEqual(jenkins_build.jenkins.artifact_name, "stuff.tar")
-        self.assertEqual(jenkins_build.build, build)
+        self.assertEqual(jenkins.config.api_key, "super secret key")
+        self.assertEqual(jenkins.config.user, "admin")
+        self.assertEqual(jenkins.config.artifact_name, "stuff.tar")
 
     @mock.patch("gentoo_build_publisher.jenkins.requests.get")
     def test_get_metadata(self, mock_requests_get):
         mock_response = test_data("jenkins_build.json")
         mock_requests_get.return_value.json.return_value = json.loads(mock_response)
-        jenkins_build = JenkinsBuild(
-            build=Build(name="babette", number=291),
-            jenkins=JENKINS_CONFIG,
-        )
+        build = Build(name="babette", number=291)
+        jenkins = Jenkins(JENKINS_CONFIG)
 
-        metadata = jenkins_build.get_metadata()
+        metadata = jenkins.get_metadata(build.id)
 
         self.assertEqual(
             metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)
@@ -153,7 +143,8 @@ class ScheduleBuildTestCase(TestCase):
             mock_response.headers = {
                 "location": "https://jenkins.invalid/queue/item/31528/"
             }
-            location = schedule_build(name, settings)
+            jenkins = Jenkins.from_settings(settings)
+            location = jenkins.schedule_build(name)
 
         self.assertEqual(location, "https://jenkins.invalid/queue/item/31528/")
         mock_post.assert_called_once_with(
@@ -179,4 +170,5 @@ class ScheduleBuildTestCase(TestCase):
             mock_response.raise_for_status.side_effect = MyException
 
             with self.assertRaises(MyException):
-                schedule_build(name, settings)
+                jenkins = Jenkins.from_settings(settings)
+                jenkins.schedule_build(name)

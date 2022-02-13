@@ -9,7 +9,8 @@ from unittest import mock
 
 import django.test
 
-from gentoo_build_publisher.jenkins import JenkinsBuild, JenkinsMetadata
+from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
@@ -62,28 +63,28 @@ def test_data(filename):
         return file_obj.read()
 
 
-class MockJenkinsBuild(JenkinsBuild):
-    """JenkinsBuild with requests mocked out"""
+class MockJenkins(Jenkins):
+    """Jenkins with requests mocked out"""
 
     mock_get = None
     get_build_logs_mock_get = None
 
-    def download_artifact(self):
+    def download_artifact(self, build_id: BuildID):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: iter([test_data("build.tar.gz")])
             )
             self.mock_get = mock_get
-            return super().download_artifact()
+            return super().download_artifact(build_id)
 
-    def get_logs(self):
+    def get_logs(self, build_id: BuildID):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.text = "foo\n"
             self.get_build_logs_mock_get = mock_get
 
-            return super().get_logs()
+            return super().get_logs(build_id)
 
-    def get_metadata(self):
+    def get_metadata(self, build_id: BuildID) -> JenkinsMetadata:
         return JenkinsMetadata(duration=124, timestamp=1620525666000)
 
 

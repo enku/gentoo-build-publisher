@@ -17,7 +17,7 @@ from gentoo_build_publisher.build import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage, quick_check
 
-from . import PACKAGE_INDEX, MockJenkinsBuild, TestCase
+from . import PACKAGE_INDEX, MockJenkins, TestCase
 from .factories import BuildManFactory
 
 TEST_SETTINGS = Settings(
@@ -66,8 +66,8 @@ class StorageDownloadArtifactTestCase(TestCase):
         """Should extract artifacts and move to repos/ and binpkgs/"""
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         self.assertIs(storage.get_path(build.id, Content.REPOS).is_dir(), True)
         self.assertIs(storage.get_path(build.id, Content.BINPKGS).is_dir(), True)
@@ -76,8 +76,8 @@ class StorageDownloadArtifactTestCase(TestCase):
         """Should extract artifacts and move to etc-portage/"""
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         self.assertIs(storage.get_path(build.id, Content.ETC_PORTAGE).is_dir(), True)
 
@@ -85,8 +85,8 @@ class StorageDownloadArtifactTestCase(TestCase):
         """Should extract artifacts and move to var-lib-portage/"""
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         self.assertIs(
             storage.get_path(build.id, Content.VAR_LIB_PORTAGE).is_dir(), True
@@ -104,7 +104,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
         # And we extract the build
         build.storage.extract_artifact(
-            build.build.id, build.jenkins_build.download_artifact()
+            build.build.id, build.jenkins.download_artifact(build.build.id)
         )
 
         # Then the orpaned path is removed
@@ -155,10 +155,10 @@ class StoragePublishedTestCase(TestCase):
         storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # When we publish the build
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
         storage.publish(build.id)
 
         # And call published(build)
@@ -189,15 +189,15 @@ class StoragePublishedTestCase(TestCase):
         storage = Storage(self.tmpdir)
 
         # Given the jenkins instance
-        jenkins_build = MockJenkinsBuild.from_settings(build1, TEST_SETTINGS)
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
         # When we publish the first build
-        storage.extract_artifact(build1.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build1.id, jenkins.download_artifact(build1.id))
         storage.publish(build1.id)
 
         # Given the second build published
         build2 = Build(name="babette", number=193)
-        storage.extract_artifact(build2.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build2.id, jenkins.download_artifact(build2.id))
         storage.publish(build2.id)
 
         # Then published returns True on the second build
@@ -213,8 +213,8 @@ class StorageDeleteTestCase(TestCase):
     def test_deletes_expected_directories(self):
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         storage.delete(build.id)
 
@@ -235,9 +235,9 @@ class StorageExtractArtifactTestCase(TestCase):
     def test_does_not_extract_already_pulled_build(self):
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
         assert storage.pulled(build.id)
 
         # extract won't be able to extract this
@@ -251,23 +251,25 @@ class StorageExtractArtifactTestCase(TestCase):
     def test_extracts_bytesteam_and_content(self):
         build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(build, TEST_SETTINGS)
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
-        storage.extract_artifact(build.id, jenkins_build.download_artifact())
+        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
 
         self.assertIs(storage.pulled(build.id), True)
 
     def test_uses_hard_link_if_previous_build_exists(self):
         previous_build = Build(name="babette", number=19)
         storage = Storage(self.tmpdir)
-        jenkins_build = MockJenkinsBuild.from_settings(previous_build, TEST_SETTINGS)
-        storage.extract_artifact(previous_build.id, jenkins_build.download_artifact())
+        jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        storage.extract_artifact(
+            previous_build.id, jenkins.download_artifact(previous_build.id)
+        )
 
         current_build = Build(name="babette", number=20)
 
         storage.extract_artifact(
             current_build.id,
-            jenkins_build.download_artifact(),
+            jenkins.download_artifact(current_build.id),
             previous_build=previous_build.id,
         )
 
