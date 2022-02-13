@@ -7,7 +7,7 @@ from unittest import TestCase, mock
 
 from yarl import URL
 
-from gentoo_build_publisher.build import Build, BuildID
+from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
 from gentoo_build_publisher.settings import Settings
 
@@ -24,7 +24,7 @@ JENKINS_CONFIG = JenkinsConfig(
 class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
 
-    def test_artiact_url(self):
+    def test_artifact_url(self):
         """.build_url() should return the url of the given build artifact"""
         # Given the build id
         build_id = BuildID("babette.193")
@@ -43,14 +43,14 @@ class JenkinsTestCase(TestCase):
 
     def test_download_artifact(self):
         """.download_artifact should download the given build artifact"""
-        # Given the build
-        build = Build(name="babette", number=193)
+        # Given the build id
+        build_id = BuildID("babette.193")
 
         # Given the Jenkins instance
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         # When we call download_artifact on the build
-        stream = jenkins.download_artifact(build.id)
+        stream = jenkins.download_artifact(build_id)
 
         # Then it streams the build artifact's contents
         bytes_io = io.BytesIO()
@@ -66,14 +66,14 @@ class JenkinsTestCase(TestCase):
         )
 
     def test_download_artifact_with_no_auth(self):
-        # Given the build
-        build = Build(name="babette", number=193)
+        # Given the build id
+        build_id = BuildID("babette.193")
 
         # Given the Jenkins instance having no user/api_key
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         # When we call download_artifact on the build
-        jenkins.download_artifact(build.id)
+        jenkins.download_artifact(build_id)
 
         # Then it requests the artifact with no auth
         jenkins.mock_get.assert_called_with(
@@ -110,10 +110,10 @@ class JenkinsTestCase(TestCase):
     def test_get_metadata(self, mock_requests_get):
         mock_response = test_data("jenkins_build.json")
         mock_requests_get.return_value.json.return_value = json.loads(mock_response)
-        build = Build(name="babette", number=291)
+        build_id = BuildID("babette.291")
         jenkins = Jenkins(JENKINS_CONFIG)
 
-        metadata = jenkins.get_metadata(build.id)
+        metadata = jenkins.get_metadata(build_id)
 
         self.assertEqual(
             metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)

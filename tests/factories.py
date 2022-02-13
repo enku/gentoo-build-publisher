@@ -1,8 +1,10 @@
 """Test factories for GBP"""
+# pylint: disable=missing-docstring,too-few-public-methods
 import factory
 from django.utils import timezone
 
-from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.db import BuildRecord
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.settings import Settings
@@ -20,15 +22,36 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
     name = "babette"
     number = factory.Sequence(lambda n: n)
     submitted = factory.LazyFunction(timezone.now)
+    completed = None
 
 
-class BuildDBFactory(factory.Factory):
+class BuildIDFactory(factory.Factory):
+    """BuildID factory"""
+
+    class Meta:
+        model = BuildID
+        inline_args = ("build_id",)
+
+    class Params:
+        name = "babette"
+
+    @factory.lazy_attribute_sequence
+    def build_id(self, seq):
+        return f"{self.name}.{seq}"  # pylint: disable=no-member
+
+
+class BuildRecordFactory(factory.Factory):
     """BuildDB Factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
-        model = BuildDB
+        model = BuildRecord
 
-    build_model = factory.SubFactory(BuildModelFactory)
+    build_id = factory.SubFactory(BuildIDFactory)
+    submitted = None
+    completed = None
+    note = None
+    logs = None
+    keep = False
 
 
 class BuildManFactory(factory.Factory):
@@ -38,10 +61,21 @@ class BuildManFactory(factory.Factory):
         model = BuildMan
         rename = {"build_attr": "build"}
 
-    build_attr = factory.SubFactory(BuildDBFactory)
+    build_attr = factory.SubFactory(BuildRecordFactory)
     jenkins = factory.LazyAttribute(
         lambda _: MockJenkins.from_settings(Settings.from_environ())
     )
     storage = factory.LazyAttribute(
         lambda _: Storage.from_settings(Settings.from_environ())
     )
+
+    @classmethod
+    def create(cls, *args, **kwargs) -> BuildMan:
+        build_man = super().create(*args, **kwargs)
+
+        if not build_man.record:
+            build_man.record = BuildRecordFactory.create(build_id=build_man.id)
+
+        build_man.save_record()
+
+        return build_man

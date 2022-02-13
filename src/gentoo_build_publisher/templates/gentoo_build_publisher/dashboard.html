@@ -63,10 +63,10 @@
             {% if not build.published and build in built_recently %}
             <li class="list-group-item d-flex justify-content-between lh-condensed">
               <div>
-                <h6 class="my-0">{{ build.name }}</h6>
-                <small class="text-muted">{{ build.number }}</small>
+                <h6 class="my-0">{{ build.id.name }}</h6>
+                <small class="text-muted">{{ build.id.number }}</small>
               </div>
-              {% with build.name|addstr:"."|addstr:build.number as key %}
+              {% with build.id.name|addstr:"."|addstr:build.id.number as key %}
               {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
               {% endwith %}
             </li>
@@ -86,10 +86,10 @@
             {% if build.published %}
             <li class="list-group-item d-flex justify-content-between lh-condensed">
               <div>
-                <h6 class="my-0">{{ build.name }}</h6>
-                <small class="text-muted">{{ build.number }}</small>
+                <h6 class="my-0">{{ build.id.name }}</h6>
+                <small class="text-muted">{{ build.id.number }}</small>
               </div>
-              {% with build.name|addstr:"."|addstr:build.number as key %}
+              {% with build.id.name|addstr:"."|addstr:build.id.number as key %}
               {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
               {% endwith %}
             </li>
@@ -104,8 +104,8 @@
             {% for build in builds_to_do %}
             <li class="list-group-item d-flex justify-content-between lh-condensed">
               <div>
-                <h6 class="my-0">{{ build.name }}</h6>
-                <small class="text-muted">{{ build.number }}</small>
+                <h6 class="my-0">{{ build.id.name }}</h6>
+                <small class="text-muted">{{ build.id.number }}</small>
               </div>
             </li>
             {% empty %}

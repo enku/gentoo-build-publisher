@@ -3,7 +3,8 @@
 import datetime
 from unittest import mock
 
-from gentoo_build_publisher.build import Build, Content
+from gentoo_build_publisher.build import BuildID, Content
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.models import BuildModel, KeptBuild
 from gentoo_build_publisher.settings import Settings
@@ -22,7 +23,7 @@ class BuildManTestCase(TestCase):
 
         error = context.exception
 
-        expected = ("build argument must be one of [Build, BuildDB]. Got int.",)
+        expected = ("build argument must be one of [BuildID, BuildRecord]. Got int.",)
         self.assertEqual(error.args, expected)
 
     def test_publish(self):
@@ -31,19 +32,19 @@ class BuildManTestCase(TestCase):
 
         buildman.publish()
 
-        self.assertIs(buildman.storage.published(buildman.build.id), True)
+        self.assertIs(buildman.storage.published(buildman.id), True)
 
     def test_pull_without_db(self):
         """pull creates db instance and pulls from jenkins"""
-        build = Build(name="babette", number=193)
+        build_id = BuildID("babette.193")
         settings = Settings.from_environ()
         jenkins = MockJenkins.from_settings(settings)
-        buildman = BuildMan(build, jenkins=jenkins)
+        buildman = BuildMan(build_id, jenkins=jenkins)
 
         buildman.pull()
 
-        self.assertIs(buildman.storage.pulled(build.id), True)
-        self.assertIsNot(buildman.db, None)
+        self.assertIs(buildman.storage.pulled(buildman.id), True)
+        self.assertIsNot(buildman.record, None)
 
     def test_pull_stores_build_logs(self):
         """Should store the logs of the build"""
@@ -56,7 +57,7 @@ class BuildManTestCase(TestCase):
         call_args = buildman.jenkins.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
-        self.assertEqual(buildman.db.logs, "foo\n")
+        self.assertEqual(buildman.record.logs, "foo\n")
 
     def test_pull_updates_build_models_completed_field(self):
         """Should update the completed field with the current timestamp"""
@@ -67,8 +68,8 @@ class BuildManTestCase(TestCase):
             mock_now.return_value = now
             buildman.pull()
 
-        buildman.db.model.refresh_from_db()
-        self.assertEqual(buildman.db.model.completed, now.replace(tzinfo=utc))
+        buildman = BuildMan(buildman.id)
+        self.assertEqual(buildman.record.completed, now.replace(tzinfo=utc))
 
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
@@ -79,11 +80,11 @@ class BuildManTestCase(TestCase):
             number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
         )
 
-        build = Build(name=build_model.name, number=build_model.number)
+        build_id = BuildID.create(build_model.name, build_model.number)
         settings = Settings.from_environ()
         jenkins = MockJenkins.from_settings(settings)
         storage = Storage(self.tmpdir)
-        storage.extract_artifact(build.id, jenkins.download_artifact(build.id))
+        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
 
         BuildMan.purge(build_model.name)
 
@@ -92,7 +93,7 @@ class BuildManTestCase(TestCase):
         self.assertIs(query.exists(), False)
 
         for item in Content:
-            path = storage.get_path(build.id, item)
+            path = storage.get_path(build_id, item)
             self.assertIs(path.exists(), False, path)
 
     def test_purge_does_not_delete_old_kept_build(self):
@@ -113,7 +114,7 @@ class BuildManTestCase(TestCase):
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""
-        buildman = BuildManFactory.build(
+        buildman = BuildManFactory.create(
             build=BuildModelFactory.create(
                 number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
             )
@@ -123,9 +124,11 @@ class BuildManTestCase(TestCase):
         )
 
         buildman.publish()
-        BuildMan.purge(buildman.name)
+        BuildMan.purge(buildman.id.name)
 
-        query = BuildModel.objects.filter(id=buildman.id)
+        query = BuildModel.objects.filter(
+            name=buildman.id.name, number=buildman.id.number
+        )
 
         self.assertIs(query.exists(), True)
 
@@ -151,8 +154,8 @@ class BuildManTestCase(TestCase):
         MockJenkins.from_settings(settings)
 
         buildman.update_build_metadata()
-        self.assertEqual(buildman.db.logs, "foo\n")
-        self.assertIsNot(buildman.db.completed, None)
+        self.assertEqual(buildman.record.logs, "foo\n")
+        self.assertIsNot(buildman.record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
         left = BuildManFactory.create()
@@ -172,12 +175,12 @@ class MachineInfoTestCase(TestCase):
 
     def test(self):
         # Given the "foo" builds, one of which is published
-        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        first_build = BuildManFactory.create(build_attr__build_id__name="foo")
         first_build.publish()
-        latest_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        latest_build = BuildManFactory.create(build_attr__build_id__name="foo")
 
         # Given the "other" builds
-        BuildManFactory.create_batch(3, build_attr__build_model__name="bar")
+        BuildManFactory.create_batch(3)
 
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
@@ -185,8 +188,8 @@ class MachineInfoTestCase(TestCase):
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
-        self.assertEqual(machine_info.latest_build.number, latest_build.number)
-        self.assertEqual(machine_info.published.number, first_build.number)
+        self.assertEqual(machine_info.latest_build, latest_build)
+        self.assertEqual(machine_info.published, first_build)
 
     def test_empty_db(self):
         # When we get MachineInfo for foo
@@ -200,9 +203,15 @@ class MachineInfoTestCase(TestCase):
 
     def test_builds_method(self):
         # Given the "foo" builds
-        first_build = BuildManFactory.create(build_attr__build_model__name="foo")
-        second_build = BuildManFactory.create(build_attr__build_model__name="foo")
-        third_build = BuildManFactory.create(build_attr__build_model__name="foo")
+        first_build = BuildManFactory.create(
+            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
+        )
+        second_build = BuildManFactory.create(
+            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
+        )
+        third_build = BuildManFactory.create(
+            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
+        )
 
         # Given the MachineInfo for foo
         machine_info = MachineInfo("foo")

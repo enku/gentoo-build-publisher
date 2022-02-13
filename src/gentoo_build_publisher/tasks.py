@@ -5,7 +5,8 @@ import requests
 import requests.exceptions
 from celery import shared_task
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan
 from gentoo_build_publisher.settings import Settings
 
@@ -25,27 +26,27 @@ def publish_build(name: str, number: int):
     try:
         pull_build.apply((name, number), throw=True)
     except PUBLISH_FATAL_EXCEPTIONS:
-        logger.error("Build %s/%s failed to pull. Not publishing", name, number)
+        logger.error("Build %s failed to pull. Not publishing", f"{name}.{number}")
         return False
 
-    buildman = BuildMan(Build(name=name, number=number))
+    buildman = BuildMan(BuildID.create(name, number))
     buildman.publish()
 
     return True
 
 
 @shared_task(bind=True)
-def pull_build(self, name: str, number: int):
+def pull_build(self, name: str, number: int) -> None:
     """Pull the build into storage"""
-    build = Build(name=name, number=number)
-    buildman = BuildMan(build)
+    build_id = BuildID.create(name, number)
+    buildman = BuildMan(build_id)
 
     try:
         buildman.pull()
     except PULL_RETRYABLE_EXCEPTIONS as error:
-        logger.exception("Failed to pull build %s", buildman.build)
-        if buildman.db:
-            buildman.db.delete()
+        logger.exception("Failed to pull build %s", buildman.id)
+        if buildman.record:
+            BuildDB.delete(buildman.id)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
@@ -58,7 +59,7 @@ def pull_build(self, name: str, number: int):
         return
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(buildman.name)
+        purge_build.delay(name)
 
 
 @shared_task
@@ -70,9 +71,8 @@ def purge_build(build_name: str):
 @shared_task
 def delete_build(name: str, number: int):
     """Delete the given build from the db"""
-    build = Build(name=name, number=number)
-    logger.info("Deleting build: %s", build)
+    buildman = BuildMan(BuildID.create(name, number))
+    logger.info("Deleting build: %s", buildman.id)
 
-    buildman = BuildMan(build)
     buildman.delete()
-    logger.info("Deleted build: %s", build)
+    logger.info("Deleted build: %s", buildman.id)

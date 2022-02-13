@@ -5,11 +5,11 @@ from datetime import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 
-from .factories import BuildDBFactory, BuildModelFactory
+from .factories import BuildModelFactory, BuildRecordFactory
 
 
 # pylint: disable=too-many-public-methods
@@ -17,272 +17,225 @@ class BuildDBTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build_db = BuildDBFactory.create()
+        self.record = BuildRecordFactory()
 
     def test_id_property(self):
-        self.assertEqual(self.build_db.id, self.build_db.model.id)
+        self.assertTrue(isinstance(self.record.id, BuildID))
 
-    def test_name_getter(self):
-        self.assertEqual(self.build_db.name, self.build_db.model.name)
+        # pylint: disable=protected-access
+        self.assertEqual(self.record.id, self.record._build_id)
 
-    def test_name_setter(self):
-        self.build_db.name = "foo"
-        self.build_db.save()
+    def test_submitted_set(self):
+        self.record.submitted = timezone.make_aware(datetime(1970, 1, 1))
+        model = BuildDB.save(self.record)
 
-        build_model = BuildModel.objects.get(id=self.build_db.id)
+        self.assertEqual(model.submitted, timezone.make_aware(datetime(1970, 1, 1)))
 
-        self.assertEqual(build_model.name, "foo")
-
-    def test_number_getter(self):
-        self.assertEqual(self.build_db.number, self.build_db.model.number)
-
-    def test_number_setter(self):
-        self.build_db.number = 100000
-        self.build_db.save()
-
-        build_model = BuildModel.objects.get(id=self.build_db.id)
-
-        self.assertEqual(build_model.number, 100000)
-
-    def test_submitted_setter(self):
-        self.build_db.submitted = timezone.make_aware(datetime(1970, 1, 1))
-        self.build_db.save()
-
-        build_model = BuildModel.objects.get(id=self.build_db.id)
-
-        self.assertEqual(
-            build_model.submitted, timezone.make_aware(datetime(1970, 1, 1))
-        )
-
-    def test_completed_getter(self):
-        build_model = BuildModelFactory.create(
+    def test_completed_get(self):
+        model = BuildModelFactory.create(
             completed=timezone.make_aware(datetime(1970, 1, 1))
         )
 
-        build_db = BuildDB(build_model=build_model)
+        record = BuildDB.model_to_record(model)
 
-        self.assertEqual(build_db.completed, timezone.make_aware(datetime(1970, 1, 1)))
+        self.assertEqual(record.completed, timezone.make_aware(datetime(1970, 1, 1)))
 
-    def test_completed_setter(self):
-        self.build_db.completed = timezone.make_aware(datetime(1970, 1, 1))
-        self.build_db.save()
+    def test_completed_set(self):
+        self.record.completed = timezone.make_aware(datetime(1970, 1, 1))
+        BuildDB.save(self.record)
 
-        build_model = BuildModel.objects.get(id=self.build_db.id)
-
-        self.assertEqual(
-            build_model.completed, timezone.make_aware(datetime(1970, 1, 1))
+        model = BuildModel.objects.get(
+            name=self.record.id.name, number=self.record.id.number
         )
 
-    def test_refesh(self):
-        build_model = self.build_db.model
-
-        BuildNote.objects.create(build_model=build_model, note="This is a test")
-
-        self.build_db.refresh()
-
-        self.assertEqual(self.build_db.note, "This is a test")
+        self.assertEqual(model.completed, timezone.make_aware(datetime(1970, 1, 1)))
 
     def test_save_note(self):
-        build_db = self.build_db
-        build_db.note = "This is a test"
-        build_db.save()
+        record = self.record
+        record.note = "This is a test"
+        model = BuildDB.save(record)
 
-        build_note = BuildNote.objects.get(build_model=build_db.model)
+        build_note = BuildNote.objects.get(build_model=model)
 
         self.assertEqual(build_note.note, "This is a test")
 
     def test_delete_build_note(self):
-        build_model = self.build_db.model
-        BuildNote.objects.create(build_model=build_model, note="This is a test")
+        model = BuildDB.save(self.record)
+        BuildNote.objects.create(build_model=model, note="This is a test")
 
-        self.build_db.note = None
-        self.build_db.save()
+        self.record.note = None
+        BuildDB.save(self.record)
 
         with self.assertRaises(BuildNote.DoesNotExist):
-            BuildNote.objects.get(build_model=build_model)
-
-    def test_delete_should_not_delete_when_model_has_no_pk(
-        self,
-    ):  # pylint: disable=no-self-use
-        build_model = BuildModel(name="babette", number=286)
-        build_db = BuildDB(build_model)
-
-        build_db.delete()
+            BuildNote.objects.get(build_model=model)
 
     def test_save_keep(self):
-        build_db = self.build_db
-        build_db.keep = True
-        build_db.save()
+        record = self.record
+        record.keep = True
+        model = BuildDB.save(record)
 
-        KeptBuild.objects.get(build_model=build_db.model)
+        KeptBuild.objects.get(build_model=model)
 
     def test_delete_build_keep(self):
-        build_model = self.build_db.model
-        KeptBuild.objects.create(build_model=build_model)
+        model = BuildDB.save(self.record)
+        KeptBuild.objects.create(build_model=model)
 
-        self.build_db.keep = False
-        self.build_db.save()
+        self.record.keep = False
+        BuildDB.save(self.record)
 
         with self.assertRaises(KeptBuild.DoesNotExist):
-            KeptBuild.objects.get(build_model=build_model)
+            KeptBuild.objects.get(build_model=model)
 
     def test_save_logs(self):
-        build_db = self.build_db
-        build_db.logs = "This is a test"
-        build_db.save()
+        self.record.logs = "This is a test"
+        model = BuildDB.save(self.record)
 
-        build_logs = BuildLog.objects.get(build_model=build_db.model)
+        build_logs = BuildLog.objects.get(build_model=model)
 
         self.assertEqual(build_logs.logs, "This is a test")
 
     def test_delete_build_logs(self):
-        build_model = self.build_db.model
-        BuildLog.objects.create(build_model=build_model, logs="This is a test")
+        model = BuildDB.save(self.record)
+        BuildLog.objects.create(build_model=model, logs="This is a test")
 
-        self.build_db.logs = None
-        self.build_db.save()
+        self.record.logs = None
+        BuildDB.save(self.record)
 
         with self.assertRaises(BuildLog.DoesNotExist):
-            BuildLog.objects.get(build_model=build_model)
+            BuildLog.objects.get(build_model=model)
 
-    def test_create_not_exists(self):
-        build_db = BuildDB.create(Build(name="foo", number=555))
+    def test_save_not_exists(self):
+        record = BuildRecordFactory(build_id=BuildID("foo.555"))
 
-        build_model = BuildModel.objects.get(name="foo", number=555)
+        model = BuildDB.save(record)
 
-        self.assertEqual(build_db.model, build_model)
+        self.assertEqual(BuildModel.objects.get(name="foo", number=555), model)
 
-    def test_create_exists(self):
-        build_model = BuildModel.objects.create(
+    def test_save_exists(self):
+        model = BuildModelFactory.create(
             name="foo", number=555, submitted=timezone.make_aware(datetime(1970, 1, 1))
         )
 
-        build_db = BuildDB.create(Build(name="foo", number=555))
+        record = BuildRecordFactory(build_id=BuildID("foo.555"))
+        model2 = BuildDB.save(record)
 
-        self.assertEqual(build_db.model, build_model)
+        self.assertEqual(model, model2)
 
     def test_get(self):
-        build_model = BuildModel.objects.create(
+        BuildModelFactory.create(
             name="foo", number=555, submitted=timezone.make_aware(datetime(1970, 1, 1))
         )
 
-        build_db = BuildDB.get(Build(name="foo", number=555))
+        build_id = BuildID("foo.555")
+        record = BuildDB.get(build_id)
 
-        self.assertEqual(build_db.model, build_model)
+        self.assertEqual(record.id, build_id)
+        self.assertEqual(record.submitted, timezone.make_aware(datetime(1970, 1, 1)))
 
     def test_get_does_not_exist(self):
         with self.assertRaises(BuildDB.NotFound):
-            BuildDB.get(Build(name="bogus", number=555))
+            BuildDB.get(BuildID("bogus.955"))
 
-    def test_get_or_create_exists(self):
-        build_db = BuildDBFactory.create()
-        build = Build(build_db.name, build_db.number)
+    def test_get_records(self):
+        BuildDB.save(BuildRecordFactory(build_id=BuildID("foo.555")))
+        BuildDB.save(BuildRecordFactory(build_id=BuildID("foo.556")))
+        BuildDB.save(BuildRecordFactory(build_id=BuildID("bar.555")))
 
-        result = BuildDB.get_or_create(build)
+        records = [*BuildDB.get_records(number=555)]
 
-        self.assertEqual(result, build_db)
-
-    def test_get_or_create_does_not_exist(self):
-        build = Build(name="foo", number=555)
-
-        with self.assertRaises(BuildDB.NotFound):
-            BuildDB.get(build)
-
-        result = BuildDB.get_or_create(build)
-
-        self.assertIsInstance(result, BuildDB)
-        self.assertEqual(result, BuildDB.get(build))
-
-    def test_builds(self):
-        BuildDB.create(Build(name="foo", number=555))
-        BuildDB.create(Build(name="foo", number=556))
-        BuildDB.create(Build(name="bar", number=555))
-
-        builds = list(BuildDB.builds(number=555))
-
-        self.assertEqual([i.name for i in builds], ["bar", "foo"])
+        self.assertEqual([i.id.name for i in records], ["bar", "foo"])
 
     def test_previous_build_should_return_none_when_there_are_none(self):
-        build_db = self.build_db
+        BuildDB.save(self.record)
 
-        previous = build_db.previous_build()
+        previous = BuildDB.previous_build(self.record.id)
 
         self.assertIs(previous, None)
 
     def test_previous_build_when_not_completed_should_return_none(self):
-        previous_build = self.build_db
-        build_db = BuildDBFactory()
+        previous_build = self.record
+        BuildDB.save(previous_build)
+        record = BuildRecordFactory()
+        BuildDB.save(record)
 
-        assert previous_build.name == build_db.name
+        assert previous_build.id.name == record.id.name
 
-        self.assertIs(build_db.previous_build(), None)
+        self.assertIs(BuildDB.previous_build(record.id), None)
 
     def test_previous_build_when_not_completed_and_completed_arg_is_false(self):
-        previous_build = self.build_db
-        build_db = BuildDBFactory()
+        previous_build = self.record
+        BuildDB.save(previous_build)
+        record = BuildRecordFactory()
+        BuildDB.save(record)
 
-        assert previous_build.name == build_db.name
+        assert previous_build.id.name == record.id.name
 
-        self.assertEqual(build_db.previous_build(completed=False), previous_build)
+        self.assertEqual(
+            BuildDB.previous_build(record.id, completed=False), previous_build
+        )
 
     def test_previous_build_when_completed(self):
-        previous_build = self.build_db
-        previous_build.model.completed = timezone.now()
-        previous_build.model.save()
+        previous_build = self.record
+        previous_build.completed = timezone.now()
+        BuildDB.save(previous_build)
 
-        build_db = BuildDBFactory()
+        current_build = BuildRecordFactory()
+        BuildDB.save(current_build)
 
-        assert previous_build.name == build_db.name
+        assert previous_build.id.name == current_build.id.name
 
-        self.assertEqual(build_db.previous_build(), previous_build)
+        self.assertEqual(BuildDB.previous_build(current_build.id), previous_build)
 
     def test_next_build_should_return_none_when_there_are_none(self):
-        build_db = self.build_db
-
-        next_build = build_db.next_build()
+        build_id = BuildID("bogus.1")
+        next_build = BuildDB.next_build(build_id)
 
         self.assertIs(next_build, None)
 
     def test_next_build_when_not_completed_should_return_none(self):
-        next_build = self.build_db
-        build_db = BuildDBFactory()
+        BuildDB.save(self.record)
+        next_build = BuildRecordFactory()
+        BuildDB.save(next_build)
 
-        assert next_build.name == build_db.name
+        assert next_build.id.name == self.record.id.name
 
-        self.assertIs(build_db.next_build(), None)
+        self.assertIs(BuildDB.next_build(self.record.id), None)
 
     def test_next_build_when_not_completed_and_completed_arg_is_false(self):
-        build_db = self.build_db
-        next_build = BuildDBFactory()
+        BuildDB.save(self.record)
+        next_build = BuildRecordFactory()
+        BuildDB.save(next_build)
 
-        assert next_build.name == build_db.name
+        assert next_build.id.name == self.record.id.name
 
-        self.assertEqual(build_db.next_build(completed=False), next_build)
+        self.assertEqual(
+            BuildDB.next_build(self.record.id, completed=False), next_build
+        )
 
     def test_next_build_when_completed(self):
-        build_db = self.build_db
-        next_build = BuildDBFactory()
-        next_build.model.completed = timezone.now()
-        next_build.model.save()
+        BuildDB.save(self.record)
+        next_build = BuildRecordFactory()
+        next_build.completed = timezone.now()
+        BuildDB.save(next_build)
 
-        assert next_build.name == build_db.name
+        assert next_build.id.name == self.record.id.name
 
-        self.assertEqual(build_db.next_build(), next_build)
+        self.assertEqual(BuildDB.next_build(self.record.id), next_build)
 
     def test_list_machines(self):
-        BuildDBFactory.create(build_model__name="lighthouse")
-        BuildDBFactory.create(build_model__name="babette")
-        BuildDBFactory.create(build_model__name="babette")
+        BuildModelFactory.create(name="lighthouse")
+        BuildModelFactory.create(name="babette")
+        BuildModelFactory.create(name="babette")
 
         machines = BuildDB.list_machines()
 
         self.assertEqual(machines, ["babette", "lighthouse"])
 
     def test_count_name(self):
-        BuildDBFactory.create(build_model__name="lighthouse")
-        BuildDBFactory.create(build_model__name="babette")
-        BuildDBFactory.create(build_model__name="babette")
+        BuildModelFactory.create(name="lighthouse")
+        BuildModelFactory.create(name="babette")
+        BuildModelFactory.create(name="babette")
 
-        self.assertEqual(BuildDB.count(), 4)
+        self.assertEqual(BuildDB.count(), 3)
         self.assertEqual(BuildDB.count("lighthouse"), 1)
         self.assertEqual(BuildDB.count("bogus"), 0)

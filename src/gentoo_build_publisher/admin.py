@@ -63,7 +63,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     def published(self, obj):
         """Return the admin published field"""
-        return BuildMan(BuildDB(obj)).published()
+        return BuildMan(BuildDB.model_to_record(obj)).published()
 
     published.boolean = True
 
@@ -87,7 +87,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "_publish" in request.POST:
-            BuildMan(BuildDB(obj)).publish()
+            BuildMan(BuildDB.model_to_record(obj)).publish()
 
         if "_keep" in request.POST:
             try:
@@ -105,7 +105,9 @@ class BuildModelAdmin(admin.ModelAdmin):
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not (KeptBuild.keep(obj) or BuildMan(BuildDB(obj)).published())
+        return not (
+            KeptBuild.keep(obj) or BuildMan(BuildDB.model_to_record(obj)).published()
+        )
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}

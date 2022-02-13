@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, Iterator, Optional, Type, TypeVar
+from dataclasses import InitVar, dataclass
+from typing import Any, Iterator, TypeVar
 
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Build
+from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 
 T = TypeVar("T", bound="BuildDB")  # pylint: disable=invalid-name
@@ -27,139 +28,116 @@ ATTR_TO_1TO1 = {
 }
 
 
+@dataclass
+class BuildRecord:
+    """A Build record from the database"""
+
+    build_id: InitVar[BuildID]
+    note: str | None
+    logs: str | None
+    keep: bool
+    submitted: dt.datetime
+    completed: dt.datetime | None
+
+    def __post_init__(self, build_id: BuildID):
+        self._build_id = build_id
+
+    @property
+    def id(self) -> BuildID:  # pylint: disable=invalid-name
+        """Return the BuildID associated with this record"""
+        return self._build_id
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__qualname__}(build_id={self.id!r})"
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+
 class BuildDB:
     """Abstraction of the Django ORM"""
 
     class NotFound(LookupError):
         """Not found exception for the .get() method"""
 
-    def __init__(self, build_model: BuildModel):
-        self.model = build_model
-
-        try:
-            self.note: Optional[str] = build_model.buildnote.note
-        except BuildNote.DoesNotExist:
-            self.note = None
-
-        try:
-            self.logs: Optional[str] = build_model.buildlog.logs
-        except BuildLog.DoesNotExist:
-            self.logs = None
-
-        try:
-            build_model.keptbuild
-        except KeptBuild.DoesNotExist:
-            self.keep = False
-        else:
-            self.keep = True
-
-    @property
-    def id(self) -> int:  # pylint: disable=invalid-name
-        """Return the database id for this build"""
-        return self.model.id
-
-    @property
-    def name(self) -> str:
-        """Property for the Build name"""
-        return self.model.name
-
-    @name.setter
-    def name(self, value: str):
-        self.model.name = value
-
-    @property
-    def number(self) -> int:
-        """Property for the Build number"""
-        return self.model.number
-
-    @number.setter
-    def number(self, value: int):
-        self.model.number = value
-
-    @property
-    def submitted(self) -> dt.datetime:
-        """Property for the Build submitted timestamp"""
-        return self.model.submitted
-
-    @submitted.setter
-    def submitted(self, value):
-        self.model.submitted = value
-
-    @property
-    def completed(self) -> Optional[dt.datetime]:
-        """Property for the Build completed timestamp"""
-        return self.model.completed
-
-    @completed.setter
-    def completed(self, value: Optional[dt.datetime]):
-        self.model.completed = value
-
-    def refresh(self):
-        """Refresh from the database"""
-        self.model.refresh_from_db()
-        self.__init__(self.model)
-
-    def save(self):
-        """Save changes back to the database"""
-        self.model.submitted = self.submitted
-        self.model.completed = self.completed
-
-        self.model.save()
-
-        for attr, (model, fields) in ATTR_TO_1TO1.items():
-            if getattr(self, attr):
-                model.upsert(self.model, *[getattr(self, field) for field in fields])
-            else:
-                model.remove(self.model)  # bug with pylint: disable=no-member
-
-    def delete(self):
-        """Delete this Build from the db"""
-        if self.model.pk is not None:
-            self.model.delete()
-
     @classmethod
-    def create(
-        cls: Type[T], build: Build, submitted: Optional[dt.datetime] = None
-    ) -> T:
-        """Factory to create a db record.
+    def get(cls, build_id: BuildID) -> BuildRecord:
+        """Retrieve db record"""
+        try:
+            build_model: BuildModel = BuildModel.objects.select_related(*RELATED).get(
+                name=build_id.name, number=build_id.number
+            )
+        except BuildModel.DoesNotExist:
+            raise cls.NotFound(build_id) from None
 
-        If the record already exists it will be returned unaltered.
-        """
-        if submitted is None:
-            submitted = timezone.now()
+        return cls.model_to_record(build_model)
 
-        model, _ = BuildModel.objects.get_or_create(
-            name=build.name, number=build.number, defaults={"submitted": submitted}
+    @staticmethod
+    def model_to_record(model: BuildModel) -> BuildRecord:
+        """Convert BuildModel to BuildRecord"""
+        try:
+            note: str | None = model.buildnote.note
+        except BuildNote.DoesNotExist:
+            note = None
+
+        try:
+            logs: str | None = model.buildlog.logs
+        except BuildLog.DoesNotExist:
+            logs = None
+
+        try:
+            model.keptbuild
+        except KeptBuild.DoesNotExist:
+            keep = False
+        else:
+            keep = True
+
+        return BuildRecord(
+            build_id=BuildID(f"{model.name}.{model.number}"),
+            note=note,
+            logs=logs,
+            keep=keep,
+            submitted=model.submitted,
+            completed=model.completed,
         )
 
-        return cls(model)
-
-    @classmethod
-    def get(cls: Type[T], build: Build) -> T:
-        """Factory to retrieve a db record.
-
-        If the record does not exist in the database, cls.DoesNotExist is raised.
-        """
+    @staticmethod
+    def save(build_record: BuildRecord) -> BuildModel:
+        """Save changes back to the database"""
         try:
-            model = BuildModel.objects.select_related(*RELATED).get(
-                name=build.name, number=build.number
+            model: BuildModel = BuildModel.objects.get(
+                name=build_record.id.name, number=build_record.id.number
             )
-        except BuildModel.DoesNotExist as error:
-            raise cls.NotFound from error
+        except BuildModel.DoesNotExist:
+            model = BuildModel(name=build_record.id.name, number=build_record.id.number)
 
-        return cls(model)
+        if build_record.submitted is None:
+            build_record.submitted = timezone.now()
+
+        model.submitted = build_record.submitted
+        model.completed = build_record.completed
+
+        model.save()
+
+        for attr, (related_model, fields) in ATTR_TO_1TO1.items():
+            if getattr(build_record, attr):
+                #  bug with pylint: disable=no-member
+                related_model.upsert(
+                    model, *[getattr(build_record, field) for field in fields]
+                )
+            else:
+                related_model.remove(model)  # bug with pylint: disable=no-member
+
+        return model
+
+    @staticmethod
+    def delete(build_id: BuildID) -> None:
+        """Delete this Build from the db"""
+        BuildModel.objects.filter(name=build_id.name, number=build_id.number).delete()
 
     @classmethod
-    def get_or_create(cls: Type[T], build: Build) -> T:
-        """Factory to retrieve a db record or create one if one doesn't exist"""
-        try:
-            return cls.get(build)
-        except cls.NotFound:
-            return cls.create(build)
-
-    @classmethod
-    def builds(cls, **filters) -> Iterator:
-        """Query the datbase and return an iterable of BuildDB objects
+    def get_records(cls, **filters) -> Iterator[BuildRecord]:
+        """Query the datbase and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.
 
@@ -167,16 +145,16 @@ class BuildDB:
 
             >>> BuildDB.builds(name="babette")
         """
-        build_models = (
+        models = (
             BuildModel.objects.select_related(*RELATED)
             .filter(**filters)
             .order_by("-submitted")
         )
 
-        return (cls(build_model) for build_model in build_models)
+        return (cls.model_to_record(model) for model in models)
 
-    @classmethod
-    def list_machines(cls) -> list[str]:
+    @staticmethod
+    def list_machines() -> list[str]:
         """Return a list of machine names"""
         machines = (
             BuildModel.objects.values_list("name", flat=True)
@@ -186,89 +164,92 @@ class BuildDB:
 
         return list(machines)
 
-    def previous_build(self, completed: bool = True) -> Optional[BuildDB]:
+    @classmethod
+    def previous_build(
+        cls, build_id: BuildID, completed: bool = True
+    ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        if completed:
-            query = BuildModel.objects.filter(
-                name=self.name, completed__isnull=False, number__lt=self.number
-            )
-        else:
-            query = BuildModel.objects.filter(name=self.name, number__lt=self.number)
+        field_lookups = dict(name=build_id.name, number__lt=build_id.number)
 
-        query = query.select_related(*RELATED).order_by("-number")
+        if completed:
+            field_lookups["completed__isnull"] = False
+
+        query = (
+            BuildModel.objects.filter(**field_lookups)
+            .select_related(*RELATED)
+            .order_by("-number")
+        )
 
         try:
-            build_model = query[0]
+            model = query[0]
         except IndexError:
             return None
 
-        return type(self)(build_model)
-
-    def next_build(self, completed: bool = True) -> Optional[BuildDB]:
-        """Return the next build in the db or None"""
-        query = BuildModel.objects.filter(name=self.name, number__gt=self.number)
-
-        if completed:
-            query = query.filter(completed__isnull=False)
-
-        query = query.select_related(*RELATED).order_by("number")
-
-        try:
-            build_model = query[0]
-        except IndexError:
-            return None
-
-        return type(self)(build_model)
+        return cls.model_to_record(model)
 
     @classmethod
-    def latest_build(cls, name: str, completed: bool = False) -> Optional[BuildDB]:
+    def next_build(
+        cls, build_id: BuildID, completed: bool = True
+    ) -> BuildRecord | None:
+        """Return the next build in the db or None"""
+        field_lookups = dict(name=build_id.name, number__gt=build_id.number)
+
+        if completed:
+            field_lookups["completed__isnull"] = False
+
+        query = (
+            BuildModel.objects.filter(**field_lookups)
+            .select_related(*RELATED)
+            .order_by("number")
+        )
+
+        try:
+            model = query[0]
+        except IndexError:
+            return None
+
+        return cls.model_to_record(model)
+
+    @classmethod
+    def latest_build(cls, name: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
         If no builds exist for the given machine name, return None.
         """
-        filter_: dict[str, Any] = {"name": name}
+        field_lookups: dict[str, Any] = {"name": name}
 
         if completed:
-            filter_["completed__isnull"] = False
+            field_lookups["completed__isnull"] = False
 
         try:
-            build_model = (
-                BuildModel.objects.filter(**filter_)
+            model = (
+                BuildModel.objects.filter(**field_lookups)
                 .order_by("-number")
                 .select_related(*RELATED)
             )[0]
         except IndexError:
             return None
 
-        return cls(build_model)
+        return cls.model_to_record(model)
 
     @classmethod
-    def search_notes(cls, machine: str, key: str) -> Iterator[BuildDB]:
+    def search_notes(cls, machine: str, key: str) -> Iterator[BuildRecord]:
         """search notes for given machine"""
-        build_models = (
+        models = (
             BuildModel.objects.select_related(*RELATED)
             .filter(name=machine, buildnote__note__icontains=key)
             .order_by("-submitted")
         )
 
-        return (cls(build_model) for build_model in build_models)
+        return (cls.model_to_record(model) for model in models)
 
     @staticmethod
-    def count(name: Optional[str] = None) -> int:
+    def count(name: str | None = None) -> int:
         """Return the total number of builds
 
         If `name` is given, return the total number of builds for the given machine
         """
-        filter_: dict[str, Any] = {"name": name} if name else {}
+        field_lookups: dict[str, Any] = {"name": name} if name else {}
 
-        return BuildModel.objects.filter(**filter_).count()
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return NotImplemented
-
-        return self.model == other.model
-
-    def __hash__(self):
-        return hash(self.model)
+        return BuildModel.objects.filter(**field_lookups).count()

@@ -97,14 +97,14 @@ class StorageDownloadArtifactTestCase(TestCase):
         build = BuildManFactory.create()
 
         # When when one of the target paths already exist
-        path = build.storage.get_path(build.build.id, Content.BINPKGS)
+        path = build.storage.get_path(build.id, Content.BINPKGS)
         path.mkdir(parents=True)
         orphan = path / "this should not be here"
         orphan.touch()
 
         # And we extract the build
         build.storage.extract_artifact(
-            build.build.id, build.jenkins.download_artifact(build.build.id)
+            build.id, build.jenkins.download_artifact(build.id)
         )
 
         # Then the orpaned path is removed
@@ -292,7 +292,7 @@ class StorageGetPackagesTestCase(TestCase):
         self.storage = self.build.storage
 
     def test_should_return_list_of_packages_from_index(self):
-        packages = self.storage.get_packages(self.build.build.id)
+        packages = self.storage.get_packages(self.build.id)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
         package = packages[0]
@@ -304,13 +304,11 @@ class StorageGetPackagesTestCase(TestCase):
         self.assertEqual(package.build_time, 1622722899)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
-        index_file = (
-            self.storage.get_path(self.build.build.id, Content.BINPKGS) / "Packages"
-        )
+        index_file = self.storage.get_path(self.build.id, Content.BINPKGS) / "Packages"
         index_file.unlink()
 
         with self.assertRaises(LookupError):
-            self.storage.get_packages(self.build.build.id)
+            self.storage.get_packages(self.build.id)
 
 
 class StorageGetMetadataTestCase(TestCase):
@@ -324,7 +322,7 @@ class StorageGetMetadataTestCase(TestCase):
         self.storage = self.build.storage
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self):
-        metadata = self.storage.get_metadata(self.build.build.id)
+        metadata = self.storage.get_metadata(self.build.id)
 
         expected = GBPMetadata(
             build_duration=124,
@@ -362,11 +360,11 @@ class StorageGetMetadataTestCase(TestCase):
         self.assertEqual(metadata, expected)
 
     def test_should_raise_lookuperror_when_file_does_not_exist(self):
-        path = self.storage.get_path(self.build.build.id, Content.BINPKGS) / "gbp.json"
+        path = self.storage.get_path(self.build.id, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
         with self.assertRaises(LookupError) as context:
-            self.storage.get_metadata(self.build.build.id)
+            self.storage.get_metadata(self.build.id)
 
         exception = context.exception
         self.assertEqual(exception.args, ("gbp.json does not exist",))
@@ -380,9 +378,7 @@ class StorageSetMetadataTestCase(TestCase):
         self.build = BuildManFactory.create()
         self.build.pull()
         self.storage = self.build.storage
-        self.path = (
-            self.storage.get_path(self.build.build.id, Content.BINPKGS) / "gbp.json"
-        )
+        self.path = self.storage.get_path(self.build.id, Content.BINPKGS) / "gbp.json"
 
         if self.path.exists():
             self.path.unlink()
@@ -403,7 +399,7 @@ class StorageSetMetadataTestCase(TestCase):
             ],
         )
         gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
-        self.storage.set_metadata(self.build.build.id, gbp_metadata)
+        self.storage.set_metadata(self.build.id, gbp_metadata)
 
         with self.path.open("r") as json_file:
             result = json.load(json_file)

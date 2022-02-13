@@ -67,7 +67,7 @@ def get_packages(build: BuildMan) -> list[Package]:
 
     This call may be cached for performance.
     """
-    cache_key = f"packages-{build.name}-{build.number}"
+    cache_key = f"packages-{build.id.name}-{build.id.number}"
 
     try:
         return cache.get_or_set(cache_key, build.get_packages, timeout=None)
@@ -101,7 +101,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         if not (latest_build := machine.latest_build):
             continue
 
-        if not latest_build.db.completed:
+        if not (latest_build.record and latest_build.record.completed):
             continue
 
         latest_builds.append(latest_build)
@@ -110,13 +110,13 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
             build_packages[build_id] = [
                 i.cpv
                 for i in latest_build.storage.get_metadata(
-                    latest_build.build.id
+                    latest_build.id
                 ).packages.built
             ]
         except LookupError:
             build_packages[build_id] = []
 
-        if lapsed(latest_build.db.completed, now) < 86400:
+        if lapsed(latest_build.record.completed, now) < 86400:
             built_recently.append(latest_build)
 
     return latest_builds, built_recently, build_packages
@@ -127,25 +127,25 @@ def package_metadata(buildman: BuildMan, context: DashboardContext):
     metadata: Optional[GBPMetadata]
 
     try:
-        metadata = buildman.storage.get_metadata(buildman.build.id)
+        metadata = buildman.storage.get_metadata(buildman.id)
     except LookupError:
         metadata = None
 
-    if metadata:
+    if metadata and buildman.record:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][buildman.name] += metadata.packages.size
+        context["total_package_size"][buildman.id.name] += metadata.packages.size
 
-        if lapsed(buildman.db.submitted, context["now"]) < 86400:
+        if lapsed(buildman.record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
                 if (
                     package.cpv in context["recent_packages"]
                     or len(context["recent_packages"]) < 12
                 ):
-                    context["recent_packages"][package.cpv].add(buildman.name)
+                    context["recent_packages"][package.cpv].add(buildman.id.name)
     else:
         packages = get_packages(buildman)
         context["package_count"] += len(packages)
-        context["total_package_size"][buildman.name] += sum(i.size for i in packages)
+        context["total_package_size"][buildman.id.name] += sum(i.size for i in packages)
 
 
 def dashboard(request: HttpRequest) -> HttpResponse:
@@ -180,13 +180,13 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         "unpublished_builds_count": 0,
     }
 
-    for builddb in BuildDB.builds():
-        buildman = BuildMan(builddb)
+    for record in BuildDB.get_records():
+        buildman = BuildMan(record)
         package_metadata(buildman, context)
 
-        day_submitted = builddb.submitted.astimezone(current_timezone).date()
+        day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][buildman.name] += 1
+            builds_over_time[day_submitted][buildman.id.name] += 1
 
     (
         context["latest_builds"],
@@ -197,7 +197,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         [build for build in context["latest_builds"] if not build.published()]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
-    context["builds_to_do"] = [BuildMan(i) for i in BuildDB.builds(completed=None)]
+    context["builds_to_do"] = [BuildMan(i) for i in BuildDB.get_records(completed=None)]
 
     # https://stackoverflow.com/questions/4764110/django-template-cant-loop-defaultdict
     context["recent_packages"].default_factory = None

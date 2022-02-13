@@ -6,6 +6,7 @@ from collections import defaultdict
 from django.utils import timezone
 
 from gentoo_build_publisher.build import Content
+from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildMan, MachineInfo
 from gentoo_build_publisher.views import (
     get_build_summary,
@@ -14,7 +15,7 @@ from gentoo_build_publisher.views import (
 )
 
 from . import TestCase
-from .factories import BuildManFactory
+from .factories import BuildManFactory, BuildModelFactory
 
 
 def buncha_builds(
@@ -25,10 +26,10 @@ def buncha_builds(
     for i in reversed(range(num_days)):
         day = end_date - dt.timedelta(days=i)
         for name in machines:
+            model = BuildModelFactory.create(name=name, submitted=day)
             builds = BuildManFactory.create_batch(
                 per_day,
-                build_attr__build_model__submitted=day,
-                build_attr__build_model__name=name,
+                build_attr=BuildDB.model_to_record(model),
             )
             buildmans[name].extend(builds)
     return buildmans
@@ -59,7 +60,7 @@ class GetBuildSummaryTestCase(TestCase):
         web.pull()
 
         # Make sure it doesn't fail when a gbp.json is missing
-        (web.storage.get_path(web.build.id, Content.BINPKGS) / "gbp.json").unlink()
+        (web.storage.get_path(web.id, Content.BINPKGS) / "gbp.json").unlink()
 
         machine_info = [MachineInfo(i) for i in machines]
 

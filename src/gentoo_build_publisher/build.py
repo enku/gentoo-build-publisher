@@ -1,4 +1,6 @@
 """Basic Build interface for Gentoo Build Publisher"""
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum, unique
 
@@ -26,6 +28,11 @@ class BuildID(str):
             self.number = int(parts[2])
         except ValueError as error:
             raise InvalidBuildID(str(error)) from error
+
+    @classmethod
+    def create(cls, name: str, number: int) -> BuildID:
+        """Build BuildID from name and number"""
+        return cls(f"{name}.{number}")
 
 
 @dataclass

@@ -6,13 +6,13 @@ import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
 from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional
 
 from yarl import URL
 
 from gentoo_build_publisher import io
 from gentoo_build_publisher.build import (
-    Build,
+    BuildID,
     Change,
     Content,
     GBPMetadata,
@@ -20,7 +20,7 @@ from gentoo_build_publisher.build import (
     PackageMetadata,
     Status,
 )
-from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.db import BuildDB, BuildRecord
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.settings import Settings
@@ -35,25 +35,28 @@ class BuildMan:
 
     def __init__(
         self,
-        build: Union[Build, BuildDB],
+        build: BuildID | BuildRecord,
         *,
         jenkins: Optional[Jenkins] = None,
         storage: Optional[Storage] = None,
     ):
-        if isinstance(build, Build):
-            self.build = build
-            self._db: Optional[BuildDB] = None
-        elif isinstance(build, BuildDB):
-            self.build = Build(name=build.name, number=build.number)
-            self._db = build
-        else:
-            raise TypeError(
-                "build argument must be one of [Build, BuildDB]."
-                f" Got {type(build).__name__}."
-            )
+        self.db = BuildDB  # pylint: disable=invalid-name
 
-        self.name = self.build.name
-        self.number = self.build.number
+        match build:
+            case BuildRecord():
+                self.id = build.id  # pylint: disable=invalid-name
+                self.record = build
+            case BuildID():
+                self.id = build
+                try:
+                    self.record = self.db.get(build)
+                except BuildDB.NotFound:
+                    self.record = None
+            case _:
+                raise TypeError(
+                    "build argument must be one of [BuildID, BuildRecord]."
+                    f" Got {type(build).__name__}."
+                )
 
         if jenkins is None:
             self.jenkins = Jenkins.from_settings(Settings.from_environ())
@@ -65,108 +68,96 @@ class BuildMan:
         else:
             self.storage = storage
 
-    @property
-    def id(self):  # pylint: disable=invalid-name
-        """Return the BuildDB id or None if there is no database model"""
-        return self.db.id if self.db is not None else None
-
-    @property
-    def db(self):  # pylint: disable=invalid-name
-        """The database object (or None)"""
-        if not self._db:
-            try:
-                self._db = BuildDB.get(self.build)
-            except BuildDB.NotFound:
-                pass
-
-        return self._db
-
     def publish(self):
         """Publish the build"""
         if not self.pulled():
             self.pull()
 
-        self.storage.publish(self.build.id)
+        self.storage.publish(self.id)
 
     def published(self) -> bool:
         """Return True if this Build is published"""
-        return self.storage.published(self.build.id)
+        return self.storage.published(self.id)
 
     def pull(self):
         """pull the Build to storage"""
         if self.pulled():
             return
 
-        build = self.build
-        storage = self.storage
-        jenkins = self.jenkins
+        if not self.record:
+            self.record = BuildRecord(
+                self.id,
+                note=None,
+                logs=None,
+                keep=False,
+                submitted=utcnow().replace(tzinfo=timezone.utc),
+                completed=None,
+            )
 
-        self._db = self._db or BuildDB.get_or_create(build)
-        previous = BuildDB.previous_build(self._db)
+        self.db.save(self.record)
+        previous = self.db.previous_build(self.id)
 
         if previous:
-            previous_build = previous.build.id
+            previous_build = previous.id
         else:
             previous_build = None
 
-        logger.info("Pulling build: %s", build)
+        logger.info("Pulling build: %s", self.id)
 
-        chunk_size = jenkins.config.download_chunk_size
+        chunk_size = self.jenkins.config.download_chunk_size
         tmpdir = str(self.storage.tmpdir)
         with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
-            logger.info("Downloading build: %s", build)
-            io.write_chunks(temp, jenkins.download_artifact(self.build.id))
+            logger.info("Downloading build: %s", self.id)
+            io.write_chunks(temp, self.jenkins.download_artifact(self.id))
 
-            logger.info("Downloaded build: %s", build)
+            logger.info("Downloaded build: %s", self.id)
             temp.seek(0)
 
             byte_stream = io.read_chunks(temp, chunk_size)
-            storage.extract_artifact(self.build.id, byte_stream, previous_build)
+            self.storage.extract_artifact(self.id, byte_stream, previous_build)
 
-        logging.info("Pulled build %s", build)
+        logging.info("Pulled build %s", self.id)
 
         self.update_build_metadata()
 
     def update_build_metadata(self):
         """Update the build's db attributes (based on storage, etc.)"""
-        self._db = self._db or BuildDB.get_or_create(self.build)
-
-        self.db.logs = self.jenkins.get_logs(self.build.id)
-        self.db.completed = utcnow().replace(tzinfo=timezone.utc)
-        self.db.save()
+        self.record.logs = self.jenkins.get_logs(self.id)
+        self.record.completed = utcnow().replace(tzinfo=timezone.utc)
+        self.db.save(self.record)
 
         try:
-            packages = self.storage.get_packages(self.build.id)
+            packages = self.storage.get_packages(self.id)
         except LookupError:
             return
 
-        jenkins_metadata = self.jenkins.get_metadata(self.build.id)
-        self.storage.set_metadata(
-            self.build.id, gbp_metadata(jenkins_metadata, packages)
-        )
+        jenkins_metadata = self.jenkins.get_metadata(self.id)
+        self.storage.set_metadata(self.id, gbp_metadata(jenkins_metadata, packages))
+
+    def save_record(self) -> None:
+        """Save the BuildRecord to the database"""
+        self.db.save(self.record)
 
     def pulled(self) -> bool:
         """Return true if the Build has been pulled"""
-        return self.storage.pulled(self.build.id)
+        return self.storage.pulled(self.id)
 
     def delete(self):
         """Delete this build"""
-        if self.db is not None:
-            self.db.delete()
-
-        self.storage.delete(self.build.id)
+        self.db.delete(self.id)
+        self.storage.delete(self.id)
 
     def logs_url(self) -> URL:
         """Return the Jenkins logs url for this Build"""
-        return self.jenkins.logs_url(self.build.id)
+        return self.jenkins.logs_url(self.id)
 
     def get_packages(self) -> list[Package]:
         """Return the list of packages for this build"""
-        return self.storage.get_packages(self.build.id)
+        return self.storage.get_packages(self.id)
 
     def get_path(self, item: Content) -> Path:
         """Return the path of the content type for this Build's storage"""
-        return self.storage.get_path(self.build.id, item)
+        return self.storage.get_path(self.id, item)
 
     @staticmethod
     def schedule_build(name: str) -> str:
@@ -180,18 +171,19 @@ class BuildMan:
     def purge(cls, machine: str):
         """Purge old builds for machine"""
         logging.info("Purging builds for %s", machine)
-        build_dbs = BuildDB.builds(name=machine)
-        purger = Purger(build_dbs, key=lambda b: b.submitted.replace(tzinfo=None))
+        records = BuildDB.get_records(name=machine)
+        purger = Purger(records, key=lambda b: b.submitted.replace(tzinfo=None))
 
-        for build_db in purger.purge():  # type: BuildDB
-            if not build_db.keep and not cls(build_db).published():
-                buildman = cls(build_db)
-                buildman.delete()
+        for record in purger.purge():  # type: BuildRecord
+            if not record.keep:
+                buildman = cls(record)
+                if not buildman.published():
+                    buildman.delete()
 
     @classmethod
     def search_notes(cls, machine: str, key: str) -> Iterator[BuildMan]:
         """search notes for given machine"""
-        return (cls(build_db) for build_db in BuildDB.search_notes(machine, key))
+        return (cls(record) for record in BuildDB.search_notes(machine, key))
 
     @staticmethod
     def diff_binpkgs(left: BuildMan, right: BuildMan) -> Iterator[Change]:
@@ -214,10 +206,10 @@ class BuildMan:
             yield Change(cpvb, Status[code_map[code]])
 
     def __str__(self) -> str:
-        return str(self.build)
+        return str(self.id)
 
     def __eq__(self, other) -> bool:
-        return self.build == other.build
+        return self.id == other.id
 
 
 class MachineInfo:  # pylint: disable=too-few-public-methods
@@ -236,10 +228,10 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         published = None
 
         if latest_build is not None:
-            current_build = latest_build.number
+            current_build = latest_build.id.number
 
             while current_build:
-                buildman = BuildMan(Build(machine_name, current_build))
+                buildman = BuildMan(BuildID(f"{machine_name}.{current_build}"))
                 if buildman.published():
                     published = buildman
                     break
@@ -249,15 +241,15 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         self.name: str = machine_name
         self.build_count: int = BuildDB.count(machine_name)
         self.latest_build: Optional[BuildMan] = (
-            BuildMan(latest_build) if latest_build else None
+            BuildMan(latest_build.id) if latest_build else None
         )
         self.published: Optional[BuildMan] = published
 
     def builds(self) -> list[BuildMan]:
         """Return the builds for the given machine"""
-        builddbs = BuildDB.builds(name=self.name)
+        records = BuildDB.get_records(name=self.name)
 
-        return [BuildMan(i) for i in builddbs]
+        return [BuildMan(record) for record in records]
 
 
 def diff_notes(left: BuildMan, right: BuildMan, header: str = "") -> str:
