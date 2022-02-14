@@ -1,6 +1,10 @@
 """GraphQL resolvers for Gentoo Build Publisher"""
 # Most of the functions are resolvers and need no explanation
 # pylint: disable=missing-function-docstring
+
+# "id" is used throughout. It's idiomatic GraphQL
+# pylint: disable=redefined-builtin,invalid-name
+
 from importlib import resources
 from typing import Any, Optional
 
@@ -31,8 +35,7 @@ resolvers = [
     query := ObjectType("Query"),
 ]
 
-build_type.set_field("name", lambda build, _: build.id.name)
-build_type.set_field("number", lambda build, _: build.id.number)
+build_type.set_field("machine", lambda build, _: build.id.name)
 build_type.set_field("keep", lambda build, _: build.record.keep)
 build_type.set_field("submitted", lambda build, _: build.record.submitted)
 build_type.set_field("completed", lambda build, _: build.record.completed)
@@ -77,9 +80,8 @@ def resolve_query_machines(*_) -> list[MachineInfo]:
 
 
 @query.field("build")
-def resolve_query_build(*_, name: str, number: int) -> Optional[Build]:
-    build_id = BuildID.create(name, number)
-    build = Build(build_id)
+def resolve_query_build(*_, id: str) -> Optional[Build]:
+    build = Build(BuildID(id))
     return None if build.record is None else build
 
 
@@ -97,14 +99,14 @@ def resolve_query_builds(*_, name: str) -> list[Build]:
 
 
 @query.field("diff")
-def resolve_query_diff(*_, left: Object, right: Object) -> Optional[Object]:
-    left_build_id = BuildID.create(left["name"], left["number"])
+def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
+    left_build_id = BuildID(left)
     left_build = Build(left_build_id)
 
     if not left_build.record:
         return None
 
-    right_build_id = BuildID.create(right["name"], right["number"])
+    right_build_id = BuildID(right)
     right_build = Build(right_build_id)
 
     if not right_build.record:
@@ -133,8 +135,8 @@ def resolve_query_working(*_) -> list[Build]:
 
 
 @mutation.field("publish")
-def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
-    build_id = BuildID.create(name, number)
+def resolve_mutation_publish(*_, id: str) -> MachineInfo:
+    build_id = BuildID(id)
     build = Build(build_id)
 
     if build.pulled():
@@ -142,12 +144,15 @@ def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
     else:
         publish_build.delay(str(build_id))
 
-    return MachineInfo(name)
+    return MachineInfo(build_id.name)
 
 
 @mutation.field("pull")
-def resolve_mutation_pull(*_, name: str, number: int) -> MachineInfo:
-    pull_build.delay(f"{name}.{number}")
+def resolve_mutation_pull(*_, id: str) -> MachineInfo:
+    pull_build.delay(id)
+
+    name = id.partition(".")[0]
+
     return MachineInfo(name)
 
 
@@ -157,8 +162,8 @@ def resolve_mutation_schedule_build(*_, name: str) -> str:
 
 
 @mutation.field("keepBuild")
-def resolve_mutation_keepbuild(*_, name: str, number: int) -> Optional[Build]:
-    build_id = BuildID.create(name, number)
+def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
+    build_id = BuildID(id)
     build = Build(build_id)
 
     if not build.record:
@@ -171,8 +176,8 @@ def resolve_mutation_keepbuild(*_, name: str, number: int) -> Optional[Build]:
 
 
 @mutation.field("releaseBuild")
-def resolve_mutation_releasebuild(*_, name: str, number: int) -> Optional[Build]:
-    build_id = BuildID.create(name, number)
+def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
+    build_id = BuildID(id)
     build = Build(build_id)
 
     if not build.record:
@@ -186,9 +191,9 @@ def resolve_mutation_releasebuild(*_, name: str, number: int) -> Optional[Build]
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
-    *_, name: str, number: int, note: Optional[str] = None
+    *_, id: str, note: Optional[str] = None
 ) -> Optional[Build]:
-    build_id = BuildID.create(name, number)
+    build_id = BuildID(id)
     build = Build(build=build_id)
 
     if not build.record:

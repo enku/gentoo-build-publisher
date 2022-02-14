@@ -32,13 +32,15 @@ def assert_data(test_case: TestCase, result: dict, expected: dict):
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
+    maxDiff = None
+
     def test(self):
         build = BuildFactory.create()
         build.pull()
-        query = """query Build($name: String!, $number: Int!) {
-            build(name: $name, number: $number) {
-                name
-                number
+        query = """query ($id: ID!) {
+            build(id: $id) {
+                id
+                machine
                 pulled
                 published
                 packagesBuilt {
@@ -48,14 +50,12 @@ class BuildQueryTestCase(TestCase):
         }
         """
 
-        result = execute(
-            query, variables={"name": build.id.name, "number": build.id.number}
-        )
+        result = execute(query, variables={"id": build.id})
 
         expected = {
             "build": {
-                "name": build.id.name,
-                "number": build.id.number,
+                "id": build.id,
+                "machine": build.id.name,
                 "pulled": True,
                 "published": False,
                 "packagesBuilt": [
@@ -74,12 +74,12 @@ class BuildQueryTestCase(TestCase):
         build.pull()
 
         # when we query the build's packages
-        query = """query Build($name: String!, $number: Int!) {
-            build(name: $name, number: $number) {
+        query = """query ($id: ID!) {
+            build(id: $id) {
                 packages
             }
         }"""
-        result = execute(query, {"name": build.id.name, "number": build.id.number})
+        result = execute(query, {"id": build.id})
 
         # Then we get the list of packages in the build
         assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
@@ -89,12 +89,12 @@ class BuildQueryTestCase(TestCase):
         build = BuildFactory.create()
 
         # when we query the build's packages
-        query = """query Build($name: String!, $number: Int!) {
-            build(name: $name, number: $number) {
+        query = """query ($id: ID!) {
+            build(id: $id) {
                 packages
             }
         }"""
-        result = execute(query, {"name": build.id.name, "number": build.id.number})
+        result = execute(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
@@ -106,12 +106,12 @@ class BuildQueryTestCase(TestCase):
         (build.storage.get_path(build.id, Content.BINPKGS) / "Packages").unlink()
 
         # when we query the build's packages
-        query = """query Build($name: String!, $number: Int!) {
-            build(name: $name, number: $number) {
+        query = """query ($id: ID!) {
+            build(id: $id) {
                 packages
             }
         }"""
-        result = execute(query, {"name": build.id.name, "number": build.id.number})
+        result = execute(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
@@ -123,20 +123,20 @@ class BuildQueryTestCase(TestCase):
         (build.storage.get_path(build.id, Content.BINPKGS) / "gbp.json").unlink()
 
         # when we query the build's packagesBuild
-        query = """query Build($name: String!, $number: Int!) {
-            build(name: $name, number: $number) {
-                name
-                number
+        query = """query ($id: ID!) {
+            build(id: $id) {
+                id
+                machine
                 packagesBuilt {
                     cpv
                 }
             }
         }"""
-        result = execute(query, {"name": build.id.name, "number": build.id.number})
+        result = execute(query, {"id": build.id})
 
         self.assertEqual(
             result["data"]["build"],
-            {"name": build.id.name, "number": build.id.number, "packagesBuilt": None},
+            {"id": build.id, "machine": build.id.name, "packagesBuilt": None},
         )
         self.assertEqual(len(result["errors"]), 1)
         self.assertEqual(result["errors"][0]["message"], "Packages built unknown")
@@ -154,7 +154,7 @@ class BuildsQueryTestCase(TestCase):
         builds.sort(key=lambda build: build.id.number, reverse=True)
         query = """query Builds($name: String!) {
             builds(name: $name) {
-                number
+                id
                 completed
             }
         }
@@ -162,10 +162,10 @@ class BuildsQueryTestCase(TestCase):
 
         result = execute(query, variables={"name": builds[0].id.name})
 
-        build_numbers = [build.id.number for build in builds]
+        build_ids = [build.id for build in builds]
         expected = [
-            {"number": number, "completed": "2021-09-30T20:17:00+00:00"}
-            for number in build_numbers
+            {"id": build_id, "completed": "2021-09-30T20:17:00+00:00"}
+            for build_id in build_ids
         ]
 
         assert_data(self, result, {"builds": expected})
@@ -192,7 +192,7 @@ class LatestQueryTestCase(TestCase):
     def test_when_no_builds_should_respond_with_none(self):
         query = """{
             latest(name: "bogus") {
-                number
+                id
             }
         }"""
         result = execute(query)
@@ -202,12 +202,14 @@ class LatestQueryTestCase(TestCase):
     def test_should_return_the_latest_submitted_completed(self):
         query = """{
             latest(name: "babette") {
-                number
+                id
             }
         }"""
         result = execute(query)
 
-        assert_data(self, result, {"latest": {"number": self.latest.number}})
+        assert_data(
+            self, result, {"latest": {"id": f"{self.latest.name}.{self.latest.number}"}}
+        )
 
 
 class DiffQueryTestCase(TestCase):
@@ -233,13 +235,13 @@ class DiffQueryTestCase(TestCase):
         left_bm = self.left_bm
         right_bm = self.right_bm
 
-        query = """query Diff($left: BuildInput!, $right: BuildInput!) {
+        query = """query Diff($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 left {
-                    number
+                    id
                 }
                 right {
-                    number
+                    id
                 }
                 items {
                     item
@@ -247,17 +249,14 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {
-            "left": {"name": left_bm.id.name, "number": left_bm.id.number},
-            "right": {"name": right_bm.id.name, "number": right_bm.id.number},
-        }
+        variables = {"left": left_bm.id, "right": right_bm.id}
         result = execute(query, variables=variables)
 
         # Then the differences are given between the two builds
         expected = {
             "diff": {
-                "left": {"number": left_bm.id.number},
-                "right": {"number": right_bm.id.number},
+                "left": {"id": left_bm.id},
+                "right": {"id": right_bm.id},
                 "items": [
                     {"item": "app-arch/tar-1.34-1", "status": "REMOVED"},
                     {"item": "app-arch/tar-1.35-1", "status": "ADDED"},
@@ -270,7 +269,7 @@ class DiffQueryTestCase(TestCase):
         left_bm = self.left_bm
         right_bm = self.right_bm
 
-        query = """query Diff($left: BuildInput!, $right: BuildInput!) {
+        query = """query ($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 items {
                     item
@@ -278,10 +277,8 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {
-            "left": {"name": left_bm.id.name, "number": left_bm.id.number},
-            "right": {"name": right_bm.id.name, "number": right_bm.id.number},
-        }
+        variables = {"left": left_bm.id, "right": right_bm.id}
+
         result = execute(query, variables=variables)
 
         # Then the differences are given between the two builds
@@ -298,13 +295,13 @@ class DiffQueryTestCase(TestCase):
     def test_should_return_none_when_left_does_not_exist(self):
         right_bm = self.right_bm
 
-        query = """query Diff($left: BuildInput!, $right: BuildInput!) {
+        query = """query Diff($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 left {
-                    number
+                    id
                 }
                 right {
-                    number
+                    id
                 }
                 items {
                     item
@@ -312,10 +309,7 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {
-            "left": {"name": "bogus", "number": 1},
-            "right": {"name": right_bm.id.name, "number": right_bm.id.number},
-        }
+        variables = {"left": "bogus.1", "right": right_bm.id}
         result = execute(query, variables=variables)
 
         # Then None is returned
@@ -324,13 +318,13 @@ class DiffQueryTestCase(TestCase):
     def test_should_return_none_when_right_does_not_exist(self):
         left_bm = self.left_bm
 
-        query = """query Diff($left: BuildInput!, $right: BuildInput!) {
+        query = """query ($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 left {
-                    number
+                    id
                 }
                 right {
-                    number
+                    id
                 }
                 items {
                     item
@@ -338,10 +332,7 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {
-            "left": {"name": left_bm.id.name, "number": left_bm.id.number},
-            "right": {"name": "bogus", "number": 1},
-        }
+        variables = {"left": left_bm.id, "right": "bogus.1"}
         result = execute(query, variables=variables)
 
         # Then None is returned
@@ -370,13 +361,13 @@ class MachinesQueryTestCase(TestCase):
                 name
                 buildCount
                 latestBuild {
-                    name
+                    id
                 }
                 publishedBuild {
-                    number
+                    id
                 }
                 builds {
-                    number
+                    id
                 }
             }
         }"""
@@ -387,17 +378,15 @@ class MachinesQueryTestCase(TestCase):
             {
                 "name": "babette",
                 "buildCount": 3,
-                "builds": [{"number": i.id.number} for i in reversed(babette_builds)],
-                "latestBuild": {"name": "babette"},
-                "publishedBuild": {"number": build.id.number},
+                "builds": [{"id": i.id} for i in reversed(babette_builds)],
+                "latestBuild": {"id": build.id},
+                "publishedBuild": {"id": build.id},
             },
             {
                 "name": "lighthouse",
                 "buildCount": 3,
-                "builds": [
-                    {"number": i.id.number} for i in reversed(lighthouse_builds)
-                ],
-                "latestBuild": {"name": "lighthouse"},
+                "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
+                "latestBuild": {"id": lighthouse_builds[-1].id},
                 "publishedBuild": None,
             },
         ]
@@ -429,27 +418,23 @@ class PublishMutationTestCase(TestCase):
         build = BuildFactory.create()
         build.pull()
 
-        query = """mutation Publish($name: String!, $number: Int!) {
-            publish(name: $name, number: $number) {
+        query = """mutation ($id: ID!) {
+            publish(id: $id) {
                 publishedBuild {
-                    number
+                    id
                 }
             }
         }"""
-        result = execute(
-            query, variables={"name": build.id.name, "number": build.id.number}
-        )
+        result = execute(query, variables={"id": build.id})
 
-        assert_data(
-            self, result, {"publish": {"publishedBuild": {"number": build.id.number}}}
-        )
+        assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
     def test_publish_when_not_pulled(self):  # pylint: disable=no-self-use
         """Should publish builds"""
         query = """mutation {
-            publish(name: "babette", number: 193) {
+            publish(id: "babette.193") {
                 publishedBuild {
-                    number
+                    id
                 }
             }
         }"""
@@ -468,17 +453,15 @@ class PullMutationTestCase(TestCase):
         """Should publish builds"""
         build = BuildFactory()
 
-        query = """mutation Pull ($name: String!, $number: Int!) {
-            pull(name: $name, number: $number) {
+        query = """mutation ($id: ID!) {
+            pull(id: $id) {
                 publishedBuild {
-                    number
+                    id
                 }
             }
         }"""
         with mock.patch("gentoo_build_publisher.graphql.pull_build") as mock_pull:
-            result = execute(
-                query, variables={"name": build.id.name, "number": build.id.number}
-            )
+            result = execute(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
         mock_pull.delay.assert_called_once_with(str(build.id))
@@ -532,25 +515,25 @@ class KeepBuildMutationTestCase(TestCase):
 
     def test_should_keep_existing_build(self):
         model = BuildModelFactory.create()
-        query = """mutation KeepBuild($name: String!, $number: Int!) {
-           keepBuild(name: $name, number: $number) {
+        query = """mutation ($id: ID!) {
+           keepBuild(id: $id) {
                 keep
             }
         }
         """
-        result = execute(query, variables={"name": model.name, "number": model.number})
+        result = execute(query, variables={"id": f"{model.name}.{model.number}"})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
     def test_should_return_none_when_build_doesnt_exist(self):
-        query = """mutation KeepBuild($name: String!, $number: Int!) {
-           keepBuild(name: $name, number: $number) {
+        query = """mutation KeepBuild($id: ID!) {
+           keepBuild(id: $id) {
                 keep
             }
         }
         """
 
-        result = execute(query, variables={"name": "bogus", "number": 309})
+        result = execute(query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"keepBuild": None})
 
@@ -562,28 +545,26 @@ class ReleaseBuildMutationTestCase(TestCase):
         build = BuildFactory.create()
         build.record.keep = True
         build.save_record()
-        query = """mutation ReleaseBuild($name: String!, $number: Int!) {
-           releaseBuild(name: $name, number: $number) {
+        query = """mutation ($id: ID!) {
+           releaseBuild(id: $id) {
                 keep
             }
         }
         """
 
-        result = execute(
-            query, variables={"name": build.id.name, "number": build.id.number}
-        )
+        result = execute(query, variables={"id": build.id})
 
         assert_data(self, result, {"releaseBuild": {"keep": False}})
 
     def test_should_return_none_when_build_doesnt_exist(self):
-        query = """mutation ReleaseBuild($name: String!, $number: Int!) {
-           releaseBuild(name: $name, number: $number) {
+        query = """mutation ($id: ID!) {
+           releaseBuild(id: $id) {
                 keep
             }
         }
         """
 
-        result = execute(query, variables={"name": "bogus", "number": 309})
+        result = execute(query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"releaseBuild": None})
 
@@ -594,8 +575,8 @@ class CreateNoteMutationTestCase(TestCase):
     def test_set_text(self):
         model = BuildModelFactory.create()
         note_text = "Hello, world!"
-        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
-           createNote(name: $name, number: $number, note: $note) {
+        query = """mutation ($id: ID!, $note: String) {
+           createNote(id: $id, note: $note) {
                 notes
             }
         }
@@ -603,7 +584,7 @@ class CreateNoteMutationTestCase(TestCase):
 
         result = execute(
             query,
-            variables={"name": model.name, "number": model.number, "note": note_text},
+            variables={"id": f"{model.name}.{model.number}", "note": note_text},
         )
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
@@ -612,17 +593,14 @@ class CreateNoteMutationTestCase(TestCase):
 
     def test_set_none(self):
         build = BuildFactory.create(build_attr__note="Hello world")
-        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
-           createNote(name: $name, number: $number, note: $note) {
+        query = """mutation ($id: ID!, $note: String) {
+           createNote(id: $id, note: $note) {
                 notes
             }
         }
         """
 
-        result = execute(
-            query,
-            variables={"name": build.id.name, "number": build.id.number, "note": None},
-        )
+        result = execute(query, variables={"id": build.id, "note": None})
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
@@ -630,16 +608,14 @@ class CreateNoteMutationTestCase(TestCase):
         self.assertEqual(build.record.note, None)
 
     def test_should_return_none_when_build_doesnt_exist(self):
-        query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
-           createNote(name: $name, number: $number, note: $note) {
+        query = """mutation ($id: ID!, $note: String) {
+           createNote(id: $id, note: $note) {
                 notes
             }
         }
         """
 
-        result = execute(
-            query, variables={"name": "bogus", "number": 309, "note": None}
-        )
+        result = execute(query, variables={"id": "bogus.309", "note": None})
 
         assert_data(self, result, {"createNote": None})
 
@@ -647,9 +623,9 @@ class CreateNoteMutationTestCase(TestCase):
 class SearchNotesQueryTestCase(TestCase):
     """tests for the searchNotes query"""
 
-    query = """query SearchNotes($name: String!, $key: String!) {
+    query = """query ($name: String!, $key: String!) {
        searchNotes(name: $name, key: $key) {
-            name
+            id
             notes
         }
     }
@@ -658,18 +634,18 @@ class SearchNotesQueryTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        build1 = BuildFactory.create()
-        build1.record.note = "test foo"
-        build1.save_record()
-        build2 = BuildFactory.create()
-        build2.record.note = "test bar"
-        build2.save_record()
+        self.build1 = BuildFactory.create()
+        self.build1.record.note = "test foo"
+        self.build1.save_record()
+        self.build2 = BuildFactory.create()
+        self.build2.record.note = "test bar"
+        self.build2.save_record()
 
     def test_single_match(self):
         result = execute(self.query, variables={"name": "babette", "key": "foo"})
 
         assert_data(
-            self, result, {"searchNotes": [{"name": "babette", "notes": "test foo"}]}
+            self, result, {"searchNotes": [{"id": self.build1.id, "notes": "test foo"}]}
         )
 
     def test_multiple_match(self):
@@ -680,8 +656,8 @@ class SearchNotesQueryTestCase(TestCase):
             result,
             {
                 "searchNotes": [
-                    {"name": "babette", "notes": "test bar"},
-                    {"name": "babette", "notes": "test foo"},
+                    {"id": self.build2.id, "notes": "test bar"},
+                    {"id": self.build1.id, "notes": "test foo"},
                 ]
             },
         )
@@ -696,7 +672,7 @@ class SearchNotesQueryTestCase(TestCase):
         assert_data(
             self,
             result,
-            {"searchNotes": [{"name": "lighthouse", "notes": "test foo"}]},
+            {"searchNotes": [{"id": build.id, "notes": "test foo"}]},
         )
 
     def test_when_named_machine_does_not_exist(self):
@@ -708,8 +684,7 @@ class SearchNotesQueryTestCase(TestCase):
 class WorkingTestCase(TestCase):
     query = """{
         working {
-            name
-            number
+            id
         }
     }
     """
@@ -721,11 +696,7 @@ class WorkingTestCase(TestCase):
 
         result = execute(self.query)
 
-        assert_data(
-            self,
-            result,
-            {"working": [{"name": working.id.name, "number": working.id.number}]},
-        )
+        assert_data(self, result, {"working": [{"id": working.id}]})
 
 
 class VersionTestCase(TestCase):

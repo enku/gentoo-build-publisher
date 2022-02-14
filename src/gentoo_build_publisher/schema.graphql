@@ -1,10 +1,5 @@
 scalar DateTime
 
-input BuildInput {
-  name: String!
-  number: Int!
-}
-
 type Package {
    cpv: String!
    repo: String!
@@ -13,8 +8,8 @@ type Package {
 }
 
 type Build {
-  name: String!
-  number: Int!
+  id: ID!
+  machine: String!
   submitted: DateTime!
   completed: DateTime
   published: Boolean
@@ -52,9 +47,9 @@ type DiffStat {
 }
 
 type Query {
-  build(name: String!, number: Int!): Build
+  build(id: ID!): Build
   builds(name: String!): [Build!]!
-  diff(left: BuildInput!, right: BuildInput!): DiffStat
+  diff(left: ID!, right: ID!): DiffStat
   latest(name: String!): Build
   machines: [MachineSummary!]!
   searchNotes(name: String!, key: String!): [Build!]!
@@ -63,10 +58,10 @@ type Query {
 }
 
 type Mutation {
-  publish(name: String!, number: Int!): MachineSummary
-  pull(name: String!, number: Int!): MachineSummary
+  publish(id: ID!): MachineSummary
+  pull(id: ID!): MachineSummary
   scheduleBuild(name: String!): String
-  keepBuild(name: String!, number: Int!): Build
-  releaseBuild(name: String!, number: Int!): Build
-  createNote(name: String!, number: Int!, note: String): Build
+  keepBuild(id: ID!): Build
+  releaseBuild(id: ID!): Build
+  createNote(id: ID!, note: String): Build
 }
