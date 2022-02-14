@@ -251,24 +251,6 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         return [Build(record) for record in records]
 
 
-def diff_notes(left: Build, right: Build, header: str = "") -> str:
-    """Return package diff as a string of notes
-
-    If there are no changes, return an empty string
-    """
-    changeset = [
-        item for item in Build.diff_binpkgs(left, right) if item.status.is_a_build()
-    ]
-    changeset.sort(key=lambda i: i.item)
-
-    note = "\n".join(f"* {i.item}" for i in changeset)
-
-    if note and header:
-        note = f"{header}\n{note}"
-
-    return note
-
-
 def gbp_metadata(
     jenkins_metadata: JenkinsMetadata, packages: list[Package]
 ) -> GBPMetadata:
