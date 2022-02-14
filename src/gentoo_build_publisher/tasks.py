@@ -55,7 +55,7 @@ def pull_build(self, build_id: str) -> None:
 
         self.retry(exc=error)
 
-        return
+        return  # pragma: no cover
 
     if Settings.from_environ().ENABLE_PURGE:
         purge_build.delay(build.id.name)
