@@ -63,10 +63,6 @@ class Status(Enum):
     CHANGED = 0
     ADDED = 1
 
-    def is_a_build(self):
-        """Return true if this is a "build" change"""
-        return self is not Status.REMOVED
-
 
 @dataclass(frozen=True)
 class Change:
