@@ -5,7 +5,6 @@ import logging
 import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
-from pathlib import Path
 from typing import Iterator, Optional
 
 from yarl import URL
@@ -14,7 +13,6 @@ from gentoo_build_publisher import io
 from gentoo_build_publisher.build import (
     BuildID,
     Change,
-    Content,
     GBPMetadata,
     Package,
     PackageMetadata,
@@ -159,10 +157,6 @@ class Build:
     def get_packages(self) -> list[Package]:
         """Return the list of packages for this build"""
         return self.storage.get_packages(self.id)
-
-    def get_path(self, item: Content) -> Path:
-        """Return the path of the content type for this Build's storage"""
-        return self.storage.get_path(self.id, item)
 
     @staticmethod
     def schedule_build(name: str) -> str:
