@@ -239,3 +239,6 @@ class BuildDBTestCase(TestCase):
         self.assertEqual(BuildDB.count(), 3)
         self.assertEqual(BuildDB.count("lighthouse"), 1)
         self.assertEqual(BuildDB.count("bogus"), 0)
+
+    def test_repr_buildrecord(self):
+        self.assertEqual(repr(self.record), f"BuildRecord(build_id='{self.record.id}')")
