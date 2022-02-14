@@ -7,11 +7,11 @@ from unittest import mock
 from django.test.client import Client
 
 from gentoo_build_publisher.build import Content
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import Build
 from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry
-from .factories import BuildManFactory, BuildModelFactory
+from .factories import BuildFactory, BuildModelFactory
 
 
 def execute(query, variables=None):
@@ -33,7 +33,7 @@ class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
     def test(self):
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.pull()
         query = """query Build($name: String!, $number: Int!) {
             build(name: $name, number: $number) {
@@ -70,7 +70,7 @@ class BuildQueryTestCase(TestCase):
 
     def test_packages(self):
         # given the pulled build with packages
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.pull()
 
         # when we query the build's packages
@@ -86,7 +86,7 @@ class BuildQueryTestCase(TestCase):
 
     def test_packages_when_not_pulled_returns_none(self):
         # given the unpulled package
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
 
         # when we query the build's packages
         query = """query Build($name: String!, $number: Int!) {
@@ -101,7 +101,7 @@ class BuildQueryTestCase(TestCase):
 
     def test_packages_should_return_none_when_package_index_missing(self):
         # given the pulled build with index file missing
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.pull()
         (build.storage.get_path(build.id, Content.BINPKGS) / "Packages").unlink()
 
@@ -118,7 +118,7 @@ class BuildQueryTestCase(TestCase):
 
     def test_packagesbuild_should_return_error_when_gbpjson_missing(self):
         # given the pulled build with gbp.json missing
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.pull()
         (build.storage.get_path(build.id, Content.BINPKGS) / "gbp.json").unlink()
 
@@ -150,7 +150,7 @@ class BuildsQueryTestCase(TestCase):
 
     def test(self):
         now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.timezone.utc)
-        builds = BuildManFactory.create_batch(3, build_attr__completed=now)
+        builds = BuildFactory.create_batch(3, build_attr__completed=now)
         builds.sort(key=lambda build: build.id.number, reverse=True)
         query = """query Builds($name: String!) {
             builds(name: $name) {
@@ -217,13 +217,13 @@ class DiffQueryTestCase(TestCase):
         super().setUp()
 
         # Given the first build with tar-1.34
-        self.left_bm = BuildManFactory.create()
+        self.left_bm = BuildFactory.create()
         binpkgs = self.left_bm.storage.get_path(self.left_bm.id, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
-        self.right_bm = BuildManFactory.create()
+        self.right_bm = BuildFactory.create()
         binpkgs = self.right_bm.storage.get_path(self.right_bm.id, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
@@ -354,16 +354,16 @@ class MachinesQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self):
-        babette_builds = BuildManFactory.create_batch(
+        babette_builds = BuildFactory.create_batch(
             3, build_attr__build_id__name="babette"
         )
-        lighthouse_builds = BuildManFactory.create_batch(
+        lighthouse_builds = BuildFactory.create_batch(
             3, build_attr__build_id__name="lighthouse"
         )
 
         # publish a build
-        buildman = babette_builds[-1]
-        buildman.publish()
+        build = babette_builds[-1]
+        build.publish()
 
         query = """{
             machines {
@@ -389,7 +389,7 @@ class MachinesQueryTestCase(TestCase):
                 "buildCount": 3,
                 "builds": [{"number": i.id.number} for i in reversed(babette_builds)],
                 "latestBuild": {"name": "babette"},
-                "publishedBuild": {"number": buildman.id.number},
+                "publishedBuild": {"number": build.id.number},
             },
             {
                 "name": "lighthouse",
@@ -406,8 +406,8 @@ class MachinesQueryTestCase(TestCase):
     def test_only_name(self):
         # basically test that only selecting the name doesn't query other infos
         # (coverage.py)
-        BuildManFactory.create_batch(2, build_attr__build_id__name="babette")
-        BuildManFactory.create_batch(3, build_attr__build_id__name="lighthouse")
+        BuildFactory.create_batch(2, build_attr__build_id__name="babette")
+        BuildFactory.create_batch(3, build_attr__build_id__name="lighthouse")
 
         query = """{
             machines {
@@ -426,7 +426,7 @@ class PublishMutationTestCase(TestCase):
 
     def test_publish_when_pulled(self):
         """Should publish builds"""
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.pull()
 
         query = """mutation Publish($name: String!, $number: Int!) {
@@ -466,7 +466,7 @@ class PullMutationTestCase(TestCase):
 
     def test(self):
         """Should publish builds"""
-        build = BuildManFactory()
+        build = BuildFactory()
 
         query = """mutation Pull ($name: String!, $number: Int!) {
             pull(name: $name, number: $number) {
@@ -491,7 +491,7 @@ class ScheduleBuildMutationTestCase(TestCase):
 
     def test(self):
         query = 'mutation { scheduleBuild(name: "babette") }'
-        schedule_build_path = "gentoo_build_publisher.graphql.BuildMan.schedule_build"
+        schedule_build_path = "gentoo_build_publisher.graphql.Build.schedule_build"
         with mock.patch(schedule_build_path) as mock_schedule_build:
             mock_schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
@@ -506,7 +506,7 @@ class ScheduleBuildMutationTestCase(TestCase):
 
     def test_should_return_error_when_schedule_build_fails(self):
         query = 'mutation { scheduleBuild(name: "babette") }'
-        schedule_build_path = "gentoo_build_publisher.graphql.BuildMan.schedule_build"
+        schedule_build_path = "gentoo_build_publisher.graphql.Build.schedule_build"
         with mock.patch(schedule_build_path) as mock_schedule_build:
             mock_schedule_build.side_effect = Exception("The end is near")
             result = execute(query)
@@ -559,7 +559,7 @@ class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self):
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
         build.record.keep = True
         build.save_record()
         query = """mutation ReleaseBuild($name: String!, $number: Int!) {
@@ -611,7 +611,7 @@ class CreateNoteMutationTestCase(TestCase):
         self.assertEqual(model.buildnote.note, note_text)
 
     def test_set_none(self):
-        build = BuildManFactory.create(build_attr__note="Hello world")
+        build = BuildFactory.create(build_attr__note="Hello world")
         query = """mutation CreateNote($name: String!, $number: Int!, $note: String) {
            createNote(name: $name, number: $number, note: $note) {
                 notes
@@ -626,7 +626,7 @@ class CreateNoteMutationTestCase(TestCase):
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
-        build = BuildMan(build.id)
+        build = Build(build.id)
         self.assertEqual(build.record.note, None)
 
     def test_should_return_none_when_build_doesnt_exist(self):
@@ -658,10 +658,10 @@ class SearchNotesQueryTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        build1 = BuildManFactory.create()
+        build1 = BuildFactory.create()
         build1.record.note = "test foo"
         build1.save_record()
-        build2 = BuildManFactory.create()
+        build2 = BuildFactory.create()
         build2.record.note = "test bar"
         build2.save_record()
 
@@ -687,7 +687,7 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
     def test_only_matches_given_machine(self):
-        build = BuildManFactory(build_attr__build_id__name="lighthouse")
+        build = BuildFactory(build_attr__build_id__name="lighthouse")
         build.record.note = "test foo"
         build.save_record()
 
@@ -715,9 +715,9 @@ class WorkingTestCase(TestCase):
     """
 
     def test(self):
-        BuildManFactory.create().pull()
-        BuildManFactory.create(build_attr__build_id__name="lighthouse").pull()
-        working = BuildManFactory.create()
+        BuildFactory.create().pull()
+        BuildFactory.create(build_attr__build_id__name="lighthouse").pull()
+        working = BuildFactory.create()
 
         result = execute(self.query)
 

@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildRecord
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import Build
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -54,11 +54,11 @@ class BuildRecordFactory(factory.Factory):
     keep = False
 
 
-class BuildManFactory(factory.Factory):
-    """BuildMan factory"""
+class BuildFactory(factory.Factory):
+    """Build factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
-        model = BuildMan
+        model = Build
         rename = {"build_attr": "build"}
 
     build_attr = factory.SubFactory(BuildRecordFactory)
@@ -70,12 +70,12 @@ class BuildManFactory(factory.Factory):
     )
 
     @classmethod
-    def create(cls, *args, **kwargs) -> BuildMan:
-        build_man = super().create(*args, **kwargs)
+    def create(cls, *args, **kwargs) -> Build:
+        build = super().create(*args, **kwargs)
 
-        if not build_man.record:
-            build_man.record = BuildRecordFactory.create(build_id=build_man.id)
+        if not build.record:
+            build.record = BuildRecordFactory.create(build_id=build.id)
 
-        build_man.save_record()
+        build.save_record()
 
-        return build_man
+        return build

@@ -8,7 +8,7 @@ from requests import HTTPError
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import Build
 from gentoo_build_publisher.tasks import (
     delete_build,
     publish_build,
@@ -28,8 +28,8 @@ class PublishBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             result = publish_build.s("babette", 193).apply()
 
-        buildman = BuildMan(BuildID("babette.193"))
-        self.assertIs(buildman.published(), True)
+        build = Build(BuildID("babette.193"))
+        self.assertIs(build.published(), True)
         self.assertIs(result.result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
@@ -48,7 +48,7 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_build task"""
 
-    @mock.patch("gentoo_build_publisher.tasks.BuildMan.purge")
+    @mock.patch("gentoo_build_publisher.tasks.Build.purge")
     def test(self, purge_mock):
         purge_build.s("foo").apply()
 
@@ -64,8 +64,8 @@ class PullBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             pull_build.s("lima", 1012).apply()
 
-        buildman = BuildMan(BuildID("lima.1012"))
-        self.assertIs(buildman.pulled(), True)
+        build = Build(BuildID("lima.1012"))
+        self.assertIs(build.pulled(), True)
 
     @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
     def test_calls_purge_build(self):
@@ -116,9 +116,9 @@ class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
     def test_should_delete_the_build(self):
-        with mock.patch("gentoo_build_publisher.tasks.BuildMan") as buildman_mock:
+        with mock.patch("gentoo_build_publisher.tasks.Build") as build_mock:
             delete_build.s("zulu", 56).apply()
 
-        buildman_mock.assert_called_once_with("zulu.56")
-        task_buildman = buildman_mock.return_value
-        task_buildman.delete.assert_called_once_with()
+        build_mock.assert_called_once_with("zulu.56")
+        task_build = build_mock.return_value
+        task_build.delete.assert_called_once_with()

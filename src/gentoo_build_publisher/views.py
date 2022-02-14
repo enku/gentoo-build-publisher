@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.build import GBPMetadata, Package
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan, MachineInfo
+from gentoo_build_publisher.managers import Build, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -29,7 +29,7 @@ class DashboardContext(TypedDict):
     build_count: int
 
     # Builds not yet completed
-    builds_to_do: list[BuildMan]
+    builds_to_do: list[Build]
 
     # Each machine gets it's own #rrggbb color
     machine_colors: list[str]
@@ -51,10 +51,10 @@ class DashboardContext(TypedDict):
     total_package_size: defaultdict[str, int]
 
     # List of the latest builds for each machine, if the machine has one
-    latest_builds: list[BuildMan]
+    latest_builds: list[Build]
 
     # List of builds from the last 24 hours
-    built_recently: list[BuildMan]
+    built_recently: list[Build]
 
     builds_over_time: list[list[int]]
 
@@ -62,7 +62,7 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
-def get_packages(build: BuildMan) -> list[Package]:
+def get_packages(build: Build) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
     This call may be cached for performance.
@@ -122,30 +122,30 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     return latest_builds, built_recently, build_packages
 
 
-def package_metadata(buildman: BuildMan, context: DashboardContext):
+def package_metadata(build: Build, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
 
     try:
-        metadata = buildman.storage.get_metadata(buildman.id)
+        metadata = build.storage.get_metadata(build.id)
     except LookupError:
         metadata = None
 
-    if metadata and buildman.record:
+    if metadata and build.record:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][buildman.id.name] += metadata.packages.size
+        context["total_package_size"][build.id.name] += metadata.packages.size
 
-        if lapsed(buildman.record.submitted, context["now"]) < 86400:
+        if lapsed(build.record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
                 if (
                     package.cpv in context["recent_packages"]
                     or len(context["recent_packages"]) < 12
                 ):
-                    context["recent_packages"][package.cpv].add(buildman.id.name)
+                    context["recent_packages"][package.cpv].add(build.id.name)
     else:
-        packages = get_packages(buildman)
+        packages = get_packages(build)
         context["package_count"] += len(packages)
-        context["total_package_size"][buildman.id.name] += sum(i.size for i in packages)
+        context["total_package_size"][build.id.name] += sum(i.size for i in packages)
 
 
 def dashboard(request: HttpRequest) -> HttpResponse:
@@ -181,12 +181,12 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     }
 
     for record in BuildDB.get_records():
-        buildman = BuildMan(record)
-        package_metadata(buildman, context)
+        build = Build(record)
+        package_metadata(build, context)
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][buildman.id.name] += 1
+            builds_over_time[day_submitted][build.id.name] += 1
 
     (
         context["latest_builds"],
@@ -197,7 +197,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         [build for build in context["latest_builds"] if not build.published()]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
-    context["builds_to_do"] = [BuildMan(i) for i in BuildDB.get_records(completed=None)]
+    context["builds_to_do"] = [Build(i) for i in BuildDB.get_records(completed=None)]
 
     # https://stackoverflow.com/questions/4764110/django-template-cant-loop-defaultdict
     context["recent_packages"].default_factory = None

@@ -106,7 +106,7 @@ class BuildModelChangeViewTestCase(TestCase):
             "buildnote-INITIAL_FORMS": "0",
         }
         with mock.patch(
-            "gentoo_build_publisher.managers.BuildMan.publish"
+            "gentoo_build_publisher.managers.Build.publish"
         ) as mock_publish:
             client.post(url, post_data)
 

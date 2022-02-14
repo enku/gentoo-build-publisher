@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow
 
 
-class BuildMan:
+class Build:
     """Pulls a build's db, jenkins and storage all together"""
 
     def __init__(
@@ -176,17 +176,17 @@ class BuildMan:
 
         for record in purger.purge():  # type: BuildRecord
             if not record.keep:
-                buildman = cls(record)
-                if not buildman.published():
-                    buildman.delete()
+                build = cls(record)
+                if not build.published():
+                    build.delete()
 
     @classmethod
-    def search_notes(cls, machine: str, key: str) -> Iterator[BuildMan]:
+    def search_notes(cls, machine: str, key: str) -> Iterator[Build]:
         """search notes for given machine"""
         return (cls(record) for record in BuildDB.search_notes(machine, key))
 
     @staticmethod
-    def diff_binpkgs(left: BuildMan, right: BuildMan) -> Iterator[Change]:
+    def diff_binpkgs(left: Build, right: Build) -> Iterator[Change]:
         """Compare two package's binpkgs and generate the differences"""
         if left == right:
             return
@@ -219,8 +219,8 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
         name: str
         build_count: int
-        latest_build: Optional[BuildMan]
-        published: Optional[BuildMan]
+        latest_build: Optional[Build]
+        published: Optional[Build]
     """
 
     def __init__(self, machine_name: str):
@@ -231,34 +231,34 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
             current_build = latest_build.id.number
 
             while current_build:
-                buildman = BuildMan(BuildID(f"{machine_name}.{current_build}"))
-                if buildman.published():
-                    published = buildman
+                build = Build(BuildID(f"{machine_name}.{current_build}"))
+                if build.published():
+                    published = build
                     break
 
                 current_build -= 1
 
         self.name: str = machine_name
         self.build_count: int = BuildDB.count(machine_name)
-        self.latest_build: Optional[BuildMan] = (
-            BuildMan(latest_build.id) if latest_build else None
+        self.latest_build: Optional[Build] = (
+            Build(latest_build.id) if latest_build else None
         )
-        self.published: Optional[BuildMan] = published
+        self.published: Optional[Build] = published
 
-    def builds(self) -> list[BuildMan]:
+    def builds(self) -> list[Build]:
         """Return the builds for the given machine"""
         records = BuildDB.get_records(name=self.name)
 
-        return [BuildMan(record) for record in records]
+        return [Build(record) for record in records]
 
 
-def diff_notes(left: BuildMan, right: BuildMan, header: str = "") -> str:
+def diff_notes(left: Build, right: Build, header: str = "") -> str:
     """Return package diff as a string of notes
 
     If there are no changes, return an empty string
     """
     changeset = [
-        item for item in BuildMan.diff_binpkgs(left, right) if item.status.is_a_build()
+        item for item in Build.diff_binpkgs(left, right) if item.status.is_a_build()
     ]
     changeset.sort(key=lambda i: i.item)
 

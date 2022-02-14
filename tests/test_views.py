@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.build import Content
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan, MachineInfo
+from gentoo_build_publisher.managers import Build, MachineInfo
 from gentoo_build_publisher.views import (
     get_build_summary,
     get_packages,
@@ -15,36 +15,36 @@ from gentoo_build_publisher.views import (
 )
 
 from . import TestCase
-from .factories import BuildManFactory, BuildModelFactory
+from .factories import BuildFactory, BuildModelFactory
 
 
 def buncha_builds(
     machines: list[str], end_date, num_days: int, per_day: int
-) -> defaultdict[str, list[BuildMan]]:
-    buildmans = defaultdict(list)
+) -> defaultdict[str, list[Build]]:
+    buildmap = defaultdict(list)
 
     for i in reversed(range(num_days)):
         day = end_date - dt.timedelta(days=i)
         for name in machines:
             model = BuildModelFactory.create(name=name, submitted=day)
-            builds = BuildManFactory.create_batch(
+            builds = BuildFactory.create_batch(
                 per_day,
                 build_attr=BuildDB.model_to_record(model),
             )
-            buildmans[name].extend(builds)
-    return buildmans
+            buildmap[name].extend(builds)
+    return buildmap
 
 
 class GetPackagesTestCase(TestCase):
-    """This is just cached BuildMan.get_packages()"""
+    """This is just cached Build.get_packages()"""
 
     def test(self):
-        buildman = BuildManFactory.create()
-        buildman.pull()
+        build = BuildFactory.create()
+        build.pull()
 
-        packages = get_packages(buildman)
+        packages = get_packages(build)
 
-        self.assertEqual(packages, buildman.get_packages())
+        self.assertEqual(packages, build.get_packages())
 
 
 class GetBuildSummaryTestCase(TestCase):
@@ -84,8 +84,8 @@ class GetBuildSummaryTestCase(TestCase):
 class PackageMetadataTestCase(TestCase):
     def test(self):
         now = timezone.now()
-        buildman = BuildManFactory.create()
-        buildman.pull()
+        build = BuildFactory.create()
+        build.pull()
         context = {
             "now": now,
             "package_count": 0,
@@ -93,7 +93,7 @@ class PackageMetadataTestCase(TestCase):
             "recent_packages": defaultdict(set),
             "total_package_size": defaultdict(int),
         }
-        package_metadata(buildman, context)
+        package_metadata(build, context)
 
         expected = {
             "now": now,

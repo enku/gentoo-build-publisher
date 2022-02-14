@@ -18,7 +18,7 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage, quick_check
 
 from . import PACKAGE_INDEX, MockJenkins, TestCase
-from .factories import BuildManFactory
+from .factories import BuildFactory
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
@@ -94,7 +94,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
     def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
         # Given the extractable build
-        build = BuildManFactory.create()
+        build = BuildFactory.create()
 
         # When when one of the target paths already exist
         path = build.storage.get_path(build.id, Content.BINPKGS)
@@ -287,7 +287,7 @@ class StorageGetPackagesTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build = BuildManFactory.create()
+        self.build = BuildFactory.create()
         self.build.pull()
         self.storage = self.build.storage
 
@@ -317,7 +317,7 @@ class StorageGetMetadataTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build = BuildManFactory.create()
+        self.build = BuildFactory.create()
         self.build.pull()
         self.storage = self.build.storage
 
@@ -375,7 +375,7 @@ class StorageSetMetadataTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.build = BuildManFactory.create()
+        self.build = BuildFactory.create()
         self.build.pull()
         self.storage = self.build.storage
         self.path = self.storage.get_path(self.build.id, Content.BINPKGS) / "gbp.json"

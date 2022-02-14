@@ -7,7 +7,7 @@ from celery import shared_task
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import BuildMan
+from gentoo_build_publisher.managers import Build
 from gentoo_build_publisher.settings import Settings
 
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
@@ -29,8 +29,8 @@ def publish_build(name: str, number: int):
         logger.error("Build %s failed to pull. Not publishing", f"{name}.{number}")
         return False
 
-    buildman = BuildMan(BuildID.create(name, number))
-    buildman.publish()
+    build = Build(BuildID.create(name, number))
+    build.publish()
 
     return True
 
@@ -39,14 +39,14 @@ def publish_build(name: str, number: int):
 def pull_build(self, name: str, number: int) -> None:
     """Pull the build into storage"""
     build_id = BuildID.create(name, number)
-    buildman = BuildMan(build_id)
+    build = Build(build_id)
 
     try:
-        buildman.pull()
+        build.pull()
     except PULL_RETRYABLE_EXCEPTIONS as error:
-        logger.exception("Failed to pull build %s", buildman.id)
-        if buildman.record:
-            BuildDB.delete(buildman.id)
+        logger.exception("Failed to pull build %s", build.id)
+        if build.record:
+            BuildDB.delete(build.id)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
@@ -65,14 +65,14 @@ def pull_build(self, name: str, number: int) -> None:
 @shared_task
 def purge_build(build_name: str):
     """Purge old builds for build_name"""
-    BuildMan.purge(build_name)
+    Build.purge(build_name)
 
 
 @shared_task
 def delete_build(name: str, number: int):
     """Delete the given build from the db"""
-    buildman = BuildMan(BuildID.create(name, number))
-    logger.info("Deleting build: %s", buildman.id)
+    build = Build(BuildID.create(name, number))
+    logger.info("Deleting build: %s", build.id)
 
-    buildman.delete()
-    logger.info("Deleted build: %s", buildman.id)
+    build.delete()
+    logger.info("Deleted build: %s", build.id)
