@@ -33,11 +33,11 @@ class BuildRecord:
     """A Build record from the database"""
 
     build_id: InitVar[BuildID]
-    note: str | None
-    logs: str | None
-    keep: bool
-    submitted: dt.datetime
-    completed: dt.datetime | None
+    note: str | None = None
+    logs: str | None = None
+    keep: bool = False
+    submitted: dt.datetime | None = None
+    completed: dt.datetime | None = None
 
     def __post_init__(self, build_id: BuildID):
         self._build_id = build_id
@@ -75,31 +75,28 @@ class BuildDB:
     @staticmethod
     def model_to_record(model: BuildModel) -> BuildRecord:
         """Convert BuildModel to BuildRecord"""
+        build_id = BuildID(f"{model.name}.{model.number}")
+        record = BuildRecord(
+            build_id, submitted=model.submitted, completed=model.completed
+        )
         try:
-            note: str | None = model.buildnote.note
+            record.note = model.buildnote.note
         except BuildNote.DoesNotExist:
-            note = None
+            pass
 
         try:
-            logs: str | None = model.buildlog.logs
+            record.logs = model.buildlog.logs
         except BuildLog.DoesNotExist:
-            logs = None
+            pass
 
         try:
             model.keptbuild
         except KeptBuild.DoesNotExist:
-            keep = False
+            pass
         else:
-            keep = True
+            record.keep = True
 
-        return BuildRecord(
-            build_id=BuildID(f"{model.name}.{model.number}"),
-            note=note,
-            logs=logs,
-            keep=keep,
-            submitted=model.submitted,
-            completed=model.completed,
-        )
+        return record
 
     @staticmethod
     def save(build_record: BuildRecord) -> BuildModel:
@@ -134,6 +131,13 @@ class BuildDB:
     def delete(build_id: BuildID) -> None:
         """Delete this Build from the db"""
         BuildModel.objects.filter(name=build_id.name, number=build_id.number).delete()
+
+    @staticmethod
+    def exists(build_id: BuildID) -> bool:
+        """Return True iff a record of the build exists in the database"""
+        return BuildModel.objects.filter(
+            name=build_id.name, number=build_id.number
+        ).exists()
 
     @classmethod
     def get_records(cls, **filters) -> Iterator[BuildRecord]:

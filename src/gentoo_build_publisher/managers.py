@@ -42,21 +42,17 @@ class Build:
     ):
         self.db = BuildDB  # pylint: disable=invalid-name
 
-        match build:
-            case BuildRecord():
-                self.id = build.id  # pylint: disable=invalid-name
-                self.record = build
-            case BuildID():
-                self.id = build
-                try:
-                    self.record = self.db.get(build)
-                except BuildDB.NotFound:
-                    self.record = None
-            case _:
-                raise TypeError(
-                    "build argument must be one of [BuildID, BuildRecord]."
-                    f" Got {type(build).__name__}."
-                )
+        if isinstance(build, BuildID):
+            self.id = build  # pylint: disable=invalid-name
+            self._record = None  # fetch lazily
+        elif isinstance(build, BuildRecord):
+            self.id = build.id
+            self._record = build
+        else:
+            raise TypeError(
+                "build argument must be one of [BuildID, BuildRecord]."
+                f" Got {type(build).__name__}."
+            )
 
         if jenkins is None:
             self.jenkins = Jenkins.from_settings(Settings.from_environ())
@@ -67,6 +63,24 @@ class Build:
             self.storage = Storage.from_settings(Settings.from_environ())
         else:
             self.storage = storage
+
+    @property
+    def record(self) -> BuildRecord:
+        """Return BuildRecord for this build.
+
+        If we already have one, return it.
+        Otherwise if a record exists in the BuildDB, get it from the BuildDB.
+        Otherwize create an "empty" record.
+        """
+        if record := self._record:
+            return record
+
+        try:
+            self._record = self.db.get(self.id)
+        except BuildDB.NotFound:
+            self._record = BuildRecord(self.id)
+
+        return self._record
 
     def publish(self):
         """Publish the build"""
@@ -84,16 +98,7 @@ class Build:
         if self.pulled():
             return
 
-        if not self.record:
-            self.record = BuildRecord(
-                self.id,
-                note=None,
-                logs=None,
-                keep=False,
-                submitted=utcnow().replace(tzinfo=timezone.utc),
-                completed=None,
-            )
-
+        self.record.submitted = utcnow().replace(tzinfo=timezone.utc)
         self.db.save(self.record)
         previous = self.db.previous_build(self.id)
 

@@ -152,7 +152,7 @@ class BuildsQueryTestCase(TestCase):
         now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.timezone.utc)
         builds = BuildFactory.create_batch(3, build_attr__completed=now)
         builds.sort(key=lambda build: build.id.number, reverse=True)
-        query = """query Builds($name: String!) {
+        query = """query ($name: String!) {
             builds(name: $name) {
                 id
                 completed

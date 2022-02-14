@@ -103,13 +103,13 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
     left_build_id = BuildID(left)
     left_build = Build(left_build_id)
 
-    if not left_build.record:
+    if not BuildDB.exists(left_build.id):
         return None
 
     right_build_id = BuildID(right)
     right_build = Build(right_build_id)
 
-    if not right_build.record:
+    if not BuildDB.exists(right_build.id):
         return None
 
     items = Build.diff_binpkgs(left_build, right_build)
@@ -166,7 +166,7 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
     build = Build(build_id)
 
-    if not build.record:
+    if not BuildDB.exists(build.id):
         return None
 
     build.record.keep = True
@@ -180,7 +180,7 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
     build = Build(build_id)
 
-    if not build.record:
+    if not BuildDB.exists(build.id):
         return None
 
     build.record.keep = False
@@ -194,9 +194,9 @@ def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
 ) -> Optional[Build]:
     build_id = BuildID(id)
-    build = Build(build=build_id)
+    build = Build(build_id)
 
-    if not build.record:
+    if not BuildDB.exists(build.id):
         return None
 
     build.record.note = note

@@ -41,7 +41,7 @@ class BuildIDFactory(factory.Factory):
 
 
 class BuildRecordFactory(factory.Factory):
-    """BuildDB Factory"""
+    """BuildRecord Factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         model = BuildRecord
@@ -72,10 +72,6 @@ class BuildFactory(factory.Factory):
     @classmethod
     def create(cls, *args, **kwargs) -> Build:
         build = super().create(*args, **kwargs)
-
-        if not build.record:
-            build.record = BuildRecordFactory.create(build_id=build.id)
-
         build.save_record()
 
         return build
