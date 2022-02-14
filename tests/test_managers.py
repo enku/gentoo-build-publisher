@@ -80,7 +80,7 @@ class BuildTestCase(TestCase):
             number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
         )
 
-        build_id = BuildID.create(build_model.name, build_model.number)
+        build_id = BuildID(f"{build_model.name}.{build_model.number}")
         settings = Settings.from_environ()
         jenkins = MockJenkins.from_settings(settings)
         storage = Storage(self.tmpdir)
