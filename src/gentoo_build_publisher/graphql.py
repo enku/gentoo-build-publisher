@@ -140,14 +140,14 @@ def resolve_mutation_publish(*_, name: str, number: int) -> MachineInfo:
     if build.pulled():
         build.publish()
     else:
-        publish_build.delay(name, number)
+        publish_build.delay(str(build_id))
 
     return MachineInfo(name)
 
 
 @mutation.field("pull")
 def resolve_mutation_pull(*_, name: str, number: int) -> MachineInfo:
-    pull_build.delay(name, number)
+    pull_build.delay(f"{name}.{number}")
     return MachineInfo(name)
 
 

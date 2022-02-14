@@ -21,25 +21,24 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def publish_build(name: str, number: int):
+def publish_build(build_id: str):
     """Publish the build"""
     try:
-        pull_build.apply((name, number), throw=True)
+        pull_build.apply((build_id,), throw=True)
     except PUBLISH_FATAL_EXCEPTIONS:
-        logger.error("Build %s failed to pull. Not publishing", f"{name}.{number}")
+        logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
 
-    build = Build(BuildID.create(name, number))
+    build = Build(BuildID(build_id))
     build.publish()
 
     return True
 
 
 @shared_task(bind=True)
-def pull_build(self, name: str, number: int) -> None:
+def pull_build(self, build_id: str) -> None:
     """Pull the build into storage"""
-    build_id = BuildID.create(name, number)
-    build = Build(build_id)
+    build = Build(BuildID(build_id))
 
     try:
         build.pull()
@@ -59,7 +58,7 @@ def pull_build(self, name: str, number: int) -> None:
         return
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(name)
+        purge_build.delay(build.id.name)
 
 
 @shared_task
@@ -69,10 +68,10 @@ def purge_build(build_name: str):
 
 
 @shared_task
-def delete_build(name: str, number: int):
+def delete_build(build_id: str):
     """Delete the given build from the db"""
-    build = Build(BuildID.create(name, number))
-    logger.info("Deleting build: %s", build.id)
+    build = Build(BuildID(build_id))
+    logger.info("Deleting build: %s", build_id)
 
     build.delete()
-    logger.info("Deleted build: %s", build.id)
+    logger.info("Deleted build: %s", build_id)

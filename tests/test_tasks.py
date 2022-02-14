@@ -26,7 +26,7 @@ class PublishBuildTestCase(TestCase):
     def test_publishes_build(self):
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            result = publish_build.s("babette", 193).apply()
+            result = publish_build.s("babette.193").apply()
 
         build = Build(BuildID("babette.193"))
         self.assertIs(build.published(), True)
@@ -36,7 +36,7 @@ class PublishBuildTestCase(TestCase):
     def test_should_give_up_when_publish_raises_httperror(self, log_error_mock):
         with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
             apply_mock.side_effect = HTTPError
-            result = publish_build.s("babette", 193).apply()
+            result = publish_build.s("babette.193").apply()
 
         self.assertIs(result.result, False)
 
@@ -62,7 +62,7 @@ class PullBuildTestCase(TestCase):
     def test_pulls_build(self):
         """Should actually pull the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
-            pull_build.s("lima", 1012).apply()
+            pull_build.s("lima.1012").apply()
 
         build = Build(BuildID("lima.1012"))
         self.assertIs(build.pulled(), True)
@@ -72,7 +72,7 @@ class PullBuildTestCase(TestCase):
         """Should issue the purge_build task when setting is true"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                pull_build.s("charlie", 197).apply()
+                pull_build.s("charlie.197").apply()
 
         mock_purge_build.delay.assert_called_with("charlie")
 
@@ -81,7 +81,7 @@ class PullBuildTestCase(TestCase):
         """Should not issue the purge_build task when setting is false"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                pull_build.s("delta", 424).apply()
+                pull_build.s("delta.424").apply()
 
         mock_purge_build.delay.assert_not_called()
 
@@ -91,7 +91,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.managers.Jenkins.download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = HTTPError
-            pull_build.s("oscar", 197).apply()
+            pull_build.s("oscar.197").apply()
 
         with self.assertRaises(BuildDB.NotFound):
             BuildDB.get(BuildID("oscar.197"))
@@ -107,7 +107,7 @@ class PullBuildTestCase(TestCase):
             download_artifact_mock.side_effect = error
 
             with mock.patch.object(pull_build, "retry") as retry_mock:
-                pull_build.s("tango", 197).apply()
+                pull_build.s("tango.197").apply()
 
         retry_mock.assert_not_called()
 
@@ -117,7 +117,7 @@ class DeleteBuildTestCase(TestCase):
 
     def test_should_delete_the_build(self):
         with mock.patch("gentoo_build_publisher.tasks.Build") as build_mock:
-            delete_build.s("zulu", 56).apply()
+            delete_build.s("zulu.56").apply()
 
         build_mock.assert_called_once_with("zulu.56")
         task_build = build_mock.return_value

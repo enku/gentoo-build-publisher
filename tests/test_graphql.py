@@ -458,7 +458,7 @@ class PublishMutationTestCase(TestCase):
         ) as publish_delay:
             execute(query)
 
-        publish_delay.assert_called_once_with("babette", 193)
+        publish_delay.assert_called_once_with("babette.193")
 
 
 class PullMutationTestCase(TestCase):
@@ -481,7 +481,7 @@ class PullMutationTestCase(TestCase):
             )
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_pull.delay.assert_called_once_with(build.id.name, build.id.number)
+        mock_pull.delay.assert_called_once_with(str(build.id))
 
 
 class ScheduleBuildMutationTestCase(TestCase):
