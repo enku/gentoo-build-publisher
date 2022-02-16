@@ -28,7 +28,23 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 class TestCase(django.test.TestCase):
     def setUp(self):
+        # Don't import Build until Django is initialized
+        # pylint: disable=import-outside-toplevel
+        from gentoo_build_publisher.managers import Build
+
         super().setUp()
+
+        # Remove Build's "global" settings so that it will re-instantiate them on each
+        # init
+        try:
+            del Build.jenkins
+        except AttributeError:
+            pass
+
+        try:
+            del Build.storage
+        except AttributeError:
+            pass
 
         tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.addCleanup(tmpdir.cleanup)

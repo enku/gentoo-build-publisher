@@ -31,6 +31,9 @@ utcnow = datetime.utcnow
 class Build:
     """Pulls a build's db, jenkins and storage all together"""
 
+    jenkins: Jenkins
+    storage: Storage
+
     def __init__(
         self,
         build: BuildID | BuildRecord,
@@ -53,12 +56,12 @@ class Build:
             )
 
         if jenkins is None:
-            self.jenkins = Jenkins.from_settings(Settings.from_environ())
+            self.jenkins = self.environ_jenkins
         else:
             self.jenkins = jenkins
 
         if storage is None:
-            self.storage = Storage.from_settings(Settings.from_environ())
+            self.storage = self.environ_storage
         else:
             self.storage = storage
 
@@ -153,6 +156,26 @@ class Build:
     def logs_url(self) -> URL:
         """Return the Jenkins logs url for this Build"""
         return self.jenkins.logs_url(self.id)
+
+    @property
+    def environ_jenkins(self) -> Jenkins:
+        """Get or create Jenkins configured from environment variables"""
+        cls = type(self)
+
+        if not hasattr(cls, "jenkins"):
+            cls.jenkins = Jenkins.from_settings(Settings.from_environ())
+
+        return cls.jenkins
+
+    @property
+    def environ_storage(self) -> Storage:
+        """Get or create Storage configured from environment variables"""
+        cls = type(self)
+
+        if not hasattr(cls, "storage"):
+            cls.storage = Storage.from_settings(Settings.from_environ())
+
+        return cls.storage
 
     def get_packages(self) -> list[Package]:
         """Return the list of packages for this build"""
