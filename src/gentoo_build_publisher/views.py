@@ -72,7 +72,7 @@ def get_packages(build_id: BuildID) -> list[Package]:
 
     try:
         return cache.get_or_set(
-            cache_key, build_publisher.get_packages(build_id), timeout=None
+            cache_key, lambda: build_publisher.get_packages(build_id), timeout=None
         )
     except LookupError:
         return []
