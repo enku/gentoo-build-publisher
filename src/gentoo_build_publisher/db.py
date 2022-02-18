@@ -14,19 +14,6 @@ T = TypeVar("T", bound="BuildDB")  # pylint: disable=invalid-name
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 
-ATTR_TO_1TO1 = {
-    "keep": (KeptBuild, []),
-    "logs": (BuildLog, ["logs"]),
-    "note": (BuildNote, ["note"]),
-    #  ^        ^           ^
-    #  |        |           |
-    #  |        |           + Fields to pass to the model's .upsert() method
-    #  |        |
-    #  |        +  Corresponding Django db model
-    #  |
-    #  + BuildDB attribute name
-}
-
 
 @dataclass
 class BuildRecord:
@@ -119,14 +106,9 @@ class BuildDB:
 
         model.save()
 
-        for attr, (related_model, fields) in ATTR_TO_1TO1.items():
-            if getattr(build_record, attr):
-                #  bug with pylint: disable=no-member
-                related_model.upsert(
-                    model, *[getattr(build_record, field) for field in fields]
-                )
-            else:
-                related_model.remove(model)  # bug with pylint: disable=no-member
+        KeptBuild.update(model, build_record.keep)
+        BuildLog.update(model, build_record.logs)
+        BuildNote.update(model, build_record.note)
 
         return model
 

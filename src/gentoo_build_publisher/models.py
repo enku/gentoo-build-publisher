@@ -3,11 +3,7 @@ Django models for Gentoo Build Publisher
 """
 from __future__ import annotations
 
-from typing import Type, TypeVar
-
 from django.db import models
-
-T = TypeVar("T", bound=models.Model)  # pylint: disable=invalid-name
 
 
 class BuildModel(models.Model):
@@ -68,22 +64,12 @@ class KeptBuild(models.Model):
             return False
 
     @classmethod
-    def upsert(cls: Type[T], build_model: BuildModel) -> T:
-        """Get or create a KeptBuild for the given build_model
-
-        Return the KeptBuild instance.
-        """
-        return upsert_1to1(cls, build_model)
-
-    @classmethod
-    def remove(cls, build_model: BuildModel) -> bool:
-        """Delete KeptBuild for build_model.
-
-        Returns True if KeptBuild was deleted.
-
-        Returns False if there was no KeptBuild to delete.
-        """
-        return remove_1to1(cls, build_model)
+    def update(cls, build_model: BuildModel, keep: bool) -> None:
+        """Get or create a KeptBuild for the given build_model"""
+        if keep:
+            cls.objects.get_or_create(build_model=build_model)
+        else:
+            cls.objects.filter(build_model=build_model).delete()
 
     def __str__(self) -> str:
         return str(self.build_model)
@@ -96,22 +82,14 @@ class BuildNote(models.Model):
     note = models.TextField()
 
     @classmethod
-    def upsert(cls: Type[T], build_model: BuildModel, note_text: str) -> T:
-        """Save the text for the build_model's note.
-
-        Return the BuildNote instance.
-        """
-        return upsert_1to1(cls, build_model, note=note_text)
-
-    @classmethod
-    def remove(cls, build_model: BuildModel) -> bool:
-        """Delete note for build_model.
-
-        Returns True if note was deleted.
-
-        Returns False if there was no note to delete.
-        """
-        return remove_1to1(cls, build_model)
+    def update(cls, build_model: BuildModel, note_text: str | None) -> None:
+        """Save or remove the text for the build_model's note"""
+        if note_text is not None:
+            cls.objects.update_or_create(
+                build_model=build_model, defaults={"note": note_text}
+            )
+        else:
+            cls.objects.filter(build_model=build_model).delete()
 
     def __str__(self) -> str:
         return f"Notes for build {self.build_model}"
@@ -124,50 +102,11 @@ class BuildLog(models.Model):
     logs = models.TextField()
 
     @classmethod
-    def upsert(cls: Type[T], build_model: BuildModel, logs: str) -> T:
-        """Save the text for the build_model's logs.
-
-        Return the BuildLog instance.
-        """
-        return upsert_1to1(cls, build_model, logs=logs)
-
-    @classmethod
-    def remove(cls, build_model: BuildModel) -> bool:
-        """Delete log for build_model
-
-        Returns True if log was deleted.
-
-        Returns False if there was no log to delete.
-        """
-        return remove_1to1(cls, build_model)
-
-
-def upsert_1to1(model: Type[T], build_model: BuildModel, **attrs) -> T:
-    """Save the attrs for the build_model's Model.
-
-    Return the Model instance.
-    """
-    obj = model.objects.get_or_create(build_model=build_model)[0]  # type: ignore
-
-    for field, value in attrs.items():
-        setattr(obj, field, value)
-    obj.save()
-
-    return obj
-
-
-def remove_1to1(model: Type[T], build_model: BuildModel) -> bool:
-    """Delete model for build_model.
-
-    Returns True if model was deleted.
-
-    Returns False if there was no model to delete.
-    """
-    try:
-        obj = model.objects.get(build_model=build_model)
-    except model.DoesNotExist:
-        return False
-
-    obj.delete()
-
-    return True
+    def update(cls, build_model: BuildModel, logs: str | None) -> None:
+        """Save or remove the text for the build_model's logs"""
+        if logs is not None:
+            cls.objects.update_or_create(
+                build_model=build_model, defaults={"logs": logs}
+            )
+        else:
+            cls.objects.filter(build_model=build_model).delete()
