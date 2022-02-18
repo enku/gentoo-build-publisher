@@ -61,6 +61,17 @@ class BuildPublisherTestCase(TestCase):
         record = build_publisher.record(build_id)
         self.assertEqual(record.completed, now.replace(tzinfo=utc))
 
+    def test_pull_does_not_download_when_already_pulled(self):
+        build_id = BuildIDFactory()
+        build_publisher = BuildPublisherFactory()
+
+        build_publisher.pull(build_id)
+
+        with mock.patch.object(build_publisher.jenkins, "download_artifact") as mock_dl:
+            build_publisher.pull(build_id)
+
+        self.assertFalse(mock_dl.called)
+
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
         build_publisher = BuildPublisherFactory()
