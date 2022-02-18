@@ -18,7 +18,7 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage, quick_check
 
 from . import PACKAGE_INDEX, MockJenkins, TestCase
-from .factories import BuildFactory
+from .factories import BuildIDFactory, BuildPublisherFactory
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
@@ -93,18 +93,20 @@ class StorageDownloadArtifactTestCase(TestCase):
         )
 
     def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
+        build_publisher = BuildPublisherFactory()
+
         # Given the extractable build
-        build = BuildFactory.create()
+        build_id = BuildIDFactory()
 
         # When when one of the target paths already exist
-        path = build.storage.get_path(build.id, Content.BINPKGS)
+        path = build_publisher.storage.get_path(build_id, Content.BINPKGS)
         path.mkdir(parents=True)
         orphan = path / "this should not be here"
         orphan.touch()
 
         # And we extract the build
-        build.storage.extract_artifact(
-            build.id, build.jenkins.download_artifact(build.id)
+        build_publisher.storage.extract_artifact(
+            build_id, build_publisher.jenkins.download_artifact(build_id)
         )
 
         # Then the orpaned path is removed
@@ -287,12 +289,13 @@ class StorageGetPackagesTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build = BuildFactory.create()
-        self.build.pull()
-        self.storage = self.build.storage
+        self.build_id = BuildIDFactory()
+        build_publisher = BuildPublisherFactory()
+        build_publisher.pull(self.build_id)
+        self.storage = build_publisher.storage
 
     def test_should_return_list_of_packages_from_index(self):
-        packages = self.storage.get_packages(self.build.id)
+        packages = self.storage.get_packages(self.build_id)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
         package = packages[0]
@@ -304,11 +307,11 @@ class StorageGetPackagesTestCase(TestCase):
         self.assertEqual(package.build_time, 1622722899)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
-        index_file = self.storage.get_path(self.build.id, Content.BINPKGS) / "Packages"
+        index_file = self.storage.get_path(self.build_id, Content.BINPKGS) / "Packages"
         index_file.unlink()
 
         with self.assertRaises(LookupError):
-            self.storage.get_packages(self.build.id)
+            self.storage.get_packages(self.build_id)
 
 
 class StorageGetMetadataTestCase(TestCase):
@@ -317,12 +320,13 @@ class StorageGetMetadataTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.build = BuildFactory.create()
-        self.build.pull()
-        self.storage = self.build.storage
+        self.build_id = BuildIDFactory()
+        self.build_publisher = BuildPublisherFactory()
+        self.build_publisher.pull(self.build_id)
+        self.storage = self.build_publisher.storage
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self):
-        metadata = self.storage.get_metadata(self.build.id)
+        metadata = self.storage.get_metadata(self.build_id)
 
         expected = GBPMetadata(
             build_duration=124,
@@ -360,11 +364,11 @@ class StorageGetMetadataTestCase(TestCase):
         self.assertEqual(metadata, expected)
 
     def test_should_raise_lookuperror_when_file_does_not_exist(self):
-        path = self.storage.get_path(self.build.id, Content.BINPKGS) / "gbp.json"
+        path = self.storage.get_path(self.build_id, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
         with self.assertRaises(LookupError) as context:
-            self.storage.get_metadata(self.build.id)
+            self.storage.get_metadata(self.build_id)
 
         exception = context.exception
         self.assertEqual(exception.args, ("gbp.json does not exist",))
@@ -375,10 +379,11 @@ class StorageSetMetadataTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.build = BuildFactory.create()
-        self.build.pull()
-        self.storage = self.build.storage
-        self.path = self.storage.get_path(self.build.id, Content.BINPKGS) / "gbp.json"
+        self.build_id = BuildIDFactory()
+        build_publisher = BuildPublisherFactory()
+        build_publisher.pull(self.build_id)
+        self.storage = build_publisher.storage
+        self.path = self.storage.get_path(self.build_id, Content.BINPKGS) / "gbp.json"
 
         if self.path.exists():
             self.path.unlink()
@@ -399,7 +404,7 @@ class StorageSetMetadataTestCase(TestCase):
             ],
         )
         gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
-        self.storage.set_metadata(self.build.id, gbp_metadata)
+        self.storage.set_metadata(self.build_id, gbp_metadata)
 
         with self.path.open("r") as json_file:
             result = json.load(json_file)

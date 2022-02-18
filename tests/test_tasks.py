@@ -8,7 +8,6 @@ from requests import HTTPError
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build
 from gentoo_build_publisher.tasks import (
     delete_build,
     publish_build,
@@ -17,6 +16,7 @@ from gentoo_build_publisher.tasks import (
 )
 
 from . import MockJenkins, TestCase
+from .factories import BuildPublisherFactory
 
 
 class PublishBuildTestCase(TestCase):
@@ -28,8 +28,9 @@ class PublishBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             result = publish_build.s("babette.193").apply()
 
-        build = Build(BuildID("babette.193"))
-        self.assertIs(build.published(), True)
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildID("babette.193")
+        self.assertIs(build_publisher.published(build_id), True)
         self.assertIs(result.result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
@@ -48,7 +49,7 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_build task"""
 
-    @mock.patch("gentoo_build_publisher.tasks.Build.purge")
+    @mock.patch("gentoo_build_publisher.tasks.BuildPublisher.purge")
     def test(self, purge_mock):
         purge_build.s("foo").apply()
 
@@ -64,8 +65,9 @@ class PullBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             pull_build.s("lima.1012").apply()
 
-        build = Build(BuildID("lima.1012"))
-        self.assertIs(build.pulled(), True)
+        build_id = BuildID("lima.1012")
+        build_publisher = BuildPublisherFactory()
+        self.assertIs(build_publisher.pulled(build_id), True)
 
     @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
     def test_calls_purge_build(self):
@@ -116,9 +118,9 @@ class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
     def test_should_delete_the_build(self):
-        with mock.patch("gentoo_build_publisher.tasks.Build") as build_mock:
+        with mock.patch(
+            "gentoo_build_publisher.tasks.BuildPublisher.delete"
+        ) as mock_delete:
             delete_build.s("zulu.56").apply()
 
-        build_mock.assert_called_once_with("zulu.56")
-        task_build = build_mock.return_value
-        task_build.delete.assert_called_once_with()
+        mock_delete.assert_called_once_with("zulu.56")

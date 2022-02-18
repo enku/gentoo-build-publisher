@@ -7,7 +7,7 @@ from celery import shared_task
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build
+from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
@@ -29,23 +29,24 @@ def publish_build(build_id: str):
         logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
 
-    build = Build(BuildID(build_id))
-    build.publish()
+    build_publisher = BuildPublisher()
+    build_publisher.publish(BuildID(build_id))
 
     return True
 
 
 @shared_task(bind=True)
-def pull_build(self, build_id: str) -> None:
+def pull_build(self, build_id_str: str) -> None:
     """Pull the build into storage"""
-    build = Build(BuildID(build_id))
+    build_id = BuildID(build_id_str)
+    build_publisher = BuildPublisher()
 
     try:
-        build.pull()
+        build_publisher.pull(build_id)
     except PULL_RETRYABLE_EXCEPTIONS as error:
-        logger.exception("Failed to pull build %s", build.id)
-        if build.record:
-            BuildDB.delete(build.id)
+        logger.exception("Failed to pull build %s", build_id)
+        if BuildDB.exists(build_id):
+            BuildDB.delete(build_id)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
@@ -58,20 +59,24 @@ def pull_build(self, build_id: str) -> None:
         return  # pragma: no cover
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(build.id.name)
+        purge_build.delay(build_id.name)
 
 
 @shared_task
-def purge_build(build_name: str):
+def purge_build(name: str):
     """Purge old builds for build_name"""
-    Build.purge(build_name)
+    build_publisher = BuildPublisher()
+
+    build_publisher.purge(name)
 
 
 @shared_task
-def delete_build(build_id: str):
+def delete_build(build_id_str: str):
     """Delete the given build from the db"""
-    build = Build(BuildID(build_id))
+    build_id = BuildID(build_id_str)
+    build_publisher = BuildPublisher()
+
     logger.info("Deleting build: %s", build_id)
 
-    build.delete()
+    build_publisher.delete(build_id)
     logger.info("Deleted build: %s", build_id)

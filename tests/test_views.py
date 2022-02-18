@@ -5,9 +5,9 @@ from collections import defaultdict
 
 from django.utils import timezone
 
-from gentoo_build_publisher.build import Content
+from gentoo_build_publisher.build import BuildID, Content
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build, MachineInfo
+from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
 from gentoo_build_publisher.views import (
     get_build_summary,
     get_packages,
@@ -15,23 +15,27 @@ from gentoo_build_publisher.views import (
 )
 
 from . import TestCase
-from .factories import BuildFactory, BuildModelFactory
+from .factories import BuildIDFactory, BuildPublisherFactory
 
 
 def buncha_builds(
-    machines: list[str], end_date, num_days: int, per_day: int
-) -> defaultdict[str, list[Build]]:
+    build_publisher: BuildPublisher,
+    machines: list[str],
+    end_date,
+    num_days: int,
+    per_day: int,
+) -> defaultdict[str, list[BuildID]]:
     buildmap = defaultdict(list)
 
     for i in reversed(range(num_days)):
         day = end_date - dt.timedelta(days=i)
         for name in machines:
-            model = BuildModelFactory.create(name=name, submitted=day)
-            builds = BuildFactory.create_batch(
-                per_day,
-                build_attr=BuildDB.model_to_record(model),
-            )
-            buildmap[name].extend(builds)
+            build_ids = BuildIDFactory.create_batch(per_day, name=name)
+
+            for build_id in build_ids:
+                BuildDB.save(build_publisher.record(build_id), submitted=day)
+
+            buildmap[name].extend(build_ids)
     return buildmap
 
 
@@ -39,28 +43,30 @@ class GetPackagesTestCase(TestCase):
     """This is just cached Build.get_packages()"""
 
     def test(self):
-        build = BuildFactory.create()
-        build.pull()
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
+        build_publisher.pull(build_id)
 
-        packages = get_packages(build)
+        packages = get_packages(build_id)
 
-        self.assertEqual(packages, build.get_packages())
+        self.assertEqual(packages, build_publisher.get_packages(build_id))
 
 
 class GetBuildSummaryTestCase(TestCase):
     def test(self):
+        build_publisher = BuildPublisherFactory()
         now = timezone.now()
         machines = ["babette", "lighthouse", "web"]
-        builds = buncha_builds(machines, now, 3, 2)
+        builds = buncha_builds(build_publisher, machines, now, 3, 2)
 
         lighthouse = builds["lighthouse"][-1]
-        lighthouse.publish()
+        build_publisher.publish(lighthouse)
 
         web = builds["web"][-1]
-        web.pull()
+        build_publisher.pull(web)
 
         # Make sure it doesn't fail when a gbp.json is missing
-        (web.storage.get_path(web.id, Content.BINPKGS) / "gbp.json").unlink()
+        (build_publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
 
         machine_info = [MachineInfo(i) for i in machines]
 
@@ -84,8 +90,9 @@ class GetBuildSummaryTestCase(TestCase):
 class PackageMetadataTestCase(TestCase):
     def test(self):
         now = timezone.now()
-        build = BuildFactory.create()
-        build.pull()
+        build_id = BuildIDFactory()
+        build_publisher = BuildPublisherFactory()
+        build_publisher.pull(build_id)
         context = {
             "now": now,
             "package_count": 0,
@@ -93,7 +100,7 @@ class PackageMetadataTestCase(TestCase):
             "recent_packages": defaultdict(set),
             "total_package_size": defaultdict(int),
         }
-        package_metadata(build, context)
+        package_metadata(build_id, context)
 
         expected = {
             "now": now,
@@ -121,15 +128,16 @@ class DashboardTestCase(TestCase):
 
         self.now = timezone.now()
         self.machines = ["babette", "lighthouse", "web"]
-        self.builds = buncha_builds(self.machines, self.now, 3, 2)
+        self.build_publisher = BuildPublisherFactory()
+        self.builds = buncha_builds(self.build_publisher, self.machines, self.now, 3, 2)
 
     def test(self):
         lighthouse = self.builds["lighthouse"][-1]
-        lighthouse.publish()
+        self.build_publisher.publish(lighthouse)
 
         # pull the latest web
         web = self.builds["web"][-1]
-        web.pull()
+        self.build_publisher.pull(web)
 
         response = self.client.get("/")
 

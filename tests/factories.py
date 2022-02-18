@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.db import BuildRecord
-from gentoo_build_publisher.managers import Build
+from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -34,10 +34,17 @@ class BuildIDFactory(factory.Factory):
 
     class Params:
         name = "babette"
+        number = None
 
     @factory.lazy_attribute_sequence
     def build_id(self, seq):
-        return f"{self.name}.{seq}"  # pylint: disable=no-member
+
+        if self.number is not None:  # pylint: disable=no-member
+            number = self.number  # pylint: disable=no-member
+        else:
+            number = seq
+
+        return f"{self.name}.{number}"  # pylint: disable=no-member
 
 
 class BuildRecordFactory(factory.Factory):
@@ -54,24 +61,16 @@ class BuildRecordFactory(factory.Factory):
     keep = False
 
 
-class BuildFactory(factory.Factory):
-    """Build factory"""
+class BuildPublisherFactory(factory.Factory):
+    """BuildPublisher factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
-        model = Build
+        model = BuildPublisher
         rename = {"build_attr": "build"}
 
-    build_attr = factory.SubFactory(BuildRecordFactory)
     jenkins = factory.LazyAttribute(
         lambda _: MockJenkins.from_settings(Settings.from_environ())
     )
     storage = factory.LazyAttribute(
         lambda _: Storage.from_settings(Settings.from_environ())
     )
-
-    @classmethod
-    def create(cls, *args, **kwargs) -> Build:
-        build = super().create(*args, **kwargs)
-        build.save_record()
-
-        return build

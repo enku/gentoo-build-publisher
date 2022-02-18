@@ -3,182 +3,165 @@
 import datetime
 from unittest import mock
 
-from gentoo_build_publisher.build import BuildID, Content
+from gentoo_build_publisher.build import Content
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build, MachineInfo
-from gentoo_build_publisher.models import BuildModel, KeptBuild
-from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import Storage
+from gentoo_build_publisher.managers import MachineInfo
 
 from . import TestCase
-from .factories import BuildFactory, BuildModelFactory, MockJenkins
+from .factories import BuildIDFactory, BuildPublisherFactory
 
 utc = datetime.timezone.utc
 
 
-class BuildTestCase(TestCase):
-    def test_instantiate_with_wrong_class(self):
-        with self.assertRaises(TypeError) as context:
-            Build(1)
-
-        error = context.exception
-
-        expected = ("build argument must be one of [BuildID, BuildRecord]. Got int.",)
-        self.assertEqual(error.args, expected)
-
+class BuildPublisherTestCase(TestCase):
     def test_publish(self):
         """.publish should publish the build artifact"""
-        build = BuildFactory.build()
+        build_id = BuildIDFactory()
+        build_publisher = BuildPublisherFactory()
 
-        build.publish()
+        build_publisher.publish(build_id)
 
-        self.assertIs(build.storage.published(build.id), True)
+        self.assertIs(build_publisher.storage.published(build_id), True)
 
     def test_pull_without_db(self):
         """pull creates db instance and pulls from jenkins"""
-        build_id = BuildID("babette.193")
-        settings = Settings.from_environ()
-        jenkins = MockJenkins.from_settings(settings)
-        build = Build(build_id, jenkins=jenkins)
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
 
-        build.pull()
+        build_publisher.pull(build_id)
 
-        self.assertIs(build.storage.pulled(build.id), True)
-        self.assertIsNot(build.record, None)
+        self.assertIs(build_publisher.storage.pulled(build_id), True)
+        self.assertIs(BuildDB.exists(build_id), True)
 
     def test_pull_stores_build_logs(self):
         """Should store the logs of the build"""
-        build = BuildFactory.build()
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
 
-        build.pull()
+        build_publisher.pull(build_id)
 
-        url = str(build.logs_url())
-        build.jenkins.get_build_logs_mock_get.assert_called_once()
-        call_args = build.jenkins.get_build_logs_mock_get.call_args
+        url = str(build_publisher.jenkins.logs_url(build_id))
+        build_publisher.jenkins.get_build_logs_mock_get.assert_called_once()
+        call_args = build_publisher.jenkins.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
-        self.assertEqual(build.record.logs, "foo\n")
+        record = build_publisher.record(build_id)
+        self.assertEqual(record.logs, "foo\n")
 
     def test_pull_updates_build_models_completed_field(self):
         """Should update the completed field with the current timestamp"""
         now = datetime.datetime.now()
-        build = BuildFactory.build()
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
 
         with mock.patch("gentoo_build_publisher.managers.utcnow") as mock_now:
             mock_now.return_value = now
-            build.pull()
+            build_publisher.pull(build_id)
 
-        build = Build(build.id)
-        self.assertEqual(build.record.completed, now.replace(tzinfo=utc))
+        record = build_publisher.record(build_id)
+        self.assertEqual(record.completed, now.replace(tzinfo=utc))
 
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
-        )
-        BuildModelFactory.create(
-            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
-        )
+        build_publisher = BuildPublisherFactory()
 
-        build_id = BuildID(f"{build_model.name}.{build_model.number}")
-        settings = Settings.from_environ()
-        jenkins = MockJenkins.from_settings(settings)
-        storage = Storage(self.tmpdir)
-        storage.extract_artifact(build_id, jenkins.download_artifact(build_id))
+        old_build = BuildIDFactory()
+        build_publisher.pull(old_build)
+        record = build_publisher.record(old_build)
+        BuildDB.save(record, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc))
 
-        Build.purge(build_model.name)
+        new_build = BuildIDFactory()
+        build_publisher.pull(new_build)
+        record = build_publisher.record(new_build)
+        BuildDB.save(record, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc))
 
-        query = BuildModel.objects.filter(id=build_model.id)
+        build_publisher.purge(old_build.name)
 
-        self.assertIs(query.exists(), False)
+        self.assertIs(BuildDB.exists(old_build), False)
 
         for item in Content:
-            path = storage.get_path(build_id, item)
+            path = build_publisher.storage.get_path(old_build, item)
             self.assertIs(path.exists(), False, path)
 
     def test_purge_does_not_delete_old_kept_build(self):
         """Should remove purgable builds"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+        build_publisher = BuildPublisherFactory()
+
+        build_id = BuildIDFactory()
+        BuildDB.save(
+            build_publisher.record(build_id),
+            submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
+            keep=True,
         )
-        KeptBuild.objects.create(build_model=build_model)
-        BuildModelFactory.create(
-            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        BuildDB.save(
+            build_publisher.record(BuildIDFactory()),
+            submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        Build.purge(build_model.name)
+        build_publisher.purge(build_id.name)
 
-        query = BuildModel.objects.filter(id=build_model.id)
-
-        self.assertIs(query.exists(), True)
+        self.assertIs(BuildDB.exists(build_id), True)
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""
-        build = BuildFactory.create(
-            build=BuildModelFactory.create(
-                number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
-            )
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
+
+        build_publisher.publish(build_id)
+        BuildDB.save(
+            build_publisher.record(build_id),
+            submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
         )
-        BuildModelFactory.create(
-            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
-        )
-
-        build.publish()
-        Build.purge(build.id.name)
-
-        query = BuildModel.objects.filter(name=build.id.name, number=build.id.number)
-
-        self.assertIs(query.exists(), True)
-
-    def test_purge_doesnt_delete_build_when_keptbuild_exists(self):
-        """Should not delete build when KeptBuild exists for the BuildModel"""
-        build_model = BuildModelFactory.create(
-            number=1, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
-        )
-        KeptBuild.objects.create(build_model=build_model)
-        BuildModelFactory.create(
-            number=2, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        BuildDB.save(
+            build_publisher.record(BuildIDFactory()),
+            submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        Build.purge(build_model.name)
+        build_publisher.purge(build_id.name)
 
-        query = BuildModel.objects.filter(id=build_model.id)
-
-        self.assertIs(query.exists(), True)
+        self.assertIs(BuildDB.exists(build_id), True)
 
     def test_update_build_metadata(self):
-        build = BuildFactory.create()
-        settings = Settings.from_environ()
-        MockJenkins.from_settings(settings)
+        # pylint: disable=protected-access
+        build_publisher = BuildPublisherFactory()
+        build_id = BuildIDFactory()
+        record = build_publisher.record(build_id)
 
-        build.update_build_metadata()
-        self.assertEqual(build.record.logs, "foo\n")
-        self.assertIsNot(build.record.completed, None)
+        build_publisher._update_build_metadata(record)
+
+        record = build_publisher.record(build_id)
+        self.assertEqual(record.logs, "foo\n")
+        self.assertIsNot(record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
-        left = BuildFactory.create()
-        left.get_packages = mock.Mock(wraps=left.get_packages)
+        build_publisher = BuildPublisherFactory()
+        left = BuildIDFactory()
+        build_publisher.get_packages = mock.Mock(wraps=build_publisher.get_packages)
         right = left
 
         # This should actually fail if not short-circuited because the builds have not
         # been pulled
-        diff = [*Build.diff_binpkgs(left, right)]
+        diff = [*build_publisher.diff_binpkgs(left, right)]
 
         self.assertEqual(diff, [])
-        self.assertEqual(left.get_packages.call_count, 0)
+        self.assertEqual(build_publisher.get_packages.call_count, 0)
 
 
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
     def test(self):
+        build_publisher = BuildPublisherFactory()
+
         # Given the "foo" builds, one of which is published
-        first_build = BuildFactory.create(build_attr__build_id__name="foo")
-        first_build.publish()
-        latest_build = BuildFactory.create(build_attr__build_id__name="foo")
+        first_build = BuildIDFactory(name="foo")
+        build_publisher.publish(first_build)
+        latest_build = BuildIDFactory(name="foo")
+        build_publisher.pull(latest_build)
 
         # Given the "other" builds
-        BuildFactory.create_batch(3)
+        for build_id in BuildIDFactory.create_batch(3, name="other"):
+            build_publisher.pull(build_id)
 
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
@@ -200,41 +183,35 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.published, None)
 
     def test_builds_method(self):
+        build_publisher = BuildPublisherFactory()
+
         # Given the "foo" builds
-        first_build = BuildFactory.create(
-            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
-        )
-        second_build = BuildFactory.create(
-            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
-        )
-        third_build = BuildFactory.create(
-            build_attr=BuildDB.model_to_record(BuildModelFactory.create(name="foo"))
-        )
+        builds = BuildIDFactory.create_batch(3, name="foo")
+        for build_id in builds:
+            build_publisher.pull(build_id)
 
         # Given the MachineInfo for foo
         machine_info = MachineInfo("foo")
 
         # When we call its .builds method
-        builds = machine_info.builds()
+        result = machine_info.builds()
 
         # Then we get the list of builds in reverse chronological order
-        self.assertEqual(builds, [third_build, second_build, first_build])
+        self.assertEqual(result, [*reversed(builds)])
 
 
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
     def test(self):
-        name = "babette"
-        settings = Settings.from_environ()
-        mock_path = "gentoo_build_publisher.managers.Jenkins.from_settings"
+        build_publisher = BuildPublisherFactory()
 
-        with mock.patch(mock_path) as mock_jenkins:
-            mock_jenkins.return_value.schedule_build.return_value = (
-                "https://jenkins.invalid/queue/item/31528/"
-            )
-            response = Build.schedule_build(name)
+        with mock.patch.object(
+            build_publisher.jenkins, "schedule_build"
+        ) as mock_schedule_build:
+            mock_queue_url = "https://jenkins.invalid/queue/item/31528/"
+            mock_schedule_build.return_value = mock_queue_url
+            response = build_publisher.schedule_build("babette")
 
-        self.assertEqual(response, "https://jenkins.invalid/queue/item/31528/")
-        mock_jenkins.assert_called_once_with(settings)
-        mock_jenkins.return_value.schedule_build.assert_called_once_with(name)
+        self.assertEqual(response, mock_queue_url)
+        mock_schedule_build.assert_called_once_with("babette")

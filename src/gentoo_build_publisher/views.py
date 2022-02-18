@@ -9,9 +9,9 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from gentoo_build_publisher.build import GBPMetadata, Package
+from gentoo_build_publisher.build import BuildID, GBPMetadata, Package
 from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build, MachineInfo
+from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -29,7 +29,7 @@ class DashboardContext(TypedDict):
     build_count: int
 
     # Builds not yet completed
-    builds_to_do: list[Build]
+    builds_to_do: list[BuildID]
 
     # Each machine gets it's own #rrggbb color
     machine_colors: list[str]
@@ -51,10 +51,10 @@ class DashboardContext(TypedDict):
     total_package_size: defaultdict[str, int]
 
     # List of the latest builds for each machine, if the machine has one
-    latest_builds: list[Build]
+    latest_builds: list[BuildID]
 
     # List of builds from the last 24 hours
-    built_recently: list[Build]
+    built_recently: list[BuildID]
 
     builds_over_time: list[list[int]]
 
@@ -62,15 +62,18 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
-def get_packages(build: Build) -> list[Package]:
+def get_packages(build_id: BuildID) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
     This call may be cached for performance.
     """
-    cache_key = f"packages-{build.id.name}-{build.id.number}"
+    build_publisher = BuildPublisher()
+    cache_key = f"packages-{build_id}"
 
     try:
-        return cache.get_or_set(cache_key, build.get_packages, timeout=None)
+        return cache.get_or_set(
+            cache_key, build_publisher.get_packages(build_id), timeout=None
+        )
     except LookupError:
         return []
 
@@ -93,6 +96,7 @@ def bot_to_list(builds_over_time, machines, days):
 
 def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     """Update `context` with `latest_builds` and `build_recently`"""
+    build_publisher = BuildPublisher()
     latest_builds = []
     built_recently = []
     build_packages = {}
@@ -101,7 +105,9 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         if not (latest_build := machine.latest_build):
             continue
 
-        if not (latest_build.record and latest_build.record.completed):
+        latest_build.published = build_publisher.published(latest_build)
+        record = build_publisher.record(latest_build)
+        if not record.completed:
             continue
 
         latest_builds.append(latest_build)
@@ -109,47 +115,50 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         try:
             build_packages[build_id] = [
                 i.cpv
-                for i in latest_build.storage.get_metadata(
-                    latest_build.id
+                for i in build_publisher.storage.get_metadata(
+                    latest_build
                 ).packages.built
             ]
         except LookupError:
             build_packages[build_id] = []
 
-        if lapsed(latest_build.record.completed, now) < 86400:
+        if lapsed(record.completed, now) < 86400:
             built_recently.append(latest_build)
 
     return latest_builds, built_recently, build_packages
 
 
-def package_metadata(build: Build, context: DashboardContext):
+def package_metadata(build_id: BuildID, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
+    build_publisher = BuildPublisher()
 
     try:
-        metadata = build.storage.get_metadata(build.id)
+        metadata = build_publisher.storage.get_metadata(build_id)
     except LookupError:
         metadata = None
 
-    if metadata and build.record:
+    record = build_publisher.record(build_id)
+    if metadata and record.completed:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][build.id.name] += metadata.packages.size
+        context["total_package_size"][build_id.name] += metadata.packages.size
 
-        if lapsed(build.record.submitted, context["now"]) < 86400:
+        if lapsed(record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
                 if (
                     package.cpv in context["recent_packages"]
                     or len(context["recent_packages"]) < 12
                 ):
-                    context["recent_packages"][package.cpv].add(build.id.name)
+                    context["recent_packages"][package.cpv].add(build_id.name)
     else:
-        packages = get_packages(build)
+        packages = get_packages(build_id)
         context["package_count"] += len(packages)
-        context["total_package_size"][build.id.name] += sum(i.size for i in packages)
+        context["total_package_size"][build_id.name] += sum(i.size for i in packages)
 
 
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
+    build_publisher = BuildPublisher()
     now = timezone.localtime()
     current_timezone = timezone.get_current_timezone()
     bot_days = [now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)]
@@ -181,12 +190,12 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     }
 
     for record in BuildDB.get_records():
-        build = Build(record)
-        package_metadata(build, context)
+        build_id = record.id
+        package_metadata(build_id, context)
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][build.id.name] += 1
+            builds_over_time[day_submitted][build_id.name] += 1
 
     (
         context["latest_builds"],
@@ -194,10 +203,14 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         context["build_packages"],
     ) = get_build_summary(now, machines)
     context["unpublished_builds_count"] = len(
-        [build for build in context["latest_builds"] if not build.published()]
+        [
+            build_id
+            for build_id in context["latest_builds"]
+            if not build_publisher.published(build_id)
+        ]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
-    context["builds_to_do"] = [Build(i) for i in BuildDB.get_records(completed=None)]
+    context["builds_to_do"] = [i.id for i in BuildDB.get_records(completed=None)]
 
     # https://stackoverflow.com/questions/4764110/django-template-cant-loop-defaultdict
     context["recent_packages"].default_factory = None

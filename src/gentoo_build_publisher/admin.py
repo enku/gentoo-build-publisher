@@ -2,8 +2,8 @@
 # pylint: disable=no-self-use
 from django.contrib import admin
 
-from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build
+from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
 
 
@@ -61,9 +61,12 @@ class BuildModelAdmin(admin.ModelAdmin):
         "keep",
     ]
 
-    def published(self, obj):
+    def published(self, obj: BuildModel) -> bool:
         """Return the admin published field"""
-        return Build(BuildDB.model_to_record(obj)).published()
+        build_publisher = BuildPublisher()
+        build_id = BuildID(f"{obj.name}.{obj.number}")
+
+        return build_publisher.published(build_id)
 
     published.boolean = True
 
@@ -86,8 +89,11 @@ class BuildModelAdmin(admin.ModelAdmin):
     note.boolean = True
 
     def response_change(self, request, obj):
+        build_publisher = BuildPublisher()
+        build_id = BuildID(f"{obj.name}.{obj.number}")
+
         if "_publish" in request.POST:
-            Build(BuildDB.model_to_record(obj)).publish()
+            build_publisher.publish(build_id)
 
         if "_keep" in request.POST:
             try:
@@ -105,9 +111,10 @@ class BuildModelAdmin(admin.ModelAdmin):
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not (
-            KeptBuild.keep(obj) or Build(BuildDB.model_to_record(obj)).published()
-        )
+        build_publisher = BuildPublisher()
+        build_id = BuildID(f"{obj.name}.{obj.number}")
+
+        return not (KeptBuild.keep(obj) or build_publisher.published(build_id))
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}

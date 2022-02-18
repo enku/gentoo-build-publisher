@@ -5,6 +5,7 @@
 # "id" is used throughout. It's idiomatic GraphQL
 # pylint: disable=redefined-builtin,invalid-name
 
+import datetime as dt
 from importlib import resources
 from typing import Any, Optional
 
@@ -19,8 +20,8 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
 from gentoo_build_publisher.build import BuildID, Package, Status
-from gentoo_build_publisher.db import BuildDB
-from gentoo_build_publisher.managers import Build, MachineInfo
+from gentoo_build_publisher.db import BuildDB, BuildRecord
+from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
@@ -29,49 +30,104 @@ type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
     EnumType("StatusEnum", Status),
     datetime_scalar,
-    build_type := ObjectType("Build"),
+    ObjectType("Build"),
     machine_summary := ObjectType("MachineSummary"),
     mutation := ObjectType("Mutation"),
     query := ObjectType("Query"),
 ]
 
-build_type.set_field("machine", lambda build, _: build.id.name)
-build_type.set_field("keep", lambda build, _: build.record.keep)
-build_type.set_field("submitted", lambda build, _: build.record.submitted)
-build_type.set_field("completed", lambda build, _: build.record.completed)
-build_type.set_field("logs", lambda build, _: build.record.logs)
-build_type.set_field("notes", lambda build, _: build.record.note)
-build_type.set_field("published", lambda build, _: build.published())
-build_type.set_field("pulled", lambda build, _: build.pulled())
+
+class Build:
+    """Build Type resolvers"""
+
+    def __init__(self, build: BuildID | BuildRecord):
+
+        if isinstance(build, BuildID):
+            self.build_id = build
+            self._record: BuildRecord | None = None
+        elif isinstance(build, BuildRecord):
+            self.build_id = build.id
+            self._record = build
+        else:
+            raise TypeError(build)
+
+        self.build_publisher = BuildPublisher()
+
+    def id(self, _) -> str:
+        return str(self.build_id)
+
+    def machine(self, _) -> str:
+        return self.build_id.name
+
+    def keep(self, _) -> bool:
+        return self.record.keep
+
+    def submitted(self, _) -> dt.datetime | None:
+        return self.record.submitted
+
+    def completed(self, _) -> dt.datetime | None:
+        return self.record.completed
+
+    def logs(self, _) -> str | None:
+        return self.record.logs
+
+    def notes(self, _) -> str | None:
+        return self.record.note
+
+    def published(self, _) -> bool:
+        return self.build_publisher.published(self.build_id)
+
+    def pulled(self, _) -> bool:
+        return self.build_publisher.pulled(self.build_id)
+
+    def packages(self, _) -> list[str] | None:
+        if not self.build_publisher.pulled(self.build_id):
+            return None
+
+        try:
+            return [
+                package.cpv
+                for package in self.build_publisher.get_packages(self.build_id)
+            ]
+        except LookupError:
+            return None
+
+    def packages_built(self, _) -> list[Package] | None:
+        try:
+            gbp_metadata = self.build_publisher.storage.get_metadata(self.build_id)
+        except LookupError as error:
+            raise GraphQLError("Packages built unknown") from error
+
+        return gbp_metadata.packages.built
+
+    @property
+    def record(self):
+        if self._record is None:
+            self._record = BuildDB.get(self.build_id)
+
+        return self._record
 
 
-@build_type.field("packages")
-def resolve_build_packages(build: Build, _) -> Optional[list[str]]:
-    if not build.pulled():
+# MachineSummary resolvers
+@machine_summary.field("latestBuild")
+def resolve_machinesummary_latestbuild(machine_info: MachineInfo, _) -> Build | None:
+    if not machine_info.latest_build:
         return None
 
-    try:
-        return [package.cpv for package in build.get_packages()]
-    except LookupError:
+    return Build(machine_info.latest_build)
+
+
+@machine_summary.field("publishedBuild")
+def resolve_machinesummary_publishedbuild(machine_info: MachineInfo, _) -> Build | None:
+    if not machine_info.published:
         return None
 
-
-@build_type.field("packagesBuilt")
-def resolve_build_packagesbuilt(build: Build, _) -> Optional[list[Package]]:
-    try:
-        gbp_metadata = build.storage.get_metadata(build.id)
-    except LookupError as error:
-        raise GraphQLError("Packages built unknown") from error
-
-    return gbp_metadata.packages.built
-
-
-machine_summary.set_alias("publishedBuild", "published")
+    return Build(machine_info.published)
 
 
 @machine_summary.field("builds")
 def resolve_machinesummary_builds(machine_info: MachineInfo, _) -> list[Build]:
-    return machine_info.builds()
+    return [Build(i) for i in machine_info.builds()]
 
 
 @query.field("machines")
@@ -81,45 +137,54 @@ def resolve_query_machines(*_) -> list[MachineInfo]:
 
 @query.field("build")
 def resolve_query_build(*_, id: str) -> Optional[Build]:
-    build = Build(BuildID(id))
-    return None if build.record is None else build
+    build_publisher = BuildPublisher()
+    build_id = BuildID(id)
+
+    return (
+        None if build_publisher.record(build_id).completed is None else Build(build_id)
+    )
 
 
 @query.field("latest")
 def resolve_query_latest(*_, name: str) -> Optional[Build]:
-    build_db = BuildDB.latest_build(name, completed=True)
-    return None if build_db is None else Build(build_db)
+    record = BuildDB.latest_build(name, completed=True)
+    return None if record is None else Build(record)
 
 
 @query.field("builds")
 def resolve_query_builds(*_, name: str) -> list[Build]:
     records = BuildDB.get_records(name=name, completed__isnull=False)
-    builds = [Build(record) for record in records]
-    return builds
+
+    return [Build(record) for record in records]
 
 
 @query.field("diff")
 def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
     left_build_id = BuildID(left)
-    left_build = Build(left_build_id)
 
-    if not BuildDB.exists(left_build.id):
+    if not BuildDB.exists(left_build_id):
         return None
 
     right_build_id = BuildID(right)
-    right_build = Build(right_build_id)
 
-    if not BuildDB.exists(right_build.id):
+    if not BuildDB.exists(right_build_id):
         return None
 
-    items = Build.diff_binpkgs(left_build, right_build)
+    build_publisher = BuildPublisher()
+    items = build_publisher.diff_binpkgs(left_build_id, right_build_id)
 
-    return {"left": left_build, "right": right_build, "items": [*items]}
+    return {
+        "left": Build(left_build_id),
+        "right": Build(right_build_id),
+        "items": [*items],
+    }
 
 
 @query.field("searchNotes")
 def resolve_query_searchnotes(*_, name: str, key: str) -> list[Build]:
-    return [*Build.search_notes(name, key)]
+    build_publisher = BuildPublisher()
+
+    return [Build(i) for i in build_publisher.search_notes(name, key)]
 
 
 @query.field("version")
@@ -137,10 +202,10 @@ def resolve_query_working(*_) -> list[Build]:
 @mutation.field("publish")
 def resolve_mutation_publish(*_, id: str) -> MachineInfo:
     build_id = BuildID(id)
-    build = Build(build_id)
+    build_publisher = BuildPublisher()
 
-    if build.pulled():
-        build.publish()
+    if build_publisher.pulled(build_id):
+        build_publisher.publish(build_id)
     else:
         publish_build.delay(str(build_id))
 
@@ -158,35 +223,37 @@ def resolve_mutation_pull(*_, id: str) -> MachineInfo:
 
 @mutation.field("scheduleBuild")
 def resolve_mutation_schedule_build(*_, name: str) -> str:
-    return Build.schedule_build(name)
+    build_publisher = BuildPublisher()
+
+    return build_publisher.schedule_build(name)
 
 
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
-    build = Build(build_id)
+    build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build.id):
+    if not BuildDB.exists(build_id):
         return None
 
-    build.record.keep = True
-    BuildDB.save(build.record)
+    record = build_publisher.record(build_id)
+    BuildDB.save(record, keep=True)
 
-    return build
+    return Build(record)
 
 
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
-    build = Build(build_id)
+    build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build.id):
+    if not BuildDB.exists(build_id):
         return None
 
-    build.record.keep = False
-    BuildDB.save(build.record)
+    record = build_publisher.record(build_id)
+    BuildDB.save(record, keep=False)
 
-    return build
+    return Build(record)
 
 
 @mutation.field("createNote")
@@ -194,15 +261,15 @@ def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
 ) -> Optional[Build]:
     build_id = BuildID(id)
-    build = Build(build_id)
+    build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build.id):
+    if not BuildDB.exists(build_id):
         return None
 
-    build.record.note = note
-    build.save_record()
+    record = build_publisher.record(build_id)
+    BuildDB.save(record, note=note)
 
-    return build
+    return Build(record)
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

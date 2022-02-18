@@ -26,8 +26,9 @@ class BuildDBTestCase(TestCase):
         self.assertEqual(self.record.id, self.record._build_id)
 
     def test_submitted_set(self):
-        self.record.submitted = timezone.make_aware(datetime(1970, 1, 1))
-        model = BuildDB.save(self.record)
+        model = BuildDB.save(
+            self.record, submitted=timezone.make_aware(datetime(1970, 1, 1))
+        )
 
         self.assertEqual(model.submitted, timezone.make_aware(datetime(1970, 1, 1)))
 
@@ -41,8 +42,7 @@ class BuildDBTestCase(TestCase):
         self.assertEqual(record.completed, timezone.make_aware(datetime(1970, 1, 1)))
 
     def test_completed_set(self):
-        self.record.completed = timezone.make_aware(datetime(1970, 1, 1))
-        BuildDB.save(self.record)
+        BuildDB.save(self.record, completed=timezone.make_aware(datetime(1970, 1, 1)))
 
         model = BuildModel.objects.get(
             name=self.record.id.name, number=self.record.id.number
@@ -52,8 +52,7 @@ class BuildDBTestCase(TestCase):
 
     def test_save_note(self):
         record = self.record
-        record.note = "This is a test"
-        model = BuildDB.save(record)
+        model = BuildDB.save(record, note="This is a test")
 
         build_note = BuildNote.objects.get(build_model=model)
 
@@ -63,16 +62,14 @@ class BuildDBTestCase(TestCase):
         model = BuildDB.save(self.record)
         BuildNote.objects.create(build_model=model, note="This is a test")
 
-        self.record.note = None
-        BuildDB.save(self.record)
+        BuildDB.save(self.record, note=None)
 
         with self.assertRaises(BuildNote.DoesNotExist):
             BuildNote.objects.get(build_model=model)
 
     def test_save_keep(self):
         record = self.record
-        record.keep = True
-        model = BuildDB.save(record)
+        model = BuildDB.save(record, keep=True)
 
         KeptBuild.objects.get(build_model=model)
 
@@ -80,15 +77,13 @@ class BuildDBTestCase(TestCase):
         model = BuildDB.save(self.record)
         KeptBuild.objects.create(build_model=model)
 
-        self.record.keep = False
-        BuildDB.save(self.record)
+        BuildDB.save(self.record, keep=False)
 
         with self.assertRaises(KeptBuild.DoesNotExist):
             KeptBuild.objects.get(build_model=model)
 
     def test_save_logs(self):
-        self.record.logs = "This is a test"
-        model = BuildDB.save(self.record)
+        model = BuildDB.save(self.record, logs="This is a test")
 
         build_logs = BuildLog.objects.get(build_model=model)
 
@@ -98,8 +93,7 @@ class BuildDBTestCase(TestCase):
         model = BuildDB.save(self.record)
         BuildLog.objects.create(build_model=model, logs="This is a test")
 
-        self.record.logs = None
-        BuildDB.save(self.record)
+        BuildDB.save(self.record, logs=None)
 
         with self.assertRaises(BuildLog.DoesNotExist):
             BuildLog.objects.get(build_model=model)
@@ -176,8 +170,7 @@ class BuildDBTestCase(TestCase):
 
     def test_previous_build_when_completed(self):
         previous_build = self.record
-        previous_build.completed = timezone.now()
-        BuildDB.save(previous_build)
+        BuildDB.save(previous_build, completed=timezone.now())
 
         current_build = BuildRecordFactory()
         BuildDB.save(current_build)
@@ -215,8 +208,7 @@ class BuildDBTestCase(TestCase):
     def test_next_build_when_completed(self):
         BuildDB.save(self.record)
         next_build = BuildRecordFactory()
-        next_build.completed = timezone.now()
-        BuildDB.save(next_build)
+        BuildDB.save(next_build, completed=timezone.now())
 
         assert next_build.id.name == self.record.id.name
 

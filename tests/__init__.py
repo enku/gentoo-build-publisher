@@ -30,19 +30,19 @@ class TestCase(django.test.TestCase):
     def setUp(self):
         # Don't import Build until Django is initialized
         # pylint: disable=import-outside-toplevel
-        from gentoo_build_publisher.managers import Build
+        from gentoo_build_publisher.managers import BuildPublisher
 
         super().setUp()
 
-        # Remove Build's "global" settings so that it will re-instantiate them on each
-        # init
+        # Remove BuildPublisher's "global" settings so that it will re-instantiate them
+        # on each init
         try:
-            del Build.jenkins
+            del BuildPublisher.jenkins
         except AttributeError:
             pass
 
         try:
-            del Build.storage
+            del BuildPublisher.storage
         except AttributeError:
             pass
 

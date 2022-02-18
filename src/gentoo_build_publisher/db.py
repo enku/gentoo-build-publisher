@@ -99,8 +99,11 @@ class BuildDB:
         return record
 
     @staticmethod
-    def save(build_record: BuildRecord) -> BuildModel:
+    def save(build_record: BuildRecord, **fields) -> BuildModel:
         """Save changes back to the database"""
+        for name, value in fields.items():
+            setattr(build_record, name, value)
+
         try:
             model: BuildModel = BuildModel.objects.get(
                 name=build_record.id.name, number=build_record.id.number
