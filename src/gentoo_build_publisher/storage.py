@@ -6,6 +6,7 @@ import os
 import shutil
 import tarfile
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from typing import IO, Iterator
 
@@ -30,11 +31,18 @@ class Storage:
 
         return f"{module}.{cls.__name__}({repr(self.path)})"
 
+    def __hash__(self):
+        return hash(self.path)
+
+    def __eq__(self, other):
+        return self.path == other.path
+
     @classmethod
     def from_settings(cls, settings: Settings) -> Storage:
         """Instatiate from settings"""
         return cls(settings.STORAGE_PATH)
 
+    @lru_cache(maxsize=256 * len(Content))
     def get_path(self, build_id: BuildID, item: Content) -> Path:
         """Return the Path of the content type for build
 
