@@ -29,6 +29,11 @@ class BuildID(str):
         except ValueError as error:
             raise InvalidBuildID(str(error)) from error
 
+    @property
+    def id(self) -> BuildID:  # pylint: disable=invalid-name
+        """BuildID.id is an alias for itself"""
+        return self
+
 
 @unique
 class Content(Enum):

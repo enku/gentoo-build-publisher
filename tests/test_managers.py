@@ -181,7 +181,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
         self.assertEqual(machine_info.latest_build, latest_build)
-        self.assertEqual(machine_info.published, first_build)
+        self.assertEqual(machine_info.published_build, first_build)
 
     def test_empty_db(self):
         # When we get MachineInfo for foo
@@ -191,9 +191,9 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 0)
         self.assertEqual(machine_info.latest_build, None)
-        self.assertEqual(machine_info.published, None)
+        self.assertEqual(machine_info.published_build, None)
 
-    def test_builds_method(self):
+    def test_builds_property(self):
         build_publisher = BuildPublisherFactory()
 
         # Given the "foo" builds
@@ -205,7 +205,7 @@ class MachineInfoTestCase(TestCase):
         machine_info = MachineInfo("foo")
 
         # When we call its .builds method
-        result = machine_info.builds()
+        result = machine_info.builds
 
         # Then we get the list of builds in reverse chronological order
         self.assertEqual(result, [*reversed(builds)])

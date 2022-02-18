@@ -5,6 +5,7 @@ import logging
 import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
+from functools import cached_property
 from typing import Iterator, Optional
 
 from gentoo_build_publisher import io
@@ -203,35 +204,44 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         name: str
         build_count: int
         latest_build: Optional[BuildID]
-        published: Optional[BuildID]
+        published_build: Optional[BuildID]
     """
 
-    def __init__(self, machine_name: str):
-        build_publisher = BuildPublisher()
-        latest_build = BuildDB.latest_build(machine_name)
-        published = None
+    # pylint: disable=missing-docstring
 
-        if latest_build is not None:
-            current_build = latest_build.id.number
+    def __init__(self, name):
+        self.name = name
+        self.build_publisher = BuildPublisher()
 
-            while current_build:
-                build_id = BuildID(f"{machine_name}.{current_build}")
-                if build_publisher.published(build_id):
-                    published = build_id
-                    break
+    @cached_property
+    def build_count(self) -> int:
+        return BuildDB.count(self.name)
 
-                current_build -= 1
-
-        self.name: str = machine_name
-        self.build_count: int = BuildDB.count(machine_name)
-        self.latest_build: Optional[BuildID] = latest_build.id if latest_build else None
-        self.published: Optional[BuildID] = published
-
+    @cached_property
     def builds(self) -> list[BuildID]:
-        """Return the builds for the given machine"""
-        records = BuildDB.get_records(name=self.name)
+        return [record.id for record in BuildDB.get_records(name=self.name)]
 
-        return [record.id for record in records]
+    @cached_property
+    def latest_build(self) -> BuildID | None:
+        record = BuildDB.latest_build(self.name)
+
+        return None if record is None else record.id
+
+    @cached_property
+    def published_build(self) -> BuildID | None:
+        if not (latest := self.latest_build):
+            return None
+
+        number = latest.number
+
+        while number:
+            build_id = BuildID(f"{self.name}.{number}")
+            if self.build_publisher.published(build_id):
+                return build_id
+
+            number -= 1
+
+        return None
 
 
 def gbp_metadata(

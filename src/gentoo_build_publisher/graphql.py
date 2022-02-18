@@ -6,6 +6,7 @@
 # pylint: disable=redefined-builtin,invalid-name
 
 import datetime as dt
+from functools import cached_property
 from importlib import resources
 from typing import Any, Optional
 
@@ -31,7 +32,7 @@ resolvers = [
     EnumType("StatusEnum", Status),
     datetime_scalar,
     ObjectType("Build"),
-    machine_summary := ObjectType("MachineSummary"),
+    ObjectType("MachineSummary"),
     mutation := ObjectType("Mutation"),
     query := ObjectType("Query"),
 ]
@@ -74,13 +75,16 @@ class Build:
     def notes(self, _) -> str | None:
         return self.record.note
 
-    def published(self, _) -> bool:
+    @cached_property
+    def published(self) -> bool:
         return self.build_publisher.published(self.build_id)
 
-    def pulled(self, _) -> bool:
+    @cached_property
+    def pulled(self) -> bool:
         return self.build_publisher.pulled(self.build_id)
 
-    def packages(self, _) -> list[str] | None:
+    @cached_property
+    def packages(self) -> list[str] | None:
         if not self.build_publisher.pulled(self.build_id):
             return None
 
@@ -92,7 +96,8 @@ class Build:
         except LookupError:
             return None
 
-    def packages_built(self, _) -> list[Package] | None:
+    @cached_property
+    def packages_built(self) -> list[Package] | None:
         try:
             gbp_metadata = self.build_publisher.storage.get_metadata(self.build_id)
         except LookupError as error:
@@ -100,34 +105,12 @@ class Build:
 
         return gbp_metadata.packages.built
 
-    @property
+    @cached_property
     def record(self):
         if self._record is None:
             self._record = BuildDB.get(self.build_id)
 
         return self._record
-
-
-# MachineSummary resolvers
-@machine_summary.field("latestBuild")
-def resolve_machinesummary_latestbuild(machine_info: MachineInfo, _) -> Build | None:
-    if not machine_info.latest_build:
-        return None
-
-    return Build(machine_info.latest_build)
-
-
-@machine_summary.field("publishedBuild")
-def resolve_machinesummary_publishedbuild(machine_info: MachineInfo, _) -> Build | None:
-    if not machine_info.published:
-        return None
-
-    return Build(machine_info.published)
-
-
-@machine_summary.field("builds")
-def resolve_machinesummary_builds(machine_info: MachineInfo, _) -> list[Build]:
-    return [Build(i) for i in machine_info.builds()]
 
 
 @query.field("machines")
