@@ -75,10 +75,11 @@ class GetBuildSummaryTestCase(TestCase):
         machine_info.append(MachineInfo("foo"))
 
         result = get_build_summary(now, machine_info)
-        latest_builds, built_recently, build_packages = result
+        latest_builds, built_recently, build_packages, latest_published = result
 
         self.assertEqual(latest_builds, [lighthouse, web])
         self.assertEqual(built_recently, [lighthouse, web])
+        self.assertEqual(latest_published, set([lighthouse]))
         pkgs = [
             "acct-group/sgx-0",
             "app-admin/perl-cleaner-2.30",

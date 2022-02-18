@@ -44,6 +44,9 @@ class DashboardContext(TypedDict):
     # list of packages for a build, key is the str(build)
     build_packages: dict[str, list[str]]
 
+    # set of latest_packages that are published
+    latest_published: set[BuildID]
+
     # recently built packages (for all machines)
     recent_packages: defaultdict[str, set]
 
@@ -100,12 +103,15 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     latest_builds = []
     built_recently = []
     build_packages = {}
+    latest_published = set()
 
     for machine in machines:
         if not (latest_build := machine.latest_build):
             continue
 
-        latest_build.published = build_publisher.published(latest_build)
+        if build_publisher.published(latest_build):
+            latest_published.add(latest_build)
+
         record = build_publisher.record(latest_build)
         if not record.completed:
             continue
@@ -125,7 +131,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         if lapsed(record.completed, now) < 86400:
             built_recently.append(latest_build)
 
-    return latest_builds, built_recently, build_packages
+    return latest_builds, built_recently, build_packages, latest_published
 
 
 def package_metadata(build_id: BuildID, context: DashboardContext):
@@ -177,6 +183,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         "builds_over_time": [],
         "built_recently": [],
         "latest_builds": [],
+        "latest_published": set(),
         "machine_colors": [
             str(color) for color in gradient(color_start, color_end, len(machines))
         ],
@@ -201,6 +208,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         context["latest_builds"],
         context["built_recently"],
         context["build_packages"],
+        context["latest_published"],
     ) = get_build_summary(now, machines)
     context["unpublished_builds_count"] = len(
         [
