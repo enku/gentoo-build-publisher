@@ -3,15 +3,13 @@ from __future__ import annotations
 
 import datetime as dt
 import platform
-from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Type, TypeVar
+from typing import NamedTuple, Type, TypeVar
 
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 
-@dataclass
-class Color:
+class Color(NamedTuple):
     """Data structure representing an rgb color"""
 
     red: int
