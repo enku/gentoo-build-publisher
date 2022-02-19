@@ -149,7 +149,7 @@ def package_metadata(build_id: BuildID, context: DashboardContext):
         context["package_count"] += metadata.packages.total
         context["total_package_size"][build_id.name] += metadata.packages.size
 
-        if lapsed(record.submitted, context["now"]) < 86400:
+        if record.submitted and lapsed(record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
                 if (
                     package.cpv in context["recent_packages"]
@@ -199,6 +199,9 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     for record in BuildDB.get_records():
         build_id = record.id
         package_metadata(build_id, context)
+
+        if record.submitted is None:
+            continue
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:

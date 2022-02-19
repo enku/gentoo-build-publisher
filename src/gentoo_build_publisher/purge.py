@@ -5,13 +5,13 @@ give a proper attribution.  It's originally a backup purging strategy but I want
 able to use it for purging builds or anything else for that matter.
 """
 import datetime
-from typing import Callable, Iterable, Optional, TypeVar
+from typing import Callable, Generic, Iterable, Optional, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 KeyFunc = Callable[[T], datetime.datetime]
 
 
-class Purger:
+class Purger(Generic[T]):
     """Purger of items
 
     Items must be the same type and must be hashable
