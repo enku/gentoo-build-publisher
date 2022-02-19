@@ -62,9 +62,8 @@ class BuildDB:
     @staticmethod
     def model_to_record(model: BuildModel) -> BuildRecord:
         """Convert BuildModel to BuildRecord"""
-        build_id = BuildID(f"{model.name}.{model.number}")
         record = BuildRecord(
-            build_id, submitted=model.submitted, completed=model.completed
+            model.build_id, submitted=model.submitted, completed=model.completed
         )
         try:
             record.note = model.buildnote.note

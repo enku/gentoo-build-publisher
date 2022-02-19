@@ -11,4 +11,4 @@ def build_model_deleted(
     sender, signal, instance, using, **kwargs
 ):  # pylint: disable=unused-argument
     """Signal handler for when a BuildModel is deleted"""
-    delete_build.delay(f"{instance.name}.{instance.number}")
+    delete_build.delay(str(instance.build_id))

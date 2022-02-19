@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from django.db import models
 
+from gentoo_build_publisher import build
+
 
 class BuildModel(models.Model):
     """Django persistance for Build objects"""
@@ -41,7 +43,12 @@ class BuildModel(models.Model):
         return f"{class_name}(name={name!r}, number={number})"
 
     def __str__(self) -> str:
-        return f"{self.name}.{self.number}"
+        return str(self.build_id)
+
+    @property
+    def build_id(self) -> build.BuildID:
+        """Convert BuildModel to BuildID"""
+        return build.BuildID(f"{self.name}.{self.number}")
 
 
 class KeptBuild(models.Model):

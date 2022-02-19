@@ -224,9 +224,7 @@ class LatestQueryTestCase(TestCase):
         }"""
         result = execute(query)
 
-        assert_data(
-            self, result, {"latest": {"id": f"{self.latest.name}.{self.latest.number}"}}
-        )
+        assert_data(self, result, {"latest": {"id": self.latest.build_id}})
 
 
 class DiffQueryTestCase(TestCase):
@@ -541,7 +539,7 @@ class KeepBuildMutationTestCase(TestCase):
             }
         }
         """
-        result = execute(query, variables={"id": f"{model.name}.{model.number}"})
+        result = execute(query, variables={"id": model.build_id})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
@@ -604,10 +602,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(
-            query,
-            variables={"id": f"{model.name}.{model.number}", "note": note_text},
-        )
+        result = execute(query, variables={"id": model.build_id, "note": note_text})
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
         model.refresh_from_db()
