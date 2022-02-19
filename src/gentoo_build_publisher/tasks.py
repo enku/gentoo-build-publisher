@@ -1,4 +1,6 @@
 """Celery tasks for Gentoo Build Publisher"""
+from __future__ import annotations
+
 import logging
 
 import requests

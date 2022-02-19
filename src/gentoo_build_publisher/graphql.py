@@ -4,6 +4,7 @@
 
 # "id" is used throughout. It's idiomatic GraphQL
 # pylint: disable=redefined-builtin,invalid-name
+from __future__ import annotations
 
 import datetime as dt
 from functools import cached_property

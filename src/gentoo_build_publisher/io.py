@@ -1,4 +1,6 @@
 """I/O utils for Gentoo Build Publisher"""
+from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Protocol
 

@@ -1,4 +1,6 @@
 """Admin for Gentoo Build Publisher"""
+from __future__ import annotations
+
 # pylint: disable=no-self-use
 from django.contrib import admin
 
