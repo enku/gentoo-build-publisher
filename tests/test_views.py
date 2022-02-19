@@ -94,6 +94,7 @@ class PackageMetadataTestCase(TestCase):
         build_id = BuildIDFactory()
         build_publisher = BuildPublisherFactory()
         build_publisher.pull(build_id)
+        record = build_publisher.record(build_id)
         context = {
             "now": now,
             "package_count": 0,
@@ -101,7 +102,7 @@ class PackageMetadataTestCase(TestCase):
             "recent_packages": defaultdict(set),
             "total_package_size": defaultdict(int),
         }
-        package_metadata(build_id, context)
+        package_metadata(record, context)
 
         expected = {
             "now": now,

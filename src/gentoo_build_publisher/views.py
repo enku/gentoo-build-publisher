@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID, GBPMetadata, Package
-from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.db import BuildDB, BuildRecord
 from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color, lapsed
 
@@ -136,9 +136,10 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     return latest_builds, built_recently, build_packages, latest_published
 
 
-def package_metadata(build_id: BuildID, context: DashboardContext):
+def package_metadata(record: BuildRecord, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
+    build_id = record.id
     build_publisher = BuildPublisher()
 
     try:
@@ -146,7 +147,6 @@ def package_metadata(build_id: BuildID, context: DashboardContext):
     except LookupError:
         metadata = None
 
-    record = build_publisher.record(build_id)
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total
         context["total_package_size"][build_id.name] += metadata.packages.size
@@ -173,13 +173,14 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
     }
+    records = BuildDB.get_records()
     machines = [MachineInfo(i) for i in BuildDB.list_machines()]
     machines.sort(key=lambda m: m.build_count, reverse=True)
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
     context: DashboardContext = {
         "bot_days": [datetime.strftime("%A") for datetime in bot_days],
-        "build_count": BuildDB.count(),
+        "build_count": 0,
         "builds_to_do": [],
         "build_packages": {},
         "builds_over_time": [],
@@ -198,16 +199,19 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         "unpublished_builds_count": 0,
     }
 
-    for record in BuildDB.get_records():
-        build_id = record.id
-        package_metadata(build_id, context)
+    for record in records:
+        context["build_count"] += 1
+        if not record.completed:
+            context["builds_to_do"].append(record.id)
+
+        package_metadata(record, context)
 
         if record.submitted is None:
             continue
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][build_id.name] += 1
+            builds_over_time[day_submitted][record.id.name] += 1
 
     (
         context["latest_builds"],
@@ -223,7 +227,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         ]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
-    context["builds_to_do"] = [i.id for i in BuildDB.get_records(completed=None)]
 
     # https://stackoverflow.com/questions/4764110/django-template-cant-loop-defaultdict
     context["recent_packages"].default_factory = None
