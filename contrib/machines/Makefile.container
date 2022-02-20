@@ -1,0 +1,25 @@
+.SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := world
+
+CLEAN_DELAY := 0
+EMERGE_WARNING_DELAY := 0
+
+export CLEAN_DELAY EMERGE_WARNING_DELAY
+
+universal_opts := --color=n --keep-going=n --nospinner --with-bdeps=y
+opts := $(universal_opts) --changed-deps=y --deep --jobs=4 --newuse --oneshot --update --verbose
+
+
+.PHONY: world
+world:  ## Update @world and remove unneeded pkgs & binpkgs
+	rm -rf /var/tmp/portage
+	emerge $(opts) --usepkg=y @world gentoolkit
+	emerge $(universal_opts) --changed-deps=n --usepkg=n --getbinpkg=n @preserved-rebuild
+	eclean-pkg --changed-deps --deep --quiet
+	emerge $(universal_opts) --depclean --quiet
+
+
+.PHONY: emerge-info
+emerge-info:  ## Run emerge --info
+	emerge $(universal_opts) --info
