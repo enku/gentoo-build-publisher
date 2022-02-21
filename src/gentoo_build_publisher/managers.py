@@ -208,6 +208,10 @@ class BuildPublisher:
 
             yield Change(cpvb, Status[code_map[code]])
 
+    def machines(self) -> list[MachineInfo]:
+        """Return list of machines with metadata"""
+        return [MachineInfo(i) for i in self.records.list_machines()]
+
 
 class MachineInfo:  # pylint: disable=too-few-public-methods
     """Data type for machine metadata

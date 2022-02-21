@@ -174,7 +174,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         day: defaultdict(int) for day in bot_days
     }
     records = build_publisher.records.query()
-    machines = [MachineInfo(i) for i in build_publisher.records.list_machines()]
+    machines = build_publisher.machines()
     machines.sort(key=lambda m: m.build_count, reverse=True)
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))

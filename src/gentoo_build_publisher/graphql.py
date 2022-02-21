@@ -116,9 +116,9 @@ class Build:
 
 @query.field("machines")
 def resolve_query_machines(*_) -> list[MachineInfo]:
-    records = BuildPublisher().records
+    build_publisher = BuildPublisher()
 
-    return [MachineInfo(name) for name in records.list_machines()]
+    return build_publisher.machines()
 
 
 @query.field("build")
