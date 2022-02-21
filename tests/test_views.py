@@ -69,11 +69,11 @@ class GetBuildSummaryTestCase(TestCase):
         # Make sure it doesn't fail when a gbp.json is missing
         (build_publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
 
-        machine_info = [MachineInfo(i) for i in machines]
+        machine_info = [MachineInfo(i, build_publisher) for i in machines]
 
         # Make sure it doesn't fail when a machine has no latest build (i.e. being built
         # for the first time)
-        machine_info.append(MachineInfo("foo"))
+        machine_info.append(MachineInfo("foo", build_publisher))
 
         result = get_build_summary(now, machine_info)
         latest_builds, built_recently, build_packages, latest_published = result

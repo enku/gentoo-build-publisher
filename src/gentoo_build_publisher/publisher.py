@@ -128,7 +128,9 @@ class BuildPublisher:
             return
 
         jenkins_metadata = self.jenkins.get_metadata(build_id)
-        self.storage.set_metadata(build_id, gbp_metadata(jenkins_metadata, packages))
+        self.storage.set_metadata(
+            build_id, self.gbp_metadata(jenkins_metadata, packages)
+        )
 
     def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""
@@ -205,14 +207,32 @@ class BuildPublisher:
 
     def machines(self) -> list[MachineInfo]:
         """Return list of machines with metadata"""
-        return [MachineInfo(i) for i in self.records.list_machines()]
+        return [MachineInfo(i, self) for i in self.records.list_machines()]
 
     def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
         return self.records.latest_build(name, completed)
 
+    @staticmethod
+    def gbp_metadata(
+        jenkins_metadata: JenkinsMetadata, packages: list[Package]
+    ) -> GBPMetadata:
+        """Generate GBPMetadata given JenkinsMetadata and Packages"""
+        return GBPMetadata(
+            build_duration=jenkins_metadata.duration,
+            packages=PackageMetadata(
+                total=len(packages),
+                size=sum(package.size for package in packages),
+                built=[
+                    package
+                    for package in packages
+                    if package.build_time >= jenkins_metadata.timestamp / 1000
+                ],
+            ),
+        )
 
-class MachineInfo:  # pylint: disable=too-few-public-methods
+
+class MachineInfo:
     """Data type for machine metadata
 
     Has the following attributes:
@@ -225,9 +245,9 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
     # pylint: disable=missing-docstring
 
-    def __init__(self, name):
+    def __init__(self, name, build_publisher: BuildPublisher):
         self.name = name
-        self.build_publisher = BuildPublisher()
+        self.build_publisher = build_publisher
 
     @cached_property
     def build_count(self) -> int:
@@ -256,21 +276,3 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
             number -= 1
 
         return None
-
-
-def gbp_metadata(
-    jenkins_metadata: JenkinsMetadata, packages: list[Package]
-) -> GBPMetadata:
-    """Generate GBPMetadata given JenkinsMetadata and Packages"""
-    return GBPMetadata(
-        build_duration=jenkins_metadata.duration,
-        packages=PackageMetadata(
-            total=len(packages),
-            size=sum(package.size for package in packages),
-            built=[
-                package
-                for package in packages
-                if package.build_time >= jenkins_metadata.timestamp / 1000
-            ],
-        ),
-    )

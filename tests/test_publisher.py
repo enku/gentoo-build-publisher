@@ -164,33 +164,35 @@ class BuildPublisherTestCase(TestCase):
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
-    def test(self):
-        build_publisher = BuildPublisherFactory()
+    def setUp(self):
+        super().setUp()
+        self.build_publisher = BuildPublisherFactory()
 
+    def test(self):
         # Given the "foo" builds, one of which is published
         first_build = BuildIDFactory(name="foo")
-        build_publisher.publish(first_build)
+        self.build_publisher.publish(first_build)
         latest_build = BuildIDFactory(name="foo")
-        build_publisher.pull(latest_build)
+        self.build_publisher.pull(latest_build)
 
         # Given the "other" builds
         for build_id in BuildIDFactory.create_batch(3, name="other"):
-            build_publisher.pull(build_id)
+            self.build_publisher.pull(build_id)
 
         # When we get MachineInfo for foo
-        machine_info = MachineInfo("foo")
+        machine_info = MachineInfo("foo", self.build_publisher)
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
         self.assertEqual(
-            machine_info.latest_build, build_publisher.record(latest_build)
+            machine_info.latest_build, self.build_publisher.record(latest_build)
         )
         self.assertEqual(machine_info.published_build, first_build)
 
     def test_empty_db(self):
         # When we get MachineInfo for foo
-        machine_info = MachineInfo("foo")
+        machine_info = MachineInfo("foo", self.build_publisher)
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
@@ -199,21 +201,21 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.published_build, None)
 
     def test_builds_property(self):
-        build_publisher = BuildPublisherFactory()
-
         # Given the "foo" builds
         builds = BuildIDFactory.create_batch(3, name="foo")
         for build_id in builds:
-            build_publisher.pull(build_id)
+            self.build_publisher.pull(build_id)
 
         # Given the MachineInfo for foo
-        machine_info = MachineInfo("foo")
+        machine_info = MachineInfo("foo", self.build_publisher)
 
         # When we call its .builds method
         result = machine_info.builds
 
         # Then we get the list of builds in reverse chronological order
-        self.assertEqual(result, [build_publisher.record(i) for i in reversed(builds)])
+        self.assertEqual(
+            result, [self.build_publisher.record(i) for i in reversed(builds)]
+        )
 
 
 class ScheduleBuildTestCase(TestCase):
