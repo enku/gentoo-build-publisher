@@ -21,7 +21,7 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
-from .publisher import BuildPublisher, MachineInfo
+from .publisher import MachineInfo, build_publisher
 from .tasks import publish_build, pull_build
 from .types import Build, BuildID, BuildRecord, Package, Status
 from .utils import get_version
@@ -46,8 +46,6 @@ class GQLBuild:
         self.build = build
         self._record = build if isinstance(build, BuildRecord) else None
 
-        self.build_publisher = BuildPublisher()
-
     def id(self, _) -> str:
         return str(self.build.id)
 
@@ -71,28 +69,26 @@ class GQLBuild:
 
     @cached_property
     def published(self) -> bool:
-        return self.build_publisher.published(self.build)
+        return build_publisher.published(self.build)
 
     @cached_property
     def pulled(self) -> bool:
-        return self.build_publisher.pulled(self.build)
+        return build_publisher.pulled(self.build)
 
     @cached_property
     def packages(self) -> list[str] | None:
-        if not self.build_publisher.pulled(self.build):
+        if not build_publisher.pulled(self.build):
             return None
 
         try:
-            return [
-                package.cpv for package in self.build_publisher.get_packages(self.build)
-            ]
+            return [package.cpv for package in build_publisher.get_packages(self.build)]
         except LookupError:
             return None
 
     @cached_property
     def packages_built(self) -> list[Package] | None:
         try:
-            gbp_metadata = self.build_publisher.storage.get_metadata(self.build)
+            gbp_metadata = build_publisher.storage.get_metadata(self.build)
         except LookupError as error:
             raise GraphQLError("Packages built unknown") from error
 
@@ -101,21 +97,18 @@ class GQLBuild:
     @cached_property
     def record(self) -> BuildRecord:
         if self._record is None:
-            self._record = self.build_publisher.record(self.build)
+            self._record = build_publisher.record(self.build)
 
         return self._record
 
 
 @query.field("machines")
 def resolve_query_machines(*_) -> list[MachineInfo]:
-    build_publisher = BuildPublisher()
-
     return build_publisher.machines()
 
 
 @query.field("build")
 def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
-    build_publisher = BuildPublisher()
     build_id = BuildID(id)
 
     return (
@@ -127,7 +120,6 @@ def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
 
 @query.field("latest")
 def resolve_query_latest(*_, name: str) -> Optional[GQLBuild]:
-    build_publisher = BuildPublisher()
     record = build_publisher.latest_build(name, completed=True)
 
     return None if record is None else GQLBuild(record)
@@ -135,16 +127,13 @@ def resolve_query_latest(*_, name: str) -> Optional[GQLBuild]:
 
 @query.field("builds")
 def resolve_query_builds(*_, name: str) -> list[GQLBuild]:
-    records = BuildPublisher().records
+    records = build_publisher.records.query(name=name, completed__isnull=False)
 
-    build_records = records.query(name=name, completed__isnull=False)
-
-    return [GQLBuild(record) for record in build_records]
+    return [GQLBuild(record) for record in records]
 
 
 @query.field("diff")
 def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
-    build_publisher = BuildPublisher()
     left_build_id = BuildID(left)
 
     if not build_publisher.records.exists(left_build_id):
@@ -166,8 +155,6 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
 
 @query.field("searchNotes")
 def resolve_query_searchnotes(*_, name: str, key: str) -> list[GQLBuild]:
-    build_publisher = BuildPublisher()
-
     return [GQLBuild(i) for i in build_publisher.search_notes(name, key)]
 
 
@@ -178,17 +165,14 @@ def resolve_query_version(*_) -> str:
 
 @query.field("working")
 def resolve_query_working(*_) -> list[GQLBuild]:
-    records = BuildPublisher().records
+    records = build_publisher.records.query(completed=None)
 
-    build_records = records.query(completed=None)
-
-    return [GQLBuild(record) for record in build_records]
+    return [GQLBuild(record) for record in records]
 
 
 @mutation.field("publish")
 def resolve_mutation_publish(*_, id: str) -> MachineInfo:
     build_id = BuildID(id)
-    build_publisher = BuildPublisher()
 
     if build_publisher.pulled(build_id):
         build_publisher.publish(build_id)
@@ -201,7 +185,6 @@ def resolve_mutation_publish(*_, id: str) -> MachineInfo:
 @mutation.field("pull")
 def resolve_mutation_pull(*_, id: str) -> MachineInfo:
     build_id = BuildID(id)
-    build_publisher = BuildPublisher()
 
     pull_build.delay(id)
 
@@ -210,7 +193,6 @@ def resolve_mutation_pull(*_, id: str) -> MachineInfo:
 
 @mutation.field("scheduleBuild")
 def resolve_mutation_schedule_build(*_, name: str) -> str:
-    build_publisher = BuildPublisher()
 
     return build_publisher.schedule_build(name)
 
@@ -218,7 +200,6 @@ def resolve_mutation_schedule_build(*_, name: str) -> str:
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
     build_id = BuildID(id)
-    build_publisher = BuildPublisher()
 
     if not build_publisher.records.exists(build_id):
         return None
@@ -232,7 +213,6 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
     build_id = BuildID(id)
-    build_publisher = BuildPublisher()
 
     if not build_publisher.records.exists(build_id):
         return None
@@ -248,7 +228,6 @@ def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
 ) -> Optional[GQLBuild]:
     build_id = BuildID(id)
-    build_publisher = BuildPublisher()
 
     if not build_publisher.records.exists(build_id):
         return None

@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.publisher import BuildPublisher
+from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import BuildID, BuildRecord
@@ -72,4 +73,7 @@ class BuildPublisherFactory(factory.Factory):
     )
     storage = factory.LazyAttribute(
         lambda _: Storage.from_settings(Settings.from_environ())
+    )
+    records = factory.LazyAttribute(
+        lambda _: Records.from_settings(Settings.from_environ())
     )

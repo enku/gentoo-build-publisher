@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .publisher import BuildPublisher, MachineInfo
+from .publisher import MachineInfo, build_publisher
 from .types import BuildID, BuildRecord, GBPMetadata, Package
 from .utils import Color, lapsed
 
@@ -71,7 +71,6 @@ def get_packages(build_id: BuildID) -> list[Package]:
 
     This call may be cached for performance.
     """
-    build_publisher = BuildPublisher()
     cache_key = f"packages-{build_id}"
 
     try:
@@ -100,7 +99,6 @@ def bot_to_list(builds_over_time, machines, days):
 
 def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     """Update `context` with `latest_builds` and `build_recently`"""
-    build_publisher = BuildPublisher()
     latest_builds = []
     built_recently = []
     build_packages = {}
@@ -139,7 +137,6 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
     build_id = record.id
-    build_publisher = BuildPublisher()
 
     try:
         metadata = build_publisher.storage.get_metadata(build_id)
@@ -165,7 +162,6 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
 
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
-    build_publisher = BuildPublisher()
     now = timezone.localtime()
     current_timezone = timezone.get_current_timezone()
     bot_days = [now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)]

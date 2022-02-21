@@ -49,7 +49,7 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_build task"""
 
-    @mock.patch("gentoo_build_publisher.tasks.BuildPublisher.purge")
+    @mock.patch("gentoo_build_publisher.tasks.build_publisher.purge")
     def test(self, purge_mock):
         purge_build.s("foo").apply()
 
@@ -121,7 +121,7 @@ class DeleteBuildTestCase(TestCase):
 
     def test_should_delete_the_build(self):
         with mock.patch(
-            "gentoo_build_publisher.tasks.BuildPublisher.delete"
+            "gentoo_build_publisher.tasks.build_publisher.delete"
         ) as mock_delete:
             delete_build.s("zulu.56").apply()
 

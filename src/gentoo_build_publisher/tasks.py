@@ -7,7 +7,7 @@ import requests
 import requests.exceptions
 from celery import shared_task
 
-from .publisher import BuildPublisher
+from .publisher import build_publisher
 from .settings import Settings
 from .types import BuildID
 
@@ -30,7 +30,6 @@ def publish_build(build_id: str):
         logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
 
-    build_publisher = BuildPublisher()
     build_publisher.publish(BuildID(build_id))
 
     return True
@@ -40,7 +39,6 @@ def publish_build(build_id: str):
 def pull_build(self, build_id_str: str) -> None:
     """Pull the build into storage"""
     build_id = BuildID(build_id_str)
-    build_publisher = BuildPublisher()
 
     try:
         build_publisher.pull(build_id)
@@ -66,8 +64,6 @@ def pull_build(self, build_id_str: str) -> None:
 @shared_task
 def purge_build(name: str):
     """Purge old builds for build_name"""
-    build_publisher = BuildPublisher()
-
     build_publisher.purge(name)
 
 
@@ -75,7 +71,6 @@ def purge_build(name: str):
 def delete_build(build_id_str: str):
     """Delete the given build from the db"""
     build_id = BuildID(build_id_str)
-    build_publisher = BuildPublisher()
 
     logger.info("Deleting build: %s", build_id)
 

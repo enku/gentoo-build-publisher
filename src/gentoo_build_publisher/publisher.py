@@ -6,7 +6,7 @@ import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
 from functools import cached_property
-from typing import Iterator, Optional
+from typing import Any, Iterator
 
 from . import io
 from .jenkins import Jenkins, JenkinsMetadata
@@ -36,27 +36,19 @@ class BuildPublisher:
     storage: Storage
     db: RecordDB
 
-    def __init__(
-        self,
-        *,
-        jenkins: Optional[Jenkins] = None,
-        storage: Optional[Storage] = None,
-        records: Optional[RecordDB] = None,
-    ):
-        if jenkins is None:
-            self.jenkins = self.environ_jenkins
-        else:
-            self.jenkins = jenkins
+    def __init__(self, *, jenkins: Jenkins, storage: Storage, records: RecordDB):
+        self.jenkins = jenkins
+        self.storage = storage
+        self.records = records
 
-        if storage is None:
-            self.storage = self.environ_storage
-        else:
-            self.storage = storage
+    @classmethod
+    def from_settings(cls, settings: Settings) -> BuildPublisher:
+        """Instatiate from settings"""
+        jenkins = Jenkins.from_settings(settings)
+        storage = Storage.from_settings(settings)
+        records = Records.from_settings(settings)
 
-        if records is None:
-            self.records = Records.from_settings(Settings.from_environ())
-        else:
-            self.records = records
+        return cls(jenkins=jenkins, storage=storage, records=records)
 
     def record(self, build: Build) -> BuildRecord:
         """Return BuildRecord for this build.
@@ -245,9 +237,9 @@ class MachineInfo:
 
     # pylint: disable=missing-docstring
 
-    def __init__(self, name, build_publisher: BuildPublisher):
+    def __init__(self, name, publisher: BuildPublisher):
         self.name = name
-        self.build_publisher = build_publisher
+        self.build_publisher = publisher
 
     @cached_property
     def build_count(self) -> int:
@@ -276,3 +268,30 @@ class MachineInfo:
             number -= 1
 
         return None
+
+
+# The whole purpose of this is so that we can have a "singleton" instance of
+# BuildPublisher. But we can't intantiate it here at import time because for the tests
+# we're overriding the environment variables on each test and the instance depends on
+# environment variables plus those variables don't exist yet when the test runner starts
+# importing. So what we do here is create a "lazy" subclass that doesn't actually
+# instantiate the instance until __getattr__ is called and have the TestCase's .setUp()
+# remove (reset) the instance on each test.
+class SystemPublisher(BuildPublisher):
+    """Build publisher singleton"""
+
+    def __init__(self):  # pylint: disable=super-init-not-called
+        self._publisher = None
+
+    def __getattr__(self, name: str) -> Any:
+        if self._publisher is None:
+            self._publisher = BuildPublisher.from_settings(Settings.from_environ())
+
+        return getattr(self._publisher, name)
+
+    def reset(self) -> None:
+        """Reset the instance"""
+        self._publisher = None
+
+
+build_publisher = SystemPublisher()

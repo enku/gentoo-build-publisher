@@ -10,7 +10,7 @@ from unittest import mock
 import django.test
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
-from gentoo_build_publisher.publisher import BuildPublisher
+from gentoo_build_publisher.publisher import BuildPublisher, build_publisher
 from gentoo_build_publisher.types import Build, BuildID
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -31,18 +31,7 @@ class TestCase(django.test.TestCase):
     def setUp(self):
         super().setUp()
 
-        # Remove BuildPublisher's "global" settings so that it will re-instantiate them
-        # on each init
-        try:
-            del BuildPublisher.jenkins
-        except AttributeError:
-            pass
-
-        try:
-            del BuildPublisher.storage
-        except AttributeError:
-            pass
-
+        build_publisher.reset()
         tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.addCleanup(tmpdir.cleanup)
         self.tmpdir = Path(tmpdir.name)

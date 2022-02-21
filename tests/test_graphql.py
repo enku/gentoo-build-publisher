@@ -488,7 +488,7 @@ class ScheduleBuildMutationTestCase(TestCase):
     def test(self):
         query = 'mutation { scheduleBuild(name: "babette") }'
         schedule_build_path = (
-            "gentoo_build_publisher.graphql.BuildPublisher.schedule_build"
+            "gentoo_build_publisher.graphql.build_publisher.schedule_build"
         )
         with mock.patch(schedule_build_path) as mock_schedule_build:
             mock_schedule_build.return_value = (
@@ -505,7 +505,7 @@ class ScheduleBuildMutationTestCase(TestCase):
     def test_should_return_error_when_schedule_build_fails(self):
         query = 'mutation { scheduleBuild(name: "babette") }'
         schedule_build_path = (
-            "gentoo_build_publisher.graphql.BuildPublisher.schedule_build"
+            "gentoo_build_publisher.graphql.build_publisher.schedule_build"
         )
         with mock.patch(schedule_build_path) as mock_schedule_build:
             mock_schedule_build.side_effect = Exception("The end is near")
