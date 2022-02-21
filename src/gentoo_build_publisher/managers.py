@@ -212,6 +212,10 @@ class BuildPublisher:
         """Return list of machines with metadata"""
         return [MachineInfo(i) for i in self.records.list_machines()]
 
+    def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
+        """Return the latest completed build for the given machine name"""
+        return self.records.latest_build(name, completed)
+
 
 class MachineInfo:  # pylint: disable=too-few-public-methods
     """Data type for machine metadata
@@ -242,7 +246,7 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
     @cached_property
     def latest_build(self) -> BuildID | None:
-        record = self.build_publisher.records.latest_build(self.name)
+        record = self.build_publisher.latest_build(self.name)
 
         return None if record is None else record.id
 

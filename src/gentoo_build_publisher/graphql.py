@@ -109,7 +109,7 @@ class Build:
     @cached_property
     def record(self):
         if self._record is None:
-            self._record = self.build_publisher.records.get(self.build_id)
+            self._record = self.build_publisher.record(self.build_id)
 
         return self._record
 
@@ -133,9 +133,9 @@ def resolve_query_build(*_, id: str) -> Optional[Build]:
 
 @query.field("latest")
 def resolve_query_latest(*_, name: str) -> Optional[Build]:
-    records = BuildPublisher().records
+    build_publisher = BuildPublisher()
+    record = build_publisher.latest_build(name, completed=True)
 
-    record = records.latest_build(name, completed=True)
     return None if record is None else Build(record)
 
 
