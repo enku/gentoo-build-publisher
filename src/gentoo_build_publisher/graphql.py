@@ -21,7 +21,7 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
-from .managers import BuildPublisher, MachineInfo
+from .publisher import BuildPublisher, MachineInfo
 from .tasks import publish_build, pull_build
 from .types import Build, BuildID, BuildRecord, Package, Status
 from .utils import get_version

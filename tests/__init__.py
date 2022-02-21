@@ -10,6 +10,7 @@ from unittest import mock
 import django.test
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.types import Build, BuildID
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -28,10 +29,6 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 class TestCase(django.test.TestCase):
     def setUp(self):
-        # Don't import Build until Django is initialized
-        # pylint: disable=import-outside-toplevel
-        from gentoo_build_publisher.managers import BuildPublisher
-
         super().setUp()
 
         # Remove BuildPublisher's "global" settings so that it will re-instantiate them

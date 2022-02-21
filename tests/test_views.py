@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from django.utils import timezone
 
-from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.types import BuildID, Content
 from gentoo_build_publisher.views import (
     get_build_summary,

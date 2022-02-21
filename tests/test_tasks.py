@@ -22,7 +22,7 @@ from .factories import BuildPublisherFactory
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
+    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_publishes_build(self):
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
@@ -59,7 +59,7 @@ class PurgeBuildTestCase(TestCase):
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
+    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_pulls_build(self):
         """Should actually pull the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
@@ -69,7 +69,7 @@ class PullBuildTestCase(TestCase):
         build_publisher = BuildPublisherFactory()
         self.assertIs(build_publisher.pulled(build_id), True)
 
-    @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
+    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_calls_purge_build(self):
         """Should issue the purge_build task when setting is true"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
@@ -78,7 +78,7 @@ class PullBuildTestCase(TestCase):
 
         mock_purge_build.delay.assert_called_with("charlie")
 
-    @mock.patch("gentoo_build_publisher.managers.Jenkins", new=MockJenkins)
+    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_does_not_call_purge_build(self):
         """Should not issue the purge_build task when setting is false"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
@@ -92,7 +92,7 @@ class PullBuildTestCase(TestCase):
         records = Records.from_settings(None)
 
         with mock.patch(
-            "gentoo_build_publisher.managers.Jenkins.download_artifact"
+            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = HTTPError
             pull_build.s("oscar.197").apply()
@@ -103,7 +103,7 @@ class PullBuildTestCase(TestCase):
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_not_retry_on_404_response(self):
         with mock.patch(
-            "gentoo_build_publisher.managers.Jenkins.download_artifact"
+            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
             error = HTTPError()
             error.response = mock.Mock()

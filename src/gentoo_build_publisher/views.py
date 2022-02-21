@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .managers import BuildPublisher, MachineInfo
+from .publisher import BuildPublisher, MachineInfo
 from .types import BuildID, BuildRecord, GBPMetadata, Package
 from .utils import Color, lapsed
 

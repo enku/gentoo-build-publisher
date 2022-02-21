@@ -3,8 +3,8 @@
 import factory
 from django.utils import timezone
 
-from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import BuildID, BuildRecord

@@ -7,7 +7,7 @@ import requests
 import requests.exceptions
 from celery import shared_task
 
-from .managers import BuildPublisher
+from .publisher import BuildPublisher
 from .settings import Settings
 from .types import BuildID
 

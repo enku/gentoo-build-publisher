@@ -1,9 +1,9 @@
-"""Tests for GBP managers"""
+"""Tests for the GBP publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
 from unittest import mock
 
-from gentoo_build_publisher.managers import MachineInfo
+from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
@@ -53,7 +53,7 @@ class BuildPublisherTestCase(TestCase):
         build_publisher = BuildPublisherFactory()
         build_id = BuildIDFactory()
 
-        with mock.patch("gentoo_build_publisher.managers.utcnow") as mock_now:
+        with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_now:
             mock_now.return_value = now
             build_publisher.pull(build_id)
 
