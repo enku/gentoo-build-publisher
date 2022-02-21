@@ -9,7 +9,7 @@ from unittest import mock
 
 import django.test
 
-from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.build import Build, BuildID
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -85,22 +85,22 @@ class MockJenkins(Jenkins):
     mock_get = None
     get_build_logs_mock_get = None
 
-    def download_artifact(self, build_id: BuildID):
+    def download_artifact(self, build: Build):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: iter([test_data("build.tar.gz")])
             )
             self.mock_get = mock_get
-            return super().download_artifact(build_id)
+            return super().download_artifact(build)
 
-    def get_logs(self, build_id: BuildID):
+    def get_logs(self, build: Build):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.text = "foo\n"
             self.get_build_logs_mock_get = mock_get
 
-            return super().get_logs(build_id)
+            return super().get_logs(build)
 
-    def get_metadata(self, build_id: BuildID) -> JenkinsMetadata:
+    def get_metadata(self, build: Build) -> JenkinsMetadata:
         return JenkinsMetadata(duration=124, timestamp=1620525666000)
 
 

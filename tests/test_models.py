@@ -226,7 +226,7 @@ class RecordDBTestCase(TestCase):
     def test_previous_build_when_not_completed_should_return_none(self):
         previous_build = self.record
         self.records.save(previous_build, completed=None)
-        record = self.records.to_record(BuildModelFactory())
+        record = BuildModelFactory().record()
 
         assert previous_build.id.name == record.id.name
 
@@ -235,7 +235,7 @@ class RecordDBTestCase(TestCase):
     def test_previous_build_when_not_completed_and_completed_arg_is_false(self):
         previous_build = self.record
         self.records.save(previous_build, completed=None)
-        record = self.records.to_record(BuildModelFactory())
+        record = BuildModelFactory().record()
 
         assert previous_build.id.name == record.id.name
 
@@ -249,7 +249,7 @@ class RecordDBTestCase(TestCase):
 
         assert previous_build.name == current_build.name
 
-        current_build_record = self.records.to_record(current_build)
+        current_build_record = current_build.record()
         self.assertEqual(
             self.records.previous_build(current_build_record.id), self.record
         )
@@ -272,7 +272,7 @@ class RecordDBTestCase(TestCase):
 
         assert next_build.name == self.build_model.name
 
-        next_build_record = self.records.to_record(next_build)
+        next_build_record = next_build.record()
         self.assertEqual(
             self.records.next_build(self.record.id, completed=False), next_build_record
         )
@@ -284,7 +284,7 @@ class RecordDBTestCase(TestCase):
 
         assert next_build.name == self.build_model.name
 
-        next_build_record = self.records.to_record(next_build)
+        next_build_record = next_build.record()
         self.assertEqual(self.records.next_build(self.record.id), next_build_record)
 
     def test_list_machines(self):

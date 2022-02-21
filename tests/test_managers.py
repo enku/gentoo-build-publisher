@@ -183,7 +183,9 @@ class MachineInfoTestCase(TestCase):
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
-        self.assertEqual(machine_info.latest_build, latest_build)
+        self.assertEqual(
+            machine_info.latest_build, build_publisher.record(latest_build)
+        )
         self.assertEqual(machine_info.published_build, first_build)
 
     def test_empty_db(self):
@@ -211,7 +213,7 @@ class MachineInfoTestCase(TestCase):
         result = machine_info.builds
 
         # Then we get the list of builds in reverse chronological order
-        self.assertEqual(result, [*reversed(builds)])
+        self.assertEqual(result, [build_publisher.record(i) for i in reversed(builds)])
 
 
 class ScheduleBuildTestCase(TestCase):

@@ -8,8 +8,8 @@ from typing import Any, Iterator
 from django.db import models
 from django.utils import timezone
 
-from gentoo_build_publisher.build import BuildID
-from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.build import Build, BuildID, BuildRecord
+from gentoo_build_publisher.records import RecordNotFound
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 
@@ -43,6 +43,32 @@ class BuildModel(models.Model):
         verbose_name = "Build"
         verbose_name_plural = "Builds"
 
+    def record(self) -> BuildRecord:
+        """Convert BuildModel to BuildRecord"""
+        record = BuildRecord(
+            BuildID(str(self)),
+            submitted=self.submitted,
+            completed=self.completed,
+        )
+        try:
+            record.note = self.buildnote.note
+        except BuildNote.DoesNotExist:
+            pass
+
+        try:
+            record.logs = self.buildlog.logs
+        except BuildLog.DoesNotExist:
+            pass
+
+        try:
+            self.keptbuild
+        except KeptBuild.DoesNotExist:
+            pass
+        else:
+            record.keep = True
+
+        return record
+
     def __repr__(self) -> str:
         name = self.name
         number = self.number
@@ -51,12 +77,7 @@ class BuildModel(models.Model):
         return f"{class_name}(name={name!r}, number={number})"
 
     def __str__(self) -> str:
-        return str(self.build_id)
-
-    @property
-    def build_id(self) -> BuildID:
-        """Convert BuildModel to BuildID"""
-        return BuildID(f"{self.name}.{self.number}")
+        return f"{self.name}.{self.number}"
 
 
 class KeptBuild(models.Model):
@@ -131,33 +152,6 @@ class RecordDB:
     """Implements the RecordDB Protocol"""
 
     @staticmethod
-    def to_record(build_model: BuildModel) -> BuildRecord:
-        """Convert BuildModel to BuildRecord"""
-        record = BuildRecord(
-            build_model.build_id,
-            submitted=build_model.submitted,
-            completed=build_model.completed,
-        )
-        try:
-            record.note = build_model.buildnote.note
-        except BuildNote.DoesNotExist:
-            pass
-
-        try:
-            record.logs = build_model.buildlog.logs
-        except BuildLog.DoesNotExist:
-            pass
-
-        try:
-            build_model.keptbuild
-        except KeptBuild.DoesNotExist:
-            pass
-        else:
-            record.keep = True
-
-        return record
-
-    @staticmethod
     def save(build_record: BuildRecord, **fields) -> None:
         """Save changes back to the database"""
         for name, value in fields.items():
@@ -182,18 +176,23 @@ class RecordDB:
         BuildLog.update(model, build_record.logs)
         BuildNote.update(model, build_record.note)
 
-    def get(self, build_id: BuildID) -> BuildRecord:
+    @staticmethod
+    def get(build: Build) -> BuildRecord:
         """Retrieve db record"""
+        if isinstance(build, BuildRecord):
+            return build
+
         try:
             build_model = BuildModel.objects.select_related(*RELATED).get(
-                name=build_id.name, number=build_id.number
+                name=build.name, number=build.number
             )
         except BuildModel.DoesNotExist:
             raise RecordNotFound from None
 
-        return self.to_record(build_model)
+        return build_model.record()
 
-    def query(self, **filters) -> Iterator[BuildRecord]:
+    @staticmethod
+    def query(**filters) -> Iterator[BuildRecord]:
         """Query the datbase and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.
@@ -208,19 +207,17 @@ class RecordDB:
             .order_by("-submitted")
         )
 
-        return (self.to_record(build_model) for build_model in build_models)
+        return (build_model.record() for build_model in build_models)
 
     @staticmethod
-    def delete(build_id: BuildID) -> None:
+    def delete(build: Build) -> None:
         """Delete this Build from the db"""
-        BuildModel.objects.filter(name=build_id.name, number=build_id.number).delete()
+        BuildModel.objects.filter(name=build.name, number=build.number).delete()
 
     @staticmethod
-    def exists(build_id: BuildID) -> bool:
+    def exists(build: Build) -> bool:
         """Return True iff a record of the build exists in the database"""
-        return BuildModel.objects.filter(
-            name=build_id.name, number=build_id.number
-        ).exists()
+        return BuildModel.objects.filter(name=build.name, number=build.number).exists()
 
     @staticmethod
     def list_machines() -> list[str]:
@@ -233,11 +230,10 @@ class RecordDB:
 
         return list(machines)
 
-    def previous_build(
-        self, build_id: BuildID, completed: bool = True
-    ) -> BuildRecord | None:
+    @staticmethod
+    def previous_build(build: Build, completed: bool = True) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        field_lookups = dict(name=build_id.name, number__lt=build_id.number)
+        field_lookups = dict(name=build.name, number__lt=build.number)
 
         if completed:
             field_lookups["completed__isnull"] = False
@@ -253,13 +249,12 @@ class RecordDB:
         except IndexError:
             return None
 
-        return self.to_record(build_model)
+        return build_model.record()
 
-    def next_build(
-        self, build_id: BuildID, completed: bool = True
-    ) -> BuildRecord | None:
+    @staticmethod
+    def next_build(build: Build, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
-        field_lookups = dict(name=build_id.name, number__gt=build_id.number)
+        field_lookups = dict(name=build.name, number__gt=build.number)
 
         if completed:
             field_lookups["completed__isnull"] = False
@@ -275,9 +270,10 @@ class RecordDB:
         except IndexError:
             return None
 
-        return self.to_record(build_model)
+        return build_model.record()
 
-    def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
+    @staticmethod
+    def latest_build(name: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
@@ -297,9 +293,10 @@ class RecordDB:
         except IndexError:
             return None
 
-        return self.to_record(build_model)
+        return build_model.record()
 
-    def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
+    @staticmethod
+    def search_notes(machine: str, key: str) -> Iterator[BuildRecord]:
         """search notes for given machine"""
         build_models = (
             BuildModel.objects.select_related(*RELATED)
@@ -307,7 +304,7 @@ class RecordDB:
             .order_by("-submitted")
         )
 
-        return (self.to_record(build_model) for build_model in build_models)
+        return (build_model.record() for build_model in build_models)
 
     @staticmethod
     def count(name: str | None = None) -> int:

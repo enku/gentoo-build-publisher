@@ -66,7 +66,7 @@ class BuildModelAdmin(admin.ModelAdmin):
         """Return the admin published field"""
         build_publisher = BuildPublisher()
 
-        return build_publisher.published(obj.build_id)
+        return build_publisher.published(obj.record())
 
     published.boolean = True
 
@@ -92,7 +92,7 @@ class BuildModelAdmin(admin.ModelAdmin):
         build_publisher = BuildPublisher()
 
         if "_publish" in request.POST:
-            build_publisher.publish(obj.build_id)
+            build_publisher.publish(obj.record())
 
         if "_keep" in request.POST:
             try:
@@ -112,7 +112,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
         build_publisher = BuildPublisher()
 
-        return not (KeptBuild.keep(obj) or build_publisher.published(obj.build_id))
+        return not (KeptBuild.keep(obj) or build_publisher.published(obj.record()))
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}

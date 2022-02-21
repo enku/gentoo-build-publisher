@@ -10,6 +10,7 @@ from typing import Iterator, Optional
 
 from gentoo_build_publisher import io
 from gentoo_build_publisher.build import (
+    Build,
     BuildID,
     Change,
     GBPMetadata,
@@ -61,60 +62,58 @@ class BuildPublisher:
         else:
             self.records = records
 
-    def record(self, build_id: BuildID) -> BuildRecord:
+    def record(self, build: Build) -> BuildRecord:
         """Return BuildRecord for this build.
 
         If we already have one, return it.
         Otherwise if a record exists in the RecordDB, get it from the RecordDB.
         Otherwize create an "empty" record.
         """
+        if isinstance(build, BuildRecord):
+            return build
+
         try:
-            return self.records.get(build_id)
+            return self.records.get(build)
         except RecordNotFound:
-            return BuildRecord(build_id)
+            return BuildRecord(build)
 
-    def publish(self, build_id: BuildID) -> None:
+    def publish(self, build: Build) -> None:
         """Publish the build"""
-        if not self.pulled(build_id):
-            self.pull(build_id)
+        if not self.pulled(build):
+            self.pull(build)
 
-        self.storage.publish(build_id)
+        self.storage.publish(build)
 
-    def published(self, build_id: BuildID) -> bool:
+    def published(self, build: Build) -> bool:
         """Return True if this Build is published"""
-        return self.storage.published(build_id)
+        return self.storage.published(build)
 
-    def pull(self, build_id) -> None:
+    def pull(self, build) -> None:
         """pull the Build to storage"""
-        if self.pulled(build_id):
+        if self.pulled(build):
             return
 
-        record = self.record(build_id)
+        record = self.record(build)
         self.records.save(
             record, submitted=record.submitted or utcnow().replace(tzinfo=timezone.utc)
         )
-        previous = self.records.previous_build(build_id)
+        previous = self.records.previous_build(build)
 
-        if previous:
-            previous_build = previous.id
-        else:
-            previous_build = None
-
-        logger.info("Pulling build: %s", build_id)
+        logger.info("Pulling build: %s", build)
 
         chunk_size = self.jenkins.config.download_chunk_size
         tmpdir = str(self.storage.tmpdir)
         with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
-            logger.info("Downloading build: %s", build_id)
-            io.write_chunks(temp, self.jenkins.download_artifact(build_id))
+            logger.info("Downloading build: %s", build)
+            io.write_chunks(temp, self.jenkins.download_artifact(build))
 
-            logger.info("Downloaded build: %s", build_id)
+            logger.info("Downloaded build: %s", build)
             temp.seek(0)
 
             byte_stream = io.read_chunks(temp, chunk_size)
-            self.storage.extract_artifact(build_id, byte_stream, previous_build)
+            self.storage.extract_artifact(build, byte_stream, previous)
 
-        logging.info("Pulled build %s", build_id)
+        logging.info("Pulled build %s", build)
 
         self._update_build_metadata(record)
 
@@ -135,14 +134,14 @@ class BuildPublisher:
         jenkins_metadata = self.jenkins.get_metadata(build_id)
         self.storage.set_metadata(build_id, gbp_metadata(jenkins_metadata, packages))
 
-    def pulled(self, build_id: BuildID) -> bool:
+    def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""
-        return self.storage.pulled(build_id)
+        return self.storage.pulled(build)
 
-    def delete(self, build_id: BuildID) -> None:
+    def delete(self, build: Build) -> None:
         """Delete this build"""
-        self.records.delete(build_id)
-        self.storage.delete(build_id)
+        self.records.delete(build)
+        self.storage.delete(build)
 
     @property
     def environ_jenkins(self) -> Jenkins:
@@ -164,9 +163,9 @@ class BuildPublisher:
 
         return cls.storage
 
-    def get_packages(self, build_id: BuildID) -> list[Package]:
+    def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
-        return self.storage.get_packages(build_id)
+        return self.storage.get_packages(build)
 
     def schedule_build(self, name: str) -> str:
         """Schedule a build on jenkins for the given machine name"""
@@ -185,11 +184,11 @@ class BuildPublisher:
                 if not self.published(build_id):
                     self.delete(build_id)
 
-    def search_notes(self, machine: str, key: str) -> Iterator[BuildID]:
+    def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
         """search notes for given machine"""
-        return (record.id for record in self.records.search_notes(machine, key))
+        return (record for record in self.records.search_notes(machine, key))
 
-    def diff_binpkgs(self, left: BuildID, right: BuildID) -> Iterator[Change]:
+    def diff_binpkgs(self, left: Build, right: Build) -> Iterator[Change]:
         """Compare two package's binpkgs and generate the differences"""
         if left == right:
             return
@@ -224,7 +223,7 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
         name: str
         build_count: int
-        latest_build: Optional[BuildID]
+        latest_build: Optional[BuildRecord]
         published_build: Optional[BuildID]
     """
 
@@ -239,16 +238,12 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
         return self.build_publisher.records.count(self.name)
 
     @cached_property
-    def builds(self) -> list[BuildID]:
-        return [
-            record.id for record in self.build_publisher.records.query(name=self.name)
-        ]
+    def builds(self) -> list[BuildRecord]:
+        return [*self.build_publisher.records.query(name=self.name)]
 
     @cached_property
-    def latest_build(self) -> BuildID | None:
-        record = self.build_publisher.latest_build(self.name)
-
-        return None if record is None else record.id
+    def latest_build(self) -> BuildRecord | None:
+        return self.build_publisher.latest_build(self.name)
 
     @cached_property
     def published_build(self) -> BuildID | None:

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import IO, Iterator
 
 from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import BuildID, Content, GBPMetadata, Package
+from gentoo_build_publisher.build import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -43,18 +43,18 @@ class Storage:
         return cls(settings.STORAGE_PATH)
 
     @lru_cache(maxsize=256 * len(Content))
-    def get_path(self, build_id: BuildID, item: Content) -> Path:
+    def get_path(self, build: Build, item: Content) -> Path:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
         """
-        return self.path / item.value / build_id
+        return self.path / item.value / str(build)
 
     def extract_artifact(
         self,
-        build_id: BuildID,
+        build: Build,
         byte_stream: Iterator[bytes],
-        previous_build: BuildID | None = None,
+        previous: Build | None = None,
     ):
         """Pull and unpack the artifact
 
@@ -63,7 +63,7 @@ class Storage:
         This is similiar to the "--link-dest" argument in rsync and is used to save disk
         space.
         """
-        if self.pulled(build_id):
+        if self.pulled(build):
             return
 
         with tempfile.NamedTemporaryFile(dir=self.tmpdir, suffix="tar.gz") as artifact:
@@ -72,70 +72,68 @@ class Storage:
 
             artifact.flush()
 
-            logger.info("Extracting build: %s", build_id)
+            logger.info("Extracting build: %s", build)
             bufsize = JENKINS_DEFAULT_CHUNK_SIZE
 
             with tarfile.open(artifact.name, mode="r", bufsize=bufsize) as tar_file:
-                self._extract(build_id, tar_file, previous_build)
+                self._extract(build, tar_file, previous)
 
-            logger.info("Extracted build: %s", build_id)
+            logger.info("Extracted build: %s", build)
 
-    def _extract(
-        self, build_id, tar_file: tarfile.TarFile, previous_build: BuildID | None
-    ):
+    def _extract(self, build: Build, tar_file: tarfile.TarFile, previous: Build | None):
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
             for item in Content:
                 src = Path(dirpath) / item.value
-                dst = self.get_path(build_id, item)
+                dst = self.get_path(build, item)
 
                 if dst.exists():
                     msg = "Extract destination already exists: %s. Removing"
                     logger.warning(msg, dst)
                     shutil.rmtree(dst)
 
-                if previous_build:
-                    copy = copy_or_link(self.get_path(previous_build, item), dst)
+                if previous:
+                    copy = copy_or_link(self.get_path(previous, item), dst)
                     shutil.copytree(src, dst, symlinks=True, copy_function=copy)
                 else:
                     os.renames(src, dst)
 
-    def pulled(self, build_id: BuildID) -> bool:
+    def pulled(self, build: Build) -> bool:
         """Returns True if build has been pulled
 
         By "pulled" we mean all Build components exist on the filesystem
         """
-        return all(self.get_path(build_id, item).exists() for item in Content)
+        return all(self.get_path(build, item).exists() for item in Content)
 
-    def publish(self, build_id: BuildID):
+    def publish(self, build: Build):
         """Make this build 'active'"""
-        if not self.pulled(build_id):
+        if not self.pulled(build):
             raise FileNotFoundError("The build has not been pulled")
 
         for item in Content:
-            path = self.path / item.value / build_id.name
-            self.symlink(build_id, str(path))
+            path = self.path / item.value / build.name
+            self.symlink(str(build), str(path))
 
-    def published(self, build_id: BuildID) -> bool:
+    def published(self, build: Build) -> bool:
         """Return True if the build currently published.
 
         By "published" we mean all content are symlinked. Partially symlinked is
         unstable and therefore considered not published.
         """
         return all(
-            (symlink := self.path / item.value / build_id.name).exists()
-            and os.path.realpath(symlink) == str(self.get_path(build_id, item))
+            (symlink := self.path / item.value / build.name).exists()
+            and os.path.realpath(symlink) == str(self.get_path(build, item))
             for item in Content
         )
 
-    def delete(self, build_id: BuildID) -> None:
+    def delete(self, build: Build) -> None:
         """Delete files/dirs associated with build
 
         Does not fix dangling symlinks.
         """
         for item in Content:
-            shutil.rmtree(self.get_path(build_id, item), ignore_errors=True)
+            shutil.rmtree(self.get_path(build, item), ignore_errors=True)
 
     @staticmethod
     def symlink(source: str, target: str) -> None:
@@ -147,21 +145,21 @@ class Storage:
 
         os.symlink(source, target)
 
-    def package_index_file(self, build_id: BuildID) -> IO[str]:
+    def package_index_file(self, build: Build) -> IO[str]:
         """Return a file object for the Packages index file"""
-        package_index_path = self.get_path(build_id, Content.BINPKGS) / "Packages"
+        package_index_path = self.get_path(build, Content.BINPKGS) / "Packages"
 
         if not package_index_path.exists():
-            logger.warning("Build %s is missing package index", build_id)
+            logger.warning("Build %s is missing package index", build)
             raise LookupError(f"{package_index_path} is missing")
 
         return package_index_path.open(encoding="utf-8")
 
-    def get_packages(self, build_id: BuildID) -> list[Package]:
+    def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
         packages = []
 
-        with self.package_index_file(build_id) as package_index_file:
+        with self.package_index_file(build) as package_index_file:
             # Skip preamble (for now)
             while package_index_file.readline().rstrip():
                 pass
@@ -193,12 +191,12 @@ class Storage:
 
         return packages
 
-    def get_metadata(self, build_id: BuildID) -> GBPMetadata:
+    def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
 
         If the file does not exist (e.g. not pulled), raise LookupError
         """
-        path = self.get_path(build_id, Content.BINPKGS) / "gbp.json"
+        path = self.get_path(build, Content.BINPKGS) / "gbp.json"
 
         if not path.exists():
             raise LookupError("gbp.json does not exist")
@@ -206,9 +204,9 @@ class Storage:
         with path.open("r") as gbp_json:
             return GBPMetadata.from_json(gbp_json.read())  # type: ignore # pylint: disable=no-member
 
-    def set_metadata(self, build_id: BuildID, metadata: GBPMetadata) -> None:
+    def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
-        path = self.get_path(build_id, Content.BINPKGS) / "gbp.json"
+        path = self.get_path(build, Content.BINPKGS) / "gbp.json"
         with path.open("w") as gbp_json:
             gbp_json.write(metadata.to_json())  # type: ignore # pylint: disable=no-member
 

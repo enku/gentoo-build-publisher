@@ -21,9 +21,9 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
-from gentoo_build_publisher.build import BuildID, Package, Status
+from gentoo_build_publisher.build import Build as GBPBuild
+from gentoo_build_publisher.build import BuildID, BuildRecord, Package, Status
 from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
-from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
@@ -42,24 +42,18 @@ resolvers = [
 class Build:
     """Build Type resolvers"""
 
-    def __init__(self, build: BuildID | BuildRecord):
+    def __init__(self, build: GBPBuild):
 
-        if isinstance(build, BuildID):
-            self.build_id = build
-            self._record: BuildRecord | None = None
-        elif isinstance(build, BuildRecord):
-            self.build_id = build.id
-            self._record = build
-        else:
-            raise TypeError(build)
+        self.build = build
+        self._record = build if isinstance(build, BuildRecord) else None
 
         self.build_publisher = BuildPublisher()
 
     def id(self, _) -> str:
-        return str(self.build_id)
+        return str(self.build.id)
 
     def machine(self, _) -> str:
-        return self.build_id.name
+        return self.build.name
 
     def keep(self, _) -> bool:
         return self.record.keep
@@ -78,21 +72,20 @@ class Build:
 
     @cached_property
     def published(self) -> bool:
-        return self.build_publisher.published(self.build_id)
+        return self.build_publisher.published(self.build)
 
     @cached_property
     def pulled(self) -> bool:
-        return self.build_publisher.pulled(self.build_id)
+        return self.build_publisher.pulled(self.build)
 
     @cached_property
     def packages(self) -> list[str] | None:
-        if not self.build_publisher.pulled(self.build_id):
+        if not self.build_publisher.pulled(self.build):
             return None
 
         try:
             return [
-                package.cpv
-                for package in self.build_publisher.get_packages(self.build_id)
+                package.cpv for package in self.build_publisher.get_packages(self.build)
             ]
         except LookupError:
             return None
@@ -100,16 +93,16 @@ class Build:
     @cached_property
     def packages_built(self) -> list[Package] | None:
         try:
-            gbp_metadata = self.build_publisher.storage.get_metadata(self.build_id)
+            gbp_metadata = self.build_publisher.storage.get_metadata(self.build)
         except LookupError as error:
             raise GraphQLError("Packages built unknown") from error
 
         return gbp_metadata.packages.built
 
     @cached_property
-    def record(self):
+    def record(self) -> BuildRecord:
         if self._record is None:
-            self._record = self.build_publisher.record(self.build_id)
+            self._record = self.build_publisher.record(self.build)
 
         return self._record
 

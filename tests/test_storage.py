@@ -272,7 +272,7 @@ class StorageExtractArtifactTestCase(TestCase):
         storage.extract_artifact(
             current_build_id,
             jenkins.download_artifact(current_build_id),
-            previous_build=previous_build_id,
+            previous=previous_build_id,
         )
 
         for item in Content:

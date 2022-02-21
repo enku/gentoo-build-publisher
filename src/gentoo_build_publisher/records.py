@@ -1,43 +1,15 @@
 """DB interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
-import datetime as dt
 import importlib
-from dataclasses import InitVar, dataclass
 from typing import Iterator, Protocol
 
-from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.build import Build, BuildRecord
 from gentoo_build_publisher.settings import Settings
 
 
 class RecordNotFound(LookupError):
     """Not found exception for the .get() method"""
-
-
-@dataclass
-class BuildRecord:
-    """A Build record from the database"""
-
-    build_id: InitVar[BuildID]
-    note: str | None = None
-    logs: str | None = None
-    keep: bool = False
-    submitted: dt.datetime | None = None
-    completed: dt.datetime | None = None
-
-    def __post_init__(self, build_id: BuildID):
-        self._build_id = build_id
-
-    @property
-    def id(self) -> BuildID:  # pylint: disable=invalid-name
-        """Return the BuildID associated with this record"""
-        return self._build_id
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}(build_id={self.id!r})"
-
-    def __hash__(self) -> int:
-        return hash(self.id)
 
 
 class RecordDB(Protocol):  # pragma: no cover
@@ -47,7 +19,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Save changes back to the database"""
         ...
 
-    def get(self, build_id: BuildID) -> BuildRecord:
+    def get(self, build: Build) -> BuildRecord:
         """Retrieve db record"""
         ...
 
@@ -62,11 +34,11 @@ class RecordDB(Protocol):  # pragma: no cover
         """
         ...
 
-    def delete(self, build_id: BuildID) -> None:
+    def delete(self, build: Build) -> None:
         """Delete this Build from the db"""
         ...
 
-    def exists(self, build_id: BuildID) -> bool:
+    def exists(self, build: Build) -> bool:
         """Return True iff a record of the build exists in the database"""
         ...
 
@@ -75,14 +47,12 @@ class RecordDB(Protocol):  # pragma: no cover
         ...
 
     def previous_build(
-        self, build_id: BuildID, completed: bool = True
+        self, build_id: Build, completed: bool = True
     ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
         ...
 
-    def next_build(
-        self, build_id: BuildID, completed: bool = True
-    ) -> BuildRecord | None:
+    def next_build(self, build: Build, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
         ...
 

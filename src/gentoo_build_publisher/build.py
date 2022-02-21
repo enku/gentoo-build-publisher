@@ -1,7 +1,8 @@
 """Basic Build interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
-from dataclasses import dataclass
+import datetime as dt
+from dataclasses import InitVar, dataclass
 from enum import Enum, unique
 
 from dataclasses_json import dataclass_json
@@ -33,6 +34,48 @@ class BuildID(str):
     def id(self) -> BuildID:  # pylint: disable=invalid-name
         """BuildID.id is an alias for itself"""
         return self
+
+
+@dataclass
+class BuildRecord:
+    """A Build record from the database"""
+
+    build_id: InitVar[BuildID]
+    note: str | None = None
+    logs: str | None = None
+    keep: bool = False
+    submitted: dt.datetime | None = None
+    completed: dt.datetime | None = None
+
+    def __post_init__(self, build_id: BuildID):
+        self._build_id = build_id
+
+    @property
+    def id(self) -> BuildID:  # pylint: disable=invalid-name
+        """Return the BuildID associated with this record"""
+        return self._build_id
+
+    @property
+    def name(self) -> str:
+        """Return the machine name this record belongs to"""
+        return self.id.name
+
+    @property
+    def number(self) -> int:
+        """Return the build number for this build"""
+        return self.id.number
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__qualname__}(build_id={self.id!r})"
+
+    def __str__(self) -> str:
+        return str(self.id)
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+
+Build = BuildID | BuildRecord
 
 
 @unique

@@ -6,8 +6,7 @@ from unittest import mock
 
 from django.test.client import Client
 
-from gentoo_build_publisher.build import Content
-from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.build import BuildRecord, Content
 from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry
@@ -224,7 +223,7 @@ class LatestQueryTestCase(TestCase):
         }"""
         result = execute(query)
 
-        assert_data(self, result, {"latest": {"id": self.latest.build_id}})
+        assert_data(self, result, {"latest": {"id": str(self.latest)}})
 
 
 class DiffQueryTestCase(TestCase):
@@ -539,7 +538,7 @@ class KeepBuildMutationTestCase(TestCase):
             }
         }
         """
-        result = execute(query, variables={"id": model.build_id})
+        result = execute(query, variables={"id": str(model)})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
@@ -602,7 +601,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": model.build_id, "note": note_text})
+        result = execute(query, variables={"id": str(model), "note": note_text})
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
         model.refresh_from_db()
