@@ -22,8 +22,8 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
 from gentoo_build_publisher.build import BuildID, Package, Status
-from gentoo_build_publisher.db import BuildDB, BuildRecord
 from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
@@ -109,14 +109,16 @@ class Build:
     @cached_property
     def record(self):
         if self._record is None:
-            self._record = BuildDB.get(self.build_id)
+            self._record = self.build_publisher.records.get(self.build_id)
 
         return self._record
 
 
 @query.field("machines")
 def resolve_query_machines(*_) -> list[MachineInfo]:
-    return [MachineInfo(name) for name in BuildDB.list_machines()]
+    records = BuildPublisher().records
+
+    return [MachineInfo(name) for name in records.list_machines()]
 
 
 @query.field("build")
@@ -131,30 +133,34 @@ def resolve_query_build(*_, id: str) -> Optional[Build]:
 
 @query.field("latest")
 def resolve_query_latest(*_, name: str) -> Optional[Build]:
-    record = BuildDB.latest_build(name, completed=True)
+    records = BuildPublisher().records
+
+    record = records.latest_build(name, completed=True)
     return None if record is None else Build(record)
 
 
 @query.field("builds")
 def resolve_query_builds(*_, name: str) -> list[Build]:
-    records = BuildDB.get_records(name=name, completed__isnull=False)
+    records = BuildPublisher().records
 
-    return [Build(record) for record in records]
+    build_records = records.query(name=name, completed__isnull=False)
+
+    return [Build(record) for record in build_records]
 
 
 @query.field("diff")
 def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
+    build_publisher = BuildPublisher()
     left_build_id = BuildID(left)
 
-    if not BuildDB.exists(left_build_id):
+    if not build_publisher.records.exists(left_build_id):
         return None
 
     right_build_id = BuildID(right)
 
-    if not BuildDB.exists(right_build_id):
+    if not build_publisher.records.exists(right_build_id):
         return None
 
-    build_publisher = BuildPublisher()
     items = build_publisher.diff_binpkgs(left_build_id, right_build_id)
 
     return {
@@ -178,9 +184,11 @@ def resolve_query_version(*_) -> str:
 
 @query.field("working")
 def resolve_query_working(*_) -> list[Build]:
-    records = BuildDB.get_records(completed=None)
+    records = BuildPublisher().records
 
-    return [Build(record) for record in records]
+    build_records = records.query(completed=None)
+
+    return [Build(record) for record in build_records]
 
 
 @mutation.field("publish")
@@ -217,11 +225,11 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build_id):
+    if not build_publisher.records.exists(build_id):
         return None
 
     record = build_publisher.record(build_id)
-    BuildDB.save(record, keep=True)
+    build_publisher.records.save(record, keep=True)
 
     return Build(record)
 
@@ -231,11 +239,11 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build_id):
+    if not build_publisher.records.exists(build_id):
         return None
 
     record = build_publisher.record(build_id)
-    BuildDB.save(record, keep=False)
+    build_publisher.records.save(record, keep=False)
 
     return Build(record)
 
@@ -247,11 +255,11 @@ def resolve_mutation_createnote(
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
-    if not BuildDB.exists(build_id):
+    if not build_publisher.records.exists(build_id):
         return None
 
     record = build_publisher.record(build_id)
-    BuildDB.save(record, note=note)
+    build_publisher.records.save(record, note=note)
 
     return Build(record)
 

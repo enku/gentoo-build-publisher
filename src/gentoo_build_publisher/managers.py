@@ -17,9 +17,14 @@ from gentoo_build_publisher.build import (
     PackageMetadata,
     Status,
 )
-from gentoo_build_publisher.db import BuildDB, BuildRecord
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
+from gentoo_build_publisher.records import (
+    BuildRecord,
+    RecordDB,
+    RecordNotFound,
+    Records,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 
@@ -32,9 +37,14 @@ class BuildPublisher:
 
     jenkins: Jenkins
     storage: Storage
+    db: RecordDB
 
     def __init__(
-        self, jenkins: Optional[Jenkins] = None, storage: Optional[Storage] = None
+        self,
+        *,
+        jenkins: Optional[Jenkins] = None,
+        storage: Optional[Storage] = None,
+        records: Optional[RecordDB] = None,
     ):
         if jenkins is None:
             self.jenkins = self.environ_jenkins
@@ -46,17 +56,21 @@ class BuildPublisher:
         else:
             self.storage = storage
 
-    @staticmethod
-    def record(build_id: BuildID) -> BuildRecord:
+        if records is None:
+            self.records = Records.from_settings(Settings.from_environ())
+        else:
+            self.records = records
+
+    def record(self, build_id: BuildID) -> BuildRecord:
         """Return BuildRecord for this build.
 
         If we already have one, return it.
-        Otherwise if a record exists in the BuildDB, get it from the BuildDB.
+        Otherwise if a record exists in the RecordDB, get it from the RecordDB.
         Otherwize create an "empty" record.
         """
         try:
-            return BuildDB.get(build_id)
-        except BuildDB.NotFound:
+            return self.records.get(build_id)
+        except RecordNotFound:
             return BuildRecord(build_id)
 
     def publish(self, build_id: BuildID) -> None:
@@ -76,10 +90,10 @@ class BuildPublisher:
             return
 
         record = self.record(build_id)
-        BuildDB.save(
+        self.records.save(
             record, submitted=record.submitted or utcnow().replace(tzinfo=timezone.utc)
         )
-        previous = BuildDB.previous_build(build_id)
+        previous = self.records.previous_build(build_id)
 
         if previous:
             previous_build = previous.id
@@ -107,7 +121,7 @@ class BuildPublisher:
     def _update_build_metadata(self, record: BuildRecord) -> None:
         """Update the build's db attributes (based on storage, etc.)"""
         build_id = record.id
-        BuildDB.save(
+        self.records.save(
             record,
             logs=self.jenkins.get_logs(build_id),
             completed=utcnow().replace(tzinfo=timezone.utc),
@@ -127,7 +141,7 @@ class BuildPublisher:
 
     def delete(self, build_id: BuildID) -> None:
         """Delete this build"""
-        BuildDB.delete(build_id)
+        self.records.delete(build_id)
         self.storage.delete(build_id)
 
     @property
@@ -162,7 +176,7 @@ class BuildPublisher:
         """Purge old builds for machine"""
         record: BuildRecord
         logging.info("Purging builds for %s", machine)
-        records = BuildDB.get_records(name=machine)
+        records = self.records.query(name=machine)
         purger = Purger(records, key=lambda b: b.submitted.replace(tzinfo=None))
 
         for record in purger.purge():
@@ -171,10 +185,9 @@ class BuildPublisher:
                 if not self.published(build_id):
                     self.delete(build_id)
 
-    @staticmethod
-    def search_notes(machine: str, key: str) -> Iterator[BuildID]:
+    def search_notes(self, machine: str, key: str) -> Iterator[BuildID]:
         """search notes for given machine"""
-        return (record.id for record in BuildDB.search_notes(machine, key))
+        return (record.id for record in self.records.search_notes(machine, key))
 
     def diff_binpkgs(self, left: BuildID, right: BuildID) -> Iterator[Change]:
         """Compare two package's binpkgs and generate the differences"""
@@ -215,15 +228,17 @@ class MachineInfo:  # pylint: disable=too-few-public-methods
 
     @cached_property
     def build_count(self) -> int:
-        return BuildDB.count(self.name)
+        return self.build_publisher.records.count(self.name)
 
     @cached_property
     def builds(self) -> list[BuildID]:
-        return [record.id for record in BuildDB.get_records(name=self.name)]
+        return [
+            record.id for record in self.build_publisher.records.query(name=self.name)
+        ]
 
     @cached_property
     def latest_build(self) -> BuildID | None:
-        record = BuildDB.latest_build(self.name)
+        record = self.build_publisher.records.latest_build(self.name)
 
         return None if record is None else record.id
 

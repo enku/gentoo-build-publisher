@@ -12,8 +12,8 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID, GBPMetadata, Package
-from gentoo_build_publisher.db import BuildDB, BuildRecord
 from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -173,8 +173,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
     }
-    records = BuildDB.get_records()
-    machines = [MachineInfo(i) for i in BuildDB.list_machines()]
+    records = build_publisher.records.query()
+    machines = [MachineInfo(i) for i in build_publisher.records.list_machines()]
     machines.sort(key=lambda m: m.build_count, reverse=True)
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))

@@ -4,7 +4,6 @@ import datetime
 from unittest import mock
 
 from gentoo_build_publisher.build import Content
-from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import MachineInfo
 
 from . import TestCase
@@ -24,14 +23,14 @@ class BuildPublisherTestCase(TestCase):
         self.assertIs(build_publisher.storage.published(build_id), True)
 
     def test_pull_without_db(self):
-        """pull creates db instance and pulls from jenkins"""
+        """pull creates db record and pulls from jenkins"""
         build_publisher = BuildPublisherFactory()
         build_id = BuildIDFactory()
 
         build_publisher.pull(build_id)
 
         self.assertIs(build_publisher.storage.pulled(build_id), True)
-        self.assertIs(BuildDB.exists(build_id), True)
+        self.assertIs(build_publisher.records.exists(build_id), True)
 
     def test_pull_stores_build_logs(self):
         """Should store the logs of the build"""
@@ -79,16 +78,20 @@ class BuildPublisherTestCase(TestCase):
         old_build = BuildIDFactory()
         build_publisher.pull(old_build)
         record = build_publisher.record(old_build)
-        BuildDB.save(record, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc))
+        build_publisher.records.save(
+            record, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
+        )
 
         new_build = BuildIDFactory()
         build_publisher.pull(new_build)
         record = build_publisher.record(new_build)
-        BuildDB.save(record, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc))
+        build_publisher.records.save(
+            record, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
+        )
 
         build_publisher.purge(old_build.name)
 
-        self.assertIs(BuildDB.exists(old_build), False)
+        self.assertIs(build_publisher.records.exists(old_build), False)
 
         for item in Content:
             path = build_publisher.storage.get_path(old_build, item)
@@ -99,19 +102,19 @@ class BuildPublisherTestCase(TestCase):
         build_publisher = BuildPublisherFactory()
 
         build_id = BuildIDFactory()
-        BuildDB.save(
+        build_publisher.records.save(
             build_publisher.record(build_id),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
             keep=True,
         )
-        BuildDB.save(
+        build_publisher.records.save(
             build_publisher.record(BuildIDFactory()),
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
         build_publisher.purge(build_id.name)
 
-        self.assertIs(BuildDB.exists(build_id), True)
+        self.assertIs(build_publisher.records.exists(build_id), True)
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""
@@ -119,18 +122,18 @@ class BuildPublisherTestCase(TestCase):
         build_id = BuildIDFactory()
 
         build_publisher.publish(build_id)
-        BuildDB.save(
+        build_publisher.records.save(
             build_publisher.record(build_id),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
         )
-        BuildDB.save(
+        build_publisher.records.save(
             build_publisher.record(BuildIDFactory()),
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
         build_publisher.purge(build_id.name)
 
-        self.assertIs(BuildDB.exists(build_id), True)
+        self.assertIs(build_publisher.records.exists(build_id), True)
 
     def test_update_build_metadata(self):
         # pylint: disable=protected-access

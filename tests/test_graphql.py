@@ -7,7 +7,7 @@ from unittest import mock
 from django.test.client import Client
 
 from gentoo_build_publisher.build import Content
-from gentoo_build_publisher.db import BuildDB, BuildRecord
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry
@@ -91,7 +91,7 @@ class BuildQueryTestCase(TestCase):
         # given the unpulled package
         build_id = BuildIDFactory()
         build_publisher = BuildPublisherFactory()
-        BuildDB.save(build_publisher.record(build_id))
+        build_publisher.records.save(build_publisher.record(build_id))
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -167,7 +167,7 @@ class BuildsQueryTestCase(TestCase):
 
         for build_id in build_ids:
             record = build_publisher.record(build_id)
-            BuildDB.save(record, completed=now)
+            build_publisher.records.save(record, completed=now)
 
         build_ids.sort(key=lambda build_id: build_id.number, reverse=True)
         query = """query ($name: String!) {
@@ -237,14 +237,14 @@ class DiffQueryTestCase(TestCase):
 
         # Given the first build with tar-1.34
         self.left = BuildIDFactory()
-        BuildDB.save(self.build_publisher.record(self.left))
+        self.build_publisher.records.save(self.build_publisher.record(self.left))
         binpkgs = self.build_publisher.storage.get_path(self.left, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
         self.right = BuildIDFactory()
-        BuildDB.save(self.build_publisher.record(self.right))
+        self.build_publisher.records.save(self.build_publisher.record(self.right))
         binpkgs = self.build_publisher.storage.get_path(self.right, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
@@ -563,7 +563,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         build_id = BuildIDFactory()
         build_publisher = BuildPublisherFactory()
         record = build_publisher.record(build_id)
-        BuildDB.save(record, keep=True)
+        build_publisher.records.save(record, keep=True)
 
         query = """mutation ($id: ID!) {
            releaseBuild(id: $id) {
@@ -657,10 +657,10 @@ class SearchNotesQueryTestCase(TestCase):
         self.build_publisher = BuildPublisherFactory()
         self.build1 = BuildIDFactory()
         record = self.build_publisher.record(self.build1)
-        BuildDB.save(record, note="test foo")
+        self.build_publisher.records.save(record, note="test foo")
         self.build2 = BuildIDFactory()
         record = self.build_publisher.record(self.build2)
-        BuildDB.save(record, note="test bar")
+        self.build_publisher.records.save(record, note="test bar")
 
     def test_single_match(self):
         result = execute(self.query, variables={"name": "babette", "key": "foo"})
@@ -687,7 +687,7 @@ class SearchNotesQueryTestCase(TestCase):
         build_id = BuildIDFactory(name="lighthouse")
         self.build_publisher.pull(build_id)
         record = self.build_publisher.record(build_id)
-        BuildDB.save(record, note="test foo")
+        self.build_publisher.records.save(record, note="test foo")
 
         result = execute(self.query, variables={"name": "lighthouse", "key": "test"})
 
@@ -716,7 +716,7 @@ class WorkingTestCase(TestCase):
         build_publisher.pull(BuildIDFactory())
         build_publisher.pull(BuildIDFactory(name="lighthouse"))
         working = BuildIDFactory()
-        BuildDB.save(BuildRecord(build_id=working))
+        build_publisher.records.save(BuildRecord(build_id=working))
 
         result = execute(self.query)
 

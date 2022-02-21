@@ -6,7 +6,6 @@ from collections import defaultdict
 from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID, Content
-from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
 from gentoo_build_publisher.views import (
     get_build_summary,
@@ -33,7 +32,9 @@ def buncha_builds(
             build_ids = BuildIDFactory.create_batch(per_day, name=name)
 
             for build_id in build_ids:
-                BuildDB.save(build_publisher.record(build_id), submitted=day)
+                build_publisher.records.save(
+                    build_publisher.record(build_id), submitted=day
+                )
 
             buildmap[name].extend(build_ids)
     return buildmap

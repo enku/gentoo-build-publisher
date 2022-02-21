@@ -8,7 +8,6 @@ import requests.exceptions
 from celery import shared_task
 
 from gentoo_build_publisher.build import BuildID
-from gentoo_build_publisher.db import BuildDB
 from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 
@@ -47,8 +46,8 @@ def pull_build(self, build_id_str: str) -> None:
         build_publisher.pull(build_id)
     except PULL_RETRYABLE_EXCEPTIONS as error:
         logger.exception("Failed to pull build %s", build_id)
-        if BuildDB.exists(build_id):
-            BuildDB.delete(build_id)
+        if build_publisher.records.exists(build_id):
+            build_publisher.records.delete(build_id)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):

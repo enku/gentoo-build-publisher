@@ -4,9 +4,9 @@ import factory
 from django.utils import timezone
 
 from gentoo_build_publisher.build import BuildID
-from gentoo_build_publisher.db import BuildRecord
 from gentoo_build_publisher.managers import BuildPublisher
 from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 

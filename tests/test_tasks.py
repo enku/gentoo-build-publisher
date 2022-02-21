@@ -7,7 +7,7 @@ from unittest import mock
 from requests import HTTPError
 
 from gentoo_build_publisher.build import BuildID
-from gentoo_build_publisher.db import BuildDB
+from gentoo_build_publisher.records import RecordNotFound, Records
 from gentoo_build_publisher.tasks import (
     delete_build,
     publish_build,
@@ -89,14 +89,16 @@ class PullBuildTestCase(TestCase):
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(self):
+        records = Records.from_settings(None)
+
         with mock.patch(
             "gentoo_build_publisher.managers.Jenkins.download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = HTTPError
             pull_build.s("oscar.197").apply()
 
-        with self.assertRaises(BuildDB.NotFound):
-            BuildDB.get(BuildID("oscar.197"))
+        with self.assertRaises(RecordNotFound):
+            records.get(BuildID("oscar.197"))
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_not_retry_on_404_response(self):
