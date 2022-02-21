@@ -11,9 +11,9 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from gentoo_build_publisher.build import BuildID, GBPMetadata, Package, BuildRecord
-from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
-from gentoo_build_publisher.utils import Color, lapsed
+from .managers import BuildPublisher, MachineInfo
+from .types import BuildID, BuildRecord, GBPMetadata, Package
+from .utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 import importlib
 from typing import Iterator, Protocol
 
-from gentoo_build_publisher.build import Build, BuildRecord
-from gentoo_build_publisher.settings import Settings
+from .settings import Settings
+from .types import Build, BuildRecord
 
 
 class RecordNotFound(LookupError):

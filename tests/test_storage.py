@@ -7,15 +7,15 @@ import tarfile
 from unittest import mock
 
 from gentoo_build_publisher import utils
-from gentoo_build_publisher.build import (
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.storage import Storage, quick_check
+from gentoo_build_publisher.types import (
     BuildID,
     Content,
     GBPMetadata,
     Package,
     PackageMetadata,
 )
-from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import Storage, quick_check
 
 from . import PACKAGE_INDEX, MockJenkins, TestCase
 from .factories import BuildIDFactory, BuildPublisherFactory

@@ -2,7 +2,7 @@
 # pylint: disable=missing-docstring
 from unittest import TestCase
 
-from gentoo_build_publisher.build import BuildID, InvalidBuildID
+from gentoo_build_publisher.types import BuildID, InvalidBuildID
 
 
 class BuildIDTestCase(TestCase):

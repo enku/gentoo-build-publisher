@@ -6,7 +6,6 @@ from unittest import mock
 
 from requests import HTTPError
 
-from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.records import RecordNotFound, Records
 from gentoo_build_publisher.tasks import (
     delete_build,
@@ -14,6 +13,7 @@ from gentoo_build_publisher.tasks import (
     pull_build,
     purge_build,
 )
+from gentoo_build_publisher.types import BuildID
 
 from . import MockJenkins, TestCase
 from .factories import BuildPublisherFactory

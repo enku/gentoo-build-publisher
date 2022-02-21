@@ -3,8 +3,8 @@
 import datetime
 from unittest import mock
 
-from gentoo_build_publisher.build import Content
 from gentoo_build_publisher.managers import MachineInfo
+from gentoo_build_publisher.types import Content
 
 from . import TestCase
 from .factories import BuildIDFactory, BuildPublisherFactory

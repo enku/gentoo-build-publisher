@@ -2,7 +2,6 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 
-from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.models import (
     BuildLog,
     BuildModel,
@@ -11,6 +10,7 @@ from gentoo_build_publisher.models import (
     RecordDB,
 )
 from gentoo_build_publisher.records import RecordNotFound
+from gentoo_build_publisher.types import BuildID
 
 from . import TestCase
 from .factories import BuildModelFactory, BuildRecordFactory

@@ -10,9 +10,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import IO, Iterator
 
-from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
-from gentoo_build_publisher.build import Build, Content, GBPMetadata, Package
-from gentoo_build_publisher.settings import Settings
+from .settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
+from .types import Build, Content, GBPMetadata, Package
 
 logger = logging.getLogger(__name__)
 

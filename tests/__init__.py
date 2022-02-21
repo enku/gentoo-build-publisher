@@ -9,8 +9,8 @@ from unittest import mock
 
 import django.test
 
-from gentoo_build_publisher.build import Build, BuildID
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
+from gentoo_build_publisher.types import Build, BuildID
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 

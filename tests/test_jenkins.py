@@ -7,9 +7,9 @@ from unittest import TestCase, mock
 
 from yarl import URL
 
-from gentoo_build_publisher.build import BuildID
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import BuildID
 
 from . import MockJenkins, test_data
 

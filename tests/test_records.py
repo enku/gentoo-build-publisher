@@ -2,7 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from django.test import TestCase
 
-from gentoo_build_publisher.build import BuildID
+from gentoo_build_publisher.types import BuildID
 
 from .factories import BuildRecordFactory
 

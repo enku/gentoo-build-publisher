@@ -21,11 +21,10 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
-from gentoo_build_publisher.build import Build as GBPBuild
-from gentoo_build_publisher.build import BuildID, BuildRecord, Package, Status
-from gentoo_build_publisher.managers import BuildPublisher, MachineInfo
-from gentoo_build_publisher.tasks import publish_build, pull_build
-from gentoo_build_publisher.utils import get_version
+from .managers import BuildPublisher, MachineInfo
+from .tasks import publish_build, pull_build
+from .types import Build, BuildID, BuildRecord, Package, Status
+from .utils import get_version
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
@@ -39,10 +38,10 @@ resolvers = [
 ]
 
 
-class Build:
+class GQLBuild:
     """Build Type resolvers"""
 
-    def __init__(self, build: GBPBuild):
+    def __init__(self, build: Build):
 
         self.build = build
         self._record = build if isinstance(build, BuildRecord) else None
@@ -115,30 +114,32 @@ def resolve_query_machines(*_) -> list[MachineInfo]:
 
 
 @query.field("build")
-def resolve_query_build(*_, id: str) -> Optional[Build]:
+def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
     build_publisher = BuildPublisher()
     build_id = BuildID(id)
 
     return (
-        None if build_publisher.record(build_id).completed is None else Build(build_id)
+        None
+        if build_publisher.record(build_id).completed is None
+        else GQLBuild(build_id)
     )
 
 
 @query.field("latest")
-def resolve_query_latest(*_, name: str) -> Optional[Build]:
+def resolve_query_latest(*_, name: str) -> Optional[GQLBuild]:
     build_publisher = BuildPublisher()
     record = build_publisher.latest_build(name, completed=True)
 
-    return None if record is None else Build(record)
+    return None if record is None else GQLBuild(record)
 
 
 @query.field("builds")
-def resolve_query_builds(*_, name: str) -> list[Build]:
+def resolve_query_builds(*_, name: str) -> list[GQLBuild]:
     records = BuildPublisher().records
 
     build_records = records.query(name=name, completed__isnull=False)
 
-    return [Build(record) for record in build_records]
+    return [GQLBuild(record) for record in build_records]
 
 
 @query.field("diff")
@@ -157,17 +158,17 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
     items = build_publisher.diff_binpkgs(left_build_id, right_build_id)
 
     return {
-        "left": Build(left_build_id),
-        "right": Build(right_build_id),
+        "left": GQLBuild(left_build_id),
+        "right": GQLBuild(right_build_id),
         "items": [*items],
     }
 
 
 @query.field("searchNotes")
-def resolve_query_searchnotes(*_, name: str, key: str) -> list[Build]:
+def resolve_query_searchnotes(*_, name: str, key: str) -> list[GQLBuild]:
     build_publisher = BuildPublisher()
 
-    return [Build(i) for i in build_publisher.search_notes(name, key)]
+    return [GQLBuild(i) for i in build_publisher.search_notes(name, key)]
 
 
 @query.field("version")
@@ -176,12 +177,12 @@ def resolve_query_version(*_) -> str:
 
 
 @query.field("working")
-def resolve_query_working(*_) -> list[Build]:
+def resolve_query_working(*_) -> list[GQLBuild]:
     records = BuildPublisher().records
 
     build_records = records.query(completed=None)
 
-    return [Build(record) for record in build_records]
+    return [GQLBuild(record) for record in build_records]
 
 
 @mutation.field("publish")
@@ -214,7 +215,7 @@ def resolve_mutation_schedule_build(*_, name: str) -> str:
 
 
 @mutation.field("keepBuild")
-def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
+def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
@@ -224,11 +225,11 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[Build]:
     record = build_publisher.record(build_id)
     build_publisher.records.save(record, keep=True)
 
-    return Build(record)
+    return GQLBuild(record)
 
 
 @mutation.field("releaseBuild")
-def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
+def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
@@ -238,13 +239,13 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[Build]:
     record = build_publisher.record(build_id)
     build_publisher.records.save(record, keep=False)
 
-    return Build(record)
+    return GQLBuild(record)
 
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
-) -> Optional[Build]:
+) -> Optional[GQLBuild]:
     build_id = BuildID(id)
     build_publisher = BuildPublisher()
 
@@ -254,7 +255,7 @@ def resolve_mutation_createnote(
     record = build_publisher.record(build_id)
     build_publisher.records.save(record, note=note)
 
-    return Build(record)
+    return GQLBuild(record)
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

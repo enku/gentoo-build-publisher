@@ -4,8 +4,8 @@ from __future__ import annotations
 # pylint: disable=no-self-use
 from django.contrib import admin
 
-from gentoo_build_publisher.managers import BuildPublisher
-from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
+from .managers import BuildPublisher
+from .models import BuildModel, BuildNote, KeptBuild
 
 
 class KeepListFilter(admin.SimpleListFilter):

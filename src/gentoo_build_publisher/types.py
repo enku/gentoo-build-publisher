@@ -7,7 +7,7 @@ from enum import Enum, unique
 
 from dataclasses_json import dataclass_json
 
-from gentoo_build_publisher import utils
+from . import utils
 
 
 class InvalidBuildID(ValueError):

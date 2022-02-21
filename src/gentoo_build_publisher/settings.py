@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 
-from gentoo_build_publisher import JENKINS_DEFAULT_CHUNK_SIZE
+JENKINS_DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024
 
 
 # NOTE: Using pydantic's BaseSettings was considered here but was considered too much
