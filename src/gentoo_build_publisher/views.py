@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from .publisher import MachineInfo, build_publisher
-from .types import BuildID, BuildRecord, GBPMetadata, Package
+from .types import Build, BuildID, BuildRecord, GBPMetadata, Package
 from .utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -66,16 +66,16 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
-def get_packages(build_id: BuildID) -> list[Package]:
+def get_packages(build: Build) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
     This call may be cached for performance.
     """
-    cache_key = f"packages-{build_id}"
+    cache_key = f"packages-{build.id}"
 
     try:
         return cache.get_or_set(
-            cache_key, lambda: build_publisher.get_packages(build_id), timeout=None
+            cache_key, lambda: build_publisher.get_packages(build), timeout=None
         )
     except LookupError:
         return []
@@ -136,16 +136,15 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
 def package_metadata(record: BuildRecord, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
-    build_id = record.id
 
     try:
-        metadata = build_publisher.storage.get_metadata(build_id)
+        metadata = build_publisher.storage.get_metadata(record)
     except LookupError:
         metadata = None
 
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][build_id.name] += metadata.packages.size
+        context["total_package_size"][record.name] += metadata.packages.size
 
         if record.submitted and lapsed(record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
@@ -153,11 +152,11 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
                     package.cpv in context["recent_packages"]
                     or len(context["recent_packages"]) < 12
                 ):
-                    context["recent_packages"][package.cpv].add(build_id.name)
+                    context["recent_packages"][package.cpv].add(record.name)
     else:
-        packages = get_packages(build_id)
+        packages = get_packages(record)
         context["package_count"] += len(packages)
-        context["total_package_size"][build_id.name] += sum(i.size for i in packages)
+        context["total_package_size"][record.name] += sum(i.size for i in packages)
 
 
 def dashboard(request: HttpRequest) -> HttpResponse:
@@ -206,7 +205,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][record.id.name] += 1
+            builds_over_time[day_submitted][record.name] += 1
 
     (
         context["latest_builds"],
@@ -216,9 +215,9 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     ) = get_build_summary(now, machines)
     context["unpublished_builds_count"] = len(
         [
-            build_id
-            for build_id in context["latest_builds"]
-            if not build_publisher.published(build_id)
+            build
+            for build in context["latest_builds"]
+            if not build_publisher.published(build)
         ]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
