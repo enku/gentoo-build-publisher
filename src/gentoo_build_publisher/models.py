@@ -8,8 +8,8 @@ from typing import Any, Iterator
 from django.db import models
 from django.utils import timezone
 
-from .records import RecordNotFound
-from .types import Build, BuildRecord
+from .records import BuildRecord, RecordNotFound
+from .types import Build
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 

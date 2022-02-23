@@ -22,8 +22,9 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
 from .publisher import MachineInfo, build_publisher
+from .records import BuildRecord
 from .tasks import publish_build, pull_build
-from .types import Build, BuildRecord, Package, Status
+from .types import Build, Package, Status
 from .utils import get_version
 
 Object = dict[str, Any]

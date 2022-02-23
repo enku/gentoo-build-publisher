@@ -1,15 +1,63 @@
 """DB interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
+import datetime as dt
 import importlib
-from typing import Iterator, Protocol
+from typing import Any, Iterator, Protocol
 
 from .settings import Settings
-from .types import Build, BuildRecord
+from .types import Build
 
 
 class RecordNotFound(LookupError):
     """Not found exception for the .get() method"""
+
+
+class BuildRecord(Build):
+    """A Build record from the database"""
+
+    def __init__(
+        self,
+        id_: str,
+        *,
+        note: str | None = None,
+        logs: str | None = None,
+        keep: bool = False,
+        submitted: dt.datetime | None = None,
+        completed: dt.datetime | None = None,
+    ):
+        super().__init__(id_)
+        self.note = note
+        self.logs = logs
+        self.keep = keep
+        self.submitted = submitted
+        self.completed = completed
+
+    def __eq__(self, other: Any) -> bool:
+        if type(self) is not type(other):
+            return False
+
+        return (
+            self.id,
+            self.note,
+            self.logs,
+            self.keep,
+            self.submitted,
+            self.completed,
+        ) == (
+            other.id,
+            other.note,
+            other.logs,
+            other.keep,
+            other.submitted,
+            other.completed,
+        )
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__qualname__}({(self.id)!r})"
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
 
 class RecordDB(Protocol):  # pragma: no cover

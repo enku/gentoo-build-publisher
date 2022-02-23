@@ -6,7 +6,8 @@ from unittest import mock
 
 from django.test.client import Client
 
-from gentoo_build_publisher.types import BuildRecord, Content
+from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry

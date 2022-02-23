@@ -12,7 +12,8 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from .publisher import MachineInfo, build_publisher
-from .types import Build, BuildRecord, GBPMetadata, Package
+from .records import BuildRecord
+from .types import Build, GBPMetadata, Package
 from .utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})

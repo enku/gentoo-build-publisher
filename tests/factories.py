@@ -5,10 +5,10 @@ from django.utils import timezone
 
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.publisher import BuildPublisher
-from gentoo_build_publisher.records import Records
+from gentoo_build_publisher.records import BuildRecord, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
-from gentoo_build_publisher.types import Build, BuildRecord
+from gentoo_build_publisher.types import Build
 
 from . import MockJenkins
 

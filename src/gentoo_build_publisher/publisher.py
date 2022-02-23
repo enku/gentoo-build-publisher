@@ -11,18 +11,10 @@ from typing import Any, Iterator
 from . import io
 from .jenkins import Jenkins, JenkinsMetadata
 from .purge import Purger
-from .records import RecordDB, RecordNotFound, Records
+from .records import BuildRecord, RecordDB, RecordNotFound, Records
 from .settings import Settings
 from .storage import Storage
-from .types import (
-    Build,
-    BuildRecord,
-    Change,
-    GBPMetadata,
-    Package,
-    PackageMetadata,
-    Status,
-)
+from .types import Build, Change, GBPMetadata, Package, PackageMetadata, Status
 
 logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow
