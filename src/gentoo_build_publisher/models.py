@@ -9,7 +9,7 @@ from django.db import models
 from django.utils import timezone
 
 from .records import RecordNotFound
-from .types import Build, BuildID, BuildRecord
+from .types import Build, BuildRecord
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 
@@ -46,9 +46,7 @@ class BuildModel(models.Model):
     def record(self) -> BuildRecord:
         """Convert BuildModel to BuildRecord"""
         record = BuildRecord(
-            BuildID(str(self)),
-            submitted=self.submitted,
-            completed=self.completed,
+            str(self), submitted=self.submitted, completed=self.completed
         )
         try:
             record.note = self.buildnote.note
@@ -159,10 +157,10 @@ class RecordDB:
 
         try:
             model = BuildModel.objects.get(
-                name=build_record.id.name, number=build_record.id.number
+                name=build_record.name, number=build_record.number
             )
         except BuildModel.DoesNotExist:
-            model = BuildModel(name=build_record.id.name, number=build_record.id.number)
+            model = BuildModel(name=build_record.name, number=build_record.number)
 
         if build_record.submitted is None:
             build_record.submitted = timezone.now()

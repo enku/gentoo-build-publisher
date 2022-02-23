@@ -10,7 +10,7 @@ from gentoo_build_publisher.types import BuildRecord, Content
 from gentoo_build_publisher.utils import get_version
 
 from . import PACKAGE_INDEX, TestCase, package_entry
-from .factories import BuildIDFactory, BuildModelFactory, BuildPublisherFactory
+from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
 
 
 def execute(query, variables=None):
@@ -34,9 +34,9 @@ class BuildQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self):
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
         query = """query ($id: ID!) {
             build(id: $id) {
@@ -51,12 +51,12 @@ class BuildQueryTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build_id})
+        result = execute(query, variables={"id": build.id})
 
         expected = {
             "build": {
-                "id": build_id,
-                "machine": build_id.name,
+                "id": build.id,
+                "machine": build.name,
                 "pulled": True,
                 "published": False,
                 "packagesBuilt": [
@@ -71,9 +71,9 @@ class BuildQueryTestCase(TestCase):
 
     def test_packages(self):
         # given the pulled build with packages
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -81,16 +81,16 @@ class BuildQueryTestCase(TestCase):
                 packages
             }
         }"""
-        result = execute(query, {"id": build_id})
+        result = execute(query, {"id": build.id})
 
         # Then we get the list of packages in the build
         assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
 
-    def _test_packages_when_not_pulled_returns_none(self):
+    def test_packages_when_not_pulled_returns_none(self):
         # given the unpulled package
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.records.save(build_publisher.record(build_id))
+        build_publisher.records.save(build_publisher.record(build))
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -98,20 +98,18 @@ class BuildQueryTestCase(TestCase):
                 packages
             }
         }"""
-        result = execute(query, {"id": build_id})
+        result = execute(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
     def test_packages_should_return_none_when_package_index_missing(self):
         # given the pulled build with index file missing
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
-        (
-            build_publisher.storage.get_path(build_id, Content.BINPKGS) / "Packages"
-        ).unlink()
+        (build_publisher.storage.get_path(build, Content.BINPKGS) / "Packages").unlink()
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -119,19 +117,17 @@ class BuildQueryTestCase(TestCase):
                 packages
             }
         }"""
-        result = execute(query, {"id": build_id})
+        result = execute(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
     def test_packagesbuild_should_return_error_when_gbpjson_missing(self):
         # given the pulled build with gbp.json missing
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
-        (
-            build_publisher.storage.get_path(build_id, Content.BINPKGS) / "gbp.json"
-        ).unlink()
+        build_publisher.pull(build)
+        (build_publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json").unlink()
 
         # when we query the build's packagesBuild
         query = """query ($id: ID!) {
@@ -143,11 +139,11 @@ class BuildQueryTestCase(TestCase):
                 }
             }
         }"""
-        result = execute(query, {"id": build_id})
+        result = execute(query, {"id": build.id})
 
         self.assertEqual(
             result["data"]["build"],
-            {"id": build_id, "machine": build_id.name, "packagesBuilt": None},
+            {"id": build.id, "machine": build.name, "packagesBuilt": None},
         )
         self.assertEqual(len(result["errors"]), 1)
         self.assertEqual(result["errors"][0]["message"], "Packages built unknown")
@@ -161,14 +157,14 @@ class BuildsQueryTestCase(TestCase):
 
     def test(self):
         now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.timezone.utc)
-        build_ids = BuildIDFactory.create_batch(3)
+        builds = BuildFactory.create_batch(3)
         build_publisher = BuildPublisherFactory()
 
-        for build_id in build_ids:
-            record = build_publisher.record(build_id)
+        for build in builds:
+            record = build_publisher.record(build)
             build_publisher.records.save(record, completed=now)
 
-        build_ids.sort(key=lambda build_id: build_id.number, reverse=True)
+        builds.sort(key=lambda build: build.number, reverse=True)
         query = """query ($name: String!) {
             builds(name: $name) {
                 id
@@ -177,11 +173,11 @@ class BuildsQueryTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"name": build_ids[0].name})
+        result = execute(query, variables={"name": builds[0].name})
 
         expected = [
-            {"id": build_id, "completed": "2021-09-30T20:17:00+00:00"}
-            for build_id in build_ids
+            {"id": build.id, "completed": "2021-09-30T20:17:00+00:00"}
+            for build in builds
         ]
 
         assert_data(self, result, {"builds": expected})
@@ -235,14 +231,14 @@ class DiffQueryTestCase(TestCase):
         self.build_publisher = BuildPublisherFactory()
 
         # Given the first build with tar-1.34
-        self.left = BuildIDFactory()
+        self.left = BuildFactory()
         self.build_publisher.records.save(self.build_publisher.record(self.left))
         binpkgs = self.build_publisher.storage.get_path(self.left, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
         (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
 
         # Given the second build with tar-1.35
-        self.right = BuildIDFactory()
+        self.right = BuildFactory()
         self.build_publisher.records.save(self.build_publisher.record(self.right))
         binpkgs = self.build_publisher.storage.get_path(self.right, Content.BINPKGS)
         binpkgs.mkdir(parents=True)
@@ -264,14 +260,14 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {"left": self.left, "right": self.right}
+        variables = {"left": self.left.id, "right": self.right.id}
         result = execute(query, variables=variables)
 
         # Then the differences are given between the two builds
         expected = {
             "diff": {
-                "left": {"id": self.left},
-                "right": {"id": self.right},
+                "left": {"id": self.left.id},
+                "right": {"id": self.right.id},
                 "items": [
                     {"item": "app-arch/tar-1.34-1", "status": "REMOVED"},
                     {"item": "app-arch/tar-1.35-1", "status": "ADDED"},
@@ -289,7 +285,7 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {"left": self.left, "right": self.right}
+        variables = {"left": self.left.id, "right": self.right.id}
 
         result = execute(query, variables=variables)
 
@@ -319,7 +315,7 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {"left": "bogus.1", "right": self.right}
+        variables = {"left": "bogus.1", "right": self.right.id}
         result = execute(query, variables=variables)
 
         # Then None is returned
@@ -340,7 +336,7 @@ class DiffQueryTestCase(TestCase):
                 }
             }
         }"""
-        variables = {"left": self.left, "right": "bogus.1"}
+        variables = {"left": self.left.id, "right": "bogus.1"}
         result = execute(query, variables=variables)
 
         # Then None is returned
@@ -354,8 +350,8 @@ class MachinesQueryTestCase(TestCase):
 
     def test(self):
         build_publisher = BuildPublisherFactory()
-        babette_builds = BuildIDFactory.create_batch(3, name="babette")
-        lighthouse_builds = BuildIDFactory.create_batch(3, name="lighthouse")
+        babette_builds = BuildFactory.create_batch(3, name="babette")
+        lighthouse_builds = BuildFactory.create_batch(3, name="lighthouse")
 
         for build in babette_builds + lighthouse_builds:
             build_publisher.pull(build)
@@ -386,15 +382,15 @@ class MachinesQueryTestCase(TestCase):
             {
                 "name": "babette",
                 "buildCount": 3,
-                "builds": [{"id": i} for i in reversed(babette_builds)],
-                "latestBuild": {"id": build},
-                "publishedBuild": {"id": build},
+                "builds": [{"id": i.id} for i in reversed(babette_builds)],
+                "latestBuild": {"id": build.id},
+                "publishedBuild": {"id": build.id},
             },
             {
                 "name": "lighthouse",
                 "buildCount": 3,
-                "builds": [{"id": i} for i in reversed(lighthouse_builds)],
-                "latestBuild": {"id": lighthouse_builds[-1]},
+                "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
+                "latestBuild": {"id": lighthouse_builds[-1].id},
                 "publishedBuild": None,
             },
         ]
@@ -405,9 +401,9 @@ class MachinesQueryTestCase(TestCase):
         # (coverage.py)
         build_publisher = BuildPublisherFactory()
 
-        for build in BuildIDFactory.create_batch(
+        for build in BuildFactory.create_batch(
             2, name="babette"
-        ) + BuildIDFactory.create_batch(3, name="lighthouse"):
+        ) + BuildFactory.create_batch(3, name="lighthouse"):
             build_publisher.pull(build)
 
         query = """{
@@ -428,8 +424,8 @@ class PublishMutationTestCase(TestCase):
     def test_publish_when_pulled(self):
         """Should publish builds"""
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
-        build_publisher.pull(build_id)
+        build = BuildFactory()
+        build_publisher.pull(build)
 
         query = """mutation ($id: ID!) {
             publish(id: $id) {
@@ -438,9 +434,9 @@ class PublishMutationTestCase(TestCase):
                 }
             }
         }"""
-        result = execute(query, variables={"id": build_id})
+        result = execute(query, variables={"id": build.id})
 
-        assert_data(self, result, {"publish": {"publishedBuild": {"id": build_id}}})
+        assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
     def test_publish_when_not_pulled(self):  # pylint: disable=no-self-use
         """Should publish builds"""
@@ -464,7 +460,7 @@ class PullMutationTestCase(TestCase):
 
     def test(self):
         """Should publish builds"""
-        build_id = BuildIDFactory()
+        build = BuildFactory()
 
         query = """mutation ($id: ID!) {
             pull(id: $id) {
@@ -474,10 +470,10 @@ class PullMutationTestCase(TestCase):
             }
         }"""
         with mock.patch("gentoo_build_publisher.graphql.pull_build") as mock_pull:
-            result = execute(query, variables={"id": build_id})
+            result = execute(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_pull.delay.assert_called_once_with(str(build_id))
+        mock_pull.delay.assert_called_once_with(build.id)
 
 
 class ScheduleBuildMutationTestCase(TestCase):
@@ -559,9 +555,9 @@ class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self):
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        record = build_publisher.record(build_id)
+        record = build_publisher.record(build)
         build_publisher.records.save(record, keep=True)
 
         query = """mutation ($id: ID!) {
@@ -571,7 +567,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build_id})
+        result = execute(query, variables={"id": build.id})
 
         assert_data(self, result, {"releaseBuild": {"keep": False}})
 
@@ -608,9 +604,9 @@ class CreateNoteMutationTestCase(TestCase):
         self.assertEqual(model.buildnote.note, note_text)
 
     def test_set_none(self):
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
         query = """mutation ($id: ID!, $note: String) {
            createNote(id: $id, note: $note) {
@@ -619,11 +615,11 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build_id, "note": None})
+        result = execute(query, variables={"id": build.id, "note": None})
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
-        record = build_publisher.record(build_id)
+        record = build_publisher.record(build)
         self.assertEqual(record.note, None)
 
     def test_should_return_none_when_build_doesnt_exist(self):
@@ -654,10 +650,10 @@ class SearchNotesQueryTestCase(TestCase):
         super().setUp()
 
         self.build_publisher = BuildPublisherFactory()
-        self.build1 = BuildIDFactory()
+        self.build1 = BuildFactory()
         record = self.build_publisher.record(self.build1)
         self.build_publisher.records.save(record, note="test foo")
-        self.build2 = BuildIDFactory()
+        self.build2 = BuildFactory()
         record = self.build_publisher.record(self.build2)
         self.build_publisher.records.save(record, note="test bar")
 
@@ -665,7 +661,7 @@ class SearchNotesQueryTestCase(TestCase):
         result = execute(self.query, variables={"name": "babette", "key": "foo"})
 
         assert_data(
-            self, result, {"searchNotes": [{"id": self.build1, "notes": "test foo"}]}
+            self, result, {"searchNotes": [{"id": self.build1.id, "notes": "test foo"}]}
         )
 
     def test_multiple_match(self):
@@ -676,16 +672,16 @@ class SearchNotesQueryTestCase(TestCase):
             result,
             {
                 "searchNotes": [
-                    {"id": self.build2, "notes": "test bar"},
-                    {"id": self.build1, "notes": "test foo"},
+                    {"id": self.build2.id, "notes": "test bar"},
+                    {"id": self.build1.id, "notes": "test foo"},
                 ]
             },
         )
 
     def test_only_matches_given_machine(self):
-        build_id = BuildIDFactory(name="lighthouse")
-        self.build_publisher.pull(build_id)
-        record = self.build_publisher.record(build_id)
+        build = BuildFactory(name="lighthouse")
+        self.build_publisher.pull(build)
+        record = self.build_publisher.record(build)
         self.build_publisher.records.save(record, note="test foo")
 
         result = execute(self.query, variables={"name": "lighthouse", "key": "test"})
@@ -693,7 +689,7 @@ class SearchNotesQueryTestCase(TestCase):
         assert_data(
             self,
             result,
-            {"searchNotes": [{"id": build_id, "notes": "test foo"}]},
+            {"searchNotes": [{"id": build.id, "notes": "test foo"}]},
         )
 
     def test_when_named_machine_does_not_exist(self):
@@ -712,14 +708,14 @@ class WorkingTestCase(TestCase):
 
     def test(self):
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(BuildIDFactory())
-        build_publisher.pull(BuildIDFactory(name="lighthouse"))
-        working = BuildIDFactory()
-        build_publisher.records.save(BuildRecord(build_id=working))
+        build_publisher.pull(BuildFactory())
+        build_publisher.pull(BuildFactory(name="lighthouse"))
+        working = BuildFactory()
+        build_publisher.records.save(BuildRecord(working.id))
 
         result = execute(self.query)
 
-        assert_data(self, result, {"working": [{"id": working}]})
+        assert_data(self, result, {"working": [{"id": working.id}]})
 
 
 class VersionTestCase(TestCase):

@@ -2,25 +2,25 @@
 # pylint: disable=missing-docstring
 from unittest import TestCase
 
-from gentoo_build_publisher.types import BuildID, InvalidBuildID
+from gentoo_build_publisher.types import Build, InvalidBuild
 
 
-class BuildIDTestCase(TestCase):
+class BuildTestCase(TestCase):
     def test_string_with_name_and_number(self):
-        build_id = BuildID("babette.16")
+        build = Build("babette.16")
 
-        self.assertEqual(build_id, "babette.16")
+        self.assertEqual(str(build), "babette.16")
 
     def test_string_with_invalid_number(self):
-        with self.assertRaises(InvalidBuildID):
-            BuildID("babette.16f")
+        with self.assertRaises(InvalidBuild):
+            Build("babette.16f")
 
     def test_string_with_no_name(self):
-        with self.assertRaises(InvalidBuildID):
-            BuildID(".16")
+        with self.assertRaises(InvalidBuild):
+            Build(".16")
 
     def test_has_name_and_number_attrs(self):
-        build_id = BuildID("babette.16")
+        build = Build("babette.16")
 
-        self.assertEqual(build_id.name, "babette")
-        self.assertEqual(build_id.number, 16)
+        self.assertEqual(build.name, "babette")
+        self.assertEqual(build.number, 16)

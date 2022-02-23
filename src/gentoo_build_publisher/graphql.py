@@ -23,7 +23,7 @@ from graphql import GraphQLError
 
 from .publisher import MachineInfo, build_publisher
 from .tasks import publish_build, pull_build
-from .types import Build, BuildID, BuildRecord, Package, Status
+from .types import Build, BuildRecord, Package, Status
 from .utils import get_version
 
 Object = dict[str, Any]
@@ -47,7 +47,7 @@ class GQLBuild:
         self._record = build if isinstance(build, BuildRecord) else None
 
     def id(self, _) -> str:
-        return str(self.build.id)
+        return self.build.id
 
     def machine(self, _) -> str:
         return self.build.name
@@ -109,13 +109,9 @@ def resolve_query_machines(*_) -> list[MachineInfo]:
 
 @query.field("build")
 def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
-    build_id = BuildID(id)
+    build = Build(id)
 
-    return (
-        None
-        if build_publisher.record(build_id).completed is None
-        else GQLBuild(build_id)
-    )
+    return None if not build_publisher.records.exists(build) else GQLBuild(build)
 
 
 @query.field("latest")
@@ -134,21 +130,21 @@ def resolve_query_builds(*_, name: str) -> list[GQLBuild]:
 
 @query.field("diff")
 def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
-    left_build_id = BuildID(left)
+    left_build = Build(left)
 
-    if not build_publisher.records.exists(left_build_id):
+    if not build_publisher.records.exists(left_build):
         return None
 
-    right_build_id = BuildID(right)
+    right_build = Build(right)
 
-    if not build_publisher.records.exists(right_build_id):
+    if not build_publisher.records.exists(right_build):
         return None
 
-    items = build_publisher.diff_binpkgs(left_build_id, right_build_id)
+    items = build_publisher.diff_binpkgs(left_build, right_build)
 
     return {
-        "left": GQLBuild(left_build_id),
-        "right": GQLBuild(right_build_id),
+        "left": GQLBuild(left_build),
+        "right": GQLBuild(right_build),
         "items": [*items],
     }
 
@@ -172,23 +168,23 @@ def resolve_query_working(*_) -> list[GQLBuild]:
 
 @mutation.field("publish")
 def resolve_mutation_publish(*_, id: str) -> MachineInfo:
-    build_id = BuildID(id)
+    build = Build(id)
 
-    if build_publisher.pulled(build_id):
-        build_publisher.publish(build_id)
+    if build_publisher.pulled(build):
+        build_publisher.publish(build)
     else:
-        publish_build.delay(str(build_id))
+        publish_build.delay(build.id)
 
-    return MachineInfo(build_id.name, build_publisher)
+    return MachineInfo(build.name, build_publisher)
 
 
 @mutation.field("pull")
 def resolve_mutation_pull(*_, id: str) -> MachineInfo:
-    build_id = BuildID(id)
+    build = Build(id)
 
     pull_build.delay(id)
 
-    return MachineInfo(build_id.name, build_publisher)
+    return MachineInfo(build.name, build_publisher)
 
 
 @mutation.field("scheduleBuild")
@@ -199,12 +195,12 @@ def resolve_mutation_schedule_build(*_, name: str) -> str:
 
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
-    build_id = BuildID(id)
+    build = Build(id)
 
-    if not build_publisher.records.exists(build_id):
+    if not build_publisher.records.exists(build):
         return None
 
-    record = build_publisher.record(build_id)
+    record = build_publisher.record(build)
     build_publisher.records.save(record, keep=True)
 
     return GQLBuild(record)
@@ -212,12 +208,12 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
 
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
-    build_id = BuildID(id)
+    build = Build(id)
 
-    if not build_publisher.records.exists(build_id):
+    if not build_publisher.records.exists(build):
         return None
 
-    record = build_publisher.record(build_id)
+    record = build_publisher.record(build)
     build_publisher.records.save(record, keep=False)
 
     return GQLBuild(record)
@@ -227,12 +223,12 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
 def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
 ) -> Optional[GQLBuild]:
-    build_id = BuildID(id)
+    build = Build(id)
 
-    if not build_publisher.records.exists(build_id):
+    if not build_publisher.records.exists(build):
         return None
 
-    record = build_publisher.record(build_id)
+    record = build_publisher.record(build)
     build_publisher.records.save(record, note=note)
 
     return GQLBuild(record)

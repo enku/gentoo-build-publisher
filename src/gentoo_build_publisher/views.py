@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from .publisher import MachineInfo, build_publisher
-from .types import Build, BuildID, BuildRecord, GBPMetadata, Package
+from .types import Build, BuildRecord, GBPMetadata, Package
 from .utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -30,7 +30,7 @@ class DashboardContext(TypedDict):
     build_count: int
 
     # Builds not yet completed
-    builds_to_do: list[BuildID]
+    builds_to_do: list[Build]
 
     # Each machine gets it's own #rrggbb color
     machine_colors: list[str]
@@ -46,7 +46,7 @@ class DashboardContext(TypedDict):
     build_packages: dict[str, list[str]]
 
     # set of latest_packages that are published
-    latest_published: set[BuildID]
+    latest_published: set[Build]
 
     # recently built packages (for all machines)
     recent_packages: defaultdict[str, set]
@@ -55,10 +55,10 @@ class DashboardContext(TypedDict):
     total_package_size: defaultdict[str, int]
 
     # List of the latest builds for each machine, if the machine has one
-    latest_builds: list[BuildID]
+    latest_builds: list[Build]
 
     # List of builds from the last 24 hours
-    built_recently: list[BuildID]
+    built_recently: list[Build]
 
     builds_over_time: list[list[int]]
 
@@ -71,7 +71,7 @@ def get_packages(build: Build) -> list[Package]:
 
     This call may be cached for performance.
     """
-    cache_key = f"packages-{build.id}"
+    cache_key = f"packages-{build}"
 
     try:
         return cache.get_or_set(
@@ -116,7 +116,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
             continue
 
         latest_builds.append(latest_build)
-        build_id = str(latest_build)
+        build_id = latest_build.id
         try:
             build_packages[build_id] = [
                 i.cpv
@@ -196,7 +196,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     for record in records:
         context["build_count"] += 1
         if not record.completed:
-            context["builds_to_do"].append(record.id)
+            context["builds_to_do"].append(record)
 
         package_metadata(record, context)
 

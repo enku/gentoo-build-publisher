@@ -2,80 +2,95 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from enum import Enum, unique
+from typing import Any
 
 from dataclasses_json import dataclass_json
 
 from . import utils
 
 
-class InvalidBuildID(ValueError):
-    """BuildID not in name.number format"""
+class InvalidBuild(ValueError):
+    """Build not in name.number format"""
 
 
-class BuildID(str):
+class Build:
     """A build ID (name.number)"""
 
-    def __init__(self, _):
-        super().__init__()
+    def __init__(self, id_: str):
+        self._id = id_
 
-        if not all(parts := self.partition(".")):
-            raise InvalidBuildID(self)
+        if not all(parts := id_.partition(".")):
+            raise InvalidBuild(self)
 
         self.name = parts[0]
 
         try:
             self.number = int(parts[2])
         except ValueError as error:
-            raise InvalidBuildID(str(error)) from error
+            raise InvalidBuild(str(error)) from error
 
     @property
-    def id(self) -> BuildID:  # pylint: disable=invalid-name
-        """BuildID.id is an alias for itself"""
-        return self
-
-
-@dataclass
-class BuildRecord:
-    """A Build record from the database"""
-
-    build_id: InitVar[BuildID]
-    note: str | None = None
-    logs: str | None = None
-    keep: bool = False
-    submitted: dt.datetime | None = None
-    completed: dt.datetime | None = None
-
-    def __post_init__(self, build_id: BuildID):
-        self._build_id = build_id
-
-    @property
-    def id(self) -> BuildID:  # pylint: disable=invalid-name
-        """Return the BuildID associated with this record"""
-        return self._build_id
-
-    @property
-    def name(self) -> str:
-        """Return the machine name this record belongs to"""
-        return self.id.name
-
-    @property
-    def number(self) -> int:
-        """Return the build number for this build"""
-        return self.id.number
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}(build_id={self.id!r})"
+    def id(self):  # pylint: disable=invalid-name
+        """Return the string representation of the Build"""
+        return self._id
 
     def __str__(self) -> str:
-        return str(self.id)
+        return self._id
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
+    def __eq__(self, other: Any) -> bool:
+        return type(self) is type(other) and self.id == other.id
+
+
+class BuildRecord(Build):
+    """A Build record from the database"""
+
+    def __init__(
+        self,
+        id_: str,
+        *,
+        note: str | None = None,
+        logs: str | None = None,
+        keep: bool = False,
+        submitted: dt.datetime | None = None,
+        completed: dt.datetime | None = None,
+    ):
+        super().__init__(id_)
+        self.note = note
+        self.logs = logs
+        self.keep = keep
+        self.submitted = submitted
+        self.completed = completed
+
+    def __eq__(self, other: Any) -> bool:
+        if type(self) is not type(other):
+            return False
+
+        return (
+            self.id,
+            self.note,
+            self.logs,
+            self.keep,
+            self.submitted,
+            self.completed,
+        ) == (
+            other.id,
+            other.note,
+            other.logs,
+            other.keep,
+            other.submitted,
+            other.completed,
+        )
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__qualname__}({(self.id)!r})"
 
     def __hash__(self) -> int:
         return hash(self.id)
-
-
-Build = BuildID | BuildRecord
 
 
 @unique

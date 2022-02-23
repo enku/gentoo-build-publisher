@@ -9,7 +9,7 @@ from celery import shared_task
 
 from .publisher import build_publisher
 from .settings import Settings
-from .types import BuildID
+from .types import Build
 
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
 PULL_RETRYABLE_EXCEPTIONS = (
@@ -30,22 +30,22 @@ def publish_build(build_id: str):
         logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
 
-    build_publisher.publish(BuildID(build_id))
+    build_publisher.publish(Build(build_id))
 
     return True
 
 
 @shared_task(bind=True)
-def pull_build(self, build_id_str: str) -> None:
+def pull_build(self, build_id: str) -> None:
     """Pull the build into storage"""
-    build_id = BuildID(build_id_str)
+    build = Build(build_id)
 
     try:
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
     except PULL_RETRYABLE_EXCEPTIONS as error:
-        logger.exception("Failed to pull build %s", build_id)
-        if build_publisher.records.exists(build_id):
-            build_publisher.records.delete(build_id)
+        logger.exception("Failed to pull build %s", build)
+        if build_publisher.records.exists(build):
+            build_publisher.records.delete(build)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
@@ -58,7 +58,7 @@ def pull_build(self, build_id_str: str) -> None:
         return  # pragma: no cover
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(build_id.name)
+        purge_build.delay(build.name)
 
 
 @shared_task
@@ -68,11 +68,11 @@ def purge_build(name: str):
 
 
 @shared_task
-def delete_build(build_id_str: str):
+def delete_build(build_id: str):
     """Delete the given build from the db"""
-    build_id = BuildID(build_id_str)
+    build = Build(build_id)
 
-    logger.info("Deleting build: %s", build_id)
+    logger.info("Deleting build: %s", build)
 
-    build_publisher.delete(build_id)
-    logger.info("Deleted build: %s", build_id)
+    build_publisher.delete(build)
+    logger.info("Deleted build: %s", build)

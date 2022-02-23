@@ -16,7 +16,6 @@ from .settings import Settings
 from .storage import Storage
 from .types import (
     Build,
-    BuildID,
     BuildRecord,
     Change,
     GBPMetadata,
@@ -63,7 +62,7 @@ class BuildPublisher:
         try:
             return self.records.get(build)
         except RecordNotFound:
-            return BuildRecord(build)
+            return BuildRecord(str(build))
 
     def publish(self, build: Build) -> None:
         """Publish the build"""
@@ -107,22 +106,19 @@ class BuildPublisher:
 
     def _update_build_metadata(self, record: BuildRecord) -> None:
         """Update the build's db attributes (based on storage, etc.)"""
-        build_id = record.id
         self.records.save(
             record,
-            logs=self.jenkins.get_logs(build_id),
+            logs=self.jenkins.get_logs(record),
             completed=utcnow().replace(tzinfo=timezone.utc),
         )
 
         try:
-            packages = self.storage.get_packages(build_id)
+            packages = self.storage.get_packages(record)
         except LookupError:
             return
 
-        jenkins_metadata = self.jenkins.get_metadata(build_id)
-        self.storage.set_metadata(
-            build_id, self.gbp_metadata(jenkins_metadata, packages)
-        )
+        jenkins_metadata = self.jenkins.get_metadata(record)
+        self.storage.set_metadata(record, self.gbp_metadata(jenkins_metadata, packages))
 
     def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""
@@ -170,9 +166,8 @@ class BuildPublisher:
 
         for record in purger.purge():
             if not record.keep:
-                build_id = record.id
-                if not self.published(build_id):
-                    self.delete(build_id)
+                if not self.published(record):
+                    self.delete(record)
 
     def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
         """search notes for given machine"""
@@ -232,7 +227,7 @@ class MachineInfo:
         name: str
         build_count: int
         latest_build: Optional[BuildRecord]
-        published_build: Optional[BuildID]
+        published_build: Optional[Build]
     """
 
     # pylint: disable=missing-docstring
@@ -254,16 +249,16 @@ class MachineInfo:
         return self.build_publisher.latest_build(self.name)
 
     @cached_property
-    def published_build(self) -> BuildID | None:
+    def published_build(self) -> Build | None:
         if not (latest := self.latest_build):
             return None
 
         number = latest.number
 
         while number:
-            build_id = BuildID(f"{self.name}.{number}")
-            if self.build_publisher.published(build_id):
-                return build_id
+            build = Build(f"{self.name}.{number}")
+            if self.build_publisher.published(build):
+                return build
 
             number -= 1
 

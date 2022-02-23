@@ -6,7 +6,7 @@ from collections import defaultdict
 from django.utils import timezone
 
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
-from gentoo_build_publisher.types import BuildID, Content
+from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.views import (
     get_build_summary,
     get_packages,
@@ -14,7 +14,7 @@ from gentoo_build_publisher.views import (
 )
 
 from . import TestCase
-from .factories import BuildIDFactory, BuildPublisherFactory
+from .factories import BuildFactory, BuildPublisherFactory
 
 
 def buncha_builds(
@@ -23,20 +23,20 @@ def buncha_builds(
     end_date,
     num_days: int,
     per_day: int,
-) -> defaultdict[str, list[BuildID]]:
+) -> defaultdict[str, list[Build]]:
     buildmap = defaultdict(list)
 
     for i in reversed(range(num_days)):
         day = end_date - dt.timedelta(days=i)
         for name in machines:
-            build_ids = BuildIDFactory.create_batch(per_day, name=name)
+            builds = BuildFactory.create_batch(per_day, name=name)
 
-            for build_id in build_ids:
+            for build in builds:
                 build_publisher.records.save(
-                    build_publisher.record(build_id), submitted=day
+                    build_publisher.record(build), submitted=day
                 )
 
-            buildmap[name].extend(build_ids)
+            buildmap[name].extend(builds)
     return buildmap
 
 
@@ -45,12 +45,12 @@ class GetPackagesTestCase(TestCase):
 
     def test(self):
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
-        build_publisher.pull(build_id)
+        build = BuildFactory()
+        build_publisher.pull(build)
 
-        packages = get_packages(build_id)
+        packages = get_packages(build)
 
-        self.assertEqual(packages, build_publisher.get_packages(build_id))
+        self.assertEqual(packages, build_publisher.get_packages(build))
 
 
 class GetBuildSummaryTestCase(TestCase):
@@ -98,10 +98,10 @@ class GetBuildSummaryTestCase(TestCase):
 class PackageMetadataTestCase(TestCase):
     def test(self):
         now = timezone.now()
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
-        build_publisher.pull(build_id)
-        record = build_publisher.record(build_id)
+        build_publisher.pull(build)
+        record = build_publisher.record(build)
         context = {
             "now": now,
             "package_count": 0,

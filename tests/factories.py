@@ -8,7 +8,7 @@ from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
-from gentoo_build_publisher.types import BuildID, BuildRecord
+from gentoo_build_publisher.types import Build, BuildRecord
 
 from . import MockJenkins
 
@@ -25,11 +25,11 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
     completed = None
 
 
-class BuildIDFactory(factory.Factory):
-    """BuildID factory"""
+class BuildFactory(factory.Factory):
+    """Build factory"""
 
     class Meta:
-        model = BuildID
+        model = Build
         inline_args = ("build_id",)
 
     class Params:
@@ -47,13 +47,12 @@ class BuildIDFactory(factory.Factory):
         return f"{self.name}.{number}"  # pylint: disable=no-member
 
 
-class BuildRecordFactory(factory.Factory):
+class BuildRecordFactory(BuildFactory):
     """BuildRecord Factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         model = BuildRecord
 
-    build_id = factory.SubFactory(BuildIDFactory)
     submitted = None
     completed = None
     note = None

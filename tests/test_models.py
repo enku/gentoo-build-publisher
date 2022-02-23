@@ -10,7 +10,7 @@ from gentoo_build_publisher.models import (
     RecordDB,
 )
 from gentoo_build_publisher.records import RecordNotFound
-from gentoo_build_publisher.types import BuildID
+from gentoo_build_publisher.types import Build
 
 from . import TestCase
 from .factories import BuildModelFactory, BuildRecordFactory
@@ -106,7 +106,7 @@ class RecordDBTestCase(TestCase):
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
         self.record = self.records.get(
-            BuildID(f"{self.build_model.name}.{self.build_model.number}")
+            Build(f"{self.build_model.name}.{self.build_model.number}")
         )
 
     def test_submitted_set(self):
@@ -182,31 +182,31 @@ class RecordDBTestCase(TestCase):
             BuildLog.objects.get(build_model=self.build_model)
 
     def test_save_not_exists(self):
-        record = BuildRecordFactory(build_id=BuildID("foo.555"))
+        record = BuildRecordFactory()
 
         self.records.save(record)
 
-        self.assertTrue(BuildModel.objects.filter(name="foo", number=555).exists())
+        self.assertTrue(
+            BuildModel.objects.filter(name=record.name, number=record.number).exists()
+        )
 
     def test_save_exists(self):
-        record = self.records.get(self.record.id)
+        record = self.records.get(self.record)
         self.records.save(record)
-        build_model = BuildModel.objects.get(
-            name=record.id.name, number=record.id.number
-        )
+        build_model = BuildModel.objects.get(name=record.name, number=record.number)
 
         self.assertEqual(build_model, self.build_model)
 
     def test_get(self):
-        build_id = BuildID(f"{self.build_model.name}.{self.build_model.number}")
-        record = self.records.get(build_id)
+        build = Build(f"{self.build_model.name}.{self.build_model.number}")
+        record = self.records.get(build)
 
-        self.assertEqual(record.id, build_id)
+        self.assertEqual(record.id, build.id)
         self.assertEqual(record.submitted, self.build_model.submitted)
 
     def test_get_does_not_exist(self):
         with self.assertRaises(RecordNotFound):
-            self.records.get(BuildID("bogus.955"))
+            self.records.get(Build("bogus.955"))
 
     def test_query(self):
         BuildModel.objects.all().delete()
@@ -216,10 +216,10 @@ class RecordDBTestCase(TestCase):
 
         records = [*self.records.query(number=555)]
 
-        self.assertEqual([i.id.name for i in records], ["bar", "foo"])
+        self.assertEqual([i.name for i in records], ["bar", "foo"])
 
     def test_previous_build_should_return_none_when_there_are_none(self):
-        previous = self.records.previous_build(self.record.id)
+        previous = self.records.previous_build(self.record)
 
         self.assertIs(previous, None)
 
@@ -228,19 +228,19 @@ class RecordDBTestCase(TestCase):
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
-        assert previous_build.id.name == record.id.name
+        assert previous_build.name == record.name
 
-        self.assertIs(self.records.previous_build(record.id), None)
+        self.assertIs(self.records.previous_build(record), None)
 
     def test_previous_build_when_not_completed_and_completed_arg_is_false(self):
         previous_build = self.record
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
-        assert previous_build.id.name == record.id.name
+        assert previous_build.name == record.name
 
         self.assertEqual(
-            self.records.previous_build(record.id, completed=False), previous_build
+            self.records.previous_build(record, completed=False), previous_build
         )
 
     def test_previous_build_when_completed(self):
@@ -250,13 +250,11 @@ class RecordDBTestCase(TestCase):
         assert previous_build.name == current_build.name
 
         current_build_record = current_build.record()
-        self.assertEqual(
-            self.records.previous_build(current_build_record.id), self.record
-        )
+        self.assertEqual(self.records.previous_build(current_build_record), self.record)
 
     def test_next_build_should_return_none_when_there_are_none(self):
-        build_id = BuildID("bogus.1")
-        next_build = self.records.next_build(build_id)
+        build = Build("bogus.1")
+        next_build = self.records.next_build(build)
 
         self.assertIs(next_build, None)
 
@@ -265,7 +263,7 @@ class RecordDBTestCase(TestCase):
 
         assert next_build.name == self.build_model.name
 
-        self.assertIs(self.records.next_build(self.record.id), None)
+        self.assertIs(self.records.next_build(self.record), None)
 
     def test_next_build_when_not_completed_and_completed_arg_is_false(self):
         next_build = BuildModelFactory()
@@ -274,7 +272,7 @@ class RecordDBTestCase(TestCase):
 
         next_build_record = next_build.record()
         self.assertEqual(
-            self.records.next_build(self.record.id, completed=False), next_build_record
+            self.records.next_build(self.record, completed=False), next_build_record
         )
 
     def test_next_build_when_completed(self):
@@ -285,7 +283,7 @@ class RecordDBTestCase(TestCase):
         assert next_build.name == self.build_model.name
 
         next_build_record = next_build.record()
-        self.assertEqual(self.records.next_build(self.record.id), next_build_record)
+        self.assertEqual(self.records.next_build(self.record), next_build_record)
 
     def test_list_machines(self):
         BuildModelFactory.create(name="lighthouse")

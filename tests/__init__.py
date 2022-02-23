@@ -11,7 +11,7 @@ import django.test
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.publisher import BuildPublisher, build_publisher
-from gentoo_build_publisher.types import Build, BuildID
+from gentoo_build_publisher.types import Build
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 

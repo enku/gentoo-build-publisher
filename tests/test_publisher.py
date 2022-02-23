@@ -7,7 +7,7 @@ from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
-from .factories import BuildIDFactory, BuildPublisherFactory
+from .factories import BuildFactory, BuildPublisherFactory
 
 utc = datetime.timezone.utc
 
@@ -15,59 +15,59 @@ utc = datetime.timezone.utc
 class BuildPublisherTestCase(TestCase):
     def test_publish(self):
         """.publish should publish the build artifact"""
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
 
-        build_publisher.publish(build_id)
+        build_publisher.publish(build)
 
-        self.assertIs(build_publisher.storage.published(build_id), True)
+        self.assertIs(build_publisher.storage.published(build), True)
 
     def test_pull_without_db(self):
         """pull creates db record and pulls from jenkins"""
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
+        build = BuildFactory()
 
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
-        self.assertIs(build_publisher.storage.pulled(build_id), True)
-        self.assertIs(build_publisher.records.exists(build_id), True)
+        self.assertIs(build_publisher.storage.pulled(build), True)
+        self.assertIs(build_publisher.records.exists(build), True)
 
     def test_pull_stores_build_logs(self):
         """Should store the logs of the build"""
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
+        build = BuildFactory()
 
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
-        url = str(build_publisher.jenkins.logs_url(build_id))
+        url = str(build_publisher.jenkins.logs_url(build))
         build_publisher.jenkins.get_build_logs_mock_get.assert_called_once()
         call_args = build_publisher.jenkins.get_build_logs_mock_get.call_args
         self.assertEqual(call_args[0][0], url)
 
-        record = build_publisher.record(build_id)
+        record = build_publisher.record(build)
         self.assertEqual(record.logs, "foo\n")
 
     def test_pull_updates_build_models_completed_field(self):
         """Should update the completed field with the current timestamp"""
         now = datetime.datetime.now()
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
+        build = BuildFactory()
 
         with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_now:
             mock_now.return_value = now
-            build_publisher.pull(build_id)
+            build_publisher.pull(build)
 
-        record = build_publisher.record(build_id)
+        record = build_publisher.record(build)
         self.assertEqual(record.completed, now.replace(tzinfo=utc))
 
     def test_pull_does_not_download_when_already_pulled(self):
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher = BuildPublisherFactory()
 
-        build_publisher.pull(build_id)
+        build_publisher.pull(build)
 
         with mock.patch.object(build_publisher.jenkins, "download_artifact") as mock_dl:
-            build_publisher.pull(build_id)
+            build_publisher.pull(build)
 
         self.assertFalse(mock_dl.called)
 
@@ -75,14 +75,14 @@ class BuildPublisherTestCase(TestCase):
         """Should remove purgable builds"""
         build_publisher = BuildPublisherFactory()
 
-        old_build = BuildIDFactory()
+        old_build = BuildFactory()
         build_publisher.pull(old_build)
         record = build_publisher.record(old_build)
         build_publisher.records.save(
             record, submitted=datetime.datetime(1970, 1, 1, tzinfo=utc)
         )
 
-        new_build = BuildIDFactory()
+        new_build = BuildFactory()
         build_publisher.pull(new_build)
         record = build_publisher.record(new_build)
         build_publisher.records.save(
@@ -101,55 +101,55 @@ class BuildPublisherTestCase(TestCase):
         """Should remove purgable builds"""
         build_publisher = BuildPublisherFactory()
 
-        build_id = BuildIDFactory()
+        build = BuildFactory()
         build_publisher.records.save(
-            build_publisher.record(build_id),
+            build_publisher.record(build),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
             keep=True,
         )
         build_publisher.records.save(
-            build_publisher.record(BuildIDFactory()),
+            build_publisher.record(BuildFactory()),
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        build_publisher.purge(build_id.name)
+        build_publisher.purge(build.name)
 
-        self.assertIs(build_publisher.records.exists(build_id), True)
+        self.assertIs(build_publisher.records.exists(build), True)
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
+        build = BuildFactory()
 
-        build_publisher.publish(build_id)
+        build_publisher.publish(build)
         build_publisher.records.save(
-            build_publisher.record(build_id),
+            build_publisher.record(build),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
         )
         build_publisher.records.save(
-            build_publisher.record(BuildIDFactory()),
+            build_publisher.record(BuildFactory()),
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        build_publisher.purge(build_id.name)
+        build_publisher.purge(build.name)
 
-        self.assertIs(build_publisher.records.exists(build_id), True)
+        self.assertIs(build_publisher.records.exists(build), True)
 
     def test_update_build_metadata(self):
         # pylint: disable=protected-access
         build_publisher = BuildPublisherFactory()
-        build_id = BuildIDFactory()
-        record = build_publisher.record(build_id)
+        build = BuildFactory()
+        record = build_publisher.record(build)
 
         build_publisher._update_build_metadata(record)
 
-        record = build_publisher.record(build_id)
+        record = build_publisher.record(build)
         self.assertEqual(record.logs, "foo\n")
         self.assertIsNot(record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
         build_publisher = BuildPublisherFactory()
-        left = BuildIDFactory()
+        left = BuildFactory()
         build_publisher.get_packages = mock.Mock(wraps=build_publisher.get_packages)
         right = left
 
@@ -170,14 +170,14 @@ class MachineInfoTestCase(TestCase):
 
     def test(self):
         # Given the "foo" builds, one of which is published
-        first_build = BuildIDFactory(name="foo")
+        first_build = BuildFactory(name="foo")
         self.build_publisher.publish(first_build)
-        latest_build = BuildIDFactory(name="foo")
+        latest_build = BuildFactory(name="foo")
         self.build_publisher.pull(latest_build)
 
         # Given the "other" builds
-        for build_id in BuildIDFactory.create_batch(3, name="other"):
-            self.build_publisher.pull(build_id)
+        for build in BuildFactory.create_batch(3, name="other"):
+            self.build_publisher.pull(build)
 
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo", self.build_publisher)
@@ -202,9 +202,9 @@ class MachineInfoTestCase(TestCase):
 
     def test_builds_property(self):
         # Given the "foo" builds
-        builds = BuildIDFactory.create_batch(3, name="foo")
-        for build_id in builds:
-            self.build_publisher.pull(build_id)
+        builds = BuildFactory.create_batch(3, name="foo")
+        for build in builds:
+            self.build_publisher.pull(build)
 
         # Given the MachineInfo for foo
         machine_info = MachineInfo("foo", self.build_publisher)

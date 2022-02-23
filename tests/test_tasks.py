@@ -13,7 +13,7 @@ from gentoo_build_publisher.tasks import (
     pull_build,
     purge_build,
 )
-from gentoo_build_publisher.types import BuildID
+from gentoo_build_publisher.types import Build
 
 from . import MockJenkins, TestCase
 from .factories import BuildPublisherFactory
@@ -29,8 +29,8 @@ class PublishBuildTestCase(TestCase):
             result = publish_build.s("babette.193").apply()
 
         build_publisher = BuildPublisherFactory()
-        build_id = BuildID("babette.193")
-        self.assertIs(build_publisher.published(build_id), True)
+        build = Build("babette.193")
+        self.assertIs(build_publisher.published(build), True)
         self.assertIs(result.result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
@@ -65,9 +65,9 @@ class PullBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             pull_build.s("lima.1012").apply()
 
-        build_id = BuildID("lima.1012")
+        build = Build("lima.1012")
         build_publisher = BuildPublisherFactory()
-        self.assertIs(build_publisher.pulled(build_id), True)
+        self.assertIs(build_publisher.pulled(build), True)
 
     @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_calls_purge_build(self):
@@ -98,7 +98,7 @@ class PullBuildTestCase(TestCase):
             pull_build.s("oscar.197").apply()
 
         with self.assertRaises(RecordNotFound):
-            records.get(BuildID("oscar.197"))
+            records.get(Build("oscar.197"))
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_not_retry_on_404_response(self):
@@ -125,4 +125,4 @@ class DeleteBuildTestCase(TestCase):
         ) as mock_delete:
             delete_build.s("zulu.56").apply()
 
-        mock_delete.assert_called_once_with("zulu.56")
+        mock_delete.assert_called_once_with(Build("zulu.56"))
