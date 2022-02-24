@@ -176,7 +176,7 @@ def resolve_mutation_publish(*_, id: str) -> MachineInfo:
     else:
         publish_build.delay(build.id)
 
-    return MachineInfo(build.name, build_publisher)
+    return MachineInfo(build.name)
 
 
 @mutation.field("pull")
@@ -185,7 +185,7 @@ def resolve_mutation_pull(*_, id: str) -> MachineInfo:
 
     pull_build.delay(id)
 
-    return MachineInfo(build.name, build_publisher)
+    return MachineInfo(build.name)
 
 
 @mutation.field("scheduleBuild")

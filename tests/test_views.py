@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from django.utils import timezone
 
-from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
+from gentoo_build_publisher.publisher import MachineInfo, build_publisher
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.views import (
     get_build_summary,
@@ -14,11 +14,10 @@ from gentoo_build_publisher.views import (
 )
 
 from . import TestCase
-from .factories import BuildFactory, BuildPublisherFactory
+from .factories import BuildFactory
 
 
 def buncha_builds(
-    build_publisher: BuildPublisher,
     machines: list[str],
     end_date,
     num_days: int,
@@ -44,7 +43,6 @@ class GetPackagesTestCase(TestCase):
     """This is just cached Build.get_packages()"""
 
     def test(self):
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
         build_publisher.pull(build)
 
@@ -55,10 +53,9 @@ class GetPackagesTestCase(TestCase):
 
 class GetBuildSummaryTestCase(TestCase):
     def test(self):
-        build_publisher = BuildPublisherFactory()
         now = timezone.now()
         machines = ["babette", "lighthouse", "web"]
-        builds = buncha_builds(build_publisher, machines, now, 3, 2)
+        builds = buncha_builds(machines, now, 3, 2)
 
         lighthouse = builds["lighthouse"][-1]
         build_publisher.publish(lighthouse)
@@ -69,11 +66,11 @@ class GetBuildSummaryTestCase(TestCase):
         # Make sure it doesn't fail when a gbp.json is missing
         (build_publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
 
-        machine_info = [MachineInfo(i, build_publisher) for i in machines]
+        machine_info = [MachineInfo(i) for i in machines]
 
         # Make sure it doesn't fail when a machine has no latest build (i.e. being built
         # for the first time)
-        machine_info.append(MachineInfo("foo", build_publisher))
+        machine_info.append(MachineInfo("foo"))
 
         result = get_build_summary(now, machine_info)
         latest_builds, built_recently, build_packages, latest_published = result
@@ -99,7 +96,6 @@ class PackageMetadataTestCase(TestCase):
     def test(self):
         now = timezone.now()
         build = BuildFactory()
-        build_publisher = BuildPublisherFactory()
         build_publisher.pull(build)
         record = build_publisher.record(build)
         context = {
@@ -137,16 +133,15 @@ class DashboardTestCase(TestCase):
 
         self.now = timezone.now()
         self.machines = ["babette", "lighthouse", "web"]
-        self.build_publisher = BuildPublisherFactory()
-        self.builds = buncha_builds(self.build_publisher, self.machines, self.now, 3, 2)
+        self.builds = buncha_builds(self.machines, self.now, 3, 2)
 
     def test(self):
         lighthouse = self.builds["lighthouse"][-1]
-        self.build_publisher.publish(lighthouse)
+        build_publisher.publish(lighthouse)
 
         # pull the latest web
         web = self.builds["web"][-1]
-        self.build_publisher.pull(web)
+        build_publisher.pull(web)
 
         response = self.client.get("/")
 

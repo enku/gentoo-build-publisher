@@ -3,10 +3,12 @@
 import datetime
 import json
 import os
+import shutil
 import tarfile
 from unittest import mock
 
 from gentoo_build_publisher import utils
+from gentoo_build_publisher.publisher import build_publisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage, quick_check
 from gentoo_build_publisher.types import (
@@ -18,7 +20,7 @@ from gentoo_build_publisher.types import (
 )
 
 from . import PACKAGE_INDEX, MockJenkins, TestCase
-from .factories import BuildFactory, BuildPublisherFactory
+from .factories import BuildFactory
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
@@ -27,7 +29,7 @@ TEST_SETTINGS = Settings(
 
 class StorageInitTestCase(TestCase):
     def test_creates_dir_if_not_exists(self):
-        os.rmdir(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
 
         Storage(self.tmpdir)
         self.assertIs(os.path.isdir(self.tmpdir), True)
@@ -91,8 +93,6 @@ class StorageDownloadArtifactTestCase(TestCase):
         self.assertIs(storage.get_path(build, Content.VAR_LIB_PORTAGE).is_dir(), True)
 
     def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
-        build_publisher = BuildPublisherFactory()
-
         # Given the extractable build
         build = BuildFactory()
 
@@ -288,7 +288,6 @@ class StorageGetPackagesTestCase(TestCase):
         super().setUp()
 
         self.build = BuildFactory()
-        build_publisher = BuildPublisherFactory()
         build_publisher.pull(self.build)
         self.storage = build_publisher.storage
 
@@ -319,9 +318,8 @@ class StorageGetMetadataTestCase(TestCase):
         super().setUp()
 
         self.build = BuildFactory()
-        self.build_publisher = BuildPublisherFactory()
-        self.build_publisher.pull(self.build)
-        self.storage = self.build_publisher.storage
+        build_publisher.pull(self.build)
+        self.storage = build_publisher.storage
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self):
         metadata = self.storage.get_metadata(self.build)
@@ -378,7 +376,6 @@ class StorageSetMetadataTestCase(TestCase):
     def setUp(self):
         super().setUp()
         self.build = BuildFactory()
-        build_publisher = BuildPublisherFactory()
         build_publisher.pull(self.build)
         self.storage = build_publisher.storage
         self.path = self.storage.get_path(self.build, Content.BINPKGS) / "gbp.json"

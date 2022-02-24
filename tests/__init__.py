@@ -29,9 +29,11 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 class TestCase(django.test.TestCase):
     def setUp(self):
+        # pylint: disable=import-outside-toplevel,cyclic-import
+        from .factories import BuildPublisherFactory
+
         super().setUp()
 
-        build_publisher.reset()
         tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.addCleanup(tmpdir.cleanup)
         self.tmpdir = Path(tmpdir.name)
@@ -44,6 +46,8 @@ class TestCase(django.test.TestCase):
         )
         self.addCleanup(patch.stop)
         patch.start()
+
+        build_publisher.reset(BuildPublisherFactory())
 
     def create_file(self, name, content=b"", mtime=None):
         path = self.tmpdir / name

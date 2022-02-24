@@ -186,7 +186,7 @@ class BuildPublisher:
 
     def machines(self) -> list[MachineInfo]:
         """Return list of machines with metadata"""
-        return [MachineInfo(i, self) for i in self.records.list_machines()]
+        return [MachineInfo(i) for i in self.records.list_machines()]
 
     def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
@@ -224,21 +224,20 @@ class MachineInfo:
 
     # pylint: disable=missing-docstring
 
-    def __init__(self, name, publisher: BuildPublisher):
+    def __init__(self, name):
         self.name = name
-        self.build_publisher = publisher
 
     @cached_property
     def build_count(self) -> int:
-        return self.build_publisher.records.count(self.name)
+        return build_publisher.records.count(self.name)
 
     @cached_property
     def builds(self) -> list[BuildRecord]:
-        return [*self.build_publisher.records.query(name=self.name)]
+        return [*build_publisher.records.query(name=self.name)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
-        return self.build_publisher.latest_build(self.name)
+        return build_publisher.latest_build(self.name)
 
     @cached_property
     def published_build(self) -> Build | None:
@@ -249,7 +248,7 @@ class MachineInfo:
 
         while number:
             build = Build(f"{self.name}.{number}")
-            if self.build_publisher.published(build):
+            if build_publisher.published(build):
                 return build
 
             number -= 1
@@ -276,9 +275,9 @@ class SystemPublisher(BuildPublisher):
 
         return getattr(self._publisher, name)
 
-    def reset(self) -> None:
+    def reset(self, replacement: BuildPublisher | None = None) -> None:
         """Reset the instance"""
-        self._publisher = None
+        self._publisher = replacement
 
 
 build_publisher = SystemPublisher()

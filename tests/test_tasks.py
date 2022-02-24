@@ -6,6 +6,7 @@ from unittest import mock
 
 from requests import HTTPError
 
+from gentoo_build_publisher.publisher import build_publisher
 from gentoo_build_publisher.records import RecordNotFound, Records
 from gentoo_build_publisher.tasks import (
     delete_build,
@@ -15,20 +16,17 @@ from gentoo_build_publisher.tasks import (
 )
 from gentoo_build_publisher.types import Build
 
-from . import MockJenkins, TestCase
-from .factories import BuildPublisherFactory
+from . import TestCase
 
 
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_publishes_build(self):
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             result = publish_build.s("babette.193").apply()
 
-        build_publisher = BuildPublisherFactory()
         build = Build("babette.193")
         self.assertIs(build_publisher.published(build), True)
         self.assertIs(result.result, True)
@@ -59,17 +57,14 @@ class PurgeBuildTestCase(TestCase):
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_pulls_build(self):
         """Should actually pull the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build"):
             pull_build.s("lima.1012").apply()
 
         build = Build("lima.1012")
-        build_publisher = BuildPublisherFactory()
         self.assertIs(build_publisher.pulled(build), True)
 
-    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_calls_purge_build(self):
         """Should issue the purge_build task when setting is true"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
@@ -78,7 +73,6 @@ class PullBuildTestCase(TestCase):
 
         mock_purge_build.delay.assert_called_with("charlie")
 
-    @mock.patch("gentoo_build_publisher.publisher.Jenkins", new=MockJenkins)
     def test_does_not_call_purge_build(self):
         """Should not issue the purge_build task when setting is false"""
         with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:

@@ -3,11 +3,11 @@
 import datetime
 from unittest import mock
 
-from gentoo_build_publisher.publisher import MachineInfo
+from gentoo_build_publisher.publisher import MachineInfo, build_publisher
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
-from .factories import BuildFactory, BuildPublisherFactory
+from .factories import BuildFactory
 
 utc = datetime.timezone.utc
 
@@ -16,7 +16,6 @@ class BuildPublisherTestCase(TestCase):
     def test_publish(self):
         """.publish should publish the build artifact"""
         build = BuildFactory()
-        build_publisher = BuildPublisherFactory()
 
         build_publisher.publish(build)
 
@@ -24,7 +23,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_pull_without_db(self):
         """pull creates db record and pulls from jenkins"""
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
 
         build_publisher.pull(build)
@@ -34,7 +32,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_pull_stores_build_logs(self):
         """Should store the logs of the build"""
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
 
         build_publisher.pull(build)
@@ -50,7 +47,6 @@ class BuildPublisherTestCase(TestCase):
     def test_pull_updates_build_models_completed_field(self):
         """Should update the completed field with the current timestamp"""
         now = datetime.datetime.now()
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
 
         with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_now:
@@ -62,7 +58,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_pull_does_not_download_when_already_pulled(self):
         build = BuildFactory()
-        build_publisher = BuildPublisherFactory()
 
         build_publisher.pull(build)
 
@@ -73,7 +68,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
-        build_publisher = BuildPublisherFactory()
 
         old_build = BuildFactory()
         build_publisher.pull(old_build)
@@ -99,7 +93,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_purge_does_not_delete_old_kept_build(self):
         """Should remove purgable builds"""
-        build_publisher = BuildPublisherFactory()
 
         build = BuildFactory()
         build_publisher.records.save(
@@ -118,7 +111,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
 
         build_publisher.publish(build)
@@ -137,7 +129,6 @@ class BuildPublisherTestCase(TestCase):
 
     def test_update_build_metadata(self):
         # pylint: disable=protected-access
-        build_publisher = BuildPublisherFactory()
         build = BuildFactory()
         record = build_publisher.record(build)
 
@@ -148,7 +139,6 @@ class BuildPublisherTestCase(TestCase):
         self.assertIsNot(record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
-        build_publisher = BuildPublisherFactory()
         left = BuildFactory()
         build_publisher.get_packages = mock.Mock(wraps=build_publisher.get_packages)
         right = left
@@ -164,35 +154,31 @@ class BuildPublisherTestCase(TestCase):
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
-    def setUp(self):
-        super().setUp()
-        self.build_publisher = BuildPublisherFactory()
-
     def test(self):
         # Given the "foo" builds, one of which is published
         first_build = BuildFactory(name="foo")
-        self.build_publisher.publish(first_build)
+        build_publisher.publish(first_build)
         latest_build = BuildFactory(name="foo")
-        self.build_publisher.pull(latest_build)
+        build_publisher.pull(latest_build)
 
         # Given the "other" builds
         for build in BuildFactory.create_batch(3, name="other"):
-            self.build_publisher.pull(build)
+            build_publisher.pull(build)
 
         # When we get MachineInfo for foo
-        machine_info = MachineInfo("foo", self.build_publisher)
+        machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
         self.assertEqual(machine_info.build_count, 2)
         self.assertEqual(
-            machine_info.latest_build, self.build_publisher.record(latest_build)
+            machine_info.latest_build, build_publisher.record(latest_build)
         )
         self.assertEqual(machine_info.published_build, first_build)
 
     def test_empty_db(self):
         # When we get MachineInfo for foo
-        machine_info = MachineInfo("foo", self.build_publisher)
+        machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.name, "foo")
@@ -204,26 +190,22 @@ class MachineInfoTestCase(TestCase):
         # Given the "foo" builds
         builds = BuildFactory.create_batch(3, name="foo")
         for build in builds:
-            self.build_publisher.pull(build)
+            build_publisher.pull(build)
 
         # Given the MachineInfo for foo
-        machine_info = MachineInfo("foo", self.build_publisher)
+        machine_info = MachineInfo("foo")
 
         # When we call its .builds method
         result = machine_info.builds
 
         # Then we get the list of builds in reverse chronological order
-        self.assertEqual(
-            result, [self.build_publisher.record(i) for i in reversed(builds)]
-        )
+        self.assertEqual(result, [build_publisher.record(i) for i in reversed(builds)])
 
 
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
     def test(self):
-        build_publisher = BuildPublisherFactory()
-
         with mock.patch.object(
             build_publisher.jenkins, "schedule_build"
         ) as mock_schedule_build:
