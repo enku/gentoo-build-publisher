@@ -25,6 +25,7 @@ class BuildRecord(Build):
         keep: bool = False,
         submitted: dt.datetime | None = None,
         completed: dt.datetime | None = None,
+        built: dt.datetime | None = None,
     ):
         super().__init__(id_)
         self.note = note
@@ -32,6 +33,7 @@ class BuildRecord(Build):
         self.keep = keep
         self.submitted = submitted
         self.completed = completed
+        self.built = built
 
     def __eq__(self, other: Any) -> bool:
         if type(self) is not type(other):
@@ -44,6 +46,7 @@ class BuildRecord(Build):
             self.keep,
             self.submitted,
             self.completed,
+            self.built,
         ) == (
             other.id,
             other.note,
@@ -51,6 +54,7 @@ class BuildRecord(Build):
             other.keep,
             other.submitted,
             other.completed,
+            other.built,
         )
 
     def __repr__(self) -> str:

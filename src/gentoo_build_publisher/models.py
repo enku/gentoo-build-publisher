@@ -29,6 +29,9 @@ class BuildModel(models.Model):
     # When this build's publish task completed
     completed = models.DateTimeField(null=True)
 
+    # When CI/CD build timestamp
+    built = models.DateTimeField(null=True)
+
     keptbuild: KeptBuild
     buildnote: BuildNote
     buildlog: BuildLog
@@ -46,7 +49,10 @@ class BuildModel(models.Model):
     def record(self) -> BuildRecord:
         """Convert BuildModel to BuildRecord"""
         record = BuildRecord(
-            str(self), submitted=self.submitted, completed=self.completed
+            str(self),
+            submitted=self.submitted,
+            completed=self.completed,
+            built=self.built,
         )
         try:
             record.note = self.buildnote.note
@@ -167,6 +173,7 @@ class RecordDB:
 
         model.submitted = build_record.submitted
         model.completed = build_record.completed
+        model.built = build_record.built
 
         model.save()
 

@@ -98,10 +98,15 @@ class BuildPublisher:
 
     def _update_build_metadata(self, record: BuildRecord) -> None:
         """Update the build's db attributes (based on storage, etc.)"""
+        jenkins_metadata = self.jenkins.get_metadata(record)
+
         self.records.save(
             record,
             logs=self.jenkins.get_logs(record),
             completed=utcnow().replace(tzinfo=timezone.utc),
+            built=datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000).replace(
+                tzinfo=timezone.utc
+            ),
         )
 
         try:
@@ -109,7 +114,6 @@ class BuildPublisher:
         except LookupError:
             return
 
-        jenkins_metadata = self.jenkins.get_metadata(record)
         self.storage.set_metadata(record, self.gbp_metadata(jenkins_metadata, packages))
 
     def pulled(self, build: Build) -> bool:
