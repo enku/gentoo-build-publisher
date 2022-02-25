@@ -187,15 +187,17 @@ class LatestQueryTestCase(TestCase):
         super().setUp()
 
         BuildModelFactory.create(
-            submitted=dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc),
-            completed=dt.datetime(1970, 1, 4, tzinfo=dt.timezone.utc),
+            built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.timezone.utc),
+            submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.timezone.utc),
+            completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.timezone.utc),
         )
         self.latest = BuildModelFactory.create(
-            submitted=dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc),
-            completed=dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc),
+            built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.timezone.utc),
+            submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.timezone.utc),
+            completed=dt.datetime(2022, 2, 25, 0, 20, tzinfo=dt.timezone.utc),
         )
         BuildModelFactory.create(
-            submitted=dt.datetime(1970, 1, 3, tzinfo=dt.timezone.utc),
+            submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.timezone.utc),
         )
 
     def test_when_no_builds_should_respond_with_none(self):

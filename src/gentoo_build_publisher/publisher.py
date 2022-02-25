@@ -77,7 +77,7 @@ class BuildPublisher:
         self.records.save(
             record, submitted=record.submitted or utcnow().replace(tzinfo=timezone.utc)
         )
-        previous = self.records.previous_build(build)
+        previous = self.records.previous_build(record)
 
         logger.info("Pulling build: %s", build)
 

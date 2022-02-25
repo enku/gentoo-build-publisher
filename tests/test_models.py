@@ -103,6 +103,7 @@ class RecordDBTestCase(TestCase):
         self.build_model = BuildModelFactory.create(
             submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.timezone.utc),
             completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
+            built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
         self.record = self.records.get(
@@ -253,7 +254,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(self.records.previous_build(current_build_record), self.record)
 
     def test_next_build_should_return_none_when_there_are_none(self):
-        build = Build("bogus.1")
+        build = BuildRecordFactory.build(name="bogus", number=1)
         next_build = self.records.next_build(build)
 
         self.assertIs(next_build, None)
@@ -266,7 +267,12 @@ class RecordDBTestCase(TestCase):
         self.assertIs(self.records.next_build(self.record), None)
 
     def test_next_build_when_not_completed_and_completed_arg_is_false(self):
-        next_build = BuildModelFactory()
+        # You really can't/shouldn't have a build that's built date is set but it isn't
+        # completed as BuildPublisher._update_build_metadata updates both fields
+        # simultaneously, but...
+        next_build = BuildModelFactory(
+            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc)
+        )
 
         assert next_build.name == self.build_model.name
 
@@ -277,7 +283,8 @@ class RecordDBTestCase(TestCase):
 
     def test_next_build_when_completed(self):
         next_build = BuildModelFactory(
-            completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc)
+            completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
+            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
         )
 
         assert next_build.name == self.build_model.name

@@ -236,9 +236,14 @@ class RecordDB:
         return list(machines)
 
     @staticmethod
-    def previous_build(build: Build, completed: bool = True) -> BuildRecord | None:
+    def previous_build(
+        build: BuildRecord, completed: bool = True
+    ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        field_lookups = dict(name=build.name, number__lt=build.number)
+        field_lookups: dict[str, Any] = {"name": build.name}
+
+        if build.built:
+            field_lookups["built__lt"] = build.built
 
         if completed:
             field_lookups["completed__isnull"] = False
@@ -246,7 +251,7 @@ class RecordDB:
         query = (
             BuildModel.objects.filter(**field_lookups)
             .select_related(*RELATED)
-            .order_by("-number")
+            .order_by("-built")
         )
 
         try:
@@ -257,9 +262,12 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def next_build(build: Build, completed: bool = True) -> BuildRecord | None:
+    def next_build(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
-        field_lookups = dict(name=build.name, number__gt=build.number)
+        field_lookups: dict[str, Any] = {"name": build.name}
+
+        if build.built:
+            field_lookups["built__gt"] = build.built
 
         if completed:
             field_lookups["completed__isnull"] = False
@@ -267,7 +275,7 @@ class RecordDB:
         query = (
             BuildModel.objects.filter(**field_lookups)
             .select_related(*RELATED)
-            .order_by("number")
+            .order_by("built")
         )
 
         try:
@@ -292,7 +300,7 @@ class RecordDB:
         try:
             build_model = (
                 BuildModel.objects.filter(**field_lookups)
-                .order_by("-number")
+                .order_by("-built")
                 .select_related(*RELATED)
             )[0]
         except IndexError:
