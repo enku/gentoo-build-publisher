@@ -63,8 +63,8 @@ class BuildQueryTestCase(TestCase):
                 "pulled": True,
                 "published": False,
                 "packagesBuilt": [
-                    {"cpv": "x11-wm/mutter-41.3"},
                     {"cpv": "acct-group/sgx-0"},
+                    {"cpv": "x11-wm/mutter-41.3"},
                 ],
             }
         }

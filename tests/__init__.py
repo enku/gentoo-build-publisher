@@ -244,7 +244,7 @@ class ArtifactBuilder:
                 f"PATH: {cpv_to_path(package.cpv, package.build_id)}\n"
                 f"BUILD_TIME: {package.build_time}\n"
             )
-            for package in packages
+            for package in sorted(packages, key=lambda p: p.cpv)
         ]
 
         return "".join(["Ignore Preamble\n", *strings])
