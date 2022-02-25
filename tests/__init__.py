@@ -168,19 +168,6 @@ class ArtifactBuilder:
                 mtime=timestamp,
             )
 
-            gbp_json = {
-                "machine": "babette",
-                "build": "1",
-                "date": int(math.floor(self.timestamp / 1000)),
-                "buildHost": "lighthouse",
-            }
-            self.add_to_tarchive(
-                tarchive,
-                "binpkgs/gbp.json",
-                json.dumps(gbp_json).encode("utf-8"),
-                mtime=timestamp,
-            )
-
             for package in self.packages:
                 self.add_to_tarchive(
                     tarchive, f"binpkgs/{package.path}", b"", mtime=package.build_time

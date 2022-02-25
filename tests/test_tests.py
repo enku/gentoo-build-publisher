@@ -68,4 +68,3 @@ class ArtifactBuilderTestCase(TestCase):
             self.assertTrue(item.value in artifact_contents)
 
         self.assertTrue("binpkgs/Packages" in artifact_contents)
-        self.assertTrue("binpkgs/gbp.json" in artifact_contents)
