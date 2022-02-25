@@ -57,8 +57,6 @@ class JenkinsTestCase(TestCase):
         for chunk in stream:
             bytes_io.write(chunk)
 
-        expected = test_data("build.tar.gz")
-        self.assertEqual(bytes_io.getvalue(), expected)
         jenkins.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
             auth=("jenkins", "foo"),

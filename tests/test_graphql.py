@@ -11,7 +11,7 @@ from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version
 
-from . import PACKAGE_INDEX, TestCase, package_entry
+from . import PACKAGE_INDEX, TestCase
 from .factories import BuildFactory, BuildModelFactory
 
 
@@ -37,6 +37,8 @@ class BuildQueryTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
+        self.artifact_builder.build("x11-wm/mutter-41.3")
+        self.artifact_builder.build("acct-group/sgx-0", repo="marduk")
         build_publisher.pull(build)
 
         query = """query ($id: ID!) {
@@ -61,9 +63,8 @@ class BuildQueryTestCase(TestCase):
                 "pulled": True,
                 "published": False,
                 "packagesBuilt": [
+                    {"cpv": "x11-wm/mutter-41.3"},
                     {"cpv": "acct-group/sgx-0"},
-                    {"cpv": "app-admin/perl-cleaner-2.30"},
-                    {"cpv": "app-crypt/gpgme-1.14.0"},
                 ],
             }
         }
@@ -226,17 +227,14 @@ class DiffQueryTestCase(TestCase):
 
         # Given the first build with tar-1.34
         self.left = BuildFactory()
-        build_publisher.records.save(build_publisher.record(self.left))
-        binpkgs = build_publisher.storage.get_path(self.left, Content.BINPKGS)
-        binpkgs.mkdir(parents=True)
-        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.34"))
+        old = self.artifact_builder.build("app-arch/tar-1.34")
+        build_publisher.pull(self.left)
 
         # Given the second build with tar-1.35
         self.right = BuildFactory()
-        build_publisher.records.save(build_publisher.record(self.right))
-        binpkgs = build_publisher.storage.get_path(self.right, Content.BINPKGS)
-        binpkgs.mkdir(parents=True)
-        (binpkgs / "Packages").write_text(package_entry("app-arch/tar-1.35"))
+        self.artifact_builder.build("app-arch/tar-1.35")
+        self.artifact_builder.remove(old)
+        build_publisher.pull(self.right)
 
     def test(self):
         # When we call get the diff view given the 2 builds

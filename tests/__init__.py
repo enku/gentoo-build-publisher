@@ -1,21 +1,27 @@
 """Tests for gentoo build publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
+import io
+import json
 import logging
+import math
 import os
+import tarfile
 import tempfile
+import time
 from pathlib import Path
 from typing import Union
 from unittest import mock
 
 import django.test
 
-from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
+from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
 from gentoo_build_publisher.publisher import BuildPublisher, build_publisher
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import Build, Content, Package
+from gentoo_build_publisher.utils import cpv_to_path
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 
-# This is the list of packages (in order) stored in the artifact fixture
+# This is the default list of packages (in order) stored in the artifacts
 PACKAGE_INDEX: list[str] = [
     "acct-group/sgx-0",
     "app-admin/perl-cleaner-2.30",
@@ -47,7 +53,9 @@ class TestCase(django.test.TestCase):
         self.addCleanup(patch.stop)
         patch.start()
 
-        build_publisher.reset(BuildPublisherFactory())
+        test_publisher = BuildPublisherFactory()
+        build_publisher.reset(test_publisher)
+        self.artifact_builder = test_publisher.jenkins.artifact_builder
 
     def create_file(self, name, content=b"", mtime=None):
         path = self.tmpdir / name
@@ -75,10 +83,16 @@ class MockJenkins(Jenkins):
     mock_get = None
     get_build_logs_mock_get = None
 
+    def __init__(self, config: JenkinsConfig):
+
+        super().__init__(config)
+
+        self.artifact_builder = ArtifactBuilder()
+
     def download_artifact(self, build: Build):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
-                lambda *args, **kwargs: iter([test_data("build.tar.gz")])
+                lambda *args, **kwargs: self.artifact_builder.get_artifact()
             )
             self.mock_get = mock_get
             return super().download_artifact(build)
@@ -91,31 +105,134 @@ class MockJenkins(Jenkins):
             return super().get_logs(build)
 
     def get_metadata(self, build: Build) -> JenkinsMetadata:
-        return JenkinsMetadata(duration=124, timestamp=1620525666000)
+        return JenkinsMetadata(duration=124, timestamp=self.artifact_builder.timestamp)
 
 
-def package_entry(
-    cpv: Union[str, list[str]], build_id: int = 1, repo: str = "gentoo", size: int = 0
-) -> str:
-    if isinstance(cpv, str):
-        cpvs = [cpv]
-    else:
-        cpvs = cpv
+class ArtifactBuilder:
+    """Build CI/CD artifacts dynamically"""
 
-    strings = []
+    initial_packages = [
+        "acct-group/sgx-0",
+        "app-admin/perl-cleaner-2.30",
+        "app-arch/unzip-6.0_p26",
+        "app-crypt/gpgme-1.14.0",
+    ]
 
-    for _cpv in cpvs:
-        cat, rest = _cpv.rsplit("/", 1)
-        pkg, version = rest.split("-", 1)
+    def __init__(self, initial_packages=None, timestamp=None):
+        self.packages = []
 
-        strings.append(
-            "\n"
-            f"BUILD_ID: {build_id}\n"
-            f"CPV: {_cpv}\n"
-            f"SIZE: {size}\n"
-            f"REPO: {repo}\n"
-            f"PATH: {cat}/{pkg}/{pkg}-{version}-{build_id}.xpak\n"
-            f"BUILD_TIME: 1622722899\n"
-        )
+        if timestamp is None:
+            self.timestamp = int(time.time() * 1000)
+        else:
+            self.timestamp = timestamp
 
-    return "".join(["Ignore Preamble\n", *strings])
+        self.timer = int(self.timestamp / 1000)
+        yesterday = self.timer - 86400
+
+        if initial_packages is None:
+            initial_packages = self.initial_packages
+
+        for cpv in initial_packages:
+            self.build(cpv, build_time=yesterday)
+
+    def build(
+        self, cpv: str, repo="gentoo", build_id: int = 1, build_time: int | None = None
+    ) -> Package:
+        """Pretend we've built a package and add it to the package index"""
+        if build_time is None:
+            timestamp = self.advance()
+            build_time = timestamp
+
+        path = cpv_to_path(cpv, build_id)
+        size = len(cpv) ** 2
+        package = Package(cpv, repo, path, build_id, size, build_time)
+        self.packages.append(package)
+
+        return package
+
+    def remove(self, package: Package):
+        """Remove a package from the build"""
+        self.packages.remove(package)
+
+    def get_artifact(self) -> io.BytesIO:
+        """Return a file-like object representing a CI/CD artifact"""
+        tar_file = io.BytesIO()
+
+        with tarfile.open("build.tar.gz", "x:gz", tar_file) as tarchive:
+
+            timestamp = self.advance()
+            self.add_to_tarchive(
+                tarchive,
+                "binpkgs/Packages",
+                self.index().encode("utf-8"),
+                mtime=timestamp,
+            )
+
+            gbp_json = {
+                "machine": "babette",
+                "build": "1",
+                "date": int(math.floor(self.timestamp / 1000)),
+                "buildHost": "lighthouse",
+            }
+            self.add_to_tarchive(
+                tarchive,
+                "binpkgs/gbp.json",
+                json.dumps(gbp_json).encode("utf-8"),
+                mtime=timestamp,
+            )
+
+            for package in self.packages:
+                self.add_to_tarchive(
+                    tarchive, f"binpkgs/{package.path}", b"", mtime=package.build_time
+                )
+
+            for item in Content:
+                tar_info = tarfile.TarInfo(item.value)
+                tar_info.type = tarfile.DIRTYPE
+                tar_info.mode = 0o0755
+                tarchive.addfile(tar_info)
+
+        tar_file.seek(0)
+
+        return tar_file
+
+    def index(self) -> str:
+        """Return the package index a-la Packages"""
+        strings = [
+            (
+                "\n"
+                f"BUILD_ID: {package.build_id}\n"
+                f"CPV: {package.cpv}\n"
+                f"SIZE: {package.size}\n"
+                f"REPO: {package.repo}\n"
+                f"PATH: {cpv_to_path(package.cpv, package.build_id)}\n"
+                f"BUILD_TIME: {package.build_time}\n"
+            )
+            for package in self.packages
+        ]
+
+        return "".join(["Ignore Preamble\n", *strings])
+
+    @staticmethod
+    def add_to_tarchive(
+        tarchive: tarfile.TarFile,
+        arcname: str,
+        content: bytes,
+        mtime: int | None = None,
+    ):
+        file_obj = io.BytesIO(content)
+        tar_info = tarfile.TarInfo(arcname)
+        tar_info.size = len(content)
+        tar_info.mode = 0o0644
+
+        if mtime is None:
+            tar_info.mtime = int(time.time())
+        else:
+            tar_info.mtime = mtime
+
+        tarchive.addfile(tar_info, file_obj)
+
+    def advance(self, seconds: int = 10) -> int:
+        self.timer += seconds
+
+        return self.timer

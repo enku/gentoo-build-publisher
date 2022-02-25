@@ -58,6 +58,12 @@ class GetBuildSummaryTestCase(TestCase):
         builds = buncha_builds(machines, now, 3, 2)
 
         lighthouse = builds["lighthouse"][-1]
+        for cpv in [
+            "acct-group/sgx-0",
+            "app-admin/perl-cleaner-2.30",
+            "app-crypt/gpgme-1.14.0",
+        ]:
+            self.artifact_builder.build(cpv)
         build_publisher.publish(lighthouse)
 
         web = builds["web"][-1]
@@ -96,6 +102,10 @@ class PackageMetadataTestCase(TestCase):
     def test(self):
         now = timezone.now()
         build = BuildFactory()
+
+        for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
+            self.artifact_builder.build(cpv)
+
         build_publisher.pull(build)
         record = build_publisher.record(build)
         context = {
@@ -109,17 +119,16 @@ class PackageMetadataTestCase(TestCase):
 
         expected = {
             "now": now,
-            "package_count": 4,
+            "package_count": 6,
             "package_sizes": defaultdict(int, {}),
             "recent_packages": defaultdict(
                 set,
                 {
-                    "acct-group/sgx-0": {"babette"},
-                    "app-admin/perl-cleaner-2.30": {"babette"},
-                    "app-crypt/gpgme-1.14.0": {"babette"},
+                    "dev-vcs/git-2.34.1": {"babette"},
+                    "app-portage/gentoolkit-0.5.1-r1": {"babette"},
                 },
             ),
-            "total_package_size": defaultdict(int, {"babette": 889824}),
+            "total_package_size": defaultdict(int, {"babette": 3238}),
         }
 
         self.assertEqual(context, expected)

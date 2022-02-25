@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
@@ -209,7 +210,8 @@ class BuildPublisher:
                 built=[
                     package
                     for package in packages
-                    if package.build_time >= jenkins_metadata.timestamp / 1000
+                    if package.build_time
+                    >= math.floor(jenkins_metadata.timestamp / 1000)
                 ],
             ),
         )

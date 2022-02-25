@@ -62,9 +62,9 @@ class BuildPublisherTestCase(TestCase):
 
         record = build_publisher.record(build)
 
-        jenkins_timestamp = datetime.datetime.utcfromtimestamp(1620525666).replace(
-            tzinfo=utc
-        )
+        jenkins_timestamp = datetime.datetime.utcfromtimestamp(
+            self.artifact_builder.timestamp / 1000
+        ).replace(tzinfo=utc)
         self.assertEqual(record.built, jenkins_timestamp)
 
     def test_pull_does_not_download_when_already_pulled(self):

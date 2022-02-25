@@ -66,3 +66,11 @@ def get_version() -> str:
 def lapsed(start: dt.datetime, end: dt.datetime) -> int:
     """Return the number of seconds between `start` and `end`"""
     return int((end - start).total_seconds())
+
+
+def cpv_to_path(cpv: str, build_id: int = 1, extension=".xpak") -> str:
+    """Return the relative path of the would-be package"""
+    cat, rest = cpv.rsplit("/", 1)
+    pkg, version_ = rest.split("-", 1)
+
+    return f"{cat}/{pkg}/{pkg}-{version_}-{build_id}{extension}"

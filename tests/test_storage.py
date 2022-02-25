@@ -261,12 +261,15 @@ class StorageExtractArtifactTestCase(TestCase):
         previous_build = Build("babette.19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
+        timestamp = jenkins.artifact_builder.timer
         storage.extract_artifact(
             previous_build, jenkins.download_artifact(previous_build)
         )
 
         current_build = Build("babette.20")
 
+        # Reverse time so we have duplicate mtimes
+        jenkins.artifact_builder.timer = timestamp
         storage.extract_artifact(
             current_build,
             jenkins.download_artifact(current_build),
@@ -295,13 +298,13 @@ class StorageGetPackagesTestCase(TestCase):
         packages = self.storage.get_packages(self.build)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
-        package = packages[0]
-        self.assertEqual(package.cpv, "acct-group/sgx-0")
+        package = packages[3]
+        self.assertEqual(package.cpv, "app-crypt/gpgme-1.14.0")
         self.assertEqual(package.repo, "gentoo")
-        self.assertEqual(package.path, "acct-group/sgx/sgx-0-1.xpak")
+        self.assertEqual(package.path, "app-crypt/gpgme/gpgme-1.14.0-1.xpak")
         self.assertEqual(package.build_id, 1)
-        self.assertEqual(package.size, 11362)
-        self.assertEqual(package.build_time, 1622722899)
+        self.assertEqual(package.size, 484)
+        self.assertEqual(package.build_time, self.artifact_builder.timer - 86400 - 10)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
         index_file = self.storage.get_path(self.build, Content.BINPKGS) / "Packages"
@@ -318,6 +321,10 @@ class StorageGetMetadataTestCase(TestCase):
         super().setUp()
 
         self.build = BuildFactory()
+        self.timestamp = int(self.artifact_builder.timestamp / 1000)
+        self.artifact_builder.build("dev-libs/cyrus-sasl-2.1.28-r1")
+        self.artifact_builder.build("net-libs/nghttp2-1.47.0")
+        self.artifact_builder.build("sys-libs/glibc-2.34-r9")
         build_publisher.pull(self.build)
         self.storage = build_publisher.storage
 
@@ -327,32 +334,32 @@ class StorageGetMetadataTestCase(TestCase):
         expected = GBPMetadata(
             build_duration=124,
             packages=PackageMetadata(
-                total=4,
-                size=889824,
+                total=7,
+                size=3807,
                 built=[
                     Package(
-                        cpv="acct-group/sgx-0",
+                        cpv="dev-libs/cyrus-sasl-2.1.28-r1",
                         repo="gentoo",
-                        path="acct-group/sgx/sgx-0-1.xpak",
+                        path="dev-libs/cyrus/cyrus-sasl-2.1.28-r1-1.xpak",
                         build_id=1,
-                        size=11362,
-                        build_time=1622722899,
+                        size=841,
+                        build_time=self.timestamp + 10,
                     ),
                     Package(
-                        cpv="app-admin/perl-cleaner-2.30",
+                        cpv="net-libs/nghttp2-1.47.0",
                         repo="gentoo",
-                        path="app-admin/perl-cleaner/perl-cleaner-2.30-1.xpak",
+                        path="net-libs/nghttp2/nghttp2-1.47.0-1.xpak",
                         build_id=1,
-                        size=17686,
-                        build_time=1621623613,
+                        size=529,
+                        build_time=self.timestamp + 20,
                     ),
                     Package(
-                        cpv="app-crypt/gpgme-1.14.0",
+                        cpv="sys-libs/glibc-2.34-r9",
                         repo="gentoo",
-                        path="app-crypt/gpgme/gpgme-1.14.0-1.xpak",
+                        path="sys-libs/glibc/glibc-2.34-r9-1.xpak",
                         build_id=1,
-                        size=640649,
-                        build_time=1622585986,
+                        size=484,
+                        build_time=self.timestamp + 30,
                     ),
                 ],
             ),
