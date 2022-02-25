@@ -44,6 +44,9 @@ class Build:
     def __eq__(self, other: Any) -> bool:
         return type(self) is type(other) and self.id == other.id
 
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}({self._id!r})"
+
 
 @unique
 class Content(Enum):

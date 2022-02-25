@@ -24,3 +24,8 @@ class BuildTestCase(TestCase):
 
         self.assertEqual(build.name, "babette")
         self.assertEqual(build.number, 16)
+
+    def test_repr(self):
+        build = Build("babette.16")
+
+        self.assertEqual("Build('babette.16')", repr(build))
