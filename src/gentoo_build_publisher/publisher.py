@@ -126,26 +126,6 @@ class BuildPublisher:
         self.records.delete(build)
         self.storage.delete(build)
 
-    @property
-    def environ_jenkins(self) -> Jenkins:
-        """Get or create Jenkins configured from environment variables"""
-        cls = type(self)
-
-        if not hasattr(cls, "jenkins"):
-            cls.jenkins = Jenkins.from_settings(Settings.from_environ())
-
-        return cls.jenkins
-
-    @property
-    def environ_storage(self) -> Storage:
-        """Get or create Storage configured from environment variables"""
-        cls = type(self)
-
-        if not hasattr(cls, "storage"):
-            cls.storage = Storage.from_settings(Settings.from_environ())
-
-        return cls.storage
-
     def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
