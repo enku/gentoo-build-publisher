@@ -304,7 +304,7 @@ class StorageGetPackagesTestCase(TestCase):
         self.assertEqual(package.path, "app-crypt/gpgme/gpgme-1.14.0-1.xpak")
         self.assertEqual(package.build_id, 1)
         self.assertEqual(package.size, 484)
-        self.assertEqual(package.build_time, self.artifact_builder.timer - 86400 - 10)
+        self.assertEqual(package.build_time, 0)
 
     def test_should_raise_lookuperror_when_index_file_missing(self):
         index_file = self.storage.get_path(self.build, Content.BINPKGS) / "Packages"
@@ -322,9 +322,9 @@ class StorageGetMetadataTestCase(TestCase):
 
         self.build = BuildFactory()
         self.timestamp = int(self.artifact_builder.timestamp / 1000)
-        self.artifact_builder.build("dev-libs/cyrus-sasl-2.1.28-r1")
-        self.artifact_builder.build("net-libs/nghttp2-1.47.0")
-        self.artifact_builder.build("sys-libs/glibc-2.34-r9")
+        self.artifact_builder.build(self.build, "dev-libs/cyrus-sasl-2.1.28-r1")
+        self.artifact_builder.build(self.build, "net-libs/nghttp2-1.47.0")
+        self.artifact_builder.build(self.build, "sys-libs/glibc-2.34-r9")
         build_publisher.pull(self.build)
         self.storage = build_publisher.storage
 

@@ -63,7 +63,7 @@ class BuildPublisherTestCase(TestCase):
         record = build_publisher.record(build)
 
         jenkins_timestamp = datetime.datetime.utcfromtimestamp(
-            self.artifact_builder.timestamp / 1000
+            self.artifact_builder.build_info(build).build_time / 1000
         ).replace(tzinfo=utc)
         self.assertEqual(record.built, jenkins_timestamp)
 

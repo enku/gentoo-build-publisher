@@ -8,6 +8,8 @@ import os
 import tarfile
 import tempfile
 import time
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 from typing import Union
 from unittest import mock
@@ -92,7 +94,7 @@ class MockJenkins(Jenkins):
     def download_artifact(self, build: Build):
         with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
-                lambda *args, **kwargs: self.artifact_builder.get_artifact()
+                lambda *args, **kwargs: self.artifact_builder.get_artifact(build)
             )
             self.mock_get = mock_get
             return super().download_artifact(build)
@@ -105,40 +107,50 @@ class MockJenkins(Jenkins):
             return super().get_logs(build)
 
     def get_metadata(self, build: Build) -> JenkinsMetadata:
-        return JenkinsMetadata(duration=124, timestamp=self.artifact_builder.timestamp)
+        build_time = self.artifact_builder.build_info(build).build_time
+        return JenkinsMetadata(duration=124, timestamp=build_time)
+
+
+class PackageStatus(Enum):
+    ADDED = auto()
+    REMOVED = auto()
+
+
+@dataclass
+class BuildInfo:
+    build_time: int
+    package_info: list[tuple[Package, PackageStatus]] = field(default_factory=list)
 
 
 class ArtifactBuilder:
     """Build CI/CD artifacts dynamically"""
 
-    initial_packages = [
-        "acct-group/sgx-0",
-        "app-admin/perl-cleaner-2.30",
-        "app-arch/unzip-6.0_p26",
-        "app-crypt/gpgme-1.14.0",
-    ]
-
     def __init__(self, initial_packages=None, timestamp=None):
-        self.packages = []
-
         if timestamp is None:
             self.timestamp = int(time.time() * 1000)
         else:
             self.timestamp = timestamp
 
         self.timer = int(self.timestamp / 1000)
-        yesterday = self.timer - 86400
 
         if initial_packages is None:
-            initial_packages = self.initial_packages
+            self.initial_packages = [*PACKAGE_INDEX]
+        else:
+            self.initial_packages = initial_packages
 
-        for cpv in initial_packages:
-            self.build(cpv, build_time=yesterday)
+        self._builds: dict[str, BuildInfo] = {}
 
-    def build(
-        self, cpv: str, repo="gentoo", build_id: int = 1, build_time: int | None = None
+    def build(  # pylint: disable=too-many-arguments
+        self,
+        build: Build,
+        cpv: str,
+        repo="gentoo",
+        build_id: int = 1,
+        build_time: int | None = None,
     ) -> Package:
         """Pretend we've built a package and add it to the package index"""
+        build_info = self.build_info(build)
+
         if build_time is None:
             timestamp = self.advance()
             build_time = timestamp
@@ -146,17 +158,24 @@ class ArtifactBuilder:
         path = cpv_to_path(cpv, build_id)
         size = len(cpv) ** 2
         package = Package(cpv, repo, path, build_id, size, build_time)
-        self.packages.append(package)
+        build_info.package_info.append((package, PackageStatus.ADDED))
 
         return package
 
-    def remove(self, package: Package):
-        """Remove a package from the build"""
-        self.packages.remove(package)
+    def build_info(self, build: Build) -> BuildInfo:
+        """Return the BuildInfo for the given build"""
+        return self._builds.setdefault(build.id, BuildInfo(self.timer * 1000, []))
 
-    def get_artifact(self) -> io.BytesIO:
+    def remove(self, build: Build, package: Package):
+        """Remove a package from the build"""
+        build_info = self.build_info(build)
+
+        build_info.package_info.append((package, PackageStatus.REMOVED))
+
+    def get_artifact(self, build: Build) -> io.BytesIO:
         """Return a file-like object representing a CI/CD artifact"""
         tar_file = io.BytesIO()
+        packages = self.get_packages_for_build(build)
 
         with tarfile.open("build.tar.gz", "x:gz", tar_file) as tarchive:
 
@@ -164,11 +183,11 @@ class ArtifactBuilder:
             self.add_to_tarchive(
                 tarchive,
                 "binpkgs/Packages",
-                self.index().encode("utf-8"),
+                self.index(packages).encode("utf-8"),
                 mtime=timestamp,
             )
 
-            for package in self.packages:
+            for package in packages:
                 self.add_to_tarchive(
                     tarchive, f"binpkgs/{package.path}", b"", mtime=package.build_time
                 )
@@ -180,10 +199,40 @@ class ArtifactBuilder:
                 tarchive.addfile(tar_info)
 
         tar_file.seek(0)
+        self.timestamp = self.timer * 1000
 
         return tar_file
 
-    def index(self) -> str:
+    def get_packages_for_build(self, build: Build) -> list[Package]:
+        # First constuct the list from the initially installed packages and give them a
+        # build time of 0
+        packages = [
+            Package(i, "gentoo", cpv_to_path(i), 1, len(i) ** 2, 0)
+            for i in self.initial_packages
+        ]
+
+        # Next iterate on dict of builds for this build's machine and add/remove their
+        # packages from the list. Note we are totally relying on the fact that dicts are
+        # ordered here
+        build_name = build.name
+        for build_id, build_data in self._builds.items():
+            if Build(build_id).name != build_name:
+                continue
+
+            for package, status in build_data.package_info:
+                if status is PackageStatus.ADDED:
+                    packages.append(package)
+
+                else:
+                    packages.remove(package)
+
+            if build_id == build.id:
+                break
+
+        return packages
+
+    @staticmethod
+    def index(packages: list[Package]) -> str:
         """Return the package index a-la Packages"""
         strings = [
             (
@@ -195,7 +244,7 @@ class ArtifactBuilder:
                 f"PATH: {cpv_to_path(package.cpv, package.build_id)}\n"
                 f"BUILD_TIME: {package.build_time}\n"
             )
-            for package in self.packages
+            for package in packages
         ]
 
         return "".join(["Ignore Preamble\n", *strings])

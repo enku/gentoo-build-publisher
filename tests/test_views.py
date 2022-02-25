@@ -63,7 +63,7 @@ class GetBuildSummaryTestCase(TestCase):
             "app-admin/perl-cleaner-2.30",
             "app-crypt/gpgme-1.14.0",
         ]:
-            self.artifact_builder.build(cpv)
+            self.artifact_builder.build(lighthouse, cpv)
         build_publisher.publish(lighthouse)
 
         web = builds["web"][-1]
@@ -104,7 +104,7 @@ class PackageMetadataTestCase(TestCase):
         build = BuildFactory()
 
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
-            self.artifact_builder.build(cpv)
+            self.artifact_builder.build(build, cpv)
 
         build_publisher.pull(build)
         record = build_publisher.record(build)

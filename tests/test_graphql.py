@@ -37,8 +37,8 @@ class BuildQueryTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
-        self.artifact_builder.build("x11-wm/mutter-41.3")
-        self.artifact_builder.build("acct-group/sgx-0", repo="marduk")
+        self.artifact_builder.build(build, "x11-wm/mutter-41.3")
+        self.artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
         build_publisher.pull(build)
 
         query = """query ($id: ID!) {
@@ -227,13 +227,13 @@ class DiffQueryTestCase(TestCase):
 
         # Given the first build with tar-1.34
         self.left = BuildFactory()
-        old = self.artifact_builder.build("app-arch/tar-1.34")
+        old = self.artifact_builder.build(self.left, "app-arch/tar-1.34")
         build_publisher.pull(self.left)
 
         # Given the second build with tar-1.35
         self.right = BuildFactory()
-        self.artifact_builder.build("app-arch/tar-1.35")
-        self.artifact_builder.remove(old)
+        self.artifact_builder.build(self.right, "app-arch/tar-1.35")
+        self.artifact_builder.remove(self.right, old)
         build_publisher.pull(self.right)
 
     def test(self):
