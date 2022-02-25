@@ -41,11 +41,12 @@ class BuildNoteInline(admin.TabularInline):
 class BuildModelAdmin(admin.ModelAdmin):
     """ModelAdmin for the BuildModel"""
 
-    fields = ["name", "number", "submitted", "completed", "published", "keep"]
+    fields = ["name", "number", "built", "submitted", "completed", "published", "keep"]
     inlines = [BuildNoteInline]
     list_display = [
         "name",
         "number",
+        "built",
         "submitted",
         "completed",
         "published",
@@ -56,6 +57,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     readonly_fields = [
         "name",
         "number",
+        "built",
         "submitted",
         "completed",
         "published",
