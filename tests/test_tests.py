@@ -33,15 +33,15 @@ class ArtifactBuilderTestCase(TestCase):
         timer = self.builder.timer
         build = BuildFactory()
         package = self.builder.build(
-            build, "app-vim/gentoo-syntax", repo="marduk", build_id=35
+            build, "app-vim/gentoo-syntax-1", repo="marduk", build_id=35
         )
 
         expected = Package(
-            "app-vim/gentoo-syntax",
+            "app-vim/gentoo-syntax-1",
             "marduk",
-            "app-vim/gentoo/gentoo-syntax-35.xpak",
+            "app-vim/gentoo-syntax/gentoo-syntax-1-35.xpak",
             35,
-            441,
+            529,
             timer + 10,
         )
         self.assertEqual(package, expected)
@@ -60,7 +60,7 @@ class ArtifactBuilderTestCase(TestCase):
 
     def test_get_artifact(self):
         build = BuildFactory()
-        self.builder.build(build, "app-vim/gentoo-syntax")
+        self.builder.build(build, "app-vim/gentoo-syntax-1")
 
         artifact = self.builder.get_artifact(build)
 
@@ -106,7 +106,7 @@ class ArtifactBuilderTestCase(TestCase):
                     Package(
                         "app-vim/gentoo-syntax-1",
                         "gentoo",
-                        "app-vim/gentoo/gentoo-syntax-1-1.xpak",
+                        "app-vim/gentoo-syntax/gentoo-syntax-1-1.xpak",
                         1,
                         529,
                         self.builder.timer,

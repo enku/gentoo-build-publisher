@@ -63,3 +63,15 @@ class LapsetTestCase(TestCase):
         lapsed = utils.lapsed(start, end)
 
         self.assertEqual(lapsed, 3661)
+
+
+class CPVToPathTestCase(TestCase):
+    def test(self):
+        cpv = "app-vim/gentoo-syntax-1"
+        path = utils.cpv_to_path(cpv)
+
+        self.assertEqual("app-vim/gentoo-syntax/gentoo-syntax-1-1.xpak", path)
+
+    def test_raises_valueerror_when_not_valid_cpv(self):
+        with self.assertRaises(ValueError):
+            utils.cpv_to_path("foo-bar-1.0")

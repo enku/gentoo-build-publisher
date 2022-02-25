@@ -340,7 +340,7 @@ class StorageGetMetadataTestCase(TestCase):
                     Package(
                         cpv="dev-libs/cyrus-sasl-2.1.28-r1",
                         repo="gentoo",
-                        path="dev-libs/cyrus/cyrus-sasl-2.1.28-r1-1.xpak",
+                        path="dev-libs/cyrus-sasl/cyrus-sasl-2.1.28-r1-1.xpak",
                         build_id=1,
                         size=841,
                         build_time=self.timestamp + 10,

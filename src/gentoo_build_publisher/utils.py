@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import datetime as dt
 import platform
+import re
 from importlib.metadata import version
 from typing import NamedTuple, Type, TypeVar
 
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
+
+CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 
 
 class Color(NamedTuple):
@@ -70,7 +73,9 @@ def lapsed(start: dt.datetime, end: dt.datetime) -> int:
 
 def cpv_to_path(cpv: str, build_id: int = 1, extension=".xpak") -> str:
     """Return the relative path of the would-be package"""
-    cat, rest = cpv.rsplit("/", 1)
-    pkg, version_ = rest.split("-", 1)
+    if not (cpv_match := CPV.match(cpv)):
+        raise ValueError(cpv)
 
-    return f"{cat}/{pkg}/{pkg}-{version_}-{build_id}{extension}"
+    cat, pkg, ver = cpv_match.groups()
+
+    return f"{cat}/{pkg}/{pkg}-{ver}-{build_id}{extension}"
