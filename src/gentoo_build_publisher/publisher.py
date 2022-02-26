@@ -215,7 +215,7 @@ class MachineInfo:
 
     @cached_property
     def build_count(self) -> int:
-        return build_publisher.records.count(self.machine)
+        return len(self.builds)
 
     @cached_property
     def builds(self) -> list[BuildRecord]:
@@ -223,23 +223,21 @@ class MachineInfo:
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
-        return build_publisher.latest_build(self.machine)
+        try:
+            return next(build for build in self.builds if build.completed)
+        except StopIteration:
+            return None
 
     @cached_property
     def published_build(self) -> Build | None:
-        if not (latest := self.latest_build):
+        try:
+            return next(
+                Build(build.id)
+                for build in self.builds
+                if build_publisher.published(build)
+            )
+        except StopIteration:
             return None
-
-        number = latest.number
-
-        while number:
-            build = Build(f"{self.machine}.{number}")
-            if build_publisher.published(build):
-                return build
-
-            number -= 1
-
-        return None
 
 
 # The whole purpose of this is so that we can have a "singleton" instance of
