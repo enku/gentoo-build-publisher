@@ -299,10 +299,16 @@ class RecordDB:
         if completed:
             field_lookups["completed__isnull"] = False
 
+        if BuildModel.objects.filter(**field_lookups, built__isnull=False).count():
+            field_lookups["built__isnull"] = False
+            order_by = "-built"
+        else:
+            order_by = "-number"  # backwards compat
+
         try:
             build_model = (
                 BuildModel.objects.filter(**field_lookups)
-                .order_by("-built")
+                .order_by(order_by)
                 .select_related(*RELATED)
             )[0]
         except IndexError:

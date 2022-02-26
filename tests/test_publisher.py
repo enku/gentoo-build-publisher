@@ -3,6 +3,7 @@
 import datetime
 from unittest import mock
 
+from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.publisher import MachineInfo, build_publisher
 from gentoo_build_publisher.types import Content
 
@@ -211,6 +212,70 @@ class MachineInfoTestCase(TestCase):
 
         # Then we get the list of builds in reverse chronological order
         self.assertEqual(result, [build_publisher.record(i) for i in reversed(builds)])
+
+
+class MachineInfoLegacyBuiltTestCase(TestCase):
+    """Test case for MachineInfo where built field is not always populated"""
+
+    def setUp(self):
+        super().setUp()
+
+        # So for this case let's say we have 4 builds.  None have built timestamps.  The
+        # 3rd one is published (but has no built timestamp) and the first 2 are pulled
+        # but not published:
+        self.builds = BuildFactory.create_batch(4)
+        machine = self.builds[0].machine
+
+        build1 = self.builds[0]
+        build_publisher.pull(build1)
+        build_publisher.records.save(build_publisher.record(build1), built=None)
+
+        build2 = self.builds[1]
+        build_publisher.pull(build2)
+        build_publisher.records.save(build_publisher.record(build2), built=None)
+
+        build3 = self.builds[2]
+        build_publisher.publish(build3)
+        build_publisher.records.save(build_publisher.record(build3), built=None)
+
+        build4 = self.builds[3]
+        build_publisher.pull(build4)
+        build_publisher.records.save(build_publisher.record(build4), built=None)
+
+        assert (
+            BuildModel.objects.filter(machine=machine, built__isnull=False).count() == 0
+        )
+        self.machine_info = MachineInfo(build1.machine)
+
+    def test_build_count(self):
+        self.assertEqual(self.machine_info.build_count, 4)
+
+    def test_builds(self):
+        builds = self.machine_info.builds
+
+        expected = list(reversed([build_publisher.record(i) for i in self.builds]))
+        self.assertEqual(expected, builds)
+
+    def test_latest_build(self):
+        build4 = self.builds[3]
+        latest_build = self.machine_info.latest_build
+
+        self.assertEqual(build_publisher.record(build4), latest_build)
+
+    def test_latest_with_latest_having_built_timestamp(self):
+        build5 = BuildFactory()
+        build_publisher.pull(build5)
+
+        latest_build = self.machine_info.latest_build
+
+        self.assertEqual(build_publisher.record(build5), latest_build)
+
+    def test_published_build(self):
+        build3 = self.builds[2]
+        published_build = self.machine_info.published_build
+
+        self.assertEqual(build3, published_build)
+        self.assertTrue(build_publisher.published(build3))
 
 
 class ScheduleBuildTestCase(TestCase):
