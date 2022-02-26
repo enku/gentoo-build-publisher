@@ -92,7 +92,7 @@ def bot_to_list(builds_over_time, machines, days):
         tally = []
 
         for day in days:
-            tally.append(builds_over_time[day][machine.name])
+            tally.append(builds_over_time[day][machine.machine])
         list_of_lists.append(tally)
 
     return list_of_lists
@@ -145,7 +145,7 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
 
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][record.name] += metadata.packages.size
+        context["total_package_size"][record.machine] += metadata.packages.size
 
         if record.submitted and lapsed(record.submitted, context["now"]) < 86400:
             for package in metadata.packages.built:
@@ -153,11 +153,11 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
                     package.cpv in context["recent_packages"]
                     or len(context["recent_packages"]) < 12
                 ):
-                    context["recent_packages"][package.cpv].add(record.name)
+                    context["recent_packages"][package.cpv].add(record.machine)
     else:
         packages = get_packages(record)
         context["package_count"] += len(packages)
-        context["total_package_size"][record.name] += sum(i.size for i in packages)
+        context["total_package_size"][record.machine] += sum(i.size for i in packages)
 
 
 def dashboard(request: HttpRequest) -> HttpResponse:
@@ -186,7 +186,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             str(color) for color in gradient(color_start, color_end, len(machines))
         ],
         "machine_dist": [machine.build_count for machine in machines],
-        "machines": [machine.name for machine in machines],
+        "machines": [machine.machine for machine in machines],
         "now": now,
         "package_count": 0,
         "recent_packages": defaultdict(set),
@@ -206,7 +206,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
-            builds_over_time[day_submitted][record.name] += 1
+            builds_over_time[day_submitted][record.machine] += 1
 
     (
         context["latest_builds"],

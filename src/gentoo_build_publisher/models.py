@@ -17,8 +17,8 @@ RELATED = ("buildlog", "buildnote", "keptbuild")
 class BuildModel(models.Model):
     """Django persistance for Build objects"""
 
-    # The Jenkins build name
-    name = models.CharField(max_length=255, db_index=True)
+    # The build's machine name
+    machine = models.CharField(max_length=255, db_index=True)
 
     # The Jenkins build number
     number = models.PositiveIntegerField()
@@ -38,10 +38,10 @@ class BuildModel(models.Model):
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         constraints = [
-            models.UniqueConstraint(fields=["name", "number"], name="unique_build")
+            models.UniqueConstraint(fields=["machine", "number"], name="unique_build")
         ]
         indexes = [
-            models.Index(fields=["name"]),
+            models.Index(fields=["machine"]),
         ]
         verbose_name = "Build"
         verbose_name_plural = "Builds"
@@ -74,14 +74,14 @@ class BuildModel(models.Model):
         return record
 
     def __repr__(self) -> str:
-        name = self.name
+        machine = self.machine
         number = self.number
         class_name = type(self).__name__
 
-        return f"{class_name}(name={name!r}, number={number})"
+        return f"{class_name}(machine={machine!r}, number={number})"
 
     def __str__(self) -> str:
-        return f"{self.name}.{self.number}"
+        return f"{self.machine}.{self.number}"
 
 
 class KeptBuild(models.Model):
@@ -163,10 +163,10 @@ class RecordDB:
 
         try:
             model = BuildModel.objects.get(
-                name=build_record.name, number=build_record.number
+                machine=build_record.machine, number=build_record.number
             )
         except BuildModel.DoesNotExist:
-            model = BuildModel(name=build_record.name, number=build_record.number)
+            model = BuildModel(machine=build_record.machine, number=build_record.number)
 
         if build_record.submitted is None:
             build_record.submitted = timezone.now()
@@ -189,7 +189,7 @@ class RecordDB:
 
         try:
             build_model = BuildModel.objects.select_related(*RELATED).get(
-                name=build.name, number=build.number
+                machine=build.machine, number=build.number
             )
         except BuildModel.DoesNotExist:
             raise RecordNotFound from None
@@ -204,7 +204,7 @@ class RecordDB:
 
         For example:
 
-            >>> BuildDB.builds(name="babette")
+            >>> BuildDB.builds(machine="babette")
         """
         build_models = (
             BuildModel.objects.select_related(*RELATED)
@@ -217,20 +217,22 @@ class RecordDB:
     @staticmethod
     def delete(build: Build) -> None:
         """Delete this Build from the db"""
-        BuildModel.objects.filter(name=build.name, number=build.number).delete()
+        BuildModel.objects.filter(machine=build.machine, number=build.number).delete()
 
     @staticmethod
     def exists(build: Build) -> bool:
         """Return True iff a record of the build exists in the database"""
-        return BuildModel.objects.filter(name=build.name, number=build.number).exists()
+        return BuildModel.objects.filter(
+            machine=build.machine, number=build.number
+        ).exists()
 
     @staticmethod
     def list_machines() -> list[str]:
         """Return a list of machine names"""
         machines = (
-            BuildModel.objects.values_list("name", flat=True)
+            BuildModel.objects.values_list("machine", flat=True)
             .distinct()
-            .order_by("name")
+            .order_by("machine")
         )
 
         return list(machines)
@@ -240,7 +242,7 @@ class RecordDB:
         build: BuildRecord, completed: bool = True
     ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        field_lookups: dict[str, Any] = {"name": build.name}
+        field_lookups: dict[str, Any] = {"machine": build.machine}
 
         if build.built:
             field_lookups["built__lt"] = build.built
@@ -264,7 +266,7 @@ class RecordDB:
     @staticmethod
     def next_build(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
-        field_lookups: dict[str, Any] = {"name": build.name}
+        field_lookups: dict[str, Any] = {"machine": build.machine}
 
         if build.built:
             field_lookups["built__gt"] = build.built
@@ -286,13 +288,13 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def latest_build(name: str, completed: bool = False) -> BuildRecord | None:
+    def latest_build(machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
         If no builds exist for the given machine name, return None.
         """
-        field_lookups: dict[str, Any] = {"name": name}
+        field_lookups: dict[str, Any] = {"machine": machine}
 
         if completed:
             field_lookups["completed__isnull"] = False
@@ -313,18 +315,18 @@ class RecordDB:
         """search notes for given machine"""
         build_models = (
             BuildModel.objects.select_related(*RELATED)
-            .filter(name=machine, buildnote__note__icontains=key)
+            .filter(machine=machine, buildnote__note__icontains=key)
             .order_by("-submitted")
         )
 
         return (build_model.record() for build_model in build_models)
 
     @staticmethod
-    def count(name: str | None = None) -> int:
+    def count(machine: str | None = None) -> int:
         """Return the total number of builds
 
-        If `name` is given, return the total number of builds for the given machine
+        If `machine` is given, return the total number of builds for the given machine
         """
-        field_lookups: dict[str, Any] = {"name": name} if name else {}
+        field_lookups: dict[str, Any] = {"machine": machine} if machine else {}
 
         return BuildModel.objects.filter(**field_lookups).count()

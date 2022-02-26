@@ -19,10 +19,10 @@ class BuildTestCase(TestCase):
         with self.assertRaises(InvalidBuild):
             Build(".16")
 
-    def test_has_name_and_number_attrs(self):
+    def test_has_machine_and_number_attrs(self):
         build = Build("babette.16")
 
-        self.assertEqual(build.name, "babette")
+        self.assertEqual(build.machine, "babette")
         self.assertEqual(build.number, 16)
 
     def test_repr(self):

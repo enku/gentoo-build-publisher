@@ -25,15 +25,15 @@ class BuildModelTestCase(TestCase):
 
         string = str(build_model)
 
-        self.assertEqual(string, f"{build_model.name}.{build_model.number}")
+        self.assertEqual(string, f"{build_model.machine}.{build_model.number}")
 
     def test_repr(self):
         """repr(build_model) should return the expected string"""
-        build_model = BuildModelFactory(name="test", number=1)
+        build_model = BuildModelFactory(machine="test", number=1)
 
         string = repr(build_model)
 
-        self.assertEqual(string, "BuildModel(name='test', number=1)")
+        self.assertEqual(string, "BuildModel(machine='test', number=1)")
 
 
 class KeptBuildTestCase(TestCase):
@@ -107,7 +107,7 @@ class RecordDBTestCase(TestCase):
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
         self.record = self.records.get(
-            Build(f"{self.build_model.name}.{self.build_model.number}")
+            Build(f"{self.build_model.machine}.{self.build_model.number}")
         )
 
     def test_submitted_set(self):
@@ -188,18 +188,22 @@ class RecordDBTestCase(TestCase):
         self.records.save(record)
 
         self.assertTrue(
-            BuildModel.objects.filter(name=record.name, number=record.number).exists()
+            BuildModel.objects.filter(
+                machine=record.machine, number=record.number
+            ).exists()
         )
 
     def test_save_exists(self):
         record = self.records.get(self.record)
         self.records.save(record)
-        build_model = BuildModel.objects.get(name=record.name, number=record.number)
+        build_model = BuildModel.objects.get(
+            machine=record.machine, number=record.number
+        )
 
         self.assertEqual(build_model, self.build_model)
 
     def test_get(self):
-        build = Build(f"{self.build_model.name}.{self.build_model.number}")
+        build = Build(f"{self.build_model.machine}.{self.build_model.number}")
         record = self.records.get(build)
 
         self.assertEqual(record.id, build.id)
@@ -211,13 +215,13 @@ class RecordDBTestCase(TestCase):
 
     def test_query(self):
         BuildModel.objects.all().delete()
-        BuildModelFactory(name="foo", number=555)
-        BuildModelFactory(name="foo", number=556)
-        BuildModelFactory(name="bar", number=555)
+        BuildModelFactory(machine="foo", number=555)
+        BuildModelFactory(machine="foo", number=556)
+        BuildModelFactory(machine="bar", number=555)
 
         records = [*self.records.query(number=555)]
 
-        self.assertEqual([i.name for i in records], ["bar", "foo"])
+        self.assertEqual([i.machine for i in records], ["bar", "foo"])
 
     def test_previous_build_should_return_none_when_there_are_none(self):
         previous = self.records.previous_build(self.record)
@@ -229,7 +233,7 @@ class RecordDBTestCase(TestCase):
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
-        assert previous_build.name == record.name
+        assert previous_build.machine == record.machine
 
         self.assertIs(self.records.previous_build(record), None)
 
@@ -238,7 +242,7 @@ class RecordDBTestCase(TestCase):
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
-        assert previous_build.name == record.name
+        assert previous_build.machine == record.machine
 
         self.assertEqual(
             self.records.previous_build(record, completed=False), previous_build
@@ -248,13 +252,13 @@ class RecordDBTestCase(TestCase):
         previous_build = self.build_model
         current_build = BuildModelFactory()
 
-        assert previous_build.name == current_build.name
+        assert previous_build.machine == current_build.machine
 
         current_build_record = current_build.record()
         self.assertEqual(self.records.previous_build(current_build_record), self.record)
 
     def test_next_build_should_return_none_when_there_are_none(self):
-        build = BuildRecordFactory.build(name="bogus", number=1)
+        build = BuildRecordFactory.build(machine="bogus", number=1)
         next_build = self.records.next_build(build)
 
         self.assertIs(next_build, None)
@@ -262,7 +266,7 @@ class RecordDBTestCase(TestCase):
     def test_next_build_when_not_completed_should_return_none(self):
         next_build = BuildModelFactory()
 
-        assert next_build.name == self.build_model.name
+        assert next_build.machine == self.build_model.machine
 
         self.assertIs(self.records.next_build(self.record), None)
 
@@ -274,7 +278,7 @@ class RecordDBTestCase(TestCase):
             built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc)
         )
 
-        assert next_build.name == self.build_model.name
+        assert next_build.machine == self.build_model.machine
 
         next_build_record = next_build.record()
         self.assertEqual(
@@ -287,24 +291,24 @@ class RecordDBTestCase(TestCase):
             built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
         )
 
-        assert next_build.name == self.build_model.name
+        assert next_build.machine == self.build_model.machine
 
         next_build_record = next_build.record()
         self.assertEqual(self.records.next_build(self.record), next_build_record)
 
     def test_list_machines(self):
-        BuildModelFactory.create(name="lighthouse")
-        BuildModelFactory.create(name="babette")
-        BuildModelFactory.create(name="babette")
+        BuildModelFactory.create(machine="lighthouse")
+        BuildModelFactory.create(machine="babette")
+        BuildModelFactory.create(machine="babette")
 
         machines = self.records.list_machines()
 
         self.assertEqual(machines, ["babette", "lighthouse"])
 
-    def test_count_name(self):
-        BuildModelFactory.create(name="lighthouse")
-        BuildModelFactory.create(name="babette")
-        BuildModelFactory.create(name="babette")
+    def test_count_machine(self):
+        BuildModelFactory.create(machine="lighthouse")
+        BuildModelFactory.create(machine="babette")
+        BuildModelFactory.create(machine="babette")
 
         self.assertEqual(self.records.count(), 4)
         self.assertEqual(self.records.count("lighthouse"), 1)

@@ -22,7 +22,7 @@ type Build {
 }
 
 type MachineSummary {
-  name: String!
+  machine: String!
   buildCount: Int
   builds: [Build!]!
   latestBuild: Build
@@ -48,11 +48,11 @@ type DiffStat {
 
 type Query {
   build(id: ID!): Build
-  builds(name: String!): [Build!]!
+  builds(machine: String!): [Build!]!
   diff(left: ID!, right: ID!): DiffStat
-  latest(name: String!): Build
+  latest(machine: String!): Build
   machines: [MachineSummary!]!
-  searchNotes(name: String!, key: String!): [Build!]!
+  searchNotes(machine: String!, key: String!): [Build!]!
   version: String!
   working: [Build!]!
 }
@@ -60,7 +60,7 @@ type Query {
 type Mutation {
   publish(id: ID!): MachineSummary
   pull(id: ID!): MachineSummary
-  scheduleBuild(name: String!): String
+  scheduleBuild(machine: String!): String
   keepBuild(id: ID!): Build
   releaseBuild(id: ID!): Build
   createNote(id: ID!, note: String): Build

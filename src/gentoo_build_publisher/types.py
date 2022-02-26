@@ -11,11 +11,11 @@ from . import utils
 
 
 class InvalidBuild(ValueError):
-    """Build not in name.number format"""
+    """Build not in machine.number format"""
 
 
 class Build:
-    """A build ID (name.number)"""
+    """A build ID (machine.number)"""
 
     def __init__(self, id_: str):
         self._id = id_
@@ -23,7 +23,7 @@ class Build:
         if not all(parts := id_.partition(".")):
             raise InvalidBuild(self)
 
-        self.name = parts[0]
+        self.machine = parts[0]
 
         try:
             self.number = int(parts[2])

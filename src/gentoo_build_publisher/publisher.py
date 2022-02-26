@@ -130,15 +130,15 @@ class BuildPublisher:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
 
-    def schedule_build(self, name: str) -> str:
+    def schedule_build(self, machine: str) -> str:
         """Schedule a build on jenkins for the given machine name"""
-        return self.jenkins.schedule_build(name)
+        return self.jenkins.schedule_build(machine)
 
     def purge(self, machine: str) -> None:
         """Purge old builds for machine"""
         record: BuildRecord
         logging.info("Purging builds for %s", machine)
-        records = self.records.query(name=machine)
+        records = self.records.query(machine=machine)
         purger = Purger(records, key=lambda b: b.submitted.replace(tzinfo=None))
 
         for record in purger.purge():
@@ -173,9 +173,9 @@ class BuildPublisher:
         """Return list of machines with metadata"""
         return [MachineInfo(i) for i in self.records.list_machines()]
 
-    def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
+    def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
-        return self.records.latest_build(name, completed)
+        return self.records.latest_build(machine, completed)
 
     @staticmethod
     def gbp_metadata(
@@ -202,7 +202,7 @@ class MachineInfo:
 
     Has the following attributes:
 
-        name: str
+        machine: str
         build_count: int
         latest_build: Optional[BuildRecord]
         published_build: Optional[Build]
@@ -210,20 +210,20 @@ class MachineInfo:
 
     # pylint: disable=missing-docstring
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, machine):
+        self.machine = machine
 
     @cached_property
     def build_count(self) -> int:
-        return build_publisher.records.count(self.name)
+        return build_publisher.records.count(self.machine)
 
     @cached_property
     def builds(self) -> list[BuildRecord]:
-        return [*build_publisher.records.query(name=self.name)]
+        return [*build_publisher.records.query(machine=self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
-        return build_publisher.latest_build(self.name)
+        return build_publisher.latest_build(self.machine)
 
     @cached_property
     def published_build(self) -> Build | None:
@@ -233,7 +233,7 @@ class MachineInfo:
         number = latest.number
 
         while number:
-            build = Build(f"{self.name}.{number}")
+            build = Build(f"{self.machine}.{number}")
             if build_publisher.published(build):
                 return build
 

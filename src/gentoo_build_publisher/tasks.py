@@ -58,13 +58,13 @@ def pull_build(self, build_id: str) -> None:
         return  # pragma: no cover
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(build.name)
+        purge_build.delay(build.machine)
 
 
 @shared_task
-def purge_build(name: str):
-    """Purge old builds for build_name"""
-    build_publisher.purge(name)
+def purge_build(machine: str):
+    """Purge old builds for machine"""
+    build_publisher.purge(machine)
 
 
 @shared_task

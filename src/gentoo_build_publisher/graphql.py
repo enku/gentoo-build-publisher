@@ -51,7 +51,7 @@ class GQLBuild:
         return self.build.id
 
     def machine(self, _) -> str:
-        return self.build.name
+        return self.build.machine
 
     def keep(self, _) -> bool:
         return self.record.keep
@@ -116,15 +116,15 @@ def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
 
 
 @query.field("latest")
-def resolve_query_latest(*_, name: str) -> Optional[GQLBuild]:
-    record = build_publisher.latest_build(name, completed=True)
+def resolve_query_latest(*_, machine: str) -> Optional[GQLBuild]:
+    record = build_publisher.latest_build(machine, completed=True)
 
     return None if record is None else GQLBuild(record)
 
 
 @query.field("builds")
-def resolve_query_builds(*_, name: str) -> list[GQLBuild]:
-    records = build_publisher.records.query(name=name, completed__isnull=False)
+def resolve_query_builds(*_, machine: str) -> list[GQLBuild]:
+    records = build_publisher.records.query(machine=machine, completed__isnull=False)
 
     return [GQLBuild(record) for record in records]
 
@@ -151,8 +151,8 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
 
 
 @query.field("searchNotes")
-def resolve_query_searchnotes(*_, name: str, key: str) -> list[GQLBuild]:
-    return [GQLBuild(i) for i in build_publisher.search_notes(name, key)]
+def resolve_query_searchnotes(*_, machine: str, key: str) -> list[GQLBuild]:
+    return [GQLBuild(i) for i in build_publisher.search_notes(machine, key)]
 
 
 @query.field("version")
@@ -176,7 +176,7 @@ def resolve_mutation_publish(*_, id: str) -> MachineInfo:
     else:
         publish_build.delay(build.id)
 
-    return MachineInfo(build.name)
+    return MachineInfo(build.machine)
 
 
 @mutation.field("pull")
@@ -185,13 +185,13 @@ def resolve_mutation_pull(*_, id: str) -> MachineInfo:
 
     pull_build.delay(id)
 
-    return MachineInfo(build.name)
+    return MachineInfo(build.machine)
 
 
 @mutation.field("scheduleBuild")
-def resolve_mutation_schedule_build(*_, name: str) -> str:
+def resolve_mutation_schedule_build(*_, machine: str) -> str:
 
-    return build_publisher.schedule_build(name)
+    return build_publisher.schedule_build(machine)
 
 
 @mutation.field("keepBuild")

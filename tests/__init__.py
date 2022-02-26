@@ -214,9 +214,9 @@ class ArtifactBuilder:
         # Next iterate on dict of builds for this build's machine and add/remove their
         # packages from the list. Note we are totally relying on the fact that dicts are
         # ordered here
-        build_name = build.name
+        build_machine = build.machine
         for build_id, build_data in self._builds.items():
-            if Build(build_id).name != build_name:
+            if Build(build_id).machine != build_machine:
                 continue
 
             for package, status in build_data.package_info:

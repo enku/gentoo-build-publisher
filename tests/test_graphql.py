@@ -59,7 +59,7 @@ class BuildQueryTestCase(TestCase):
         expected = {
             "build": {
                 "id": build.id,
-                "machine": build.name,
+                "machine": build.machine,
                 "pulled": True,
                 "published": False,
                 "packagesBuilt": [
@@ -141,7 +141,7 @@ class BuildQueryTestCase(TestCase):
 
         self.assertEqual(
             result["data"]["build"],
-            {"id": build.id, "machine": build.name, "packagesBuilt": None},
+            {"id": build.id, "machine": build.machine, "packagesBuilt": None},
         )
         self.assertEqual(len(result["errors"]), 1)
         self.assertEqual(result["errors"][0]["message"], "Packages built unknown")
@@ -162,15 +162,15 @@ class BuildsQueryTestCase(TestCase):
             build_publisher.records.save(record, completed=now)
 
         builds.sort(key=lambda build: build.number, reverse=True)
-        query = """query ($name: String!) {
-            builds(name: $name) {
+        query = """query ($machine: String!) {
+            builds(machine: $machine) {
                 id
                 completed
             }
         }
         """
 
-        result = execute(query, variables={"name": builds[0].name})
+        result = execute(query, variables={"machine": builds[0].machine})
 
         expected = [
             {"id": build.id, "completed": "2021-09-30T20:17:00+00:00"}
@@ -202,7 +202,7 @@ class LatestQueryTestCase(TestCase):
 
     def test_when_no_builds_should_respond_with_none(self):
         query = """{
-            latest(name: "bogus") {
+            latest(machine: "bogus") {
                 id
             }
         }"""
@@ -212,7 +212,7 @@ class LatestQueryTestCase(TestCase):
 
     def test_should_return_the_latest_submitted_completed(self):
         query = """{
-            latest(name: "babette") {
+            latest(machine: "babette") {
                 id
             }
         }"""
@@ -343,8 +343,8 @@ class MachinesQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self):
-        babette_builds = BuildFactory.create_batch(3, name="babette")
-        lighthouse_builds = BuildFactory.create_batch(3, name="lighthouse")
+        babette_builds = BuildFactory.create_batch(3, machine="babette")
+        lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
 
         for build in babette_builds + lighthouse_builds:
             build_publisher.pull(build)
@@ -355,7 +355,7 @@ class MachinesQueryTestCase(TestCase):
 
         query = """{
             machines {
-                name
+                machine
                 buildCount
                 latestBuild {
                     id
@@ -373,14 +373,14 @@ class MachinesQueryTestCase(TestCase):
 
         expected = [
             {
-                "name": "babette",
+                "machine": "babette",
                 "buildCount": 3,
                 "builds": [{"id": i.id} for i in reversed(babette_builds)],
                 "latestBuild": {"id": build.id},
                 "publishedBuild": {"id": build.id},
             },
             {
-                "name": "lighthouse",
+                "machine": "lighthouse",
                 "buildCount": 3,
                 "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
                 "latestBuild": {"id": lighthouse_builds[-1].id},
@@ -389,23 +389,25 @@ class MachinesQueryTestCase(TestCase):
         ]
         assert_data(self, result, {"machines": expected})
 
-    def test_only_name(self):
+    def test_only_machine(self):
         # basically test that only selecting the name doesn't query other infos
         # (coverage.py)
         for build in BuildFactory.create_batch(
-            2, name="babette"
-        ) + BuildFactory.create_batch(3, name="lighthouse"):
+            2, machine="babette"
+        ) + BuildFactory.create_batch(3, machine="lighthouse"):
             build_publisher.pull(build)
 
         query = """{
             machines {
-                name
+                machine
             }
         }"""
         result = execute(query)
 
         assert_data(
-            self, result, {"machines": [{"name": "babette"}, {"name": "lighthouse"}]}
+            self,
+            result,
+            {"machines": [{"machine": "babette"}, {"machine": "lighthouse"}]},
         )
 
 
@@ -472,7 +474,7 @@ class ScheduleBuildMutationTestCase(TestCase):
     maxDiff = None
 
     def test(self):
-        query = 'mutation { scheduleBuild(name: "babette") }'
+        query = 'mutation { scheduleBuild(machine: "babette") }'
         schedule_build_path = (
             "gentoo_build_publisher.graphql.build_publisher.schedule_build"
         )
@@ -489,7 +491,7 @@ class ScheduleBuildMutationTestCase(TestCase):
         mock_schedule_build.assert_called_once_with("babette")
 
     def test_should_return_error_when_schedule_build_fails(self):
-        query = 'mutation { scheduleBuild(name: "babette") }'
+        query = 'mutation { scheduleBuild(machine: "babette") }'
         schedule_build_path = (
             "gentoo_build_publisher.graphql.build_publisher.schedule_build"
         )
@@ -626,8 +628,8 @@ class CreateNoteMutationTestCase(TestCase):
 class SearchNotesQueryTestCase(TestCase):
     """tests for the searchNotes query"""
 
-    query = """query ($name: String!, $key: String!) {
-       searchNotes(name: $name, key: $key) {
+    query = """query ($machine: String!, $key: String!) {
+       searchNotes(machine: $machine, key: $key) {
             id
             notes
         }
@@ -645,14 +647,14 @@ class SearchNotesQueryTestCase(TestCase):
         build_publisher.records.save(record, note="test bar")
 
     def test_single_match(self):
-        result = execute(self.query, variables={"name": "babette", "key": "foo"})
+        result = execute(self.query, variables={"machine": "babette", "key": "foo"})
 
         assert_data(
             self, result, {"searchNotes": [{"id": self.build1.id, "notes": "test foo"}]}
         )
 
     def test_multiple_match(self):
-        result = execute(self.query, variables={"name": "babette", "key": "test"})
+        result = execute(self.query, variables={"machine": "babette", "key": "test"})
 
         assert_data(
             self,
@@ -666,12 +668,12 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
     def test_only_matches_given_machine(self):
-        build = BuildFactory(name="lighthouse")
+        build = BuildFactory(machine="lighthouse")
         build_publisher.pull(build)
         record = build_publisher.record(build)
         build_publisher.records.save(record, note="test foo")
 
-        result = execute(self.query, variables={"name": "lighthouse", "key": "test"})
+        result = execute(self.query, variables={"machine": "lighthouse", "key": "test"})
 
         assert_data(
             self,
@@ -680,7 +682,7 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
     def test_when_named_machine_does_not_exist(self):
-        result = execute(self.query, variables={"name": "bogus", "key": "test"})
+        result = execute(self.query, variables={"machine": "bogus", "key": "test"})
 
         assert_data(self, result, {"searchNotes": []})
 
@@ -695,7 +697,7 @@ class WorkingTestCase(TestCase):
 
     def test(self):
         build_publisher.pull(BuildFactory())
-        build_publisher.pull(BuildFactory(name="lighthouse"))
+        build_publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
         build_publisher.records.save(BuildRecord(working.id))
 

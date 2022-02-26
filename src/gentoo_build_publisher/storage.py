@@ -111,7 +111,7 @@ class Storage:
             raise FileNotFoundError("The build has not been pulled")
 
         for item in Content:
-            path = self.path / item.value / build.name
+            path = self.path / item.value / build.machine
             self.symlink(str(build), str(path))
 
     def published(self, build: Build) -> bool:
@@ -121,7 +121,7 @@ class Storage:
         unstable and therefore considered not published.
         """
         return all(
-            (symlink := self.path / item.value / build.name).exists()
+            (symlink := self.path / item.value / build.machine).exists()
             and os.path.realpath(symlink) == str(self.get_path(build, item))
             for item in Content
         )

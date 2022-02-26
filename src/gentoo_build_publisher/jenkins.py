@@ -71,7 +71,7 @@ class Jenkins:
 
     def url(self, build: Build) -> URL:
         """Return the Jenkins url for the build"""
-        return self.config.base_url / "job" / build.name / str(build.number)
+        return self.config.base_url / "job" / build.machine / str(build.number)
 
     def artifact_url(self, build: Build) -> URL:
         """Return the artifact url for build"""
@@ -115,9 +115,9 @@ class Jenkins:
         config = JenkinsConfig.from_settings(settings)
         return cls(config)
 
-    def schedule_build(self, name: str) -> str:
+    def schedule_build(self, machine: str) -> str:
         """Schedule a build on Jenkins"""
-        url = self.config.base_url / "job" / name / "build"
+        url = self.config.base_url / "job" / machine / "build"
         response = requests.post(str(url), auth=self.config.auth())
         response.raise_for_status()
 

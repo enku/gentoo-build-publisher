@@ -27,15 +27,15 @@ def buncha_builds(
 
     for i in reversed(range(num_days)):
         day = end_date - dt.timedelta(days=i)
-        for name in machines:
-            builds = BuildFactory.create_batch(per_day, name=name)
+        for machine in machines:
+            builds = BuildFactory.create_batch(per_day, machine=machine)
 
             for build in builds:
                 build_publisher.records.save(
                     build_publisher.record(build), submitted=day
                 )
 
-            buildmap[name].extend(builds)
+            buildmap[machine].extend(builds)
     return buildmap
 
 

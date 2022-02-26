@@ -94,7 +94,7 @@ class BuildPublisherTestCase(TestCase):
             record, submitted=datetime.datetime(1970, 12, 31, tzinfo=utc)
         )
 
-        build_publisher.purge(old_build.name)
+        build_publisher.purge(old_build.machine)
 
         self.assertIs(build_publisher.records.exists(old_build), False)
 
@@ -116,7 +116,7 @@ class BuildPublisherTestCase(TestCase):
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        build_publisher.purge(build.name)
+        build_publisher.purge(build.machine)
 
         self.assertIs(build_publisher.records.exists(build), True)
 
@@ -134,7 +134,7 @@ class BuildPublisherTestCase(TestCase):
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        build_publisher.purge(build.name)
+        build_publisher.purge(build.machine)
 
         self.assertIs(build_publisher.records.exists(build), True)
 
@@ -167,20 +167,20 @@ class MachineInfoTestCase(TestCase):
 
     def test(self):
         # Given the "foo" builds, one of which is published
-        first_build = BuildFactory(name="foo")
+        first_build = BuildFactory(machine="foo")
         build_publisher.publish(first_build)
-        latest_build = BuildFactory(name="foo")
+        latest_build = BuildFactory(machine="foo")
         build_publisher.pull(latest_build)
 
         # Given the "other" builds
-        for build in BuildFactory.create_batch(3, name="other"):
+        for build in BuildFactory.create_batch(3, machine="other"):
             build_publisher.pull(build)
 
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
-        self.assertEqual(machine_info.name, "foo")
+        self.assertEqual(machine_info.machine, "foo")
         self.assertEqual(machine_info.build_count, 2)
         self.assertEqual(
             machine_info.latest_build, build_publisher.record(latest_build)
@@ -192,14 +192,14 @@ class MachineInfoTestCase(TestCase):
         machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
-        self.assertEqual(machine_info.name, "foo")
+        self.assertEqual(machine_info.machine, "foo")
         self.assertEqual(machine_info.build_count, 0)
         self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published_build, None)
 
     def test_builds_property(self):
         # Given the "foo" builds
-        builds = BuildFactory.create_batch(3, name="foo")
+        builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
             build_publisher.pull(build)
 

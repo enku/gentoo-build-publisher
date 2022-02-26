@@ -19,7 +19,7 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BuildModel
 
-    name = "babette"
+    machine = "babette"
     number = factory.Sequence(lambda n: n)
     submitted = factory.LazyFunction(timezone.now)
     completed = None
@@ -33,7 +33,7 @@ class BuildFactory(factory.Factory):
         inline_args = ("build_id",)
 
     class Params:
-        name = "babette"
+        machine = "babette"
         number = None
 
     @factory.lazy_attribute_sequence
@@ -44,7 +44,7 @@ class BuildFactory(factory.Factory):
         else:
             number = seq
 
-        return f"{self.name}.{number}"  # pylint: disable=no-member
+        return f"{self.machine}.{number}"  # pylint: disable=no-member
 
 
 class BuildRecordFactory(BuildFactory):
