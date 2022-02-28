@@ -374,7 +374,7 @@ class StorageGetMetadataTestCase(TestCase):
             self.storage.get_metadata(self.build)
 
         exception = context.exception
-        self.assertEqual(exception.args, ("gbp.json does not exist",))
+        self.assertEqual(exception.args, (f"gbp.json does not exist for {self.build}",))
 
 
 class StorageSetMetadataTestCase(TestCase):

@@ -198,7 +198,7 @@ class Storage:
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
 
         if not path.exists():
-            raise LookupError("gbp.json does not exist")
+            raise LookupError(f"gbp.json does not exist for {build}")
 
         with path.open("r") as gbp_json:
             return GBPMetadata.from_json(gbp_json.read())  # type: ignore # pylint: disable=no-member
