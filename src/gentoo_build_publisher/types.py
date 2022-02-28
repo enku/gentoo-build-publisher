@@ -11,11 +11,11 @@ from . import utils
 
 
 class InvalidBuild(ValueError):
-    """Build not in machine.number format"""
+    """Build not in machine.build_id format"""
 
 
 class Build:
-    """A build ID (machine.number)"""
+    """A build ID (machine.build_id)"""
 
     def __init__(self, id_: str):
         self._id = id_
@@ -24,11 +24,7 @@ class Build:
             raise InvalidBuild(self)
 
         self.machine = parts[0]
-
-        try:
-            self.number = int(parts[2])
-        except ValueError as error:
-            raise InvalidBuild(str(error)) from error
+        self.build_id = parts[2]
 
     @property
     def id(self):  # pylint: disable=invalid-name

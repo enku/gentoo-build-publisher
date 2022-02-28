@@ -21,7 +21,7 @@ class BuildModel(models.Model):
     machine = models.CharField(max_length=255, db_index=True)
 
     # The Jenkins build number
-    number = models.PositiveIntegerField()
+    build_id = models.CharField(max_length=255)
 
     # when this build was submitted to GBP
     submitted = models.DateTimeField()
@@ -38,7 +38,7 @@ class BuildModel(models.Model):
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
         constraints = [
-            models.UniqueConstraint(fields=["machine", "number"], name="unique_build")
+            models.UniqueConstraint(fields=["machine", "build_id"], name="unique_build")
         ]
         indexes = [
             models.Index(fields=["machine"]),
@@ -75,13 +75,13 @@ class BuildModel(models.Model):
 
     def __repr__(self) -> str:
         machine = self.machine
-        number = self.number
+        build_id = self.build_id
         class_name = type(self).__name__
 
-        return f"{class_name}(machine={machine!r}, number={number})"
+        return f"{class_name}(machine={machine!r}, build_id={build_id!r})"
 
     def __str__(self) -> str:
-        return f"{self.machine}.{self.number}"
+        return f"{self.machine}.{self.build_id}"
 
 
 class KeptBuild(models.Model):
@@ -163,10 +163,12 @@ class RecordDB:
 
         try:
             model = BuildModel.objects.get(
-                machine=build_record.machine, number=build_record.number
+                machine=build_record.machine, build_id=build_record.build_id
             )
         except BuildModel.DoesNotExist:
-            model = BuildModel(machine=build_record.machine, number=build_record.number)
+            model = BuildModel(
+                machine=build_record.machine, build_id=build_record.build_id
+            )
 
         if build_record.submitted is None:
             build_record.submitted = timezone.now()
@@ -189,7 +191,7 @@ class RecordDB:
 
         try:
             build_model = BuildModel.objects.select_related(*RELATED).get(
-                machine=build.machine, number=build.number
+                machine=build.machine, build_id=build.build_id
             )
         except BuildModel.DoesNotExist:
             raise RecordNotFound from None
@@ -217,13 +219,15 @@ class RecordDB:
     @staticmethod
     def delete(build: Build) -> None:
         """Delete this Build from the db"""
-        BuildModel.objects.filter(machine=build.machine, number=build.number).delete()
+        BuildModel.objects.filter(
+            machine=build.machine, build_id=build.build_id
+        ).delete()
 
     @staticmethod
     def exists(build: Build) -> bool:
         """Return True iff a record of the build exists in the database"""
         return BuildModel.objects.filter(
-            machine=build.machine, number=build.number
+            machine=build.machine, build_id=build.build_id
         ).exists()
 
     @staticmethod
@@ -303,7 +307,7 @@ class RecordDB:
             field_lookups["built__isnull"] = False
             order_by = "-built"
         else:
-            order_by = "-number"  # backwards compat
+            order_by = "-build_id"  # backwards compat
 
         try:
             build_model = (

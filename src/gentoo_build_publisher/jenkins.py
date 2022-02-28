@@ -71,7 +71,7 @@ class Jenkins:
 
     def url(self, build: Build) -> URL:
         """Return the Jenkins url for the build"""
-        return self.config.base_url / "job" / build.machine / str(build.number)
+        return self.config.base_url / "job" / build.machine / build.build_id
 
     def artifact_url(self, build: Build) -> URL:
         """Return the artifact url for build"""

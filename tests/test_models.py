@@ -25,15 +25,15 @@ class BuildModelTestCase(TestCase):
 
         string = str(build_model)
 
-        self.assertEqual(string, f"{build_model.machine}.{build_model.number}")
+        self.assertEqual(string, f"{build_model.machine}.{build_model.build_id}")
 
     def test_repr(self):
         """repr(build_model) should return the expected string"""
-        build_model = BuildModelFactory(machine="test", number=1)
+        build_model = BuildModelFactory(machine="test", build_id="test.1")
 
         string = repr(build_model)
 
-        self.assertEqual(string, "BuildModel(machine='test', number=1)")
+        self.assertEqual(string, "BuildModel(machine='test', build_id='test.1')")
 
 
 class KeptBuildTestCase(TestCase):
@@ -106,9 +106,7 @@ class RecordDBTestCase(TestCase):
             built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
-        self.record = self.records.get(
-            Build(f"{self.build_model.machine}.{self.build_model.number}")
-        )
+        self.record = self.records.get(Build(str(self.build_model)))
 
     def test_submitted_set(self):
         self.record.submitted = dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
@@ -189,7 +187,7 @@ class RecordDBTestCase(TestCase):
 
         self.assertTrue(
             BuildModel.objects.filter(
-                machine=record.machine, number=record.number
+                machine=record.machine, build_id=record.build_id
             ).exists()
         )
 
@@ -197,13 +195,13 @@ class RecordDBTestCase(TestCase):
         record = self.records.get(self.record)
         self.records.save(record)
         build_model = BuildModel.objects.get(
-            machine=record.machine, number=record.number
+            machine=record.machine, build_id=record.build_id
         )
 
         self.assertEqual(build_model, self.build_model)
 
     def test_get(self):
-        build = Build(f"{self.build_model.machine}.{self.build_model.number}")
+        build = Build(str(self.build_model))
         record = self.records.get(build)
 
         self.assertEqual(record.id, build.id)
@@ -215,11 +213,11 @@ class RecordDBTestCase(TestCase):
 
     def test_query(self):
         BuildModel.objects.all().delete()
-        BuildModelFactory(machine="foo", number=555)
-        BuildModelFactory(machine="foo", number=556)
-        BuildModelFactory(machine="bar", number=555)
+        BuildModelFactory(machine="foo", build_id="555")
+        BuildModelFactory(machine="foo", build_id="556")
+        BuildModelFactory(machine="bar", build_id="555")
 
-        records = [*self.records.query(number=555)]
+        records = [*self.records.query(build_id="555")]
 
         self.assertEqual([i.machine for i in records], ["bar", "foo"])
 

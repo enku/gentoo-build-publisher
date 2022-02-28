@@ -20,7 +20,7 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
         model = BuildModel
 
     machine = "babette"
-    number = factory.Sequence(lambda n: n)
+    build_id = factory.Sequence(lambda n: str(n))
     submitted = factory.LazyFunction(timezone.now)
     completed = None
 

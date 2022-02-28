@@ -11,19 +11,15 @@ class BuildTestCase(TestCase):
 
         self.assertEqual(str(build), "babette.16")
 
-    def test_string_with_invalid_number(self):
-        with self.assertRaises(InvalidBuild):
-            Build("babette.16f")
-
     def test_string_with_no_name(self):
         with self.assertRaises(InvalidBuild):
             Build(".16")
 
-    def test_has_machine_and_number_attrs(self):
+    def test_has_machine_and_build_id_attrs(self):
         build = Build("babette.16")
 
         self.assertEqual(build.machine, "babette")
-        self.assertEqual(build.number, 16)
+        self.assertEqual(build.build_id, "16")
 
     def test_repr(self):
         build = Build("babette.16")

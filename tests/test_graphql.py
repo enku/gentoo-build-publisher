@@ -161,7 +161,7 @@ class BuildsQueryTestCase(TestCase):
             record = build_publisher.record(build)
             build_publisher.records.save(record, completed=now)
 
-        builds.sort(key=lambda build: build.number, reverse=True)
+        builds.sort(key=lambda build: build.build_id, reverse=True)
         query = """query ($machine: String!) {
             builds(machine: $machine) {
                 id

@@ -43,7 +43,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     fields = [
         "machine",
-        "number",
+        "build_id",
         "built",
         "submitted",
         "completed",
@@ -53,7 +53,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     inlines = [BuildNoteInline]
     list_display = [
         "machine",
-        "number",
+        "build_id",
         "built",
         "submitted",
         "completed",
@@ -64,7 +64,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     list_filter = ["machine", "submitted", KeepListFilter]
     readonly_fields = [
         "machine",
-        "number",
+        "build_id",
         "built",
         "submitted",
         "completed",
