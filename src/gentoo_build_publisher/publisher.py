@@ -142,9 +142,8 @@ class BuildPublisher:
         purger = Purger(records, key=lambda b: b.submitted.replace(tzinfo=None))
 
         for record in purger.purge():
-            if not record.keep:
-                if not self.published(record):
-                    self.delete(record)
+            if not (record.keep or self.published(record)):
+                self.delete(record)
 
     def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
         """search notes for given machine"""
