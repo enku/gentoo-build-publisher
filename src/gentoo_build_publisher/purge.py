@@ -10,7 +10,6 @@ import datetime
 from typing import Callable, Generic, Iterable, Optional, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
-KeyFunc = Callable[[T], datetime.datetime]
 
 
 class Purger(Generic[T]):
@@ -22,7 +21,7 @@ class Purger(Generic[T]):
     def __init__(
         self,
         items: Iterable[T],
-        key: KeyFunc,
+        key:  Callable[[T], datetime.datetime],
         start: Optional[datetime.datetime] = None,
         end: Optional[datetime.datetime] = None,
     ):

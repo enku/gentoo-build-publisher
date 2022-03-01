@@ -134,12 +134,20 @@ class BuildPublisher:
         """Schedule a build on jenkins for the given machine name"""
         return self.jenkins.schedule_build(machine)
 
+    @staticmethod
+    def _purge_key(record: BuildRecord) -> datetime:
+        """Purge key for build records.  Purge on submitted date"""
+        submitted = record.submitted or datetime.fromtimestamp(0)
+
+        return submitted.replace(tzinfo=None)
+
     def purge(self, machine: str) -> None:
         """Purge old builds for machine"""
+
         record: BuildRecord
         logging.info("Purging builds for %s", machine)
         records = self.records.query(machine=machine)
-        purger = Purger(records, key=lambda b: b.submitted.replace(tzinfo=None))
+        purger = Purger(records, key=self._purge_key)
 
         for record in purger.purge():
             if not (record.keep or self.published(record)):
