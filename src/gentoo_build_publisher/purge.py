@@ -21,7 +21,7 @@ class Purger(Generic[T]):
     def __init__(
         self,
         items: Iterable[T],
-        key:  Callable[[T], datetime.datetime],
+        key: Callable[[T], datetime.datetime],
         start: Optional[datetime.datetime] = None,
         end: Optional[datetime.datetime] = None,
     ):
