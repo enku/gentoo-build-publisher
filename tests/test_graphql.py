@@ -39,14 +39,19 @@ class BuildQueryTestCase(TestCase):
         build = BuildFactory()
         self.artifact_builder.build(build, "x11-wm/mutter-41.3")
         self.artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
-        build_publisher.pull(build)
+
+        with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_utcnow:
+            mock_utcnow.return_value = dt.datetime(2022, 3, 1, 6, 28, 44)
+            build_publisher.pull(build)
 
         query = """query ($id: ID!) {
             build(id: $id) {
                 id
                 machine
                 pulled
+                submitted
                 published
+                logs
                 packagesBuilt {
                     cpv
                 }
@@ -62,6 +67,8 @@ class BuildQueryTestCase(TestCase):
                 "machine": build.machine,
                 "pulled": True,
                 "published": False,
+                "logs": "foo\n",
+                "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
                     {"cpv": "acct-group/sgx-0"},
                     {"cpv": "x11-wm/mutter-41.3"},
