@@ -3,11 +3,16 @@
 import datetime
 from unittest import mock
 
+from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.publisher import MachineInfo, build_publisher
+from gentoo_build_publisher.publisher import (
+    MachineInfo,
+    SystemPublisher,
+    build_publisher,
+)
 from gentoo_build_publisher.types import Content
 
-from . import TestCase
+from . import MockJenkins, TestCase
 from .factories import BuildFactory
 
 utc = datetime.timezone.utc
@@ -276,6 +281,14 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
 
         self.assertEqual(build3, published_build)
         self.assertTrue(build_publisher.published(build3))
+
+
+class SystemPublisherTestCase(TestCase):
+    def test(self):
+        publisher = SystemPublisher()
+
+        self.assertIsInstance(publisher.jenkins, Jenkins)
+        self.assertNotIsInstance(publisher.jenkins, MockJenkins)
 
 
 class ScheduleBuildTestCase(TestCase):
