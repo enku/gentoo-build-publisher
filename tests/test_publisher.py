@@ -77,11 +77,11 @@ class BuildPublisherTestCase(TestCase):
         build = BuildFactory()
 
         build_publisher.pull(build)
+        assert build_publisher.pulled(build)
 
-        with mock.patch.object(build_publisher.jenkins, "download_artifact") as mock_dl:
-            build_publisher.pull(build)
+        pulled = build_publisher.pull(build)
 
-        self.assertFalse(mock_dl.called)
+        self.assertFalse(pulled)
 
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
@@ -295,12 +295,7 @@ class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
     def test(self):
-        with mock.patch.object(
-            build_publisher.jenkins, "schedule_build"
-        ) as mock_schedule_build:
-            mock_queue_url = "https://jenkins.invalid/queue/item/31528/"
-            mock_schedule_build.return_value = mock_queue_url
-            response = build_publisher.schedule_build("babette")
+        response = build_publisher.schedule_build("babette")
 
-        self.assertEqual(response, mock_queue_url)
-        mock_schedule_build.assert_called_once_with("babette")
+        self.assertEqual("https://jenkins.invalid/job/babette/build", response)
+        self.assertEqual(build_publisher.jenkins.scheduled_builds, ["babette"])

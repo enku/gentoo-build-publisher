@@ -68,10 +68,10 @@ class BuildPublisher:
         """Return True if this Build is published"""
         return self.storage.published(build)
 
-    def pull(self, build) -> None:
+    def pull(self, build) -> bool:
         """pull the Build to storage"""
         if self.pulled(build):
-            return
+            return False
 
         record = self.record(build)
         self.records.save(
@@ -96,6 +96,8 @@ class BuildPublisher:
         logging.info("Pulled build %s", build)
 
         self._update_build_metadata(record)
+
+        return True
 
     def _update_build_metadata(self, record: BuildRecord) -> None:
         """Update the build's db attributes (based on storage, etc.)"""
