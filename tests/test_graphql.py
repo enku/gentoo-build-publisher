@@ -6,7 +6,6 @@ from unittest import mock
 
 from django.test.client import Client
 
-from gentoo_build_publisher.publisher import build_publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version
@@ -42,7 +41,7 @@ class BuildQueryTestCase(TestCase):
 
         with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_utcnow:
             mock_utcnow.return_value = dt.datetime(2022, 3, 1, 6, 28, 44)
-            build_publisher.pull(build)
+            self.publisher.pull(build)
 
         query = """query ($id: ID!) {
             build(id: $id) {
@@ -81,7 +80,7 @@ class BuildQueryTestCase(TestCase):
     def test_packages(self):
         # given the pulled build with packages
         build = BuildFactory()
-        build_publisher.pull(build)
+        self.publisher.pull(build)
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -97,7 +96,7 @@ class BuildQueryTestCase(TestCase):
     def test_packages_when_not_pulled_returns_none(self):
         # given the unpulled package
         build = BuildFactory()
-        build_publisher.records.save(build_publisher.record(build))
+        self.publisher.records.save(self.publisher.record(build))
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -113,9 +112,9 @@ class BuildQueryTestCase(TestCase):
     def test_packages_should_return_none_when_package_index_missing(self):
         # given the pulled build with index file missing
         build = BuildFactory()
-        build_publisher.pull(build)
+        self.publisher.pull(build)
 
-        (build_publisher.storage.get_path(build, Content.BINPKGS) / "Packages").unlink()
+        (self.publisher.storage.get_path(build, Content.BINPKGS) / "Packages").unlink()
 
         # when we query the build's packages
         query = """query ($id: ID!) {
@@ -131,8 +130,8 @@ class BuildQueryTestCase(TestCase):
     def test_packagesbuild_should_return_error_when_gbpjson_missing(self):
         # given the pulled build with gbp.json missing
         build = BuildFactory()
-        build_publisher.pull(build)
-        (build_publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json").unlink()
+        self.publisher.pull(build)
+        (self.publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json").unlink()
 
         # when we query the build's packagesBuild
         query = """query ($id: ID!) {
@@ -165,8 +164,8 @@ class BuildsQueryTestCase(TestCase):
         builds = BuildFactory.create_batch(3)
 
         for build in builds:
-            record = build_publisher.record(build)
-            build_publisher.records.save(record, completed=now)
+            record = self.publisher.record(build)
+            self.publisher.records.save(record, completed=now)
 
         builds.sort(key=lambda build: build.build_id, reverse=True)
         query = """query ($machine: String!) {
@@ -237,13 +236,13 @@ class DiffQueryTestCase(TestCase):
         # Given the first build with tar-1.34
         self.left = BuildFactory()
         old = self.artifact_builder.build(self.left, "app-arch/tar-1.34")
-        build_publisher.pull(self.left)
+        self.publisher.pull(self.left)
 
         # Given the second build with tar-1.35
         self.right = BuildFactory()
         self.artifact_builder.build(self.right, "app-arch/tar-1.35")
         self.artifact_builder.remove(self.right, old)
-        build_publisher.pull(self.right)
+        self.publisher.pull(self.right)
 
     def test(self):
         # When we call get the diff view given the 2 builds
@@ -354,11 +353,11 @@ class MachinesQueryTestCase(TestCase):
         lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
 
         for build in babette_builds + lighthouse_builds:
-            build_publisher.pull(build)
+            self.publisher.pull(build)
 
         # publish a build
         build = babette_builds[-1]
-        build_publisher.publish(build)
+        self.publisher.publish(build)
 
         query = """{
             machines {
@@ -402,7 +401,7 @@ class MachinesQueryTestCase(TestCase):
         for build in BuildFactory.create_batch(
             2, machine="babette"
         ) + BuildFactory.create_batch(3, machine="lighthouse"):
-            build_publisher.pull(build)
+            self.publisher.pull(build)
 
         query = """{
             machines {
@@ -424,7 +423,7 @@ class PublishMutationTestCase(TestCase):
     def test_publish_when_pulled(self):
         """Should publish builds"""
         build = BuildFactory()
-        build_publisher.pull(build)
+        self.publisher.pull(build)
 
         query = """mutation ($id: ID!) {
             publish(id: $id) {
@@ -482,10 +481,8 @@ class ScheduleBuildMutationTestCase(TestCase):
 
     def test(self):
         query = 'mutation { scheduleBuild(machine: "babette") }'
-        schedule_build_path = (
-            "gentoo_build_publisher.graphql.build_publisher.schedule_build"
-        )
-        with mock.patch(schedule_build_path) as mock_schedule_build:
+
+        with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
             mock_schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
             )
@@ -499,10 +496,8 @@ class ScheduleBuildMutationTestCase(TestCase):
 
     def test_should_return_error_when_schedule_build_fails(self):
         query = 'mutation { scheduleBuild(machine: "babette") }'
-        schedule_build_path = (
-            "gentoo_build_publisher.graphql.build_publisher.schedule_build"
-        )
-        with mock.patch(schedule_build_path) as mock_schedule_build:
+
+        with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
             mock_schedule_build.side_effect = Exception("The end is near")
             result = execute(query)
 
@@ -555,8 +550,8 @@ class ReleaseBuildMutationTestCase(TestCase):
 
     def test_should_release_existing_build(self):
         build = BuildFactory()
-        record = build_publisher.record(build)
-        build_publisher.records.save(record, keep=True)
+        record = self.publisher.record(build)
+        self.publisher.records.save(record, keep=True)
 
         query = """mutation ($id: ID!) {
            releaseBuild(id: $id) {
@@ -603,7 +598,7 @@ class CreateNoteMutationTestCase(TestCase):
 
     def test_set_none(self):
         build = BuildFactory()
-        build_publisher.pull(build)
+        self.publisher.pull(build)
 
         query = """mutation ($id: ID!, $note: String) {
            createNote(id: $id, note: $note) {
@@ -616,7 +611,7 @@ class CreateNoteMutationTestCase(TestCase):
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
-        record = build_publisher.record(build)
+        record = self.publisher.record(build)
         self.assertEqual(record.note, None)
 
     def test_should_return_none_when_build_doesnt_exist(self):
@@ -647,11 +642,11 @@ class SearchNotesQueryTestCase(TestCase):
         super().setUp()
 
         self.build1 = BuildFactory()
-        record = build_publisher.record(self.build1)
-        build_publisher.records.save(record, note="test foo")
+        record = self.publisher.record(self.build1)
+        self.publisher.records.save(record, note="test foo")
         self.build2 = BuildFactory()
-        record = build_publisher.record(self.build2)
-        build_publisher.records.save(record, note="test bar")
+        record = self.publisher.record(self.build2)
+        self.publisher.records.save(record, note="test bar")
 
     def test_single_match(self):
         result = execute(self.query, variables={"machine": "babette", "key": "foo"})
@@ -676,9 +671,9 @@ class SearchNotesQueryTestCase(TestCase):
 
     def test_only_matches_given_machine(self):
         build = BuildFactory(machine="lighthouse")
-        build_publisher.pull(build)
-        record = build_publisher.record(build)
-        build_publisher.records.save(record, note="test foo")
+        self.publisher.pull(build)
+        record = self.publisher.record(build)
+        self.publisher.records.save(record, note="test foo")
 
         result = execute(self.query, variables={"machine": "lighthouse", "key": "test"})
 
@@ -703,10 +698,10 @@ class WorkingTestCase(TestCase):
     """
 
     def test(self):
-        build_publisher.pull(BuildFactory())
-        build_publisher.pull(BuildFactory(machine="lighthouse"))
+        self.publisher.pull(BuildFactory())
+        self.publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
-        build_publisher.records.save(BuildRecord(working.id))
+        self.publisher.records.save(BuildRecord(working.id))
 
         result = execute(self.query)
 

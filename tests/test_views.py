@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from django.utils import timezone
 
-from gentoo_build_publisher.publisher import MachineInfo, build_publisher
+from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.views import (
     get_build_summary,
@@ -23,6 +23,7 @@ def buncha_builds(
     num_days: int,
     per_day: int,
 ) -> defaultdict[str, list[Build]]:
+    publisher = get_publisher()
     buildmap = defaultdict(list)
 
     for i in reversed(range(num_days)):
@@ -31,9 +32,7 @@ def buncha_builds(
             builds = BuildFactory.create_batch(per_day, machine=machine)
 
             for build in builds:
-                build_publisher.records.save(
-                    build_publisher.record(build), submitted=day
-                )
+                publisher.records.save(publisher.record(build), submitted=day)
 
             buildmap[machine].extend(builds)
     return buildmap
@@ -44,11 +43,11 @@ class GetPackagesTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
-        build_publisher.pull(build)
+        self.publisher.pull(build)
 
         packages = get_packages(build)
 
-        self.assertEqual(packages, build_publisher.get_packages(build))
+        self.assertEqual(packages, self.publisher.get_packages(build))
 
 
 class GetBuildSummaryTestCase(TestCase):
@@ -64,13 +63,13 @@ class GetBuildSummaryTestCase(TestCase):
             "app-crypt/gpgme-1.14.0",
         ]:
             self.artifact_builder.build(lighthouse, cpv)
-        build_publisher.publish(lighthouse)
+        self.publisher.publish(lighthouse)
 
         web = builds["web"][-1]
-        build_publisher.pull(web)
+        self.publisher.pull(web)
 
         # Make sure it doesn't fail when a gbp.json is missing
-        (build_publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
+        (self.publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
 
         machine_info = [MachineInfo(i) for i in machines]
 
@@ -83,13 +82,13 @@ class GetBuildSummaryTestCase(TestCase):
 
         self.assertEqual(
             latest_builds,
-            [build_publisher.record(lighthouse), build_publisher.record(web)],
+            [self.publisher.record(lighthouse), self.publisher.record(web)],
         )
         self.assertEqual(
             built_recently,
-            [build_publisher.record(lighthouse), build_publisher.record(web)],
+            [self.publisher.record(lighthouse), self.publisher.record(web)],
         )
-        self.assertEqual(latest_published, set([build_publisher.record(lighthouse)]))
+        self.assertEqual(latest_published, set([self.publisher.record(lighthouse)]))
         pkgs = [
             "acct-group/sgx-0",
             "app-admin/perl-cleaner-2.30",
@@ -106,8 +105,8 @@ class PackageMetadataTestCase(TestCase):
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
             self.artifact_builder.build(build, cpv)
 
-        build_publisher.pull(build)
-        record = build_publisher.record(build)
+        self.publisher.pull(build)
+        record = self.publisher.record(build)
         context = {
             "now": now,
             "package_count": 0,
@@ -146,11 +145,11 @@ class DashboardTestCase(TestCase):
 
     def test(self):
         lighthouse = self.builds["lighthouse"][-1]
-        build_publisher.publish(lighthouse)
+        self.publisher.publish(lighthouse)
 
         # pull the latest web
         web = self.builds["web"][-1]
-        build_publisher.pull(web)
+        self.publisher.pull(web)
 
         response = self.client.get("/")
 

@@ -16,8 +16,8 @@ from unittest import mock
 
 import django.test
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
-from gentoo_build_publisher.publisher import BuildPublisher, build_publisher
 from gentoo_build_publisher.types import Build, Content, Package
 from gentoo_build_publisher.utils import cpv_to_path
 
@@ -55,9 +55,12 @@ class TestCase(django.test.TestCase):
         self.addCleanup(patch.stop)
         patch.start()
 
-        test_publisher = BuildPublisherFactory()
-        build_publisher.reset(test_publisher)
-        self.artifact_builder = test_publisher.jenkins.artifact_builder
+        self.publisher = BuildPublisherFactory()
+        patch = mock.patch.object(publisher, "_PUBLISHER", new=self.publisher)
+        self.addCleanup(patch.stop)
+        patch.start()
+
+        self.artifact_builder = self.publisher.jenkins.artifact_builder
 
     def create_file(self, name, content=b"", mtime=None):
         path = self.tmpdir / name

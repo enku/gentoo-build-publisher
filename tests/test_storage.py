@@ -8,7 +8,6 @@ import tarfile
 from unittest import mock
 
 from gentoo_build_publisher import utils
-from gentoo_build_publisher.publisher import build_publisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage, quick_check
 from gentoo_build_publisher.types import (
@@ -97,14 +96,14 @@ class StorageDownloadArtifactTestCase(TestCase):
         build = BuildFactory()
 
         # When when one of the target paths already exist
-        path = build_publisher.storage.get_path(build, Content.BINPKGS)
+        path = self.publisher.storage.get_path(build, Content.BINPKGS)
         path.mkdir(parents=True)
         orphan = path / "this should not be here"
         orphan.touch()
 
         # And we extract the build
-        build_publisher.storage.extract_artifact(
-            build, build_publisher.jenkins.download_artifact(build)
+        self.publisher.storage.extract_artifact(
+            build, self.publisher.jenkins.download_artifact(build)
         )
 
         # Then the orpaned path is removed
@@ -291,8 +290,8 @@ class StorageGetPackagesTestCase(TestCase):
         super().setUp()
 
         self.build = BuildFactory()
-        build_publisher.pull(self.build)
-        self.storage = build_publisher.storage
+        self.publisher.pull(self.build)
+        self.storage = self.publisher.storage
 
     def test_should_return_list_of_packages_from_index(self):
         packages = self.storage.get_packages(self.build)
@@ -325,8 +324,8 @@ class StorageGetMetadataTestCase(TestCase):
         self.artifact_builder.build(self.build, "dev-libs/cyrus-sasl-2.1.28-r1")
         self.artifact_builder.build(self.build, "net-libs/nghttp2-1.47.0")
         self.artifact_builder.build(self.build, "sys-libs/glibc-2.34-r9")
-        build_publisher.pull(self.build)
-        self.storage = build_publisher.storage
+        self.publisher.pull(self.build)
+        self.storage = self.publisher.storage
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self):
         metadata = self.storage.get_metadata(self.build)
@@ -383,8 +382,8 @@ class StorageSetMetadataTestCase(TestCase):
     def setUp(self):
         super().setUp()
         self.build = BuildFactory()
-        build_publisher.pull(self.build)
-        self.storage = build_publisher.storage
+        self.publisher.pull(self.build)
+        self.storage = self.publisher.storage
         self.path = self.storage.get_path(self.build, Content.BINPKGS) / "gbp.json"
 
         if self.path.exists():

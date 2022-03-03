@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .publisher import MachineInfo, build_publisher
+from .publisher import MachineInfo, get_publisher
 from .records import BuildRecord
 from .types import Build, GBPMetadata, Package
 from .utils import Color, lapsed
@@ -72,11 +72,12 @@ def get_packages(build: Build) -> list[Package]:
 
     This call may be cached for performance.
     """
+    publisher = get_publisher()
     cache_key = f"packages-{build}"
 
     try:
         return cache.get_or_set(
-            cache_key, lambda: build_publisher.get_packages(build), timeout=None
+            cache_key, lambda: publisher.get_packages(build), timeout=None
         )
     except LookupError:
         return []
@@ -104,15 +105,16 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     built_recently = []
     build_packages = {}
     latest_published = set()
+    publisher = get_publisher()
 
     for machine in machines:
         if not (latest_build := machine.latest_build):
             continue
 
-        if build_publisher.published(latest_build):
+        if publisher.published(latest_build):
             latest_published.add(latest_build)
 
-        record = build_publisher.record(latest_build)
+        record = publisher.record(latest_build)
         if not record.completed:
             continue
 
@@ -121,9 +123,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         try:
             build_packages[build_id] = [
                 i.cpv
-                for i in build_publisher.storage.get_metadata(
-                    latest_build
-                ).packages.built
+                for i in publisher.storage.get_metadata(latest_build).packages.built
             ]
         except LookupError:
             build_packages[build_id] = []
@@ -137,9 +137,10 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
 def package_metadata(record: BuildRecord, context: DashboardContext):
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
+    publisher = get_publisher()
 
     try:
-        metadata = build_publisher.storage.get_metadata(record)
+        metadata = publisher.storage.get_metadata(record)
     except LookupError:
         metadata = None
 
@@ -162,14 +163,15 @@ def package_metadata(record: BuildRecord, context: DashboardContext):
 
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
+    publisher = get_publisher()
     now = timezone.localtime()
     current_timezone = timezone.get_current_timezone()
     bot_days = [now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)]
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
     }
-    records = build_publisher.records.query()
-    machines = build_publisher.machines()
+    records = publisher.records.query()
+    machines = publisher.machines()
     machines.sort(key=lambda m: m.build_count, reverse=True)
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
@@ -215,11 +217,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         context["latest_published"],
     ) = get_build_summary(now, machines)
     context["unpublished_builds_count"] = len(
-        [
-            build
-            for build in context["latest_builds"]
-            if not build_publisher.published(build)
-        ]
+        [build for build in context["latest_builds"] if not publisher.published(build)]
     )
     context["builds_over_time"] = bot_to_list(builds_over_time, machines, bot_days)
 

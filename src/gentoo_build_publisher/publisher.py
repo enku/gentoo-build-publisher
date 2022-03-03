@@ -7,7 +7,7 @@ import tempfile
 from datetime import datetime, timezone
 from difflib import Differ
 from functools import cached_property
-from typing import Any, Iterator
+from typing import Iterator
 
 from . import io
 from .jenkins import Jenkins, JenkinsMetadata
@@ -228,7 +228,9 @@ class MachineInfo:
 
     @cached_property
     def builds(self) -> list[BuildRecord]:
-        return [*build_publisher.records.query(machine=self.machine)]
+        publisher = get_publisher()
+
+        return [*publisher.records.query(machine=self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
@@ -239,38 +241,24 @@ class MachineInfo:
 
     @cached_property
     def published_build(self) -> Build | None:
+        publisher = get_publisher()
+
         try:
             return next(
-                Build(build.id)
-                for build in self.builds
-                if build_publisher.published(build)
+                Build(build.id) for build in self.builds if publisher.published(build)
             )
         except StopIteration:
             return None
 
 
-# The whole purpose of this is so that we can have a "singleton" instance of
-# BuildPublisher. But we can't intantiate it here at import time because for the tests
-# we're overriding the environment variables on each test and the instance depends on
-# environment variables plus those variables don't exist yet when the test runner starts
-# importing. So what we do here is create a "lazy" subclass that doesn't actually
-# instantiate the instance until __getattr__ is called and have the TestCase's .setUp()
-# remove (reset) the instance on each test.
-class SystemPublisher(BuildPublisher):
-    """Build publisher singleton"""
-
-    def __init__(self):  # pylint: disable=super-init-not-called
-        self._publisher = None
-
-    def __getattr__(self, name: str) -> Any:
-        if self._publisher is None:
-            self._publisher = BuildPublisher.from_settings(Settings.from_environ())
-
-        return getattr(self._publisher, name)
-
-    def reset(self, replacement: BuildPublisher | None = None) -> None:
-        """Reset the instance"""
-        self._publisher = replacement
+_PUBLISHER: BuildPublisher | None = None
 
 
-build_publisher = SystemPublisher()
+def get_publisher() -> BuildPublisher:
+    """Return the "system" publisher"""
+    global _PUBLISHER  # pylint: disable=global-statement
+
+    if _PUBLISHER is None:
+        _PUBLISHER = BuildPublisher.from_settings(Settings.from_environ())
+
+    return _PUBLISHER

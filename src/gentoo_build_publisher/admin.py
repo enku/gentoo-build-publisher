@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.contrib import admin
 
 from .models import BuildModel, BuildNote, KeptBuild
-from .publisher import build_publisher
+from .publisher import get_publisher
 
 
 class KeepListFilter(admin.SimpleListFilter):
@@ -74,7 +74,9 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     def published(self, obj: BuildModel) -> bool:
         """Return the admin published field"""
-        return build_publisher.published(obj.record())
+        publisher = get_publisher()
+
+        return publisher.published(obj.record())
 
     published.boolean = True
 
@@ -97,8 +99,10 @@ class BuildModelAdmin(admin.ModelAdmin):
     note.boolean = True
 
     def response_change(self, request, obj):
+        publisher = get_publisher()
+
         if "_publish" in request.POST:
-            build_publisher.publish(obj.record())
+            publisher.publish(obj.record())
 
         if "_keep" in request.POST:
             try:
@@ -113,10 +117,12 @@ class BuildModelAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        publisher = get_publisher()
+
         if obj is None:
             return super().has_delete_permission(request, None)
 
-        return not (KeptBuild.keep(obj) or build_publisher.published(obj.record()))
+        return not (KeptBuild.keep(obj) or publisher.published(obj.record()))
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
