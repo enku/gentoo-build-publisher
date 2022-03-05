@@ -86,6 +86,10 @@ class RecordDB(Protocol):  # pragma: no cover
         """
         ...
 
+    def for_machine(self, machine: str) -> Iterator[BuildRecord]:
+        """Return BuildRecords for the given machine"""
+        ...
+
     def delete(self, build: Build) -> None:
         """Delete this Build from the db"""
         ...

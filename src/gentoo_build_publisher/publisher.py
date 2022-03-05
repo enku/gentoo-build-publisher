@@ -148,7 +148,7 @@ class BuildPublisher:
 
         record: BuildRecord
         logging.info("Purging builds for %s", machine)
-        records = self.records.query(machine=machine)
+        records = self.records.for_machine(machine)
         purger = Purger(records, key=self._purge_key)
 
         for record in purger.purge():
@@ -230,7 +230,7 @@ class MachineInfo:
     def builds(self) -> list[BuildRecord]:
         publisher = get_publisher()
 
-        return [*publisher.records.query(machine=self.machine)]
+        return [*publisher.records.for_machine(self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:

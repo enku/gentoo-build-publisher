@@ -9,7 +9,7 @@ from gentoo_build_publisher.models import (
     KeptBuild,
     RecordDB,
 )
-from gentoo_build_publisher.records import RecordNotFound
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build
 
 from . import TestCase
@@ -311,3 +311,26 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(self.records.count(), 4)
         self.assertEqual(self.records.count("lighthouse"), 1)
         self.assertEqual(self.records.count("bogus"), 0)
+
+    def test_for_machine_when_only_one_build(self):
+        BuildModelFactory.create(machine="lighthouse")
+
+        records = [*self.records.for_machine("lighthouse")]
+
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertIsInstance(record, BuildRecord)
+
+    def test_for_machine_when_only_many_builds(self):
+        BuildModelFactory.create_batch(3, machine="lighthouse")
+        BuildModelFactory.create_batch(2, machine="babette")
+
+        records = [*self.records.for_machine("lighthouse")]
+
+        self.assertEqual(3, len(records))
+        self.assertTrue(all(i.machine == "lighthouse" for i in records))
+
+    def test_for_machine_when_no_builds(self):
+        records = [*self.records.for_machine("bogus")]
+
+        self.assertEqual([], records)

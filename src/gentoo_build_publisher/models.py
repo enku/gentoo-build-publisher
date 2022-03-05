@@ -217,6 +217,17 @@ class RecordDB:
         return (build_model.record() for build_model in build_models)
 
     @staticmethod
+    def for_machine(machine: str) -> Iterator[BuildRecord]:
+        """Return BuildRecords for the given machine"""
+        build_models = (
+            BuildModel.objects.select_related(*RELATED)
+            .filter(machine=machine)
+            .order_by("-submitted")
+        )
+
+        return (build_model.record() for build_model in build_models)
+
+    @staticmethod
     def delete(build: Build) -> None:
         """Delete this Build from the db"""
         BuildModel.objects.filter(
