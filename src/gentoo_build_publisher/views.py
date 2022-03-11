@@ -11,10 +11,10 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .publisher import MachineInfo, get_publisher
-from .records import BuildRecord
-from .types import Build, GBPMetadata, Package
-from .utils import Color, lapsed
+from gentoo_build_publisher.publisher import MachineInfo, get_publisher
+from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Build, GBPMetadata, Package
+from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 

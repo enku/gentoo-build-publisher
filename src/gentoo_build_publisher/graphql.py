@@ -21,11 +21,11 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError
 
-from .publisher import MachineInfo, get_publisher
-from .records import BuildRecord
-from .tasks import publish_build, pull_build
-from .types import Build, Package, Status
-from .utils import get_version
+from gentoo_build_publisher.publisher import MachineInfo, get_publisher
+from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.tasks import publish_build, pull_build
+from gentoo_build_publisher.types import Build, Package, Status
+from gentoo_build_publisher.utils import get_version
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))

@@ -3,8 +3,8 @@ from ariadne_django.views import GraphQLView
 from django.contrib import admin
 from django.urls import path
 
-from . import views
-from .graphql import schema
+from gentoo_build_publisher import views
+from gentoo_build_publisher.graphql import schema
 
 urlpatterns = [
     path("", views.dashboard),

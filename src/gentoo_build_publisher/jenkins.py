@@ -9,8 +9,8 @@ import requests
 from dataclasses_json import dataclass_json
 from yarl import URL
 
-from .settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from .types import Build
+from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
+from gentoo_build_publisher.types import Build
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)

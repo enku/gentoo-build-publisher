@@ -5,8 +5,8 @@ import datetime as dt
 import importlib
 from typing import Any, Iterator, Protocol
 
-from .settings import Settings
-from .types import Build
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import Build
 
 
 class RecordNotFound(LookupError):

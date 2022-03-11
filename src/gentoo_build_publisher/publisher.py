@@ -9,13 +9,25 @@ from difflib import Differ
 from functools import cached_property
 from typing import Iterator
 
-from . import io
-from .jenkins import Jenkins, JenkinsMetadata
-from .purge import Purger
-from .records import BuildRecord, RecordDB, RecordNotFound, Records
-from .settings import Settings
-from .storage import Storage
-from .types import Build, Change, GBPMetadata, Package, PackageMetadata, Status
+from gentoo_build_publisher import io
+from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
+from gentoo_build_publisher.purge import Purger
+from gentoo_build_publisher.records import (
+    BuildRecord,
+    RecordDB,
+    RecordNotFound,
+    Records,
+)
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.storage import Storage
+from gentoo_build_publisher.types import (
+    Build,
+    Change,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+    Status,
+)
 
 logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow

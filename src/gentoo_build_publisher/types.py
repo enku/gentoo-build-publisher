@@ -7,7 +7,7 @@ from typing import Any
 
 from dataclasses_json import dataclass_json
 
-from . import utils
+from gentoo_build_publisher import utils
 
 
 class InvalidBuild(ValueError):
