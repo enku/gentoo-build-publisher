@@ -66,9 +66,7 @@ class Storage:
             return
 
         with tempfile.NamedTemporaryFile(dir=self.tmpdir, suffix="tar.gz") as artifact:
-            for chunk in byte_stream:
-                artifact.write(chunk)
-
+            artifact.writelines(byte_stream)
             artifact.flush()
 
             logger.info("Extracting build: %s", build)

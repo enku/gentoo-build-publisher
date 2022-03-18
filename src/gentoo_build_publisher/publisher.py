@@ -97,7 +97,7 @@ class BuildPublisher:
         tmpdir = str(self.storage.tmpdir)
         with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
             logger.info("Downloading build: %s", build)
-            io.write_chunks(temp, self.jenkins.download_artifact(build))
+            temp.writelines(self.jenkins.download_artifact(build))
 
             logger.info("Downloaded build: %s", build)
             temp.seek(0)
