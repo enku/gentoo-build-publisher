@@ -111,7 +111,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Return the next build in the db or None"""
         ...
 
-    def latest_build(self, name: str, completed: bool = False) -> BuildRecord | None:
+    def latest(self, name: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.

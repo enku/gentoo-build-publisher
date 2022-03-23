@@ -305,7 +305,7 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def latest_build(machine: str, completed: bool = False) -> BuildRecord | None:
+    def latest(machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.

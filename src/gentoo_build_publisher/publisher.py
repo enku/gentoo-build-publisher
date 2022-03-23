@@ -196,7 +196,7 @@ class BuildPublisher:
 
     def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
-        return self.records.latest_build(machine, completed)
+        return self.records.latest(machine, completed)
 
     @staticmethod
     def gbp_metadata(
