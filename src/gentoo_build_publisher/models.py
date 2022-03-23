@@ -3,7 +3,8 @@ Django models for Gentoo Build Publisher
 """
 from __future__ import annotations
 
-from typing import Any, Iterator
+from collections.abc import Iterable
+from typing import Any
 
 from django.db import models
 from django.utils import timezone
@@ -199,7 +200,7 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def query(**filters) -> Iterator[BuildRecord]:
+    def query(**filters) -> Iterable[BuildRecord]:
         """Query the datbase and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.
@@ -217,7 +218,7 @@ class RecordDB:
         return (build_model.record() for build_model in build_models)
 
     @staticmethod
-    def for_machine(machine: str) -> Iterator[BuildRecord]:
+    def for_machine(machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
         build_models = (
             BuildModel.objects.select_related(*RELATED)
@@ -332,7 +333,7 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def search_notes(machine: str, key: str) -> Iterator[BuildRecord]:
+    def search_notes(machine: str, key: str) -> Iterable[BuildRecord]:
         """search notes for given machine"""
         build_models = (
             BuildModel.objects.select_related(*RELATED)

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterator, Optional, Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 import requests
 from dataclasses_json import dataclass_json
@@ -81,7 +82,7 @@ class Jenkins:
         """Return the url for the build's console logs"""
         return self.url(build) / "consoleText"
 
-    def download_artifact(self, build: Build) -> Iterator[bytes]:
+    def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.artifact_url(build)
         response = requests.get(str(url), auth=self.config.auth(), stream=True)

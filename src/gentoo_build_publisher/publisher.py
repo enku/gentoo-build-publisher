@@ -4,10 +4,10 @@ from __future__ import annotations
 import logging
 import math
 import tempfile
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from difflib import Differ
 from functools import cached_property
-from typing import Iterator
 
 from gentoo_build_publisher import io
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
@@ -167,11 +167,11 @@ class BuildPublisher:
             if not (record.keep or self.published(record)):
                 self.delete(record)
 
-    def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
+    def search_notes(self, machine: str, key: str) -> list[BuildRecord]:
         """search notes for given machine"""
-        return (record for record in self.records.search_notes(machine, key))
+        return list(self.records.search_notes(machine, key))
 
-    def diff_binpkgs(self, left: Build, right: Build) -> Iterator[Change]:
+    def diff_binpkgs(self, left: Build, right: Build) -> Iterable[Change]:
         """Compare two package's binpkgs and generate the differences"""
         if left == right:
             return

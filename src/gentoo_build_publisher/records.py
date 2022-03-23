@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib
-from typing import Any, Iterator, Protocol
+from collections.abc import Iterable
+from typing import Any, Protocol
 
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
@@ -75,7 +76,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Retrieve db record"""
         ...
 
-    def query(self, **filters) -> Iterator[BuildRecord]:
+    def query(self, **filters) -> Iterable[BuildRecord]:
         """Query the database and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.
@@ -86,7 +87,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """
         ...
 
-    def for_machine(self, machine: str) -> Iterator[BuildRecord]:
+    def for_machine(self, machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
         ...
 
@@ -120,7 +121,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """
         ...
 
-    def search_notes(self, machine: str, key: str) -> Iterator[BuildRecord]:
+    def search_notes(self, machine: str, key: str) -> Iterable[BuildRecord]:
         """search notes for given machine"""
         ...
 

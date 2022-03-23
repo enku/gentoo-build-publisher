@@ -6,9 +6,10 @@ import os
 import shutil
 import tarfile
 import tempfile
+from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Iterator
+from typing import IO
 
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
@@ -52,7 +53,7 @@ class Storage:
     def extract_artifact(
         self,
         build: Build,
-        byte_stream: Iterator[bytes],
+        byte_stream: Iterable[bytes],
         previous: Build | None = None,
     ):
         """Pull and unpack the artifact
