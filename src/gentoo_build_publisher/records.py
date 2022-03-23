@@ -107,7 +107,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Return the previous build in the db or None"""
         ...
 
-    def next_build(self, build: Build, completed: bool = True) -> BuildRecord | None:
+    def next(self, build: Build, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
         ...
 

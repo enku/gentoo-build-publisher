@@ -253,20 +253,20 @@ class RecordDBTestCase(TestCase):
         current_build_record = current_build.record()
         self.assertEqual(self.records.previous(current_build_record), self.record)
 
-    def test_next_build_should_return_none_when_there_are_none(self):
+    def test_next_should_return_none_when_there_are_none(self):
         build = BuildRecordFactory.build(machine="bogus", number=1)
-        next_build = self.records.next_build(build)
+        next_build = self.records.next(build)
 
         self.assertIs(next_build, None)
 
-    def test_next_build_when_not_completed_should_return_none(self):
+    def test_next_when_not_completed_should_return_none(self):
         next_build = BuildModelFactory()
 
         assert next_build.machine == self.build_model.machine
 
-        self.assertIs(self.records.next_build(self.record), None)
+        self.assertIs(self.records.next(self.record), None)
 
-    def test_next_build_when_not_completed_and_completed_arg_is_false(self):
+    def test_next_when_not_completed_and_completed_arg_is_false(self):
         # You really can't/shouldn't have a build that's built date is set but it isn't
         # completed as BuildPublisher._update_build_metadata updates both fields
         # simultaneously, but...
@@ -278,10 +278,10 @@ class RecordDBTestCase(TestCase):
 
         next_build_record = next_build.record()
         self.assertEqual(
-            self.records.next_build(self.record, completed=False), next_build_record
+            self.records.next(self.record, completed=False), next_build_record
         )
 
-    def test_next_build_when_completed(self):
+    def test_next_when_completed(self):
         next_build = BuildModelFactory(
             completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
             built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
@@ -290,7 +290,7 @@ class RecordDBTestCase(TestCase):
         assert next_build.machine == self.build_model.machine
 
         next_build_record = next_build.record()
-        self.assertEqual(self.records.next_build(self.record), next_build_record)
+        self.assertEqual(self.records.next(self.record), next_build_record)
 
     def test_list_machines(self):
         BuildModelFactory.create(machine="lighthouse")

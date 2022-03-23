@@ -281,7 +281,7 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def next_build(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
+    def next(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
         field_lookups: dict[str, Any] = {"machine": build.machine}
 
