@@ -254,9 +254,7 @@ class RecordDB:
         return list(machines)
 
     @staticmethod
-    def previous_build(
-        build: BuildRecord, completed: bool = True
-    ) -> BuildRecord | None:
+    def previous(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the previous build in the db or None"""
         field_lookups: dict[str, Any] = {
             "built__isnull": False,

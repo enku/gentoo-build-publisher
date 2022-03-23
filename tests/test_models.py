@@ -221,39 +221,37 @@ class RecordDBTestCase(TestCase):
 
         self.assertEqual([i.machine for i in records], ["bar", "foo"])
 
-    def test_previous_build_should_return_none_when_there_are_none(self):
-        previous = self.records.previous_build(self.record)
+    def test_previous_should_return_none_when_there_are_none(self):
+        previous = self.records.previous(self.record)
 
         self.assertIs(previous, None)
 
-    def test_previous_build_when_not_completed_should_return_none(self):
+    def test_previous_when_not_completed_should_return_none(self):
         previous_build = self.record
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
         assert previous_build.machine == record.machine
 
-        self.assertIs(self.records.previous_build(record), None)
+        self.assertIs(self.records.previous(record), None)
 
-    def test_previous_build_when_not_completed_and_completed_arg_is_false(self):
+    def test_previous_when_not_completed_and_completed_arg_is_false(self):
         previous_build = self.record
         self.records.save(previous_build, completed=None)
         record = BuildModelFactory().record()
 
         assert previous_build.machine == record.machine
 
-        self.assertEqual(
-            self.records.previous_build(record, completed=False), previous_build
-        )
+        self.assertEqual(self.records.previous(record, completed=False), previous_build)
 
-    def test_previous_build_when_completed(self):
+    def test_previous_when_completed(self):
         previous_build = self.build_model
         current_build = BuildModelFactory()
 
         assert previous_build.machine == current_build.machine
 
         current_build_record = current_build.record()
-        self.assertEqual(self.records.previous_build(current_build_record), self.record)
+        self.assertEqual(self.records.previous(current_build_record), self.record)
 
     def test_next_build_should_return_none_when_there_are_none(self):
         build = BuildRecordFactory.build(machine="bogus", number=1)

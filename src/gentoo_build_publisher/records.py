@@ -103,9 +103,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Return a list of machine names"""
         ...
 
-    def previous_build(
-        self, build_id: Build, completed: bool = True
-    ) -> BuildRecord | None:
+    def previous(self, build_id: Build, completed: bool = True) -> BuildRecord | None:
         """Return the previous build in the db or None"""
         ...
 
