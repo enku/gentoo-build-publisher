@@ -437,8 +437,8 @@ class QuickCheckTestCase(TestCase):
 
     def test(self):
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = self.create_file("foo", b"test", timestamp)
-        file2 = self.create_file("bar", b"xxxx", timestamp)
+        file1 = str(self.create_file("foo", b"test", timestamp))
+        file2 = str(self.create_file("bar", b"xxxx", timestamp))
 
         result = quick_check(file1, file2)
 
@@ -446,8 +446,8 @@ class QuickCheckTestCase(TestCase):
 
     def test_should_return_false_when_file_does_not_exist(self):
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = self.create_file("foo", b"test", timestamp)
-        file2 = self.tmpdir / "bogus"
+        file1 = str(self.create_file("foo", b"test", timestamp))
+        file2 = str(self.tmpdir / "bogus")
 
         result = quick_check(file1, file2)
 
@@ -456,8 +456,8 @@ class QuickCheckTestCase(TestCase):
     def test_should_return_false_when_mtimes_differ(self):
         timestamp1 = datetime.datetime(2021, 10, 30, 7, 10, 39)
         timestamp2 = datetime.datetime(2021, 10, 30, 7, 10, 40)
-        file1 = self.create_file("foo", b"test", timestamp1)
-        file2 = self.create_file("bar", b"test", timestamp2)
+        file1 = str(self.create_file("foo", b"test", timestamp1))
+        file2 = str(self.create_file("bar", b"test", timestamp2))
 
         result = quick_check(file1, file2)
 
@@ -465,8 +465,8 @@ class QuickCheckTestCase(TestCase):
 
     def test_should_return_false_when_sizes_differ(self):
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = self.create_file("foo", b"test", timestamp)
-        file2 = self.create_file("bar", b"tst", timestamp)
+        file1 = str(self.create_file("foo", b"test", timestamp))
+        file2 = str(self.create_file("bar", b"tst", timestamp))
 
         result = quick_check(file1, file2)
 
