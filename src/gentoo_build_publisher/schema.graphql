@@ -10,6 +10,7 @@ type Package {
 type Build {
   id: ID!
   machine: String!
+  built: DateTime
   submitted: DateTime!
   completed: DateTime
   published: Boolean

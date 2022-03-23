@@ -56,6 +56,9 @@ class GQLBuild:
     def keep(self, _) -> bool:
         return self.record.keep
 
+    def built(self, _) -> dt.datetime | None:
+        return self.record.built
+
     def submitted(self, _) -> dt.datetime | None:
         return self.record.submitted
 

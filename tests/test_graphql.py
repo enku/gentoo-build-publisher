@@ -36,6 +36,7 @@ class BuildQueryTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
+        self.artifact_builder.timer = 1646115094
         self.artifact_builder.build(build, "x11-wm/mutter-41.3")
         self.artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
 
@@ -48,6 +49,7 @@ class BuildQueryTestCase(TestCase):
                 id
                 machine
                 pulled
+                built
                 submitted
                 published
                 logs
@@ -67,6 +69,7 @@ class BuildQueryTestCase(TestCase):
                 "pulled": True,
                 "published": False,
                 "logs": "foo\n",
+                "built": "2022-03-01T06:11:34+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
                     {"cpv": "acct-group/sgx-0"},
