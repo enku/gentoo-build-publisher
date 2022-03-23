@@ -258,7 +258,10 @@ class RecordDB:
         build: BuildRecord, completed: bool = True
     ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        field_lookups: dict[str, Any] = {"machine": build.machine}
+        field_lookups: dict[str, Any] = {
+            "built__isnull": False,
+            "machine": build.machine,
+        }
 
         if build.built:
             field_lookups["built__lt"] = build.built
