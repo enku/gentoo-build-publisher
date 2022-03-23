@@ -27,7 +27,7 @@ class Build:
         self.build_id = parts[2]
 
     @property
-    def id(self):  # pylint: disable=invalid-name
+    def id(self) -> str:  # pylint: disable=invalid-name
         """Return the string representation of the Build"""
         return self._id
 
