@@ -100,57 +100,52 @@ The command-line interface can inspect, publish and pull builds:
 
 ```bash
 $ gbp list babette
-[K  ]   104 04/25/21 06:51:19
-[   ]   109 04/30/21 07:27:04
-[K N]   132 05/21/21 11:27:50
-[ PN]   157 06/16/21 08:10:04
-[   ]   167 06/27/21 08:02:12
-[   ]   168 06/29/21 11:00:41
-[  N]   169 06/30/21 06:38:53
-[  N]   170 07/01/21 06:52:48
-[   ]   171 07/02/21 06:34:30
+[ K  ]   104 04/25/21 08:51:19
+[    ]   132 05/21/21 13:27:50
+[*  N]   412 02/27/22 06:42:08
+[*   ]   413 02/28/22 06:43:32
+[*   ]   430 03/16/22 08:49:15
+[*   ]   431 03/17/22 08:54:43
+[*   ]   434 03/21/22 16:37:30
+[*   ]   435 03/22/22 12:01:48
+[* P ]   437 03/22/22 13:28:13
+[*   ]   438 03/23/22 13:09:26
 
-gbp show babette 172
-Build: babette/172
-Submitted: Sat Jul  3 06:31:58 2021 -0700
-Completed: Sat Jul  3 06:34:39 2021 -0700
+$ gbp show babette 412
+Build: babette/412
+BuildDate: Sun Feb 27 06:38:30 2022 -0500
+Submitted: Sun Feb 27 06:42:08 2022 -0500
+Completed: Sun Feb 27 06:45:00 2022 -0500
 Published: no
 Keep: no
+Packages-built:
+    app-text/opensp-1.5.2-r7
 
-    Packages built:
+This is a build note.
 
-    * app-vim/gentoo-syntax-20210428-1
-    * dev-python/idna-3.2-1
+$ gbp diff babette 437 438
+diff -r babette/437 babette/438
+--- a/babette/437 Tue Mar 22 13:28:13 2022 -0500
++++ b/babette/438 Wed Mar 23 13:09:26 2022 -0500
+-app-admin/sudo-1.9.8_p2-1
++app-admin/sudo-1.9.8_p2-r1-1
+-app-crypt/gnupg-2.2.34-1
++app-crypt/gnupg-2.2.34-r1-1
+-dev-python/importlib_metadata-4.11.2-1
+-dev-python/zipp-3.7.0-r1-1
+-net-misc/curl-7.79.1-3
++net-misc/curl-7.79.1-r1-1
 
-$ gbp diff babette 157 172
-diff -r babette/157 babette/172
---- a/babette/157 Wed Jun 16 08:10:04 2021 -0700
-+++ b/babette/172 Sat Jul  3 06:31:58 2021 -0700
--app-admin/sudo-1.9.6_p1-r1-1
-+app-admin/sudo-1.9.6_p1-r2-1
--app-misc/screen-4.8.0-r2-1
-+app-misc/screen-4.8.0-r3-1
--app-vim/gentoo-syntax-20201216-1
-+app-vim/gentoo-syntax-20210428-1
--dev-lang/perl-5.32.1-1
-+dev-lang/perl-5.32.1-2
-+dev-libs/libffi-3.3-r2-1
--dev-python/idna-3.1-2
-+dev-python/idna-3.2-1
-[...]
-
-$ gbp publish babette 172
+$ gbp publish babette 438
 ```
 
-In the above example, the `PN` output for build `157` signifies that this
-build is currently published (`P`) and there is a user note for that build
-(`N`).  The user note can be shown with the `gbp show` command.  If a build
-contains newly created packages, then Gentoo Build Publisher will
-automatically create a user note listing the newly built packages for that
-build when it is pulled from Jenkins. `gbp diff` shows the differences between
-two builds (packages added/changed/removed). Builds are purged based on how
-old they are, but you can mark builds to keep.  The `K` next to a build means
-that it has been marked for keeping. To mark a build for keeping on the
+In the above example, the `* P` output for build `437` signifies that this
+build is currently published (`P`) and there were packages built (`*`).  The
+`N` for build `412` indicates a user note. The user note and packages built
+can be shown with the `gbp show` command.  `gbp diff` shows the differences
+between two builds (packages added/changed/removed). Builds are purged based
+on how old they are, but you can mark builds to keep.  The `K` next to a build
+means that it has been marked for keeping. To mark a build for keeping on the
 command line, simply:
 
 ```bash
