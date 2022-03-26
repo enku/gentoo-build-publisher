@@ -1,4 +1,6 @@
 """Check GBP storage/db"""
+from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 
 from gentoo_build_publisher.publisher import get_publisher
@@ -11,7 +13,7 @@ class Command(BaseCommand):
 
     help = "Check GBP storage and records"
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         errors = 0
         publisher = get_publisher()
 
@@ -19,7 +21,7 @@ class Command(BaseCommand):
         records = publisher.records.query(completed__isnull=False)
 
         for record in records:
-            missing = []
+            missing: list[Path] = []
             for content in Content:
                 path = publisher.storage.get_path(record, content)
 
