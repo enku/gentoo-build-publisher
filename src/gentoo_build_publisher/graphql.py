@@ -39,7 +39,7 @@ resolvers = [
 ]
 
 
-class GQLBuild:
+class BuildType:
     """Build Type resolvers"""
 
     def __init__(self, build: Build):
@@ -124,28 +124,28 @@ def resolve_query_machines(*_) -> list[MachineInfo]:
 
 
 @query.field("build")
-def resolve_query_build(*_, id: str) -> Optional[GQLBuild]:
+def resolve_query_build(*_, id: str) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
-    return None if not publisher.records.exists(build) else GQLBuild(build)
+    return None if not publisher.records.exists(build) else BuildType(build)
 
 
 @query.field("latest")
-def resolve_query_latest(*_, machine: str) -> Optional[GQLBuild]:
+def resolve_query_latest(*_, machine: str) -> Optional[BuildType]:
     publisher = get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
-    return None if record is None else GQLBuild(record)
+    return None if record is None else BuildType(record)
 
 
 @query.field("builds")
-def resolve_query_builds(*_, machine: str) -> list[GQLBuild]:
+def resolve_query_builds(*_, machine: str) -> list[BuildType]:
     publisher = get_publisher()
 
     records = publisher.records.query(machine=machine, completed__isnull=False)
 
-    return [GQLBuild(record) for record in records]
+    return [BuildType(record) for record in records]
 
 
 @query.field("diff")
@@ -164,17 +164,17 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
     items = publisher.diff_binpkgs(left_build, right_build)
 
     return {
-        "left": GQLBuild(left_build),
-        "right": GQLBuild(right_build),
+        "left": BuildType(left_build),
+        "right": BuildType(right_build),
         "items": [*items],
     }
 
 
 @query.field("searchNotes")
-def resolve_query_searchnotes(*_, machine: str, key: str) -> list[GQLBuild]:
+def resolve_query_searchnotes(*_, machine: str, key: str) -> list[BuildType]:
     publisher = get_publisher()
 
-    return [GQLBuild(i) for i in publisher.search_notes(machine, key)]
+    return [BuildType(i) for i in publisher.search_notes(machine, key)]
 
 
 @query.field("version")
@@ -183,11 +183,11 @@ def resolve_query_version(*_) -> str:
 
 
 @query.field("working")
-def resolve_query_working(*_) -> list[GQLBuild]:
+def resolve_query_working(*_) -> list[BuildType]:
     publisher = get_publisher()
     records = publisher.records.query(completed=None)
 
-    return [GQLBuild(record) for record in records]
+    return [BuildType(record) for record in records]
 
 
 @mutation.field("publish")
@@ -220,7 +220,7 @@ def resolve_mutation_schedule_build(*_, machine: str) -> str:
 
 
 @mutation.field("keepBuild")
-def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
+def resolve_mutation_keepbuild(*_, id: str) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -230,11 +230,11 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[GQLBuild]:
     record = publisher.record(build)
     publisher.records.save(record, keep=True)
 
-    return GQLBuild(record)
+    return BuildType(record)
 
 
 @mutation.field("releaseBuild")
-def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
+def resolve_mutation_releasebuild(*_, id: str) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -244,13 +244,13 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[GQLBuild]:
     record = publisher.record(build)
     publisher.records.save(record, keep=False)
 
-    return GQLBuild(record)
+    return BuildType(record)
 
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
     *_, id: str, note: Optional[str] = None
-) -> Optional[GQLBuild]:
+) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -260,7 +260,7 @@ def resolve_mutation_createnote(
     record = publisher.record(build)
     publisher.records.save(record, note=note)
 
-    return GQLBuild(record)
+    return BuildType(record)
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)
