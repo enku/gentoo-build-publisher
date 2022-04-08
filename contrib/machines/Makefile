@@ -81,6 +81,18 @@ $(archive): gbp.json
 	gzip build.tar
 
 
+logs.tar.gz: chroot
+	tar cvf logs.tar --files-from /dev/null
+	buildah unshare --mount CHROOT=$(container) sh -c 'test -d $${CHROOT}/var/tmp/portage && cd $${CHROOT}/var/tmp/portage && find . -name build.log | tar --append -f $(CURDIR)/logs.tar -T-'
+	rm -f $@
+	gzip logs.tar
+
+
+emerge-info.txt: chroot
+	$(chroot) make -f- emerge-info < Makefile.container > .$@
+	mv .$@ $@
+
+
 push: packages  ## Push artifact (to GBP)
 	$(MAKE) machine=$(machine) build=$(build) $(archive)
 	gbp --url=$(GBP_URL) pull $(machine) $(build)

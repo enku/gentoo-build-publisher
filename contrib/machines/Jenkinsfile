@@ -40,5 +40,13 @@ pipeline {
             archiveArtifacts artifacts: 'build.tar.gz'
             sh 'make push'
         }
+        failure {
+            sh 'make logs.tar.gz emerge-info.txt'
+            emailext to: "${env.GBP_FAILURES_EMAIL}",
+            subject: "${env.JOB_BASE_NAME} #${env.BUILD_NUMBER} failed",
+            body: "See ${env.BUILD_URL} for the deets",
+            attachmentsPattern: 'logs.tar.gz, emerge-info.txt',
+            attachLog: true
+        }
     }
 }

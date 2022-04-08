@@ -12,9 +12,8 @@ opts := $(universal_opts) --changed-deps=y --deep --jobs=4 --newuse --oneshot --
 
 
 .PHONY: world
-world:  ## Update @world and remove unneeded pkgs & binpkgs
-	rm -rf /var/tmp/portage
-	emerge $(opts) --usepkg=y @world gentoolkit
+world: ## Update @world and remove unneeded pkgs & binpkgs
+	MAKELEVEL=0 emerge $(opts) --usepkg=y @world gentoolkit
 	emerge $(universal_opts) --changed-deps=n --usepkg=n --getbinpkg=n @preserved-rebuild
 	eclean-pkg --changed-deps --deep --quiet
 	emerge $(universal_opts) --depclean --quiet
@@ -23,3 +22,8 @@ world:  ## Update @world and remove unneeded pkgs & binpkgs
 .PHONY: emerge-info
 emerge-info:  ## Run emerge --info
 	emerge $(universal_opts) --info
+
+
+.PHONY: clean
+clean:  ## Clean out temporary files
+	rm -rf /var/tmp/portage
