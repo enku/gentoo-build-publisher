@@ -111,7 +111,7 @@ $ gbp list babette
 [* P ]   437 03/22/22 13:28:13
 [*   ]   438 03/23/22 13:09:26
 
-$ gbp show babette 412
+$ gbp status babette 412
 Build: babette/412
 BuildDate: Sun Feb 27 06:38:30 2022 -0500
 Submitted: Sun Feb 27 06:42:08 2022 -0500
@@ -142,7 +142,7 @@ $ gbp publish babette 438
 In the above example, the `* P` output for build `437` signifies that this
 build is currently published (`P`) and there were packages built (`*`).  The
 `N` for build `412` indicates a user note. The user note and packages built
-can be shown with the `gbp show` command.  `gbp diff` shows the differences
+can be shown with the `gbp status` command.  `gbp diff` shows the differences
 between two builds (packages added/changed/removed). Builds are purged based
 on how old they are, but you can mark builds to keep.  The `K` next to a build
 means that it has been marked for keeping. To mark a build for keeping on the
