@@ -83,7 +83,7 @@ def get_packages(build: Build) -> list[Package]:
         return []
 
 
-def bot_to_list(builds_over_time, machines, days):
+def bot_to_list(builds_over_time, machines, days) -> list:
     """Return builds_over_time dict of lists into a list of lists
 
     Each list is a list for each machine in `machines`
@@ -134,7 +134,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
     return latest_builds, built_recently, build_packages, latest_published
 
 
-def package_metadata(record: BuildRecord, context: DashboardContext):
+def package_metadata(record: BuildRecord, context: DashboardContext) -> None:
     """Update `context` with `package_count` and `total_package_size`"""
     metadata: Optional[GBPMetadata]
     publisher = get_publisher()
@@ -166,7 +166,9 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     publisher = get_publisher()
     now = timezone.localtime()
     current_timezone = timezone.get_current_timezone()
-    bot_days = [now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)]
+    bot_days: list[dt.date] = [
+        now.date() - dt.timedelta(days=days) for days in range(6, -1, -1)
+    ]
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
     }

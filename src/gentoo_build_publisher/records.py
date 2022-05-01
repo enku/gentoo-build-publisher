@@ -27,7 +27,7 @@ class BuildRecord(Build):
         submitted: dt.datetime | None = None,
         completed: dt.datetime | None = None,
         built: dt.datetime | None = None,
-    ):
+    ) -> None:
         super().__init__(id_)
         self.note = note
         self.logs = logs

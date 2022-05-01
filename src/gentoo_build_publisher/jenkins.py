@@ -67,7 +67,7 @@ class JenkinsMetadata:
 class Jenkins:
     """Interface to Jenkins"""
 
-    def __init__(self, config: JenkinsConfig):
+    def __init__(self, config: JenkinsConfig) -> None:
         self.config = config
 
     def url(self, build: Build) -> URL:
@@ -111,7 +111,7 @@ class Jenkins:
         )
 
     @classmethod
-    def from_settings(cls, settings: Settings):
+    def from_settings(cls: type[Jenkins], settings: Settings) -> Jenkins:
         """Return a JenkinsBuild instance given settings"""
         config = JenkinsConfig.from_settings(settings)
         return cls(config)
