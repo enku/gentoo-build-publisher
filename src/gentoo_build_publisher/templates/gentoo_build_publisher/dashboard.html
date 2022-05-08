@@ -67,7 +67,7 @@
                 <small class="text-muted">{{ build.build_id }}</small>
               </div>
               {% with build.machine|addstr:"."|addstr:build.build_id as key %}
-              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
+              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} package{{ build_packages|key:key|pluralize }}</span>{% endif %}
               {% endwith %}
             </li>
             {% endif %}
@@ -90,7 +90,7 @@
                 <small class="text-muted">{{ build.build_id }}</small>
               </div>
               {% with build.machine|addstr:"."|addstr:build.build_id as key %}
-              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} packages</span>{% endif %}
+              {% if build_packages|key:key %}<span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ build_packages|key:key|join:"&lt;br/&gt;" }}' data-bs-html="true">{{ build_packages|key:key|length }} package{{ build_packages|key:key|pluralize }}</span>{% endif %}
               {% endwith %}
             </li>
             {% endif %}
