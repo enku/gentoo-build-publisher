@@ -67,6 +67,7 @@ class BuildRecord(Build):
 
 class RecordDB(Protocol):  # pragma: no cover
     """Repository for BuildRecords"""
+    # pylint: disable=unnecessary-ellipsis
 
     def save(self, build_record: BuildRecord, **fields) -> None:
         """Save changes back to the database"""
