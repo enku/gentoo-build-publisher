@@ -253,9 +253,11 @@ class RecordDB:
 
         return list(machines)
 
-    @staticmethod
-    def previous(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
+    def previous(
+        self, build: BuildRecord, completed: bool = True
+    ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
+        # pylint: disable=no-self-use
         field_lookups: dict[str, Any] = {
             "built__isnull": False,
             "machine": build.machine,
@@ -280,9 +282,9 @@ class RecordDB:
 
         return build_model.record()
 
-    @staticmethod
-    def next(build: BuildRecord, completed: bool = True) -> BuildRecord | None:
+    def next(self, build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
+        # pylint: disable=no-self-use
         field_lookups: dict[str, Any] = {"machine": build.machine}
 
         if build.built:

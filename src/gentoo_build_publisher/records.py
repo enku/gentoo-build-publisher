@@ -104,11 +104,13 @@ class RecordDB(Protocol):  # pragma: no cover
         """Return a list of machine names"""
         ...
 
-    def previous(self, build_id: Build, completed: bool = True) -> BuildRecord | None:
+    def previous(
+        self, build_id: BuildRecord, completed: bool = True
+    ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
         ...
 
-    def next(self, build: Build, completed: bool = True) -> BuildRecord | None:
+    def next(self, build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
         ...
 
