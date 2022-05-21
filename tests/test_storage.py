@@ -38,10 +38,7 @@ class StorageReprTestCase(TestCase):
     def test(self):
         storage = Storage(self.tmpdir)
 
-        self.assertEqual(
-            repr(storage),
-            f"gentoo_build_publisher.storage.Storage({repr(self.tmpdir)})",
-        )
+        self.assertEqual(repr(storage), f"Storage({repr(self.tmpdir)})")
 
 
 class StorageFromSettings(TestCase):

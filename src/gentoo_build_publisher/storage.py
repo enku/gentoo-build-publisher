@@ -27,9 +27,8 @@ class Storage:
 
     def __repr__(self) -> str:
         cls = type(self)
-        module = cls.__module__
 
-        return f"{module}.{cls.__name__}({repr(self.path)})"
+        return f"{cls.__qualname__}({repr(self.path)})"
 
     def __hash__(self) -> int:
         return hash(self.path)
