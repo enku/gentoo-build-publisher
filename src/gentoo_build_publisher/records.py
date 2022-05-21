@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import datetime as dt
-import importlib
 from collections.abc import Iterable
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
+
+if TYPE_CHECKING:
+    from gentoo_build_publisher import models
 
 
 class RecordNotFound(LookupError):
@@ -138,8 +140,9 @@ class Records:  # pylint: disable=too-few-public-methods
     """Just a wrapper to look like storage and jenkins modules"""
 
     @staticmethod
-    def from_settings(_settings: Settings) -> RecordDB:
+    def from_settings(_settings: Settings) -> "models.RecordDB":
         """This simply returns the Django model as that's the only implementation"""
-        models = importlib.import_module("gentoo_build_publisher.models")
+        # pylint: disable=import-outside-toplevel
+        from gentoo_build_publisher import models
 
         return models.RecordDB()
