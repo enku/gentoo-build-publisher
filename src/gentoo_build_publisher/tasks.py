@@ -37,8 +37,8 @@ def publish_build(build_id: str) -> bool:
     return True
 
 
-@shared_task(bind=True)
-def pull_build(self, build_id: str) -> None:
+@shared_task
+def pull_build(build_id: str) -> None:
     """Pull the build into storage"""
     publisher = get_publisher()
     build = Build(build_id)
@@ -56,7 +56,7 @@ def pull_build(self, build_id: str) -> None:
             if response and response.status_code == 404:
                 raise
 
-        self.retry(exc=error)
+        pull_build.retry(exc=error)
 
         return  # pragma: no cover
 
