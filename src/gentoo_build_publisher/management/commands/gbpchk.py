@@ -1,5 +1,6 @@
 """Check GBP storage/db"""
 from pathlib import Path
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,7 +14,7 @@ class Command(BaseCommand):
 
     help = "Check GBP storage and records"
 
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:
         errors = 0
         publisher = get_publisher()
 

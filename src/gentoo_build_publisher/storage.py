@@ -9,7 +9,7 @@ import tempfile
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
-from typing import IO
+from typing import IO, Callable
 
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
@@ -25,16 +25,19 @@ class Storage:
         self.tmpdir = self.path / "tmp"
         self.tmpdir.mkdir(parents=True, exist_ok=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         cls = type(self)
         module = cls.__module__
 
         return f"{module}.{cls.__name__}({repr(self.path)})"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.path)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Storage):
+            return NotImplemented
+
         return self.path == other.path
 
     @classmethod
@@ -55,7 +58,7 @@ class Storage:
         build: Build,
         byte_stream: Iterable[bytes],
         previous: Build | None = None,
-    ):
+    ) -> None:
         """Pull and unpack the artifact
 
         If `previous_build` is given, then if a file exists in that location it will be
@@ -78,7 +81,9 @@ class Storage:
 
             logger.info("Extracted build: %s", build)
 
-    def _extract(self, build: Build, tar_file: tarfile.TarFile, previous: Build | None):
+    def _extract(
+        self, build: Build, tar_file: tarfile.TarFile, previous: Build | None
+    ) -> None:
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
@@ -104,7 +109,7 @@ class Storage:
         """
         return all(self.get_path(build, item).exists() for item in Content)
 
-    def publish(self, build: Build):
+    def publish(self, build: Build) -> None:
         """Make this build 'active'"""
         if not self.pulled(build):
             raise FileNotFoundError("The build has not been pulled")
@@ -220,10 +225,10 @@ def quick_check(file1: str, file2: str) -> bool:
     return stat1.st_mtime == stat2.st_mtime and stat1.st_size == stat2.st_size
 
 
-def copy_or_link(link_dest: Path, dst_root: Path):
+def copy_or_link(link_dest: Path, dst_root: Path) -> Callable[[str, str], None]:
     """Create a copytree copy_function that uses rsync's link_dest logic"""
 
-    def copy(src: str, dst: str, follow_symlinks=True):
+    def copy(src: str, dst: str, follow_symlinks: bool = True) -> None:
         relative = Path(dst).relative_to(dst_root)
         target = str(link_dest / relative)
         if quick_check(src, target):

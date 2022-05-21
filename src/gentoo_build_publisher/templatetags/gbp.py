@@ -1,24 +1,25 @@
 """Template tags for numerical values"""
+from typing import Any
+
 from django import template
 
 register = template.Library()
 
 
 @register.filter(is_safe=False)
-def numberize(val, precision=2):
+def numberize(val: int, precision: int = 2) -> str:
     """Format number, `val` as a string.
 
     E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precison
     2) etc.
     """
-    try:
-        val: str = str(int(val))
-    except ValueError as error:
+    if not isinstance(val, int):
         raise template.TemplateSyntaxError(
-            f"Value must be an integer. {val} is not an integer"
-        ) from error
+            f"Value must be an integer. {val!r} is not an integer"
+        )
 
-    num_digits = len(val)
+    str_val = str(val)
+    num_digits = len(str_val)
 
     if num_digits >= 10:
         split, suffix = -9, "G"
@@ -27,9 +28,9 @@ def numberize(val, precision=2):
     elif num_digits > 4:
         split, suffix = -3, "k"
     else:
-        return val
+        return str_val
 
-    dec, frac = val[:split], val[split:]
+    dec, frac = str_val[:split], str_val[split:]
 
     if precision:
         rest = f".{frac[:precision]}"
@@ -40,12 +41,12 @@ def numberize(val, precision=2):
 
 
 @register.filter
-def key(value, arg, default=None):
-    """Given the dict valeu and key return the value from the dict"""
+def key(value: dict[Any, Any], arg: Any, default: Any = None) -> Any:
+    """Given the dict value and key return the value from the dict"""
     return value.get(arg, default)
 
 
 @register.filter
-def addstr(arg1, arg2):
+def addstr(arg1: Any, arg2: Any) -> str:
     """Perform string concatination"""
     return str(arg1) + str(arg2)

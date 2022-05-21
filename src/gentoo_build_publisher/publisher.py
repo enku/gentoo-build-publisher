@@ -80,7 +80,7 @@ class BuildPublisher:
         """Return True if this Build is published"""
         return self.storage.published(build)
 
-    def pull(self, build) -> bool:
+    def pull(self, build: Build) -> bool:
         """pull the Build to storage"""
         if self.pulled(build):
             return False
@@ -231,7 +231,7 @@ class MachineInfo:
 
     # pylint: disable=missing-docstring
 
-    def __init__(self, machine):
+    def __init__(self, machine: str):
         self.machine = machine
 
     @cached_property

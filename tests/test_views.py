@@ -78,23 +78,24 @@ class GetBuildSummaryTestCase(TestCase):
         machine_info.append(MachineInfo("foo"))
 
         result = get_build_summary(now, machine_info)
-        latest_builds, built_recently, build_packages, latest_published = result
 
         self.assertEqual(
-            latest_builds,
+            result.latest_builds,
             [self.publisher.record(lighthouse), self.publisher.record(web)],
         )
         self.assertEqual(
-            built_recently,
+            result.built_recently,
             [self.publisher.record(lighthouse), self.publisher.record(web)],
         )
-        self.assertEqual(latest_published, set([self.publisher.record(lighthouse)]))
+        self.assertEqual(
+            result.latest_published, set([self.publisher.record(lighthouse)])
+        )
         pkgs = [
             "acct-group/sgx-0",
             "app-admin/perl-cleaner-2.30",
             "app-crypt/gpgme-1.14.0",
         ]
-        self.assertEqual(build_packages, {str(lighthouse): pkgs, str(web): []})
+        self.assertEqual(result.build_packages, {str(lighthouse): pkgs, str(web): []})
 
 
 class PackageMetadataTestCase(TestCase):

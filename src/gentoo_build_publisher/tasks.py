@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def publish_build(build_id: str):
+def publish_build(build_id: str) -> bool:
     """Publish the build"""
     publisher = get_publisher()
 
@@ -65,7 +65,7 @@ def pull_build(self, build_id: str) -> None:
 
 
 @shared_task
-def purge_build(machine: str):
+def purge_build(machine: str) -> None:
     """Purge old builds for machine"""
     publisher = get_publisher()
 
@@ -73,7 +73,7 @@ def purge_build(machine: str):
 
 
 @shared_task
-def delete_build(build_id: str):
+def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
     publisher = get_publisher()
     build = Build(build_id)

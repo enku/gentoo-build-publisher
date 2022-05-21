@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import datetime as dt
 from collections import defaultdict
-from typing import Optional, TypedDict
+from dataclasses import astuple, dataclass
+from typing import Mapping, Optional, TypedDict
 
 from django.conf import settings
 from django.core.cache import cache
@@ -50,7 +51,7 @@ class DashboardContext(TypedDict):
     latest_published: set[Build]
 
     # recently built packages (for all machines)
-    recent_packages: defaultdict[str, set]
+    recent_packages: defaultdict[str, set[str]]
 
     # Each machine's total package size
     total_package_size: defaultdict[str, int]
@@ -67,6 +68,21 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
+BuildID = str
+CPV = str
+MachineName = str
+
+
+@dataclass
+class BuildSummary:
+    """Struct returned by get_build_summary()"""
+
+    latest_builds: list[BuildRecord]
+    built_recently: list[BuildRecord]
+    build_packages: dict[BuildID, list[CPV]]
+    latest_published: set[BuildRecord]
+
+
 def get_packages(build: Build) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
@@ -76,14 +92,20 @@ def get_packages(build: Build) -> list[Package]:
     cache_key = f"packages-{build}"
 
     try:
-        return cache.get_or_set(
+        packages: list[Package] = cache.get_or_set(
             cache_key, lambda: publisher.get_packages(build), timeout=None
         )
     except LookupError:
         return []
 
+    return packages
 
-def bot_to_list(builds_over_time, machines, days) -> list:
+
+def bot_to_list(
+    builds_over_time: Mapping[dt.date, Mapping[MachineName, int]],
+    machines: list[MachineInfo],
+    days: list[dt.date],
+) -> list[list[int]]:
     """Return builds_over_time dict of lists into a list of lists
 
     Each list is a list for each machine in `machines`
@@ -99,7 +121,7 @@ def bot_to_list(builds_over_time, machines, days) -> list:
     return list_of_lists
 
 
-def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
+def get_build_summary(now: dt.datetime, machines: list[MachineInfo]) -> BuildSummary:
     """Update `context` with `latest_builds` and `build_recently`"""
     latest_builds = []
     built_recently = []
@@ -131,7 +153,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]):
         if lapsed(record.completed, now) < 86400:
             built_recently.append(latest_build)
 
-    return latest_builds, built_recently, build_packages, latest_published
+    return BuildSummary(latest_builds, built_recently, build_packages, latest_published)
 
 
 def package_metadata(record: BuildRecord, context: DashboardContext) -> None:
@@ -217,7 +239,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         context["built_recently"],
         context["build_packages"],
         context["latest_published"],
-    ) = get_build_summary(now, machines)
+    ) = astuple(get_build_summary(now, machines))
     context["unpublished_builds_count"] = len(
         [build for build in context["latest_builds"] if not publisher.published(build)]
     )

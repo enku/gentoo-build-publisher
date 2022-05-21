@@ -69,7 +69,7 @@ class RecordDB(Protocol):  # pragma: no cover
     """Repository for BuildRecords"""
     # pylint: disable=unnecessary-ellipsis
 
-    def save(self, build_record: BuildRecord, **fields) -> None:
+    def save(self, build_record: BuildRecord, **fields: Any) -> None:
         """Save changes back to the database"""
         ...
 
@@ -77,7 +77,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Retrieve db record"""
         ...
 
-    def query(self, **filters) -> Iterable[BuildRecord]:
+    def query(self, **filters: Any) -> Iterable[BuildRecord]:
         """Query the database and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.

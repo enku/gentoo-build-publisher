@@ -9,7 +9,7 @@ class GentooBuildPublisherConfig(AppConfig):
     verbose_name = "Gentoo Build Publisher"
     default_auto_field = "django.db.models.BigAutoField"
 
-    def ready(self):
+    def ready(self) -> None:
         """Your app is (almost) ready!"""
         # pylint: disable=import-outside-toplevel,unused-import
         from gentoo_build_publisher import signals

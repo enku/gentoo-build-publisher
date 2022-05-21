@@ -157,7 +157,7 @@ class RecordDB:
     """Implements the RecordDB Protocol"""
 
     @staticmethod
-    def save(build_record: BuildRecord, **fields) -> None:
+    def save(build_record: BuildRecord, **fields: Any) -> None:
         """Save changes back to the database"""
         for name, value in fields.items():
             setattr(build_record, name, value)
@@ -200,7 +200,7 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def query(**filters) -> Iterable[BuildRecord]:
+    def query(**filters: Any) -> Iterable[BuildRecord]:
         """Query the datbase and return an iterable of BuildRecord objects
 
         The order of the builds are by the submitted time, most recent first.

@@ -71,7 +71,7 @@ def lapsed(start: dt.datetime, end: dt.datetime) -> int:
     return int((end - start).total_seconds())
 
 
-def cpv_to_path(cpv: str, build_id: int = 1, extension=".xpak") -> str:
+def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".xpak") -> str:
     """Return the relative path of the would-be package"""
     if not (cpv_match := CPV.match(cpv)):
         raise ValueError(cpv)
