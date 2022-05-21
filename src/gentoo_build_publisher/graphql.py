@@ -19,7 +19,7 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne_django.scalars import datetime_scalar
-from graphql import GraphQLError
+from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
@@ -47,28 +47,28 @@ class BuildType:
         self.build = build
         self._record = build if isinstance(build, BuildRecord) else None
 
-    def id(self, _) -> str:
+    def id(self, _info: GraphQLResolveInfo) -> str:
         return self.build.id
 
-    def machine(self, _) -> str:
+    def machine(self, _info: GraphQLResolveInfo) -> str:
         return self.build.machine
 
-    def keep(self, _) -> bool:
+    def keep(self, _info: GraphQLResolveInfo) -> bool:
         return self.record.keep
 
-    def built(self, _) -> dt.datetime | None:
+    def built(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
         return self.record.built
 
-    def submitted(self, _) -> dt.datetime | None:
+    def submitted(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
         return self.record.submitted
 
-    def completed(self, _) -> dt.datetime | None:
+    def completed(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
         return self.record.completed
 
-    def logs(self, _) -> str | None:
+    def logs(self, _info: GraphQLResolveInfo) -> str | None:
         return self.record.logs
 
-    def notes(self, _) -> str | None:
+    def notes(self, _info: GraphQLResolveInfo) -> str | None:
         return self.record.note
 
     @cached_property
@@ -117,14 +117,16 @@ class BuildType:
 
 
 @query.field("machines")
-def resolve_query_machines(*_) -> list[MachineInfo]:
+def resolve_query_machines(_obj: Any, _info: GraphQLResolveInfo) -> list[MachineInfo]:
     publisher = get_publisher()
 
     return publisher.machines()
 
 
 @query.field("build")
-def resolve_query_build(*_, id: str) -> Optional[BuildType]:
+def resolve_query_build(
+    _obj: Any, _info: GraphQLResolveInfo, id: str
+) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -132,7 +134,9 @@ def resolve_query_build(*_, id: str) -> Optional[BuildType]:
 
 
 @query.field("latest")
-def resolve_query_latest(*_, machine: str) -> Optional[BuildType]:
+def resolve_query_latest(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str
+) -> Optional[BuildType]:
     publisher = get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
@@ -140,7 +144,9 @@ def resolve_query_latest(*_, machine: str) -> Optional[BuildType]:
 
 
 @query.field("builds")
-def resolve_query_builds(*_, machine: str) -> list[BuildType]:
+def resolve_query_builds(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str
+) -> list[BuildType]:
     publisher = get_publisher()
 
     records = publisher.records.query(machine=machine, completed__isnull=False)
@@ -149,7 +155,9 @@ def resolve_query_builds(*_, machine: str) -> list[BuildType]:
 
 
 @query.field("diff")
-def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
+def resolve_query_diff(
+    _obj: Any, _info: GraphQLResolveInfo, left: str, right: str
+) -> Optional[Object]:
     publisher = get_publisher()
     left_build = Build(left)
 
@@ -171,19 +179,21 @@ def resolve_query_diff(*_, left: str, right: str) -> Optional[Object]:
 
 
 @query.field("searchNotes")
-def resolve_query_searchnotes(*_, machine: str, key: str) -> list[BuildType]:
+def resolve_query_searchnotes(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
+) -> list[BuildType]:
     publisher = get_publisher()
 
     return [BuildType(i) for i in publisher.search_notes(machine, key)]
 
 
 @query.field("version")
-def resolve_query_version(*_) -> str:
+def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
     return get_version()
 
 
 @query.field("working")
-def resolve_query_working(*_) -> list[BuildType]:
+def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildType]:
     publisher = get_publisher()
     records = publisher.records.query(completed=None)
 
@@ -191,7 +201,9 @@ def resolve_query_working(*_) -> list[BuildType]:
 
 
 @mutation.field("publish")
-def resolve_mutation_publish(*_, id: str) -> MachineInfo:
+def resolve_mutation_publish(
+    _obj: Any, _info: GraphQLResolveInfo, id: str
+) -> MachineInfo:
     publisher = get_publisher()
     build = Build(id)
 
@@ -204,7 +216,7 @@ def resolve_mutation_publish(*_, id: str) -> MachineInfo:
 
 
 @mutation.field("pull")
-def resolve_mutation_pull(*_, id: str) -> MachineInfo:
+def resolve_mutation_pull(_obj: Any, _info: GraphQLResolveInfo, id: str) -> MachineInfo:
     build = Build(id)
 
     pull_build.delay(id)
@@ -213,14 +225,18 @@ def resolve_mutation_pull(*_, id: str) -> MachineInfo:
 
 
 @mutation.field("scheduleBuild")
-def resolve_mutation_schedule_build(*_, machine: str) -> str:
+def resolve_mutation_schedule_build(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str
+) -> str:
     publisher = get_publisher()
 
     return publisher.schedule_build(machine)
 
 
 @mutation.field("keepBuild")
-def resolve_mutation_keepbuild(*_, id: str) -> Optional[BuildType]:
+def resolve_mutation_keepbuild(
+    _obj: Any, _info: GraphQLResolveInfo, id: str
+) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -234,7 +250,9 @@ def resolve_mutation_keepbuild(*_, id: str) -> Optional[BuildType]:
 
 
 @mutation.field("releaseBuild")
-def resolve_mutation_releasebuild(*_, id: str) -> Optional[BuildType]:
+def resolve_mutation_releasebuild(
+    _obj: Any, _info: GraphQLResolveInfo, id: str
+) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -249,7 +267,7 @@ def resolve_mutation_releasebuild(*_, id: str) -> Optional[BuildType]:
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
-    *_, id: str, note: Optional[str] = None
+    _obj: Any, _info: GraphQLResolveInfo, id: str, note: Optional[str] = None
 ) -> Optional[BuildType]:
     publisher = get_publisher()
     build = Build(id)
