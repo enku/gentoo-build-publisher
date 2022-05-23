@@ -7,6 +7,7 @@ from unittest import mock
 from requests import HTTPError
 
 from gentoo_build_publisher.records import RecordNotFound, Records
+from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import (
     delete_build,
     publish_build,
@@ -82,7 +83,8 @@ class PullBuildTestCase(TestCase):
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(self):
-        records = Records.from_settings(None)
+        settings = Settings.from_environ()
+        records = Records.from_settings(settings)
 
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
