@@ -89,11 +89,24 @@ class PullBuildTestCase(TestCase):
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
-            download_artifact_mock.side_effect = HTTPError
+            download_artifact_mock.side_effect = Exception
             pull_build.s("oscar.197").apply()
 
         with self.assertRaises(RecordNotFound):
             records.get(Build("oscar.197"))
+
+    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
+    def test_should_retry_on_retryable_exceptions(self):
+        with mock.patch(
+            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
+        ) as download_artifact_mock:
+            eof_error = EOFError()
+            download_artifact_mock.side_effect = eof_error
+
+            with mock.patch.object(pull_build, "retry") as retry_mock:
+                pull_build.s("tango.197").apply()
+
+        retry_mock.assert_called_once_with(exc=eof_error)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_not_retry_on_404_response(self):

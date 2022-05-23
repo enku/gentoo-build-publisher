@@ -45,20 +45,22 @@ def pull_build(build_id: str) -> None:
 
     try:
         publisher.pull(build)
-    except PULL_RETRYABLE_EXCEPTIONS as error:
+    except Exception as error:
         logger.exception("Failed to pull build %s", build)
-        if publisher.records.exists(build):
-            publisher.records.delete(build)
 
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
             response = getattr(error, "response", None)
             if response and response.status_code == 404:
+                publisher.records.delete(build)
                 raise
 
-        pull_build.retry(exc=error)
+        if isinstance(error, PULL_RETRYABLE_EXCEPTIONS):
+            pull_build.retry(exc=error)
+            return
 
-        return  # pragma: no cover
+        publisher.records.delete(build)
+        raise
 
     if Settings.from_environ().ENABLE_PURGE:
         purge_build.delay(build.machine)
