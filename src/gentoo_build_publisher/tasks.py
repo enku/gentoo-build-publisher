@@ -51,7 +51,7 @@ def pull_build(build_id: str) -> None:
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
             response = getattr(error, "response", None)
-            if response and response.status_code == 404:
+            if response is not None and response.status_code == 404:
                 publisher.records.delete(build)
                 raise
 
