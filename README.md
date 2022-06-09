@@ -6,8 +6,9 @@
 
 ## Introduction
 
-The idea is to combine best practices with CI/CD and other tools to deliver
-successful, consistent "builds" to your Gentoo machine(s).
+The idea is to combine best practices with [continuous
+integration](https://en.wikipedia.org/wiki/Continuous_integration) and other
+tools to deliver successful, consistent "builds" to your Gentoo machine(s).
 
 In case you didn't know, [Gentoo Linux](https://www.gentoo.org/) is a
 source-based rolling-release meta-distribution that you can twist and mold
