@@ -91,12 +91,17 @@ def get_packages(build: Build) -> list[Package]:
     publisher = get_publisher()
     cache_key = f"packages-{build}"
 
-    try:
-        packages: list[Package] = cache.get_or_set(
-            cache_key, lambda: publisher.get_packages(build), timeout=None
-        )
-    except LookupError:
-        return []
+    cached = cache.get(cache_key, None)
+
+    if cached is not None:
+        packages: list[Package] = cached
+    else:
+        try:
+            packages = publisher.get_packages(build)
+        except LookupError:
+            packages = []
+
+        cache.set(cache_key, packages)
 
     return packages
 
