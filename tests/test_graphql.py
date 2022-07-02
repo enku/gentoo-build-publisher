@@ -439,7 +439,7 @@ class PublishMutationTestCase(TestCase):
 
         assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
-    def test_publish_when_not_pulled(self):  # pylint: disable=no-self-use
+    def test_publish_when_not_pulled(self):
         """Should publish builds"""
         query = """mutation {
             publish(id: "babette.193") {

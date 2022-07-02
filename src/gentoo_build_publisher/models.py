@@ -257,7 +257,6 @@ class RecordDB:
         self, build: BuildRecord, completed: bool = True
     ) -> BuildRecord | None:
         """Return the previous build in the db or None"""
-        # pylint: disable=no-self-use
         field_lookups: dict[str, Any] = {
             "built__isnull": False,
             "machine": build.machine,
@@ -284,7 +283,6 @@ class RecordDB:
 
     def next(self, build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
-        # pylint: disable=no-self-use
         field_lookups: dict[str, Any] = {"machine": build.machine}
 
         if build.built:

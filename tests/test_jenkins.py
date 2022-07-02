@@ -1,5 +1,5 @@
 """Tests for the Jenkins interface"""
-# pylint: disable=missing-class-docstring,missing-function-docstring,no-self-use
+# pylint: disable=missing-class-docstring,missing-function-docstring
 import io
 import json
 import os
