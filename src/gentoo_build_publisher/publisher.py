@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from difflib import Differ
 from functools import cached_property
 
+from pydispatch import Dispatcher
+
 from gentoo_build_publisher import io
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
@@ -33,6 +35,12 @@ logger = logging.getLogger(__name__)
 utcnow = datetime.utcnow
 
 
+class PublisherDispatcher(Dispatcher):
+    """BuildPublisher event dispatcher"""
+
+    _events_ = ["pulled"]
+
+
 class BuildPublisher:
     """Pulls a build's db, jenkins and storage all together"""
 
@@ -44,6 +52,7 @@ class BuildPublisher:
         self.jenkins = jenkins
         self.storage = storage
         self.records = records
+        self.dispatcher = PublisherDispatcher()
 
     @classmethod
     def from_settings(cls, settings: Settings) -> BuildPublisher:
@@ -112,7 +121,9 @@ class BuildPublisher:
         return True
 
     def _update_build_metadata(self, record: BuildRecord) -> None:
-        """Update the build's db attributes (based on storage, etc.)"""
+
+        packages: list[Package] | None = None
+        gbp_metadata: GBPMetadata | None = None
         jenkins_metadata = self.jenkins.get_metadata(record)
 
         self.records.save(
@@ -127,9 +138,14 @@ class BuildPublisher:
         try:
             packages = self.storage.get_packages(record)
         except LookupError:
-            return
+            pass
+        else:
+            gbp_metadata = self.gbp_metadata(jenkins_metadata, packages)
+            self.storage.set_metadata(record, gbp_metadata)
 
-        self.storage.set_metadata(record, self.gbp_metadata(jenkins_metadata, packages))
+        self.dispatcher.emit(
+            "pulled", build=record, packages=packages, gbp_metadata=gbp_metadata
+        )
 
     def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""

@@ -163,6 +163,62 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(self.publisher.get_packages.call_count, 0)
 
 
+class DispatcherTestCase(TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        super().setUp()
+
+        self.publisher.dispatcher.bind(pulled=self.pull_handler)
+        self.pull_events = []
+
+        self.addCleanup(lambda: self.publisher.dispatcher.unbind(self.pull_handler))
+
+    def pull_handler(self, *, build, packages, gbp_metadata):
+        self.pull_events.append([build, packages, gbp_metadata])
+
+    def test_pull_single(self):
+        new_build = BuildFactory()
+        self.publisher.pull(new_build)
+
+        packages = self.publisher.storage.get_packages(new_build)
+        expected = [
+            self.publisher.record(new_build),
+            packages,
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(new_build), packages
+            ),
+        ]
+        self.assertEqual(self.pull_events, [expected])
+
+    def test_pull_multi(self):
+        build1 = BuildFactory()
+        build2 = BuildFactory(machine="fileserver")
+        self.publisher.pull(build1)
+        self.publisher.pull(build2)
+
+        record1 = self.publisher.record(build1)
+        record2 = self.publisher.record(build2)
+
+        packages = self.publisher.storage.get_packages(record1)
+        event1 = [
+            record1,
+            packages,
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(record1), packages
+            ),
+        ]
+        packages = self.publisher.storage.get_packages(record2)
+        event2 = [
+            record2,
+            packages,
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(record2), packages
+            ),
+        ]
+        self.assertEqual(self.pull_events, [event1, event2])
+
+
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
