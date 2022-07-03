@@ -169,10 +169,16 @@ class DispatcherTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.publisher.dispatcher.bind(pulled=self.pull_handler)
-        self.pull_events = []
+        self.publish_events = []
+        self.publisher.dispatcher.bind(published=self.publish_handler)
+        self.addCleanup(lambda: self.publisher.dispatcher.unbind(self.publish_handler))
 
+        self.pull_events = []
+        self.publisher.dispatcher.bind(pulled=self.pull_handler)
         self.addCleanup(lambda: self.publisher.dispatcher.unbind(self.pull_handler))
+
+    def publish_handler(self, *, build):
+        self.publish_events.append(build)
 
     def pull_handler(self, *, build, packages, gbp_metadata):
         self.pull_events.append([build, packages, gbp_metadata])
@@ -217,6 +223,13 @@ class DispatcherTestCase(TestCase):
             ),
         ]
         self.assertEqual(self.pull_events, [event1, event2])
+
+    def test_publish(self):
+        new_build = BuildFactory()
+        self.publisher.publish(new_build)
+
+        record = self.publisher.record(new_build)
+        self.assertEqual(self.publish_events, [record])
 
 
 class MachineInfoTestCase(TestCase):

@@ -38,7 +38,7 @@ utcnow = datetime.utcnow
 class PublisherDispatcher(Dispatcher):
     """BuildPublisher event dispatcher"""
 
-    _events_ = ["pulled"]
+    _events_ = ["published", "pulled"]
 
 
 class BuildPublisher:
@@ -84,6 +84,7 @@ class BuildPublisher:
             self.pull(build)
 
         self.storage.publish(build)
+        self.dispatcher.emit("published", build=self.record(build))
 
     def published(self, build: Build) -> bool:
         """Return True if this Build is published"""
