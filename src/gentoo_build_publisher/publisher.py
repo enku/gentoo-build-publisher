@@ -44,10 +44,6 @@ class PublisherDispatcher(Dispatcher):
 class BuildPublisher:
     """Pulls a build's db, jenkins and storage all together"""
 
-    jenkins: Jenkins
-    storage: Storage
-    db: RecordDB
-
     def __init__(self, *, jenkins: Jenkins, storage: Storage, records: RecordDB):
         self.jenkins = jenkins
         self.storage = storage
