@@ -50,6 +50,7 @@ class TestCase(django.test.TestCase):
             {
                 "BUILD_PUBLISHER_STORAGE_PATH": tmpdir.name,
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
+                "BUILD_PUBLISHER_RECORDS_BACKEND": "django",
             },
         )
         self.addCleanup(patch.stop)

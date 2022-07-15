@@ -22,6 +22,7 @@ class Settings(BaseModel):
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: Optional[str] = None
     STORAGE_PATH: Path
+    RECORDS_BACKEND: str = "django"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
