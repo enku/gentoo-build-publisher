@@ -2,8 +2,12 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from django.utils import timezone
 
-from . import TestCase
+from . import DjangoTestCase as BaseTestCase
 from .factories import BuildFactory
+
+
+class TestCase(BaseTestCase):
+    RECORDS_BACKEND = "memory"
 
 
 class DashboardTestCase(TestCase):

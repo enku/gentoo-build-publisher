@@ -38,7 +38,9 @@ BASE_DIR = Path(__file__).resolve().parent / "data"
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
-class TestCase(django.test.TestCase):
+class TestCase(UnitTestTestCase):
+    RECORDS_BACKEND = "memory"
+
     def setUp(self) -> None:
         # pylint: disable=import-outside-toplevel,cyclic-import
         from .factories import BuildPublisherFactory
@@ -51,7 +53,7 @@ class TestCase(django.test.TestCase):
             {
                 "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
-                "BUILD_PUBLISHER_RECORDS_BACKEND": "django",
+                "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
             },
         )
         self.addCleanup(patch.stop)
@@ -94,6 +96,10 @@ class QuickCache:
 
     def set(self, key: str, value: Any) -> None:
         self.cache[key] = value
+
+
+class DjangoTestCase(TestCase, django.test.TestCase):
+    RECORDS_BACKEND = "django"
 
 
 def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:

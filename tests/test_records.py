@@ -7,6 +7,7 @@ from pathlib import Path
 from django.test import TestCase
 
 from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.memorydb import MemoryDB
 from gentoo_build_publisher.models import DjangoDB
 from gentoo_build_publisher.records import (
     BuildRecord,
@@ -19,7 +20,7 @@ from gentoo_build_publisher.settings import Settings
 from . import parametrized
 from .factories import BuildRecordFactory
 
-BACKENDS = [["django"]]
+BACKENDS = [["django"], ["memory"]]
 UTC = timezone.utc
 
 
@@ -146,6 +147,37 @@ class RecordDBTestCase(TestCase):
         self.assertIsNone(records.next(BuildRecordFactory(machine="bogus")))
 
     @parametrized(BACKENDS)
+    def test_next_excludes_unbuilt(self, backend: str) -> None:
+        records = self.backend(backend)
+        build1 = BuildRecordFactory(
+            built=dt.datetime.fromtimestamp(1662310204, UTC),
+        )
+        records.save(build1)
+        build2 = BuildRecordFactory(
+            built=None,
+            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+        )
+        records.save(build2)
+
+        self.assertEqual(records.next(build1), None)
+
+    @parametrized(BACKENDS)
+    def test_next_second_built_before_first(self, backend: str) -> None:
+        records = self.backend(backend)
+        build1 = BuildRecordFactory(
+            built=dt.datetime.fromtimestamp(1662310204, UTC),
+        )
+        records.save(build1)
+
+        build2 = BuildRecordFactory(
+            built=build1.built - dt.timedelta(hours=1),
+            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+        )
+        records.save(build2)
+
+        self.assertEqual(records.next(build1), None)
+
+    @parametrized(BACKENDS)
     def test_latest_with_completed_true(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
@@ -240,6 +272,16 @@ class RecordsTestCase(TestCase):
 
         recorddb = Records.from_settings(settings)
         self.assertIsInstance(recorddb, DjangoDB)
+
+    def test_from_settings_memory(self) -> None:
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            STORAGE_PATH=Path("/dev/null"),
+            RECORDS_BACKEND="memory",
+        )
+
+        recorddb = Records.from_settings(settings)
+        self.assertIsInstance(recorddb, MemoryDB)
 
     def test_unknown_records_backend(self) -> None:
         settings = Settings(

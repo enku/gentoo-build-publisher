@@ -8,7 +8,7 @@ from unittest import mock
 from yarl import URL
 
 from gentoo_build_publisher.common import Content
-from gentoo_build_publisher.models import BuildModel, DjangoDB
+from gentoo_build_publisher.memorydb import MemoryDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import utctime
@@ -28,7 +28,7 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
     def test_from_settings_returns_publisher_with_given_settings(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="https://testserver.invalid/",
-            RECORDS_BACKEND="django",
+            RECORDS_BACKEND="memory",
             STORAGE_PATH=self.tmpdir / "test_from_settings",
         )
         publisher = BuildPublisher.from_settings(settings)
@@ -37,7 +37,7 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
-        self.assertIsInstance(publisher.records, DjangoDB)
+        self.assertIsInstance(publisher.records, MemoryDB)
 
 
 class BuildPublisherTestCase(TestCase):
@@ -403,9 +403,11 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         self.publisher.pull(build4)
         self.publisher.records.save(self.publisher.record(build4), built=None)
 
-        assert (
-            BuildModel.objects.filter(machine=machine, built__isnull=False).count() == 0
-        )
+        assert [
+            build
+            for build in self.publisher.records.for_machine(machine)
+            if build.built
+        ] == []
         self.machine_info = MachineInfo(build1.machine)
 
     def test_build_count(self) -> None:
@@ -461,7 +463,7 @@ class GetPublisherTestCase(unittest.TestCase):
     def test_creates_publisher_from_env_variables_when_global_is_none(self) -> None:
         env = {
             "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://testserver.invalid/",
-            "BUILD_PUBLISHER_RECORDS_BACKEND": "django",
+            "BUILD_PUBLISHER_RECORDS_BACKEND": "memory",
             "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "test_get_publisher"),
         }
         with mock.patch.dict(os.environ, env, clear=True):
@@ -471,4 +473,4 @@ class GetPublisherTestCase(unittest.TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_get_publisher")
-        self.assertIsInstance(publisher.records, DjangoDB)
+        self.assertIsInstance(publisher.records, MemoryDB)

@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 
 from gentoo_build_publisher.models import BuildNote, KeptBuild
 
-from . import TestCase
+from . import DjangoTestCase as TestCase
 from .factories import BuildModelFactory
 
 User = get_user_model()

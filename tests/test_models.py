@@ -13,7 +13,7 @@ from gentoo_build_publisher.models import (
 )
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 
-from . import TestCase
+from . import DjangoTestCase as TestCase
 from .factories import BuildModelFactory, BuildRecordFactory
 
 

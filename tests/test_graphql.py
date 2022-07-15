@@ -13,7 +13,7 @@ from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
 
 from . import TestCase, graphql
-from .factories import PACKAGE_INDEX, BuildFactory, BuildModelFactory
+from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
 
@@ -236,18 +236,25 @@ class LatestQueryTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        BuildModelFactory.create(
-            built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.timezone.utc),
-            submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.timezone.utc),
-            completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.timezone.utc),
+        self.publisher.records.save(
+            BuildRecordFactory.build(
+                built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.timezone.utc),
+                submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.timezone.utc),
+                completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.timezone.utc),
+            )
         )
-        self.latest = BuildModelFactory.create(
-            built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.timezone.utc),
-            submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.timezone.utc),
-            completed=dt.datetime(2022, 2, 25, 0, 20, tzinfo=dt.timezone.utc),
+        self.publisher.records.save(
+            latest := BuildRecordFactory.build(
+                built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.timezone.utc),
+                submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.timezone.utc),
+                completed=dt.datetime(2022, 2, 25, 0, 20, tzinfo=dt.timezone.utc),
+            )
         )
-        BuildModelFactory.create(
-            submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.timezone.utc),
+        self.latest = latest
+        self.publisher.records.save(
+            BuildRecordFactory.build(
+                submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.timezone.utc),
+            )
         )
 
     def test_when_no_builds_should_respond_with_none(self) -> None:
@@ -616,7 +623,8 @@ class KeepBuildMutationTestCase(TestCase):
     maxDiff = None
 
     def test_should_keep_existing_build(self) -> None:
-        model = BuildModelFactory.create()
+        record = BuildRecordFactory.build()
+        self.publisher.records.save(record)
         query = """
         mutation ($id: ID!) {
          keepBuild(id: $id) {
@@ -624,7 +632,7 @@ class KeepBuildMutationTestCase(TestCase):
           }
         }
         """
-        result = graphql(query, variables={"id": str(model)})
+        result = graphql(query, variables={"id": str(record)})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
@@ -680,7 +688,8 @@ class CreateNoteMutationTestCase(TestCase):
     """Tests for the createNote mutation"""
 
     def test_set_text(self) -> None:
-        model = BuildModelFactory.create()
+        record = BuildRecordFactory.build()
+        self.publisher.records.save(record)
         note_text = "Hello, world!"
         query = """
         mutation ($id: ID!, $note: String) {
@@ -690,11 +699,11 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(query, variables={"id": str(model), "note": note_text})
+        result = graphql(query, variables={"id": str(record), "note": note_text})
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
-        model.refresh_from_db()
-        self.assertEqual(model.buildnote.note, note_text)
+        record = self.publisher.records.get(record)
+        self.assertEqual(record.note, note_text)
 
     def test_set_none(self) -> None:
         build = BuildFactory()

@@ -34,6 +34,7 @@ repository = "https://github.com/enku/gentoo-build-publisher"
 
 [project.entry-points."gentoo_build_publisher.records"]
 django = "gentoo_build_publisher.models:DjangoDB"
+memory = "gentoo_build_publisher.memorydb:MemoryDB"
 
 [project.optional-dependencies]
 
