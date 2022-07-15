@@ -141,9 +141,15 @@ class Records:  # pylint: disable=too-few-public-methods
     @staticmethod
     def from_settings(settings: Settings) -> RecordDB:
         """Return instance of the the RecordDB class given in settings"""
-        [backend] = importlib.metadata.entry_points(
-            group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
-        )
+        try:
+            [backend] = importlib.metadata.entry_points(
+                group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
+            )
+        except ValueError:
+            raise LookupError(
+                f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
+            ) from None
+
         record_db: Type[RecordDB] = backend.load()
 
         return record_db()
