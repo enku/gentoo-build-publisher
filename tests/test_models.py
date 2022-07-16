@@ -211,16 +211,6 @@ class RecordDBTestCase(TestCase):
         with self.assertRaises(RecordNotFound):
             self.records.get(Build("bogus.955"))
 
-    def test_query(self):
-        BuildModel.objects.all().delete()
-        BuildModelFactory(machine="foo", build_id="555")
-        BuildModelFactory(machine="foo", build_id="556")
-        BuildModelFactory(machine="bar", build_id="555")
-
-        records = [*self.records.query(build_id="555")]
-
-        self.assertEqual([i.machine for i in records], ["bar", "foo"])
-
     def test_previous_should_return_none_when_there_are_none(self):
         previous = self.records.previous(self.record)
 

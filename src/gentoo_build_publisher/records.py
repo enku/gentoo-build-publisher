@@ -78,17 +78,6 @@ class RecordDB(Protocol):  # pragma: no cover
         """Retrieve db record"""
         ...
 
-    def query(self, **filters: Any) -> Iterable[BuildRecord]:
-        """Query the database and return an iterable of BuildRecord objects
-
-        The order of the builds are by the submitted time, most recent first.
-
-        For example:
-
-            >>> RecordDB.query(name="babette")
-        """
-        ...
-
     def for_machine(self, machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
         ...

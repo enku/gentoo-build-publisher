@@ -149,9 +149,11 @@ def resolve_query_builds(
 ) -> list[BuildType]:
     publisher = get_publisher()
 
-    records = publisher.records.query(machine=machine, completed__isnull=False)
-
-    return [BuildType(record) for record in records]
+    return [
+        BuildType(record)
+        for record in publisher.records.for_machine(machine)
+        if record.completed
+    ]
 
 
 @query.field("diff")
@@ -195,9 +197,15 @@ def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
 @query.field("working")
 def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildType]:
     publisher = get_publisher()
-    records = publisher.records.query(completed=None)
+    build_types = []
+    machines = publisher.records.list_machines()
 
-    return [BuildType(record) for record in records]
+    for machine in machines:
+        for record in publisher.records.for_machine(machine):
+            if not record.completed:
+                build_types.append(BuildType(record))
+
+    return build_types
 
 
 @mutation.field("publish")

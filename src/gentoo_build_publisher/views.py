@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import itertools
 from collections import defaultdict
 from dataclasses import astuple, dataclass
 from typing import Mapping, Optional, TypedDict
@@ -199,8 +200,10 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     builds_over_time: dict[dt.date, defaultdict[str, int]] = {
         day: defaultdict(int) for day in bot_days
     }
-    records = publisher.records.query()
     machines = publisher.machines()
+    records = itertools.chain(
+        *(publisher.records.for_machine(machine.machine) for machine in machines)
+    )
     machines.sort(key=lambda m: m.build_count, reverse=True)
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))

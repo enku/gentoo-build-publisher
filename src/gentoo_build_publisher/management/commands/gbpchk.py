@@ -1,4 +1,5 @@
 """Check GBP storage/db"""
+import itertools
 from pathlib import Path
 from typing import Any
 
@@ -19,9 +20,15 @@ class Command(BaseCommand):
         publisher = get_publisher()
 
         # Pass 1: check build content
-        records = publisher.records.query(completed__isnull=False)
+        machines = publisher.records.list_machines()
+        records = itertools.chain(
+            *(publisher.records.for_machine(machine) for machine in machines)
+        )
 
         for record in records:
+            if not record.completed:
+                continue
+
             missing: list[Path] = []
             for content in Content:
                 path = publisher.storage.get_path(record, content)

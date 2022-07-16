@@ -200,24 +200,6 @@ class RecordDB:
         return build_model.record()
 
     @staticmethod
-    def query(**filters: Any) -> Iterable[BuildRecord]:
-        """Query the datbase and return an iterable of BuildRecord objects
-
-        The order of the builds are by the submitted time, most recent first.
-
-        For example:
-
-            >>> BuildDB.builds(machine="babette")
-        """
-        build_models = (
-            BuildModel.objects.select_related(*RELATED)
-            .filter(**filters)
-            .order_by("-submitted")
-        )
-
-        return (build_model.record() for build_model in build_models)
-
-    @staticmethod
     def for_machine(machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
         build_models = (
