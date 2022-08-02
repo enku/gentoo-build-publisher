@@ -57,8 +57,9 @@ for repo syncs and binpkgs.
   "profile" in a repo. This should be the repo that's pulled by your Jenkins
   job.  Unpack that as well in your Jenkins workspace. The "profile" should
   contain such things as your machine's `/etc/portage` and `/var/lib/portage`
-  contents. If this all sounds rather complicated, check the `contrib`
-  directory of the gentoo-build-publisher source for a working example.
+  contents. If this all sounds rather complicated, check the
+  [gbp-machines](https://github.com/enku/gbp-machines) repo for a working
+  example.
 * Your Jenkins job then uses `buildah run` to `emerge @world` in the
   container.
 * Upon success the job should pack the `repos` and `binpkgs` and other config
