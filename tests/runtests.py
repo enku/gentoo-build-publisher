@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Run tests for Gentoo Build Publisher"""
 import os
 import sys
 
