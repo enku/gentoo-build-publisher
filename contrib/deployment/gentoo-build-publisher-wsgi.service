@@ -1,0 +1,16 @@
+[Unit]
+Description=GBP WSGI Server
+Requires=gentoo-build-publisher-pre.service
+After=gentoo-build-publisher-pre.service
+Wants=nginx.service
+Before=nginx.service
+
+[Service]
+User=gbp
+WorkingDirectory=/home/gbp
+EnvironmentFile=/etc/gentoo-build-publisher.conf
+ExecStartPre=/home/gbp/bin/python manage.py collectstatic --noinput
+ExecStart=/home/gbp/bin/gunicorn --workers 4 djangoproject.wsgi
+
+[Install]
+WantedBy=multi-user.target

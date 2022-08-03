@@ -1,0 +1,15 @@
+[Unit]
+Description=Gentoo Build Publisher Worker
+Requires=gentoo-build-publisher-pre.service
+After=gentoo-build-publisher-pre.service
+After=gentoo-build-publisher-wsgi.service
+
+[Service]
+User=gbp
+EnvironmentFile=/etc/gentoo-build-publisher.conf
+WorkingDirectory=/home/gbp
+ExecStart=/home/gbp/bin/celery -A djangoproject worker -l info --concurrency=1
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

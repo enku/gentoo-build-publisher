@@ -1,0 +1,10 @@
+[Unit]
+Description=Gentoo Build Publisher (Pre)
+
+[Service]
+Type=oneshot
+User=gbp
+EnvironmentFile=/etc/gentoo-build-publisher.conf
+WorkingDirectory=/home/gbp
+ExecStart=/home/gbp/bin/python manage.py migrate --noinput
+Restart=on-failure
