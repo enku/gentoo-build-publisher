@@ -146,7 +146,7 @@ class BuildPublisher:
 
     def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""
-        return self.storage.pulled(build)
+        return self.storage.pulled(build) and self.record(build).completed is not None
 
     def delete(self, build: Build) -> None:
         """Delete this build"""

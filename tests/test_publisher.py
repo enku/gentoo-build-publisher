@@ -78,6 +78,18 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertFalse(pulled)
 
+    def test_pulled_when_storage_is_ok_but_db_is_not(self):
+        # On rare occasion (server crash) the build appears to be extracted but the
+        # record.completed field is None.  In this case Publisher.pulled(build) should
+        # be False
+        build = BuildFactory()
+
+        with mock.patch.object(self.publisher, "_update_build_metadata"):
+            # _update_build_metadata sets the completed attribute
+            self.publisher.pull(build)
+
+        self.assertFalse(self.publisher.pulled(build))
+
     def test_purge_deletes_old_build(self):
         """Should remove purgable builds"""
 
