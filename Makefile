@@ -60,7 +60,7 @@ clean-venv:
 
 .PHONY: shell
 shell: $(venv)
-	bash -l
+	pdm run $(.SHELL) -l
 
 
 .PHONY: pylint
