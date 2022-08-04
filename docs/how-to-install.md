@@ -91,7 +91,6 @@ emerge --verbose --ask app-arch/pigz
 Give the Jenkins user subordinate uids and gids for using rootless containers.
 
 ```sh
-loginctl enable-linger jenkins
 usermod --add-subuids 100000-165535 --add-subgids 100000-165535 jenkins
 ```
 
@@ -314,8 +313,16 @@ systemctl enable --now gentoo-build-publisher-worker
 
 ## Create Jenkins jobs
 
-Let's go back to Jenkins. Go back to your virtual machine in a browser on port
-8080.
+Let's go back to Jenkins.
+
+Configure buildah.
+
+```sh
+sudo -u jenkins -H mkdir -p /var/lib/jenkins/.config/containers
+sudo -u jenkins -H cp /home/gbp/gentoo-build-publisher/contrib/deployment/containers.conf /var/lib/jenkins/.config/containers/containers.conf
+```
+
+Go back to your virtual machine in a browser on port 8080.
 
 I prefer having all my Gentoo stuff in a seperate folder.  From the Dashboard
 click the "New Item" link in the upper left. Give it the name "Gentoo", click
