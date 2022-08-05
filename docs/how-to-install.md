@@ -168,7 +168,8 @@ sudo -u gbp -H ./bin/pip install gunicorn psycopg2
 
 ### Create the Django project
 
-As GBP is a Django app, it requires a Django project to run.
+As GBP is a [Django](https://www.djangoproject.com/) app, it requires a Django project
+to run.
 
 ```sh
 sudo -u gbp -H ./bin/django-admin startproject djangoproject .
@@ -182,7 +183,7 @@ $EDITOR djangoproject/settings.py
 
 For the `ALLOWED_HOST` setting, use either the virtual machine's (static) IP
 address or the hostname you'll be using to access the system from a web
-browser plus "localhost".  For example:
+browser plus `'localhost'`.  For example:
 
 ```python
 ALLOWED_HOSTS = ['10.10.100.12', 'localhost']
@@ -315,7 +316,7 @@ systemctl enable --now gentoo-build-publisher-worker
 
 Let's go back to Jenkins.
 
-Configure buildah.
+Configure [buildah](https://buildah.io/).
 
 ```sh
 sudo -u jenkins -H mkdir -p /var/lib/jenkins/.config/containers
@@ -324,21 +325,20 @@ sudo -u jenkins -H cp /home/gbp/gentoo-build-publisher/contrib/deployment/contai
 
 Go back to your virtual machine in a browser on port 8080.
 
-I prefer having all my Gentoo stuff in a seperate folder.  From the Dashboard
-click the "New Item" link in the upper left. Give it the name "Gentoo", click
-the "Folder" type and confirm. On the next page, click "Save".
+I prefer having all my Gentoo items in a separate Jenkins folder.  From the Dashboard
+click the "New Item" link in the upper left. Give it the name "Gentoo", click the
+"Folder" type and confirm. On the next page, click "Save".
 
 ### Create a job for the Gentoo repo
 
-In the Jenkins UI, under the Gentoo folder create another folder called
-"repos".  Under the repos folder create a new item.  Call it "gentoo".  Make
-it of type "Freestyle project" and confirm. In the next page, configure the
-"gentoo" project. Select "git" for Source Code Management. For the repository
-URL enter "https://anongit.gentoo.org/git/repo/gentoo.git". Under "Additional
-Behaviors" add "Advanced clone behaviours", then click on the "Shallow clone"
-checkbox. For Build Triggers set it to build periodically on a schedule of
-once per day ("@daily"). For Build Steps add an "Execute Shell" step with the
-following script content:
+In the Jenkins UI, under the Gentoo folder create another folder called "repos".  Under
+the repos folder create a new item.  Call it "gentoo" (lower case "g").  Make it of type
+"Freestyle project" and confirm. In the next page, configure the "gentoo" project.
+Select "git" for Source Code Management. For the repository URL enter
+"https://anongit.gentoo.org/git/repo/gentoo.git". Under "Additional Behaviors" add
+"Advanced clone behaviours", then click on the "Shallow clone" checkbox. For Build
+Triggers set it to build periodically on a schedule of once per day ("@daily"). For
+Build Steps add an "Execute Shell" step with the following script content:
 
 ```sh
 artifact="${JOB_BASE_NAME}"-repo.tar.gz
