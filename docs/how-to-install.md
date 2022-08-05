@@ -204,8 +204,8 @@ ALLOWED_HOSTS = ['*']
 
 Add the following to the list of `INSTALLED_APPS`:
 
-    * `'ariadne_django'`
-    * `'gentoo_build_publisher'`
+    * 'ariadne_django'
+    * 'gentoo_build_publisher'
 
 Change the value of `ROOT_URLCONF` to `'gentoo_build_publisher.urls'`.
 
