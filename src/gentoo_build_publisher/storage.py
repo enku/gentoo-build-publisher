@@ -129,6 +129,15 @@ class Storage:
             for item in Content
         )
 
+    def repos(self, build: Build) -> set[str]:
+        """Return the repos for this (pulled) build"""
+        if not self.pulled(build):
+            raise FileNotFoundError("The build has not been pulled")
+
+        repos_path = self.get_path(build, Content.REPOS)
+
+        return {path.name for path in repos_path.iterdir() if path.is_dir()}
+
     def delete(self, build: Build) -> None:
         """Delete files/dirs associated with build
 

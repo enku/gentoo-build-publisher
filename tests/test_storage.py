@@ -429,6 +429,24 @@ class StorageSetMetadataTestCase(TestCase):
         self.assertEqual(result, expected)
 
 
+class StorageReposTestCase(TestCase):
+    def test(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+
+        repos = self.publisher.storage.repos(build)
+
+        self.assertEqual(repos, {"gentoo", "marduk"})
+
+    def test_raise_exception_when_not_pulled(self):
+        build = BuildFactory()
+
+        with self.assertRaises(FileNotFoundError) as context:
+            self.publisher.storage.repos(build)
+
+        self.assertEqual(context.exception.args, ("The build has not been pulled",))
+
+
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 

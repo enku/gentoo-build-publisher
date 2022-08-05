@@ -208,6 +208,14 @@ class ArtifactBuilder:
                 tar_info.mode = 0o0755
                 tarchive.addfile(tar_info)
 
+                if item is Content.REPOS:
+                    # Fake some repos dirs
+                    for repo in ["gentoo", "marduk"]:
+                        tar_info = tarfile.TarInfo(f"{item.value}/{repo}")
+                        tar_info.type = tarfile.DIRTYPE
+                        tar_info.mode = 0o0755
+                        tarchive.addfile(tar_info)
+
         tar_file.seek(0)
         self.timestamp = self.timer * 1000
 
