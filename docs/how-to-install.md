@@ -361,7 +361,7 @@ since it's the first time), the official Gentoo repo and then creating an
 artifact.  This artifact can then be used for machine builds.
 
 
-### Create a machine job
+### Create your first machine job
 
 In the Jenkins UI navigate over to the "Dashboard > Gentoo" folder. Click on
 "New Item". For the name call it "base".  For type choose "Pipeline" and
@@ -388,3 +388,20 @@ install.
 ```sh
 gbp publish base
 ```
+
+
+### Create subsequent machine jobs
+
+Creating subsequent machine jobs is easy because it is as simple as copying
+from the base job and giving it the right name from the machine definitions in
+your [`gbp-machines`](https://github.com/enku/gbp-machines) git repo.
+
+In Jenkins, from Dashboard > Gentoo click on "New Item".  For the item name
+write "gbpbox".  Then in "Copy from" write "base".  Confirm, then Save, then
+
+```
+gbp build gbpbox
+```
+
+This creates and builds a machine that represents the GBP instance.  You
+can now use that to upgrade your GBP instance.
