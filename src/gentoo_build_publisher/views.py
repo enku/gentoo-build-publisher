@@ -9,7 +9,7 @@ from typing import Mapping, Optional, TypedDict
 
 from django.conf import settings
 from django.core.cache import cache
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
@@ -257,3 +257,18 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     context["recent_packages"].default_factory = None
 
     return render(request, "gentoo_build_publisher/dashboard.html", context)
+
+
+def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
+    """Create a repos.conf.d entry for the given machine"""
+    if not (build := MachineInfo(machine).published_build):
+        raise Http404("Published build for that machine does not exist")
+
+    context = {
+        "hostname": request.META["SERVER_NAME"],
+        "machine": machine,
+        "repos": get_publisher().storage.repos(build),
+    }
+    return render(
+        request, "gentoo_build_publisher/repos.conf", context, content_type="text/plain"
+    )
