@@ -62,8 +62,8 @@ for repo syncs and binpkgs.
 </p>
 
 I have a git repo called `machines` that contains the profiles for all the
-machines whose builds I want to push to the publisher.  See the
-[contrib/machines](contrib/machines) directory for an example.
+machines whose builds I want to push to the publisher.  You can fork the
+[gbp-machines](https://github.com/enku/gbp-machines) repo as a starting point.
 
 My Jenkins job does not publish a build by default. I (can) later publish the
 build so that my machines can consume them.  There is a GraphQL interface for
