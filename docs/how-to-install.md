@@ -403,5 +403,24 @@ write "gbpbox".  Then in "Copy from" write "base".  Confirm, then Save, then
 gbp build gbpbox
 ```
 
-This creates and builds a machine that represents the GBP instance.  You
-can now use that to upgrade your GBP instance.
+This creates and builds a machine that represents the GBP instance.  You can
+now use that to upgrade your GBP instance.  Publish the (latest) build.
+
+```
+gbp publish gbpbox
+```
+
+Configure portage to get repos and binpkgs from the GBP instance.
+
+```
+cd /etc/portage
+mv repos.conf repos.conf.bak
+wget http://localhost/machines/gbpbox/repos.conf
+wget http://localhost/machines/gbpbox/binrepos.conf
+```
+
+Sync and update from the GBP instance.
+
+emerge --sync --quiet
+emerge --deep --update --verbose --ask --newuse --getbinpkgs @world
+```
