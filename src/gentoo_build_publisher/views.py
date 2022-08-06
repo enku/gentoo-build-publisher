@@ -265,7 +265,7 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
         raise Http404("Published build for that machine does not exist")
 
     context = {
-        "hostname": request.META["SERVER_NAME"],
+        "hostname": request.headers.get("Host", "localhost").partition(":")[0],
         "machine": machine,
         "repos": get_publisher().storage.repos(build),
     }
