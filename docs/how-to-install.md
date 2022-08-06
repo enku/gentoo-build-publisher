@@ -423,5 +423,5 @@ Sync and update from the GBP instance.
 
 ```
 emerge --sync --quiet
-emerge --deep --update --verbose --ask --newuse --getbinpkgs @world
+emerge --deep --update --verbose --ask --newuse --getbinpkg @world
 ```
