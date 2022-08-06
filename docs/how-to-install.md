@@ -82,7 +82,7 @@ Optional: install [pigz](https://zlib.net/pigz/) for a speedier gzip on
 multi-core systems.
 
 ```sh
-echo app-arch/pigz symlink >> /etc/portage/package.accept_keywords/gbp
+echo app-arch/pigz symlink >> /etc/portage/package.use/gbp
 emerge --verbose --ask app-arch/pigz
 ```
 
