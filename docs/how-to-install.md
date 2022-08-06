@@ -421,6 +421,7 @@ wget http://localhost/machines/gbpbox/binrepos.conf
 
 Sync and update from the GBP instance.
 
+```
 emerge --sync --quiet
 emerge --deep --update --verbose --ask --newuse --getbinpkgs @world
 ```
