@@ -260,7 +260,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
-    """Create a repos.conf.d entry for the given machine"""
+    """Create a repos.conf entry for the given machine"""
     if not (build := MachineInfo(machine).published_build):
         raise Http404("Published build for that machine does not exist")
 
