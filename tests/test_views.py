@@ -187,3 +187,34 @@ class ReposDotConfTestCase(TestCase):
         response = self.client.get(f"/machines/{machine}/repos.conf")
 
         self.assertEqual(response.status_code, 404)
+
+
+class BinReposDotConfTestCase(TestCase):
+    """Tests for the repos_dot_conf view"""
+
+    def setUp(self):
+        super().setUp()
+
+        self.now = timezone.now()
+        self.machines = ["babette", "lighthouse", "web"]
+        self.builds = buncha_builds(self.machines, self.now, 3, 2)
+
+    def test(self):
+        machine = "lighthouse"
+        build = self.builds[machine][-1]
+        self.publisher.publish(build)
+
+        response = self.client.get(f"/machines/{machine}/binrepos.conf")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/plain")
+        self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
+
+    def test_non_published(self):
+        machine = "lighthouse"
+        build = self.builds[machine][-1]
+        self.publisher.pull(build)
+
+        response = self.client.get(f"/machines/{machine}/binrepos.conf")
+
+        self.assertEqual(response.status_code, 404)

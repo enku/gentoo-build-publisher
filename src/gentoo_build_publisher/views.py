@@ -272,3 +272,17 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     return render(
         request, "gentoo_build_publisher/repos.conf", context, content_type="text/plain"
     )
+
+
+def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
+    """Create a binrepos.conf entry for the given machine"""
+    if not MachineInfo(machine).published_build:
+        raise Http404("Published build for that machine does not exist")
+
+    context = {"uri": request.build_absolute_uri(f"/binpkgs/{machine}/")}
+    return render(
+        request,
+        "gentoo_build_publisher/binrepos.conf",
+        context,
+        content_type="text/plain",
+    )
