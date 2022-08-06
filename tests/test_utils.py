@@ -55,7 +55,7 @@ class ColorTestCase(TestCase):
         self.assertEqual(colors, [start, end])
 
 
-class LapsetTestCase(TestCase):
+class LapsedTestCase(TestCase):
     def test(self):
         start = dt.datetime(2021, 11, 7, 9, 27, 0)
         end = dt.datetime(2021, 11, 7, 10, 28, 1)
