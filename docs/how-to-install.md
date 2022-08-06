@@ -371,14 +371,20 @@ enter "repos/gentoo".  Under "Pipeline" select "Pipleline script from SCM"
 from the dropdown.  For "SCM" select "Git". Under "Repository URL" enter
 "https://github.com/enku/gbp-machines.git".  Click "Save".
 
-Now that we have a machine build job, let's give it a whirl.  Click on the
-"Build Now" link on the left.  After a few moments, if all goes successfully,
-you should have your first completed build pushed to GBP.  Go to the GBP
-dashboard in a browser (The hostname/IP of your virtual machine at port 80).
+Now that we have a machine build job, let's give it a whirl.  From the shell
+promt:
+
+```
+gbp build base
+```
+
+After a few moments, if all goes successfully, you should have your first
+completed build pushed to GBP.  Go to the GBP dashboard in a browser (The
+hostname/IP of your virtual machine at port 80).
 
 Now we should be able to publish the build which will make it available to
 install.
 
 ```sh
-gbp publish base 1
+gbp publish base
 ```
