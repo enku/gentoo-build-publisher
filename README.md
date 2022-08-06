@@ -53,9 +53,11 @@ for repo syncs and binpkgs.
   published so that actual machines can use it (e.g. rsync for repos, http for
   binpkgs).  Use the CLI (`gbp publish`) to publish a pulled build.
 * If the job fails, it will not be pulled.
-* Your real machine, e.g. `database`, syncs from, e.g.
-  rsync://gbp/repos/database/ and pulls binary packages from
-  https://gbp/binpkgs/database/
+* Your real machine, for example, `base`, syncs from,
+  `rsync://gbp/repos/base/gentoo`.  You can dynamically acquire the
+  `repos.conf` file from `https://gbp/machines/base/repos.conf`. Then, in
+  `/etc/portage/make.conf` configure
+  `PORTAGE_BINHOST=https://gbp/binpkgs/base/`.
 
 <p align="center">
 <img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
