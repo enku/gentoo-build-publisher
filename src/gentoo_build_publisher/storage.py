@@ -11,8 +11,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import IO, Callable
 
+from gentoo_build_publisher import utils
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
+
+TAG_SYM = "@"
 
 logger = logging.getLogger(__name__)
 
@@ -109,13 +112,65 @@ class Storage:
         return all(self.get_path(build, item).exists() for item in Content)
 
     def publish(self, build: Build) -> None:
-        """Make this build 'active'"""
+        """Make this build 'active'
+
+        Alias for tag(build, "")
+        """
+        self.tag(build)
+
+    def tag(self, build: Build, tag_name: str = "") -> None:
+        """Create a "tag" for this build
+
+        If tag is non-empty then the resulting symlink will be like, e.g.
+        lighthouse@stable -> lighthouse.9429 otherwise it's just an old fashioned
+        "published" build, e.g.  `binpkgs/lighthouse`.
+        """
         if not self.pulled(build):
             raise FileNotFoundError("The build has not been pulled")
 
+        utils.check_tag_name(tag_name)
+        name = f"{build.machine}{TAG_SYM}{tag_name}" if tag_name else build.machine
+
         for item in Content:
-            path = self.path / item.value / build.machine
+            path = self.path / item.value / name
             self.symlink(str(build), str(path))
+
+    def untag(self, machine: str, tag_name: str = "") -> None:
+        """Untag a build.
+
+        If tag_name is the empty string, unpublishes the machine.
+        Fail silently if the given tag does not exist.
+        """
+        utils.check_tag_name(tag_name)
+        # We don't need to check for the existance of the target here.  In fact we don't
+        # want to as this will allow us to remove dangling symlinks
+        name = f"{machine}{TAG_SYM}{tag_name}" if tag_name else machine
+
+        for item in Content:
+            path = self.path / item.value / name
+            if path.is_symlink():
+                path.unlink()
+
+    def get_tags(self, build: Build) -> list[str]:
+        """Return the tags for the given build.
+
+        If the build is published, the list will contain the empty string.
+        Broken and partial tags don't count.
+        """
+        tags = []
+        machine = build.machine
+
+        if self.published(build):
+            tags.append("")
+
+        for path in (self.path / Content.BINPKGS.value).glob(f"{machine}{TAG_SYM}*"):
+            tag = path.name.partition(TAG_SYM)[2]
+            if self.check_symlinks(build, f"{machine}{TAG_SYM}{tag}"):
+                tags.append(tag)
+
+        tags.sort()
+
+        return tags
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
@@ -123,8 +178,15 @@ class Storage:
         By "published" we mean all content are symlinked. Partially symlinked is
         unstable and therefore considered not published.
         """
+        return self.check_symlinks(build, build.machine)
+
+    def check_symlinks(self, build: Build, name: str) -> bool:
+        """Return True if the given symlinks point to the given build
+
+        Symlinks have to exist for all `Content`.
+        """
         return all(
-            (symlink := self.path / item.value / build.machine).exists()
+            (symlink := self.path / item.value / name).exists()
             and os.path.realpath(symlink) == str(self.get_path(build, item))
             for item in Content
         )

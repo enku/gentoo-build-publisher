@@ -75,3 +75,26 @@ class CPVToPathTestCase(TestCase):
     def test_raises_valueerror_when_not_valid_cpv(self):
         with self.assertRaises(ValueError):
             utils.cpv_to_path("foo-bar-1.0")
+
+
+class CheckTagNameTestCase(TestCase):
+    def test_empty_string_is_a_valid_tag(self):
+        utils.check_tag_name("")
+
+    def test_tag_names_cannot_start_with_a_dash(self):
+        with self.assertRaises(utils.InvalidTagName):
+            utils.check_tag_name("-prod")
+
+    def test_tag_names_cannot_start_with_a_dot(self):
+        with self.assertRaises(utils.InvalidTagName):
+            utils.check_tag_name(".prod")
+
+    def test_tag_names_cannot_be_more_than_128_chars(self):
+        tag_name = "a" * 129
+
+        with self.assertRaises(utils.InvalidTagName):
+            utils.check_tag_name(tag_name)
+
+    def test_tag_name_cannot_have_non_ascii_chars(self):
+        with self.assertRaises(utils.InvalidTagName):
+            utils.check_tag_name("pròd")

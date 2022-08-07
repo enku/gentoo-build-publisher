@@ -4,12 +4,16 @@ from __future__ import annotations
 import datetime as dt
 import platform
 import re
+import string
 from importlib.metadata import version
 from typing import NamedTuple, Type, TypeVar
 
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
+INVALID_TAG_START = (".", "-")
+VALID_TAG_CHARS = (*string.ascii_letters, *string.digits, "_", ".", "-")
+MAXIUM_TAG_LENGTH = 128
 
 
 class Color(NamedTuple):
@@ -56,6 +60,10 @@ class Color(NamedTuple):
         return colors
 
 
+class InvalidTagName(ValueError):
+    """The given tag name is invalid"""
+
+
 def get_hostname() -> str:
     """Return the system's hostname"""
     return platform.node()
@@ -79,3 +87,35 @@ def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".xpak") -> str:
     cat, pkg, ver = cpv_match.groups()
 
     return f"{cat}/{pkg}/{pkg}-{ver}-{build_id}{extension}"
+
+
+def check_tag_name(tag_name: str) -> None:
+    """Check if the given string is a valid tag name
+
+    Raise InvalidTagName if not a valid tag name
+
+    Tag names have the following requirements:
+
+        * ASCII characters
+        * contain lowercase and uppercase letters, digits, underscores, periods and
+          dashes
+        * must not start with a period, or dash
+        * Must be a maxium of 128 characters
+        * In addition the empty string is a valid tag
+    """
+    # This is based off of Docker's image tagging rules
+    # https://docs.docker.com/engine/reference/commandline/tag/
+    if tag_name == "":
+        return
+
+    if len(tag_name) > MAXIUM_TAG_LENGTH:
+        raise InvalidTagName(tag_name)
+
+    first_char = tag_name[0]
+
+    if first_char in INVALID_TAG_START:
+        raise InvalidTagName(tag_name)
+
+    for char in tag_name[1:]:
+        if char not in VALID_TAG_CHARS:
+            raise InvalidTagName(tag_name)

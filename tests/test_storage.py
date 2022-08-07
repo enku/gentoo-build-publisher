@@ -447,6 +447,117 @@ class StorageReposTestCase(TestCase):
         self.assertEqual(context.exception.args, ("The build has not been pulled",))
 
 
+class StorageTaggingTestCase(TestCase):
+    def test_can_create_tagged_directory_symlinks(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+
+        self.publisher.storage.tag(build, "prod")
+
+        for item in Content:
+            target_path = self.publisher.storage.get_path(build, item)
+            source_path = (
+                self.publisher.storage.path / item.value / f"{build.machine}@prod"
+            )
+
+            self.assertTrue(source_path.is_symlink())
+            self.assertEqual(source_path.resolve(), target_path)
+
+    def test_can_retag(self):
+        build1 = BuildFactory()
+        self.publisher.pull(build1)
+        self.publisher.storage.tag(build1, "prod")
+
+        build2 = BuildFactory()
+        self.publisher.pull(build2)
+        self.publisher.storage.tag(build2, "prod")
+
+        for item in Content:
+            target_path = self.publisher.storage.get_path(build2, item)
+            source_path = (
+                self.publisher.storage.path / item.value / f"{build2.machine}@prod"
+            )
+
+            self.assertTrue(source_path.is_symlink())
+            self.assertEqual(source_path.resolve(), target_path)
+
+    def test_can_untag(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+
+        self.publisher.storage.untag(build.machine, "prod")
+
+        for item in Content:
+            target_path = self.publisher.storage.get_path(build, item)
+            source_path = (
+                self.publisher.storage.path / item.value / f"{build.machine}@prod"
+            )
+
+            self.assertFalse(source_path.exists())
+            self.assertTrue(target_path.exists())
+
+    def test_can_untag_if_no_such_tag_exists(self):
+        """Removing a non-existant tag should fail silently"""
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.untag(build, "prod")
+
+    def test_non_published_builds_have_no_tags(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, [])
+
+    def test_builds_can_have_multiple_tags(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+        self.publisher.storage.tag(build, "albert")
+
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, ["albert", "prod"])
+
+        self.publisher.publish(build)
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, ["", "albert", "prod"])
+
+    def test_published_builds_have_the_empty_tag(self):
+        build = BuildFactory()
+        self.publisher.publish(build)
+
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, [""])
+
+    def test_unpulled_builds_have_no_tags(self):
+        build = BuildFactory()
+
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, [])
+
+    def test_partially_tagged_directories_are_not_tagged(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+        self.publisher.storage.tag(build, "albert")
+
+        # Remove one of the symlinks
+        broken = (
+            self.publisher.storage.path / Content.REPOS.value / f"{build.machine}@prod"
+        )
+        broken.unlink()
+
+        tags = self.publisher.storage.get_tags(build)
+
+        self.assertEqual(tags, ["albert"])
+
+
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 
