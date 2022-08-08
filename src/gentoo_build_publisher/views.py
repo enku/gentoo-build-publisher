@@ -261,14 +261,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a repos.conf entry for the given machine"""
-    machine, tag_name = get_machine_and_tag(machine)
-    dirname = machine if not tag_name else f"{machine}{TAG_SYM}{tag_name}"
+    build, _, dirname = parse_tag(machine)
     publisher = get_publisher()
-    build = (
-        publisher.storage.resolve_tag(dirname)
-        if tag_name
-        else MachineInfo(machine).published_build
-    )
 
     context = {
         "dirname": dirname,
@@ -282,8 +276,7 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
 
 def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a binrepos.conf entry for the given machine"""
-    machine, tag_name = get_machine_and_tag(machine)
-    dirname = machine if not tag_name else f"{machine}{TAG_SYM}{tag_name}"
+    [*_, dirname] = parse_tag(machine)
 
     context = {"uri": request.build_absolute_uri(f"/binpkgs/{dirname}/")}
     return render(
@@ -294,25 +287,27 @@ def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     )
 
 
-def get_machine_and_tag(machine_tag: str) -> tuple[str, str]:
-    """Return the machine name and tag name given the MACHINE[@TAG] string
+def parse_tag(machine_tag: str) -> tuple[Build, str, str]:
+    """Return the build, tag name and dirname given the MACHINE[@TAG] string
 
+    dirname is the name of the symlink in storage (not the full path)
     If it's not a tagged name, the tag_name will be the empty string.
     If the actual target does not exist, raise Http404
     """
+    build: Build | None
     machine, _, tag_name = machine_tag.partition(TAG_SYM)
-    published: bool
 
     if tag_name:
         try:
-            get_publisher().storage.resolve_tag(machine_tag)
-            published = True
+            build = get_publisher().storage.resolve_tag(machine_tag)
         except (ValueError, FileNotFoundError):
-            published = False
+            build = None
     else:
-        published = MachineInfo(machine).published_build is not None
+        build = MachineInfo(machine).published_build
 
-    if not published:
+    if build is None:
         raise Http404("Published build for that machine does not exist")
 
-    return machine, tag_name
+    dirname = machine if not tag_name else f"{build.machine}{TAG_SYM}{tag_name}"
+
+    return build, tag_name, dirname
