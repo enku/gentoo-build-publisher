@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.storage import TAG_SYM
 from gentoo_build_publisher.types import Build, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color, lapsed
 
@@ -261,13 +262,19 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a repos.conf entry for the given machine"""
-    if not (build := MachineInfo(machine).published_build):
-        raise Http404("Published build for that machine does not exist")
+    machine, tag_name = get_machine_and_tag(machine)
+    dirname = machine if not tag_name else f"{machine}{TAG_SYM}{tag_name}"
+    publisher = get_publisher()
+    build = (
+        publisher.storage.resolve_tag(dirname)
+        if tag_name
+        else MachineInfo(machine).published_build
+    )
 
     context = {
+        "dirname": dirname,
         "hostname": request.headers.get("Host", "localhost").partition(":")[0],
-        "machine": machine,
-        "repos": get_publisher().storage.repos(build),
+        "repos": publisher.storage.repos(build),
     }
     return render(
         request, "gentoo_build_publisher/repos.conf", context, content_type="text/plain"
@@ -276,13 +283,37 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
 
 def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a binrepos.conf entry for the given machine"""
-    if not MachineInfo(machine).published_build:
-        raise Http404("Published build for that machine does not exist")
+    machine, tag_name = get_machine_and_tag(machine)
+    dirname = machine if not tag_name else f"{machine}{TAG_SYM}{tag_name}"
 
-    context = {"uri": request.build_absolute_uri(f"/binpkgs/{machine}/")}
+    context = {"uri": request.build_absolute_uri(f"/binpkgs/{dirname}/")}
     return render(
         request,
         "gentoo_build_publisher/binrepos.conf",
         context,
         content_type="text/plain",
     )
+
+
+def get_machine_and_tag(machine_tag: str) -> tuple[str, str]:
+    """Return the machine name and tag name given the MACHINE[@TAG] string
+
+    If it's not a tagged name, the tag_name will be the empty string.
+    If the actual target does not exist, raise Http404
+    """
+    machine, _, tag_name = machine_tag.partition(TAG_SYM)
+    published: bool
+
+    if tag_name:
+        try:
+            get_publisher().storage.resolve_tag(machine_tag)
+            published = True
+        except (ValueError, FileNotFoundError):
+            published = False
+    else:
+        published = MachineInfo(machine).published_build is not None
+
+    if not published:
+        raise Http404("Published build for that machine does not exist")
+
+    return machine, tag_name

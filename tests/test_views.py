@@ -188,6 +188,24 @@ class ReposDotConfTestCase(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_tagged_builds_should_have_a_repos_dot_conf(self):
+        machine = "lighthouse"
+        build = self.builds[machine][-1]
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+
+        response = self.client.get("/machines/lighthouse@prod/repos.conf")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/plain")
+        self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
+        self.assertTrue(b"/repos/lighthouse@prod/" in response.content)
+
+    def test_nonexistant_tags_should_return_404(self):
+        response = self.client.get("/machines/lighthouse@prod/repos.conf")
+
+        self.assertEqual(response.status_code, 404)
+
 
 class BinReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
@@ -218,3 +236,16 @@ class BinReposDotConfTestCase(TestCase):
         response = self.client.get(f"/machines/{machine}/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_tagged_builds_should_have_a_binrepos_dot_conf(self):
+        machine = "lighthouse"
+        build = self.builds[machine][-1]
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+
+        response = self.client.get("/machines/lighthouse@prod/binrepos.conf")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "text/plain")
+        self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
+        self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
