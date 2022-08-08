@@ -78,6 +78,12 @@ class BuildType:
         return publisher.published(self.build)
 
     @cached_property
+    def tags(self) -> list[str]:
+        publisher = get_publisher()
+
+        return publisher.tags(self.build)
+
+    @cached_property
     def pulled(self) -> bool:
         publisher = get_publisher()
 
@@ -287,6 +293,29 @@ def resolve_mutation_createnote(
     publisher.records.save(record, note=note)
 
     return BuildType(record)
+
+
+@mutation.field("createBuildTag")
+def resolve_mutation_createbuildtag(
+    _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
+) -> BuildType:
+    publisher = get_publisher()
+    build = Build(id)
+
+    publisher.tag(build, tag)
+
+    return BuildType(build)
+
+
+@mutation.field("removeBuildTag")
+def resolve_mutation_removebuildtag(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
+) -> MachineInfo:
+    publisher = get_publisher()
+
+    publisher.untag(machine, tag)
+
+    return MachineInfo(machine)
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

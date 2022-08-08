@@ -14,6 +14,7 @@ type Build {
   submitted: DateTime!
   completed: DateTime
   published: Boolean
+  tags: [String!]!
   pulled: Boolean
   notes: String
   keep: Boolean!
@@ -28,6 +29,7 @@ type MachineSummary {
   builds: [Build!]!
   latestBuild: Build
   publishedBuild: Build
+  tags: [String!]!
 }
 
 enum StatusEnum {
@@ -63,6 +65,8 @@ type Mutation {
   pull(id: ID!): MachineSummary
   scheduleBuild(machine: String!): String
   keepBuild(id: ID!): Build
+  createBuildTag(id: ID!, tag: String!) : Build!
+  removeBuildTag(machine: String!, tag: String!) : MachineSummary
   releaseBuild(id: ID!): Build
   createNote(id: ID!, note: String): Build
 }

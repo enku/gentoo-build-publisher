@@ -44,6 +44,8 @@ class BuildQueryTestCase(TestCase):
             mock_utcnow.return_value = dt.datetime(2022, 3, 1, 6, 28, 44)
             self.publisher.pull(build)
 
+        self.publisher.tag(build, "prod")
+
         query = """query ($id: ID!) {
             build(id: $id) {
                 id
@@ -52,6 +54,7 @@ class BuildQueryTestCase(TestCase):
                 built
                 submitted
                 published
+                tags
                 logs
                 packagesBuilt {
                     cpv
@@ -68,6 +71,7 @@ class BuildQueryTestCase(TestCase):
                 "machine": build.machine,
                 "pulled": True,
                 "published": False,
+                "tags": ["prod"],
                 "logs": "foo\n",
                 "built": "2022-03-01T06:11:34+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
@@ -628,6 +632,36 @@ class CreateNoteMutationTestCase(TestCase):
         result = execute(query, variables={"id": "bogus.309", "note": None})
 
         assert_data(self, result, {"createNote": None})
+
+    def test_createbuildtag_mutation_tags_the_build(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        query = """mutation ($id: ID!, $tag: String!) {
+           createBuildTag(id: $id, tag: $tag) {
+                tags
+            }
+        }
+        """
+
+        result = execute(query, variables={"id": build.id, "tag": "prod"})
+
+        assert_data(self, result, {"createBuildTag": {"tags": ["prod"]}})
+
+    def test_removebuildtag_mutation_removes_tag_from_the_build(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+
+        query = """mutation ($machine: String!, $tag: String!) {
+           removeBuildTag(machine: $machine, tag: $tag) {
+                tags
+            }
+        }
+        """
+
+        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+
+        assert_data(self, result, {"removeBuildTag": {"tags": []}})
 
 
 class SearchNotesQueryTestCase(TestCase):
