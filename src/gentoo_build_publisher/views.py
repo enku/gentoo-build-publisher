@@ -15,8 +15,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.storage import TAG_SYM
-from gentoo_build_publisher.types import Build, GBPMetadata, Package
+from gentoo_build_publisher.types import TAG_SYM, Build, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})

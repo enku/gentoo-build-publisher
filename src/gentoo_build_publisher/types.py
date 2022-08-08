@@ -9,6 +9,9 @@ from dataclasses_json import dataclass_json
 
 from gentoo_build_publisher import utils
 
+# Symbol used to designate a build tag
+TAG_SYM = "@"
+
 
 class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""

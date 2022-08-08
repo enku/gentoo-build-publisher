@@ -13,9 +13,7 @@ from typing import IO, Callable
 
 from gentoo_build_publisher import utils
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
-
-TAG_SYM = "@"
+from gentoo_build_publisher.types import TAG_SYM, Build, Content, GBPMetadata, Package
 
 logger = logging.getLogger(__name__)
 
