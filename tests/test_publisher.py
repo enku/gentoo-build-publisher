@@ -174,6 +174,41 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(diff, [])
         self.assertEqual(self.publisher.get_packages.call_count, 0)
 
+    def test_tags_returns_the_list_of_tags_except_empty_tag(self):
+        build = BuildFactory()
+        self.publisher.publish(build)
+        self.publisher.storage.tag(build, "prod")
+
+        self.assertEqual(self.publisher.storage.get_tags(build), ["", "prod"])
+        self.assertEqual(self.publisher.tags(build), ["prod"])
+
+    def test_tag_tags_the_build_at_the_storage_layer(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+        self.publisher.tag(build, "albert")
+
+        self.assertEqual(self.publisher.storage.get_tags(build), ["albert", "prod"])
+
+    def test_untag_removes_tag_from_the_build(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+        self.publisher.tag(build, "albert")
+
+        self.publisher.untag(build.machine, "albert")
+
+        self.assertEqual(self.publisher.storage.get_tags(build), ["prod"])
+
+    def test_untag_with_empty_unpublishes_the_build(self):
+        build = BuildFactory()
+        self.publisher.publish(build)
+        self.assertTrue(self.publisher.published(build))
+
+        self.publisher.untag(build.machine, "")
+
+        self.assertFalse(self.publisher.published(build))
+
 
 class DispatcherTestCase(TestCase):
     maxDiff = None

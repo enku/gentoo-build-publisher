@@ -82,6 +82,27 @@ class BuildPublisher:
         self.storage.publish(build)
         self.dispatcher.emit("published", build=self.record(build))
 
+    def tag(self, build: Build, tag_name: str) -> None:
+        """Tag a build with the given name
+
+        Unlike publish(), does not auto-pull the build
+        """
+        self.storage.tag(build, tag_name)
+
+    def untag(self, machine: str, tag_name: str) -> None:
+        """Remove the given tag name from the machine
+
+        Can also be used to unpublish builds if tag_name is the empty string.
+        """
+        self.storage.untag(machine, tag_name)
+
+    def tags(self, build: Build) -> list[str]:
+        """Return the list of tags for the given build
+
+        Does not include the empty (published) tag.
+        """
+        return [tag for tag in self.storage.get_tags(build) if tag]
+
     def published(self, build: Build) -> bool:
         """Return True if this Build is published"""
         return self.storage.published(build)
