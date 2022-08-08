@@ -633,6 +633,8 @@ class CreateNoteMutationTestCase(TestCase):
 
         assert_data(self, result, {"createNote": None})
 
+
+class TagsTestCase(TestCase):
     def test_createbuildtag_mutation_tags_the_build(self):
         build = BuildFactory()
         self.publisher.pull(build)
