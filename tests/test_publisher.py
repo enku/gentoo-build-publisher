@@ -115,23 +115,31 @@ class BuildPublisherTestCase(TestCase):
             path = self.publisher.storage.get_path(old_build, item)
             self.assertIs(path.exists(), False, path)
 
-    def test_purge_does_not_delete_old_kept_build(self):
+    def test_purge_does_not_delete_old_tagged_builds(self):
         """Should remove purgable builds"""
 
-        build = BuildFactory()
+        kept_build = BuildFactory(machine="lighthouse")
         self.publisher.records.save(
-            self.publisher.record(build),
+            self.publisher.record(kept_build),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
             keep=True,
         )
+        tagged_build = BuildFactory(machine="lighthouse")
         self.publisher.records.save(
-            self.publisher.record(BuildFactory()),
+            self.publisher.record(tagged_build),
+            submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
+        )
+        self.publisher.pull(tagged_build)
+        self.publisher.tag(tagged_build, "prod")
+        self.publisher.records.save(
+            self.publisher.record(BuildFactory(machine="lighthouse")),
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        self.publisher.purge(build.machine)
+        self.publisher.purge("lighthouse")
 
-        self.assertIs(self.publisher.records.exists(build), True)
+        self.assertIs(self.publisher.records.exists(kept_build), True)
+        self.assertIs(self.publisher.records.exists(tagged_build), True)
 
     def test_purge_doesnt_delete_old_published_build(self):
         """Should not delete old build if published"""

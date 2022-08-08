@@ -198,7 +198,7 @@ class BuildPublisher:
         purger = Purger(records, key=self._purge_key)
 
         for record in purger.purge():
-            if not (record.keep or self.published(record)):
+            if not (record.keep or self.storage.get_tags(record)):
                 self.delete(record)
 
     def search_notes(self, machine: str, key: str) -> list[BuildRecord]:
