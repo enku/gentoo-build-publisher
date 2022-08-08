@@ -327,6 +327,18 @@ class MachineInfoTestCase(TestCase):
         # Then we get the list of builds in reverse chronological order
         self.assertEqual(result, [self.publisher.record(i) for i in reversed(builds)])
 
+    def test_tags_property_shows_tags_across_machines_builds(self):
+        builds = BuildFactory.create_batch(3, machine="foo")
+        for build in builds:
+            self.publisher.pull(build)
+
+        self.publisher.tag(builds[-1], "testing")
+        self.publisher.tag(builds[0], "stable")
+
+        machine_info = MachineInfo("foo")
+
+        self.assertEqual(machine_info.tags, ["stable", "testing"])
+
 
 class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""

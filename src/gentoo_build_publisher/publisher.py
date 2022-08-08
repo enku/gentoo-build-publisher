@@ -296,6 +296,18 @@ class MachineInfo:
         except StopIteration:
             return None
 
+    @cached_property
+    def tags(self) -> list[str]:
+        machine_tags = []
+        publisher = get_publisher()
+
+        for build in self.builds:
+            machine_tags.extend(publisher.tags(build))
+
+        machine_tags.sort()
+
+        return machine_tags
+
 
 _PUBLISHER: BuildPublisher | None = None
 
