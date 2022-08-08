@@ -382,6 +382,13 @@ After a few moments, if all goes successfully, you should have your first
 completed build pushed to GBP.  Go to the GBP dashboard in a browser (The
 hostname/IP of your virtual machine at port 80).
 
+Congratulations! You have your first GBP machine build.  Let's tag it for
+prosperity!
+
+```sh
+gbp tag base first
+```
+
 Now we should be able to publish the build which will make it available to
 install.
 
