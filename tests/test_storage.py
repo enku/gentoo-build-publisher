@@ -558,6 +558,40 @@ class StorageTaggingTestCase(TestCase):
         self.assertEqual(tags, ["albert"])
 
 
+class StorageResolveTagTestCase(TestCase):
+    """Tests for the Storage.resolve_tag method"""
+
+    def test_resolve_tag_returns_the_build_that_it_belongs_to(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+
+        tag = f"{build.machine}@prod"
+        target = self.publisher.storage.resolve_tag(tag)
+
+        self.assertEqual(target, build)
+
+    def test_resolve_tag_raises_exception_when_given_invalid_tag(self):
+        with self.assertRaises(ValueError) as context:
+            self.publisher.storage.resolve_tag("notatag")
+
+        self.assertEqual(context.exception.args[0], "Invalid tag: notatag")
+
+    def test_resolve_tag_raises_exception_when_build_doesnt_exist(self):
+        build = BuildFactory(machine="lighthouse")
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+
+        self.publisher.storage.delete(build)
+        with self.assertRaises(FileNotFoundError) as context:
+            self.publisher.storage.resolve_tag("lighthouse@prod")
+
+        self.assertEqual(
+            context.exception.args[0],
+            "Tag is broken or does not exist: lighthouse@prod",
+        )
+
+
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 

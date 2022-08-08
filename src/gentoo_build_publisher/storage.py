@@ -172,6 +172,39 @@ class Storage:
 
         return tags
 
+    def resolve_tag(self, tag: str) -> Build:
+        """Return the build given the tag name
+
+        If tag doesn't exist or is broken, raise an exception.
+        """
+        machine, _, tag_name = tag.partition(TAG_SYM)
+
+        if not tag_name:
+            raise ValueError(f"Invalid tag: {tag}")
+
+        # In order for this tag to resolve, all the content has to exist and point to
+        # the same build and the build has to exist in storage
+        target_builds = set()
+        for item in Content:
+            symlink = self.path / item.value / tag
+            target = symlink.resolve()
+
+            if not target.exists():
+                break
+
+            target_machine, _, target_build = target.name.partition(".")
+            if not (target_machine and target_build) or target_machine != machine:
+                break
+
+            target_builds.add(target_build)
+            if len(target_builds) != 1:
+                break
+        else:
+            build_id = f"{machine}.{next(iter(target_builds))}"
+            return Build(build_id)
+
+        raise FileNotFoundError(f"Tag is broken or does not exist: {tag}")
+
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.
 
