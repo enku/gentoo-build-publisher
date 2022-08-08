@@ -23,6 +23,7 @@ from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.storage import TAG_SYM
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.types import Build, Package, Status
 from gentoo_build_publisher.utils import get_version
@@ -212,6 +213,20 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildTyp
                 build_types.append(BuildType(record))
 
     return build_types
+
+
+@query.field("resolveBuildTag")
+def resolve_query_resolvebuildtag(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
+) -> Optional[BuildType]:
+    publisher = get_publisher()
+
+    try:
+        result = publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
+    except FileNotFoundError:
+        return None
+
+    return BuildType(result)
 
 
 @mutation.field("publish")

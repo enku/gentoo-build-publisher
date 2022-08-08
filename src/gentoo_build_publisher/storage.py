@@ -178,6 +178,7 @@ class Storage:
         If tag doesn't exist or is broken, raise an exception.
         """
         machine, _, tag_name = tag.partition(TAG_SYM)
+        utils.check_tag_name(tag_name)
 
         if not tag_name:
             raise ValueError(f"Invalid tag: {tag}")

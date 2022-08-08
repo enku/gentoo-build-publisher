@@ -665,6 +665,37 @@ class TagsTestCase(TestCase):
 
         assert_data(self, result, {"removeBuildTag": {"tags": []}})
 
+    def test_resolvetag_query_resolves_tag(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.tag(build, "prod")
+
+        query = """query ($machine: String!, $tag: String!) {
+           resolveBuildTag(machine: $machine, tag: $tag) {
+                id
+            }
+        }
+        """
+
+        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+
+        assert_data(self, result, {"resolveBuildTag": {"id": build.id}})
+
+    def test_resolvetag_query_resolves_to_none_when_tag_does_not_exist(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+
+        query = """query ($machine: String!, $tag: String!) {
+           resolveBuildTag(machine: $machine, tag: $tag) {
+                id
+            }
+        }
+        """
+
+        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+
+        assert_data(self, result, {"resolveBuildTag": None})
+
 
 class SearchNotesQueryTestCase(TestCase):
     """tests for the searchNotes query"""

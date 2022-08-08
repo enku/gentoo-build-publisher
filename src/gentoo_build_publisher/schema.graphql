@@ -58,6 +58,7 @@ type Query {
   searchNotes(machine: String!, key: String!): [Build!]!
   version: String!
   working: [Build!]!
+  resolveBuildTag(machine: String!, tag: String!): Build
 }
 
 type Mutation {
