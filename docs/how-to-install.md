@@ -11,10 +11,10 @@ reading it ;-).  You should at least be familiar with the [Gentoo
 Handbook](https://wiki.gentoo.org/wiki/Handbook:Main_Page).
 
 This documents how to install Gentoo Build Publisher (GBP) on a single Gentoo
-virtual machine (or physical machine if you have one to spare).  There are
-other ways of installing Gentoo Build Publisher (bare metal, containers,
-multiple machines, distros other than Gentoo, etc.) however installing on a
-single virtual machine is the easiest to document.
+virtual machine (or physical machine or perhaps `systemd-nspawn` container).
+There are other ways of installing Gentoo Build Publisher (bare metal,
+containers, multiple machines, distros other than Gentoo, etc.) however
+installing on a single virtual machine is the easiest to document.
 
 ## Install Gentoo on a virtual machine.
 
