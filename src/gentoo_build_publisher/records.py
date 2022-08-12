@@ -64,6 +64,12 @@ class BuildRecord(Build):
     def __hash__(self) -> int:
         return hash(self.id)
 
+    def purge_key(self) -> dt.datetime:
+        """Purge key for build records.  Purge on submitted date"""
+        submitted = self.submitted or dt.datetime.fromtimestamp(0)
+
+        return submitted.replace(tzinfo=None)
+
 
 class RecordDB(Protocol):  # pragma: no cover
     """Repository for BuildRecords"""
