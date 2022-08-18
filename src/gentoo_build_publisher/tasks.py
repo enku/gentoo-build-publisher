@@ -52,14 +52,14 @@ def pull_build(build_id: str) -> None:
         if isinstance(error, requests.exceptions.HTTPError):
             response = getattr(error, "response", None)
             if response is not None and response.status_code == 404:
-                publisher.records.delete(build)
+                publisher.delete(build)
                 raise
 
         if isinstance(error, PULL_RETRYABLE_EXCEPTIONS):
             pull_build.retry(exc=error)
             return
 
-        publisher.records.delete(build)
+        publisher.delete(build)
         raise
 
     if Settings.from_environ().ENABLE_PURGE:
