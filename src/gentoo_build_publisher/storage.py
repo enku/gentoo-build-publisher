@@ -54,24 +54,24 @@ class Storage:
     symbolic link lighthouse@prod -> lighthouse.19.
     """
 
-    def __init__(self, path: Path):
-        self.path = path
-        self.tmpdir = self.path / "tmp"
+    def __init__(self, root: Path):
+        self.root = root
+        self.tmpdir = self.root / "tmp"
         self.tmpdir.mkdir(parents=True, exist_ok=True)
 
     def __repr__(self) -> str:
         cls = type(self)
 
-        return f"{cls.__qualname__}({repr(self.path)})"
+        return f"{cls.__qualname__}({repr(self.root)})"
 
     def __hash__(self) -> int:
-        return hash(self.path)
+        return hash(self.root)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Storage):
             return NotImplemented
 
-        return self.path == other.path
+        return self.root == other.root
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Storage:
@@ -84,7 +84,7 @@ class Storage:
 
         Were it to be downloaded.
         """
-        return self.path / item.value / str(build)
+        return self.root / item.value / str(build)
 
     def extract_artifact(
         self,
@@ -163,7 +163,7 @@ class Storage:
         name = f"{build.machine}{TAG_SYM}{tag_name}" if tag_name else build.machine
 
         for item in Content:
-            path = self.path / item.value / name
+            path = self.root / item.value / name
             self.symlink(str(build), str(path))
 
     def untag(self, machine: str, tag_name: str = "") -> None:
@@ -178,7 +178,7 @@ class Storage:
         name = f"{machine}{TAG_SYM}{tag_name}" if tag_name else machine
 
         for item in Content:
-            path = self.path / item.value / name
+            path = self.root / item.value / name
             if path.is_symlink():
                 path.unlink()
 
@@ -194,7 +194,7 @@ class Storage:
         if self.published(build):
             tags.append("")
 
-        for path in (self.path / Content.BINPKGS.value).glob(f"{machine}{TAG_SYM}*"):
+        for path in (self.root / Content.BINPKGS.value).glob(f"{machine}{TAG_SYM}*"):
             tag = path.name.partition(TAG_SYM)[2]
             if self.check_symlinks(build, f"{machine}{TAG_SYM}{tag}"):
                 tags.append(tag)
@@ -218,7 +218,7 @@ class Storage:
         # the same build and the build has to exist in storage
         target_builds = set()
         for item in Content:
-            symlink = self.path / item.value / tag
+            symlink = self.root / item.value / tag
             target = symlink.resolve()
 
             if not target.exists():
@@ -251,7 +251,7 @@ class Storage:
         Symlinks have to exist for all `Content`.
         """
         return all(
-            (symlink := self.path / item.value / name).exists()
+            (symlink := self.root / item.value / name).exists()
             and os.path.realpath(symlink) == str(self.get_path(build, item))
             for item in Content
         )

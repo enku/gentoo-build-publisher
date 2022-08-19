@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
         # Pass 2: check for orphans
         for content in Content:
-            directory = publisher.storage.path / content.value
+            directory = publisher.storage.root / content.value
 
             for path in directory.glob("*.*"):
                 build = Build(path.name)

@@ -54,7 +54,7 @@ class StorageFromSettings(TestCase):
 
         # Then we get a Storage instance with attributes from settings
         self.assertIsInstance(storage, Storage)
-        self.assertEqual(storage.path, self.tmpdir)
+        self.assertEqual(storage.root, self.tmpdir)
 
 
 class StorageDownloadArtifactTestCase(TestCase):
@@ -215,10 +215,10 @@ class StorageDeleteTestCase(TestCase):
         storage.delete(build)
 
         directories = [
-            f"{storage.path}/binpkgs/{build}",
-            f"{storage.path}/etc-portage/{build}",
-            f"{storage.path}/repos/{build}",
-            f"{storage.path}/var-lib-portage/{build}",
+            f"{storage.root}/binpkgs/{build}",
+            f"{storage.root}/etc-portage/{build}",
+            f"{storage.root}/repos/{build}",
+            f"{storage.root}/var-lib-portage/{build}",
         ]
         for directory in directories:
             with self.subTest(directory=directory):
@@ -457,7 +457,7 @@ class StorageTaggingTestCase(TestCase):
         for item in Content:
             target_path = self.publisher.storage.get_path(build, item)
             source_path = (
-                self.publisher.storage.path / item.value / f"{build.machine}@prod"
+                self.publisher.storage.root / item.value / f"{build.machine}@prod"
             )
 
             self.assertTrue(source_path.is_symlink())
@@ -475,7 +475,7 @@ class StorageTaggingTestCase(TestCase):
         for item in Content:
             target_path = self.publisher.storage.get_path(build2, item)
             source_path = (
-                self.publisher.storage.path / item.value / f"{build2.machine}@prod"
+                self.publisher.storage.root / item.value / f"{build2.machine}@prod"
             )
 
             self.assertTrue(source_path.is_symlink())
@@ -491,7 +491,7 @@ class StorageTaggingTestCase(TestCase):
         for item in Content:
             target_path = self.publisher.storage.get_path(build, item)
             source_path = (
-                self.publisher.storage.path / item.value / f"{build.machine}@prod"
+                self.publisher.storage.root / item.value / f"{build.machine}@prod"
             )
 
             self.assertFalse(source_path.exists())
@@ -549,7 +549,7 @@ class StorageTaggingTestCase(TestCase):
 
         # Remove one of the symlinks
         broken = (
-            self.publisher.storage.path / Content.REPOS.value / f"{build.machine}@prod"
+            self.publisher.storage.root / Content.REPOS.value / f"{build.machine}@prod"
         )
         broken.unlink()
 
