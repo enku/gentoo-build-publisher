@@ -19,7 +19,40 @@ logger = logging.getLogger(__name__)
 
 
 class Storage:
-    """Filesystem storage for Gentoo Build Publisher"""
+    """Filesystem storage for Gentoo Build Publisher
+
+    Gentoo Build Publisher hosts files (repos, binpkgs, etc).  There is a "root"
+    directory for all the files and the Storage class is the interface to that directory
+    tree.
+
+    The directory tree basically looks like the following.
+    .
+    ├── binpkgs
+    │   └── lighthouse.19
+    ├── etc-portage
+    │   └── lighthouse.19
+    ├── repos
+    │   └── lighthouse.19
+    │       ├── gentoo
+    │       └── marduk
+    ├── tmp
+    └── var-lib-portage
+        └── lighthouse.19
+
+    Each of the directories binpkgs, etc-portage, repos, and var-lib-portage hold each
+    kind of Content stored in a (Jenkins) build artifact.  So in the above example, if a
+    build "lighthouse.19" was pulled, there exists a ./binpkgs/lighthouse.19 directory
+    containing the build's binary packages, a ./repos/lighthouse.19 directory containing
+    the ebuild repos used for that build, etc. The tmp/ directory, as the name implies,
+    is for temporary storage.
+
+    When a build is published, for example "lighthouse.19", then for each of its
+    respective directories in Content there exists a symbolic link with just the name of
+    the machine, for example, "lighthouse".  Likewise, a tag to a build is a symbolic
+    link with the name of the machine, the @ sign and the tag. For example if the build
+    "lighthouse.19" had a tag "prod" then for each of it's directories there would be a
+    symbolic link lighthouse@prod -> lighthouse.19.
+    """
 
     def __init__(self, path: Path):
         self.path = path

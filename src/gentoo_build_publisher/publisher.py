@@ -1,4 +1,21 @@
-"""Managers"""
+"""The Publisher
+
+When we think about a "build" In Gentoo Build Publisher there are three subsystems that,
+when combined, represent the the build:
+
+    * Jenkins: the connection to the Jenkins instance as well as the artifacts it hosts
+    * Storage: the file system storage responsible where artifacts are pulled and
+      extracted and eventually hosted by GBP.
+    * RecordDB: The (relational) database that holds various metadata not held in
+      Storage
+
+The above all classes (or Protocols) that operate independently.  There exists a
+facade for these subsystems. This is the BuildPublisher.  For example, when a build is
+pulled, then BuildPublisher.pull(build) ensures the artifact gets pull from Jenkins, get's
+extracted into Storage, and appropriate metadata is created in the RecordDB.  Likewise
+when a build is deleted (BuildPublisher.delete(build)) then it makes sure that the
+Storage and Record are removed.
+"""
 from __future__ import annotations
 
 import logging
