@@ -1,10 +1,15 @@
 """Tests for the GBP publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
+import os
 from unittest import mock
 
-from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.publisher import MachineInfo
+from yarl import URL
+
+import gentoo_build_publisher.publisher
+from gentoo_build_publisher.models import BuildModel, RecordDB
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
+from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
@@ -14,6 +19,20 @@ utc = datetime.timezone.utc
 
 
 class BuildPublisherTestCase(TestCase):
+    def test_from_settings_returns_publisher_with_given_settings(self):
+        settings = Settings(
+            JENKINS_BASE_URL="https://testserver.invalid/",
+            RECORDS_BACKEND="django",
+            STORAGE_PATH=self.tmpdir / "test_from_settings",
+        )
+        publisher = BuildPublisher.from_settings(settings)
+
+        self.assertEqual(
+            publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
+        )
+        self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
+        self.assertIsInstance(publisher.records, RecordDB)
+
     def test_publish(self):
         """.publish should publish the build artifact"""
         build = BuildFactory()
@@ -420,3 +439,28 @@ class ScheduleBuildTestCase(TestCase):
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)
         self.assertEqual(self.publisher.jenkins.scheduled_builds, ["babette"])
+
+
+class GetPublisherTestCase(TestCase):
+    """Tests for the get_publisher function"""
+
+    def setUp(self):
+        super().setUp()
+
+        # pylint: disable=protected-access
+        gentoo_build_publisher.publisher._PUBLISHER = None
+
+    def test_creates_publisher_from_env_variables_when_global_is_none(self):
+        env = {
+            "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://testserver.invalid/",
+            "BUILD_PUBLISHER_RECORDS_BACKEND": "django",
+            "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "test_get_publisher"),
+        }
+        with mock.patch.dict(os.environ, env, clear=True):
+            publisher = get_publisher()
+
+        self.assertEqual(
+            publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
+        )
+        self.assertEqual(publisher.storage.root, self.tmpdir / "test_get_publisher")
+        self.assertIsInstance(publisher.records, RecordDB)

@@ -41,6 +41,28 @@ class StorageReprTestCase(TestCase):
         self.assertEqual(repr(storage), f"Storage({repr(self.tmpdir)})")
 
 
+class StorageEqTestCase(TestCase):
+    """Test Storage.__eq__"""
+
+    def test_if_roots_are_the_same_returns_true(self):
+        storage1 = Storage(self.tmpdir / "test_eq")
+        storage2 = Storage(self.tmpdir / "test_eq")
+
+        self.assertIs(storage1 == storage2, True)
+
+    def test_if_roots_are_not_the_same_returns_false(self):
+        storage1 = Storage(self.tmpdir / "test_eq1")
+        storage2 = Storage(self.tmpdir / "test_eq2")
+
+        self.assertIs(storage1 == storage2, False)
+
+    def test_returns_false_when_not_compared_to_another_storage(self):
+        storage = Storage(self.tmpdir / "test_eq")
+
+        self.assertIs(storage == 16, False)
+        self.assertIs(16 == storage, False)
+
+
 class StorageFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self):

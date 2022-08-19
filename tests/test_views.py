@@ -3,6 +3,7 @@
 import datetime as dt
 from collections import defaultdict
 
+from django.core.cache import cache
 from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
@@ -48,6 +49,14 @@ class GetPackagesTestCase(TestCase):
         packages = get_packages(build)
 
         self.assertEqual(packages, self.publisher.get_packages(build))
+
+    def test_when_cached_return_cache(self):
+        build = BuildFactory()
+        cache.set(f"packages-{build}", [1, 2, 3])  # not real packages
+
+        packages = get_packages(build)
+
+        self.assertEqual(packages, [1, 2, 3])
 
 
 class GetBuildSummaryTestCase(TestCase):
