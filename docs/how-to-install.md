@@ -281,7 +281,7 @@ sudo -u gbp -H /home/gbp/bin/pip install shiv
 Use shiv to create a `gbp` "binary".
 
 ```sh
-/home/gbp/bin/shiv -o /usr/local/bin/gbp -e gbpcli:main git+https://github.com/enku/gbpcli
+/home/gbp/bin/shiv -o /usr/local/bin/gbp -e gbpcli:main gbpcli
 ```
 
 ## Configure nginx
