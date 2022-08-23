@@ -2,6 +2,7 @@
 name = "gentoo-build-publisher"
 dynamic = ["version"]
 description = "Gentoo Build Publisher"
+readme = "README.md"
 authors = [{name = "Albert Hopkins", email = "marduk@letterboxes.org"}]
 license = {text = "GPL3+"}
 dependencies = [

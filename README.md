@@ -1,5 +1,5 @@
 <p align="center">
-<img src="docs/media/dashboard.png" alt="Gentoo Build Publisher dashboard" width="100%">
+<img src="https://raw.githubusercontent.com/enku/gentoo-build-publisher/master/docs/media/dashboard.png" alt="Gentoo Build Publisher dashboard" width="100%">
 </p>
 
 # Gentoo Build Publisher
@@ -46,7 +46,7 @@ for repo syncs and binpkgs.
 ## Procedure
 
 * Build a Gentoo Build Publisher instance. Refer to the [Install
-  Guide](docs/how-to-install.md).
+  Guide](https://github.com/enku/gentoo-build-publisher/blob/master/docs/how-to-install.md).
 * Create "machines" and "repos" jobs in Jenkins.  Use [the following git
   repo](https://github.com/enku/gbp-machines) as a starting point.
 * Once a Jenkins job has been pulled by Gentoo Build Publisher it can be
