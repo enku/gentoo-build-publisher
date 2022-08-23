@@ -18,6 +18,13 @@ dependencies = [
     "yarl",
 ]
 requires-python = ">=3.10"
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Software Distribution",
+    "Topic :: System :: Systems Administration",
+]
 
 [project.urls]
 homepage = "https://github.com/enku/gentoo-build-publisher"
