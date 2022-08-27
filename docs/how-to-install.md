@@ -82,6 +82,7 @@ Optional: install [pigz](https://zlib.net/pigz/) for a speedier gzip on
 multi-core systems.
 
 ```sh
+mkdir -p /etc/portage/package.use
 echo app-arch/pigz symlink >> /etc/portage/package.use/gbp
 emerge --verbose --ask app-arch/pigz
 ```
@@ -264,6 +265,7 @@ systemctl daemon-reload
 Use shiv to create a `gbp` "binary".
 
 ```sh
+mkdir -p /usr/local/bin
 /home/gbp/bin/shiv -o /usr/local/bin/gbp -e gbpcli:main gbpcli
 ```
 
@@ -281,7 +283,6 @@ Edit `/etc/nginx/nginx.conf` if needed.
 
 ```sh
 cp /home/gbp/gentoo-build-publisher/contrib/deployment/rsyncd.conf /etc/rsyncd.conf
-systemctl enable --now rsyncd
 ```
 
 
@@ -290,9 +291,7 @@ systemctl enable --now rsyncd
 Enable and start all the related services:
 
 ```sh
-systemctl enable --now rabbitmq
-systemctl enable --now gentoo-build-publisher-wsgi
-systemctl enable --now gentoo-build-publisher-worker
+systemctl enable --now rabbitmq gentoo-build-publisher-wsgi gentoo-build-publisher-worker rsyncd
 ```
 
 ## Create Jenkins jobs
@@ -333,7 +332,7 @@ tar cf "${WORKSPACE_TMP}"/"${artifact}" -I 'gzip -9' --exclude-vcs --exclude-vcs
 mv "${WORKSPACE_TMP}"/"${artifact}" .
 ```
 
-For Post-build Actions add "Archive the artifacts".  Enter "\*-repo.tar.gz"
+For Post-build Actions add "Archive the artifacts".  Enter `*-repo.tar.gz`
 for Files to archive.
 
 Click Save.
@@ -400,7 +399,7 @@ now use that to upgrade your GBP instance.  Publish the (latest) build.
 gbp publish gbpbox
 ```
 
-Configure portage to get repos and binpkgs from the GBP instance.
+## Configure portage to get repos and binpkgs from the GBP instance.
 
 ```
 cd /etc/portage
