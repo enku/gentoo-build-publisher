@@ -399,7 +399,9 @@ now use that to upgrade your GBP instance.  Publish the (latest) build.
 gbp publish gbpbox
 ```
 
-## Configure portage to get repos and binpkgs from the GBP instance.
+## Get repos and binpkgs from the GBP instance
+
+Now that we have a gbpbox build on gbpbox, we can use it to update itself.
 
 ```
 cd /etc/portage
