@@ -18,26 +18,16 @@ installing on a single virtual machine is the easiest to document.
 
 ## Table of Contents
 - [Install Gentoo on a virtual machine](#install-gentoo-on-a-virtual-machine)
-    - [On Resource Requirements](#on-resource-requirements)
-    - [This Installation Document Requires systemd](#this-installation-document-requires-systemd)
 - [Install Required Packages](install-required-packages)
-    - [Optional Packages](#optional-packages)
 - [Configure Jenkins](#configure-jenkins)
-    - [Create a Jenkins API key](#create-a-jenkins-api-key)
 - [Configure PostgreSQL](#configure-postgresql)
 - [Create user for GBP](#create-user-for-gbp)
 - [Install Gentoo Build Publisher](#install-gentoo-build-publisher)
-    - [Create the Django project](#create-the-django-project)
-    - [Create the configuration file](#create-the-configuration-file)
-    - [Install systemd unit files](#install-systemd-unit-files)
 - [Install the gbp CLI](#install-the-gbp-cli)
 - [Configure nginx](#configure-nginx)
 - [Configure rsyncd](#configure-rsyncd)
 - [Start services](#start-services)
 - [Create Jenkins jobs](#create-jenkins-jobs)
-    - [Create a job for the Gentoo repo](#create-a-job-for-the-gentoo-repo)
-    - [Create your first machine job](#create-your-first-machine-job)
-    - [Create subsequent machine jobs](#create-subsequent-machine-jobs)
 - [Get repos and binpkgs from the GBP instance](#get-repos-and-binpkgs-from-the-gbp-instance)
 
 
