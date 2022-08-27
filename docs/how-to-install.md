@@ -230,16 +230,6 @@ CELERY_BROKER_POOL_LIMIT = 0
 STATIC_ROOT = '/home/gbp/share/static_media'
 ```
 
-### Create [Celery](http://celeryproject.org/) app
-
-Create a the file `/home/gbp/djangoproject/celery.py`. There is already a copy
-in the gentoo-build-publisher repo.
-
-```sh
-cp /home/gbp/gentoo-build-publisher/contrib/deployment/celery.py /home/gbp/djangoproject/celery.py
-chown gbp:gbp /home/gbp/djangoproject/celery.py
-```
-
 ### Create the configuration file
 
 Copy the file `gentoo-build-publisher.conf` file over from the repo.

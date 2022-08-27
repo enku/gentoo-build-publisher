@@ -7,8 +7,9 @@ After=gentoo-build-publisher-wsgi.service
 [Service]
 User=gbp
 EnvironmentFile=/etc/gentoo-build-publisher.conf
+Environment=DJANGO_SETTINGS_MODULE=djangoproject.settings
 WorkingDirectory=/home/gbp
-ExecStart=/home/gbp/bin/celery -A djangoproject worker -l info --concurrency=1
+ExecStart=/home/gbp/bin/celery -A gentoo_build_publisher worker -l info --concurrency=1
 Restart=on-failure
 
 [Install]
