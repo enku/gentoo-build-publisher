@@ -365,7 +365,7 @@ from the dropdown.  For "SCM" select "Git". Under "Repository URL" enter
 "https://github.com/enku/gbp-machines.git".  Click "Save".
 
 Now that we have a machine build job, let's give it a whirl.  From the shell
-promt:
+prompt:
 
 ```
 gbp build base
