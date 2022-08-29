@@ -3,6 +3,7 @@
 /.envrc
 /.pdm.toml
 /.venv/
+/__pypackages__/
 /build/
 /dist/
 /htmlcov/
