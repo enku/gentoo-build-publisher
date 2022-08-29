@@ -63,11 +63,11 @@ def pull_build(build_id: str) -> None:
         raise
 
     if Settings.from_environ().ENABLE_PURGE:
-        purge_build.delay(build.machine)
+        purge_machine.delay(build.machine)
 
 
 @shared_task
-def purge_build(machine: str) -> None:
+def purge_machine(machine: str) -> None:
     """Purge old builds for machine"""
     publisher = get_publisher()
 

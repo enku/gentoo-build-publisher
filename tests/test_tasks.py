@@ -12,7 +12,7 @@ from gentoo_build_publisher.tasks import (
     delete_build,
     publish_build,
     pull_build,
-    purge_build,
+    purge_machine,
 )
 from gentoo_build_publisher.types import Build
 
@@ -24,7 +24,7 @@ class PublishBuildTestCase(TestCase):
 
     def test_publishes_build(self):
         """Should actually publish the build"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+        with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             result = publish_build.s("babette.193").apply()
 
         build = Build("babette.193")
@@ -45,11 +45,11 @@ class PublishBuildTestCase(TestCase):
 
 
 class PurgeBuildTestCase(TestCase):
-    """Tests for the purge_build task"""
+    """Tests for the purge_machine task"""
 
     def test(self):
         with mock.patch.object(self.publisher, "purge") as purge_mock:
-            purge_build.s("foo").apply()
+            purge_machine.s("foo").apply()
 
         purge_mock.assert_called_once_with("foo")
 
@@ -59,27 +59,31 @@ class PullBuildTestCase(TestCase):
 
     def test_pulls_build(self):
         """Should actually pull the build"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_build"):
+        with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             pull_build.s("lima.1012").apply()
 
         build = Build("lima.1012")
         self.assertIs(self.publisher.pulled(build), True)
 
-    def test_calls_purge_build(self):
-        """Should issue the purge_build task when setting is true"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
+    def test_calls_purge_machine(self):
+        """Should issue the purge_machine task when setting is true"""
+        with mock.patch(
+            "gentoo_build_publisher.tasks.purge_machine"
+        ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
                 pull_build.s("charlie.197").apply()
 
-        mock_purge_build.delay.assert_called_with("charlie")
+        mock_purge_machine.delay.assert_called_with("charlie")
 
-    def test_does_not_call_purge_build(self):
-        """Should not issue the purge_build task when setting is false"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_build") as mock_purge_build:
+    def test_does_not_call_purge_machine(self):
+        """Should not issue the purge_machine task when setting is false"""
+        with mock.patch(
+            "gentoo_build_publisher.tasks.purge_machine"
+        ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
                 pull_build.s("delta.424").apply()
 
-        mock_purge_build.delay.assert_not_called()
+        mock_purge_machine.delay.assert_not_called()
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(self):
