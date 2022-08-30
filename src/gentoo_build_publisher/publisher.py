@@ -81,7 +81,7 @@ class BuildPublisher:
 
         If we already have one, return it.
         Otherwise if a record exists in the RecordDB, get it from the RecordDB.
-        Otherwize create an "empty" record.
+        Otherwise create an "empty" record.
         """
         if isinstance(build, BuildRecord):
             return build
