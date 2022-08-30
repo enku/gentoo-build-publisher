@@ -29,7 +29,7 @@ Sometimes a build takes a long time and you don't want to wait.
 Well since Gentoo is the distribution you build yourself, CI/CD seems like a
 natural fit. Enter Gentoo Build Publisher.
 
-Gentoo Build Pubisher is the combination of an rsync server (for ebuild repos
+Gentoo Build Publisher is the combination of an rsync server (for ebuild repos
 and machine configs) and HTTP server (for binpkgs) for successful builds.  For
 Jenkins it is a gateway to publish builds. For my real machines it the source
 for repo syncs and binpkgs.
