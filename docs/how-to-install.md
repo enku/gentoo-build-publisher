@@ -7,7 +7,7 @@
 This document provides step-by-step instructions on how to install [Gentoo
 Build Publisher](https://github.com/enku/gentoo-build-publisher) (GBP).  This
 document presumes a little familiarity with Gentoo, or else why would you be
-reading it ;-).  You should at least be familiar with the [Gentoo
+reading it :wink:.  You should at least be familiar with the [Gentoo
 Handbook](https://wiki.gentoo.org/wiki/Handbook:Main_Page).
 
 This documents how to install Gentoo Build Publisher (GBP) on a single Gentoo
