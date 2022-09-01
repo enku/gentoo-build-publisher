@@ -205,7 +205,7 @@ class RecordDB:
         build_models = (
             BuildModel.objects.select_related(*RELATED)
             .filter(machine=machine)
-            .order_by("-submitted")
+            .order_by(models.F("built").desc(nulls_last=True), "-submitted")
         )
 
         return (build_model.record() for build_model in build_models)
