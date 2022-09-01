@@ -261,7 +261,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a repos.conf entry for the given machine"""
-    build, _, dirname = parse_tag(machine)
+    build, _, dirname = parse_tag_or_raise_404(machine)
     publisher = get_publisher()
 
     context = {
@@ -276,7 +276,7 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
 
 def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a binrepos.conf entry for the given machine"""
-    [*_, dirname] = parse_tag(machine)
+    [*_, dirname] = parse_tag_or_raise_404(machine)
 
     context = {"uri": request.build_absolute_uri(f"/binpkgs/{dirname}/")}
     return render(
@@ -287,7 +287,7 @@ def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     )
 
 
-def parse_tag(machine_tag: str) -> tuple[Build, str, str]:
+def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
     """Return the build, tag name and dirname given the MACHINE[@TAG] string
 
     dirname is the name of the symlink in storage (not the full path)
