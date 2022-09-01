@@ -246,6 +246,15 @@ class BinReposDotConfTestCase(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_when_no_such_tag_exists_gives_404(self):
+        machine = "lighthouse"
+        build = self.builds[machine][-1]
+        self.publisher.pull(build)
+
+        response = self.client.get(f"/machines/{machine}@bogus/binrepos.conf")
+
+        self.assertEqual(response.status_code, 404)
+
     def test_tagged_builds_should_have_a_binrepos_dot_conf(self):
         machine = "lighthouse"
         build = self.builds[machine][-1]
