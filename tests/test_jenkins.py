@@ -61,6 +61,7 @@ class JenkinsTestCase(TestCase):
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
             auth=("jenkins", "foo"),
             stream=True,
+            timeout=jenkins.config.requests_timeout,
         )
 
     def test_download_artifact_with_no_auth(self):
@@ -78,6 +79,7 @@ class JenkinsTestCase(TestCase):
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
             auth=jenkins.config.auth(),
             stream=True,
+            timeout=jenkins.config.requests_timeout,
         )
 
     @mock.patch.dict(os.environ, {}, clear=True)
@@ -117,7 +119,9 @@ class JenkinsTestCase(TestCase):
             metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)
         )
         mock_requests_get.assert_called_once_with(
-            "https://jenkins.invalid/job/babette/291/api/json", auth=("jenkins", "foo")
+            "https://jenkins.invalid/job/babette/291/api/json",
+            auth=("jenkins", "foo"),
+            timeout=jenkins.config.requests_timeout,
         )
         mock_requests_get.return_value.json.assert_called_once_with()
 
@@ -148,6 +152,7 @@ class ScheduleBuildTestCase(TestCase):
         mock_post.assert_called_once_with(
             "https://jenkins.invalid/job/babette/build",
             auth=("admin", "super secret key"),
+            timeout=jenkins.config.requests_timeout,
         )
 
     def test_should_raise_on_http_error(self):

@@ -29,6 +29,7 @@ class JenkinsConfig:
     api_key: Optional[str] = None
     artifact_name: str = "build.tar.gz"
     download_chunk_size: int = JENKINS_DEFAULT_CHUNK_SIZE
+    requests_timeout: int = 10  # seconds
 
     @classmethod
     def from_settings(cls: Type[_T], settings: Settings) -> _T:
@@ -85,7 +86,12 @@ class Jenkins:
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.artifact_url(build)
-        response = requests.get(str(url), auth=self.config.auth(), stream=True)
+        response = requests.get(
+            str(url),
+            auth=self.config.auth(),
+            stream=True,
+            timeout=self.config.requests_timeout,
+        )
         response.raise_for_status()
 
         return response.iter_content(
@@ -95,7 +101,9 @@ class Jenkins:
     def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
         url = self.logs_url(build)
-        response = requests.get(str(url), auth=self.config.auth())
+        response = requests.get(
+            str(url), auth=self.config.auth(), timeout=self.config.requests_timeout
+        )
         response.raise_for_status()
 
         return response.text
@@ -103,7 +111,9 @@ class Jenkins:
     def get_metadata(self, build: Build) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url(build) / "api" / "json"
-        response = requests.get(str(url), auth=self.config.auth())
+        response = requests.get(
+            str(url), auth=self.config.auth(), timeout=self.config.requests_timeout
+        )
         response.raise_for_status()
 
         return JenkinsMetadata.from_dict(  # type: ignore  # pylint: disable=no-member
@@ -119,7 +129,9 @@ class Jenkins:
     def schedule_build(self, machine: str) -> str:
         """Schedule a build on Jenkins"""
         url = self.config.base_url / "job" / machine / "build"
-        response = requests.post(str(url), auth=self.config.auth())
+        response = requests.post(
+            str(url), auth=self.config.auth(), timeout=self.config.requests_timeout
+        )
         response.raise_for_status()
 
         # All that Jenkins gives us is the location of the queued request.  Let's return
