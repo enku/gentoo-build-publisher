@@ -11,7 +11,7 @@ if __name__ == "__main__":
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
     django.setup()
 
-    tests = sys.argv[1:] or ["tests"]
+    tests = sys.argv[1:] or ["."]
 
     TestRunner = get_runner(settings)
     test_runner = TestRunner(failfast=True, verbosity=2)
