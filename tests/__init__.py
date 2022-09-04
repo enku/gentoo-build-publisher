@@ -8,10 +8,13 @@ import os
 import tarfile
 import tempfile
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from functools import wraps
 from pathlib import Path
-from typing import Union
+from typing import Any, Callable, Union
+from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
 import django.test
@@ -75,6 +78,20 @@ class TestCase(django.test.TestCase):
             os.utime(path, times=(atime, mtime.timestamp()))
 
         return path
+
+
+def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:
+    def dec(func: Callable):
+        @wraps(func)
+        def wrapper(self: UnitTestTestCase, *args: Any, **kwargs: Any) -> None:
+            for list_of_args in lists_of_args:
+                name = ",".join(str(i) for i in list_of_args)
+                with self.subTest(name):
+                    func(self, *args, *list_of_args, **kwargs)
+
+        return wrapper
+
+    return dec
 
 
 def test_data(filename):
