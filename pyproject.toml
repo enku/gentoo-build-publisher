@@ -32,7 +32,7 @@ homepage = "https://github.com/enku/gentoo-build-publisher"
 repository = "https://github.com/enku/gentoo-build-publisher"
 
 [project.entry-points."gentoo_build_publisher.records"]
-django = "gentoo_build_publisher.models:RecordDB"
+django = "gentoo_build_publisher.models:DjangoDB"
 
 [project.optional-dependencies]
 [build-system]

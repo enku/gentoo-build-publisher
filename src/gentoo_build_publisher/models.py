@@ -153,7 +153,7 @@ class BuildLog(models.Model):
             cls.objects.filter(build_model=build_model).delete()
 
 
-class RecordDB:
+class DjangoDB:
     """Implements the RecordDB Protocol"""
 
     @staticmethod

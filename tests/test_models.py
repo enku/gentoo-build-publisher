@@ -6,8 +6,8 @@ from gentoo_build_publisher.models import (
     BuildLog,
     BuildModel,
     BuildNote,
+    DjangoDB,
     KeptBuild,
-    RecordDB,
 )
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build
@@ -95,11 +95,11 @@ class BuildLogTestCase(TestCase):
 
 
 # pylint: disable=too-many-public-methods
-class RecordDBTestCase(TestCase):
+class DjangoDBTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.records = RecordDB()
+        self.records = DjangoDB()
         self.build_model = BuildModelFactory.create(
             submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.timezone.utc),
             completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),

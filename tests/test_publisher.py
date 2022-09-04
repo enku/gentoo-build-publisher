@@ -7,7 +7,7 @@ from unittest import mock
 from yarl import URL
 
 import gentoo_build_publisher.publisher
-from gentoo_build_publisher.models import BuildModel, RecordDB
+from gentoo_build_publisher.models import BuildModel, DjangoDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Content
@@ -31,7 +31,7 @@ class BuildPublisherTestCase(TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
-        self.assertIsInstance(publisher.records, RecordDB)
+        self.assertIsInstance(publisher.records, DjangoDB)
 
     def test_publish(self):
         """.publish should publish the build artifact"""
@@ -463,4 +463,4 @@ class GetPublisherTestCase(TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_get_publisher")
-        self.assertIsInstance(publisher.records, RecordDB)
+        self.assertIsInstance(publisher.records, DjangoDB)

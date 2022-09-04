@@ -6,8 +6,13 @@ from pathlib import Path
 
 from django.test import TestCase
 
-from gentoo_build_publisher.models import RecordDB
-from gentoo_build_publisher.records import BuildRecord, RecordNotFound, Records
+from gentoo_build_publisher.models import DjangoDB
+from gentoo_build_publisher.records import (
+    BuildRecord,
+    RecordDB,
+    RecordNotFound,
+    Records,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
 
@@ -37,7 +42,7 @@ class RecordsTestCase(TestCase):
         )
 
         recorddb = Records.from_settings(settings)
-        self.assertIsInstance(recorddb, RecordDB)
+        self.assertIsInstance(recorddb, DjangoDB)
 
     def test_unknown_records_backend(self):
         settings = Settings(

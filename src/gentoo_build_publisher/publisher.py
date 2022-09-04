@@ -6,8 +6,7 @@ when combined, represent the the build:
     * Jenkins: the connection to the Jenkins instance as well as the artifacts it hosts
     * Storage: the file system storage responsible where artifacts are pulled and
       extracted and eventually hosted by GBP.
-    * RecordDB: The (relational) database that holds various metadata not held in
-      Storage
+    * RecordDB: The database that holds various metadata not held in Storage
 
 The above all classes (or Protocols) that operate independently.  There exists a
 facade for these subsystems. This is the BuildPublisher.  For example, when a build is
