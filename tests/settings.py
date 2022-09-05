@@ -1,8 +1,6 @@
 """Settings for tests"""
 from pathlib import Path
 
-from celery import Celery
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "test"
@@ -54,6 +52,4 @@ TEMPLATES = [
 ]
 
 
-app = Celery("gentoo_build_publisher")
-app.config_from_object("django.conf:settings", namespace="CELERY")
 CELERY_TASK_ALWAYS_EAGER = True
