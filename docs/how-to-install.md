@@ -91,17 +91,6 @@ emerge --verbose --ask --noreplace \
     www-servers/nginx
 ```
 
-### Optional packages
-
-Optional: install [pigz](https://zlib.net/pigz/) for a speedier gzip on
-multi-core systems.
-
-```sh
-mkdir -p /etc/portage/package.use
-echo app-arch/pigz symlink >> /etc/portage/package.use/gbp
-emerge --verbose --ask app-arch/pigz
-```
-
 ## Configure Jenkins
 
 Give the Jenkins user subordinate uids and gids for using rootless containers.
