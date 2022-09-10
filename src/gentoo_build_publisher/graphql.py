@@ -170,12 +170,12 @@ def resolve_query_diff(
     left_build = Build(left)
 
     if not publisher.records.exists(left_build):
-        return None
+        raise GraphQLError(f"Build does not exist: {left}")
 
     right_build = Build(right)
 
     if not publisher.records.exists(right_build):
-        return None
+        raise GraphQLError(f"Build does not exist: {right}")
 
     items = publisher.diff_binpkgs(left_build, right_build)
 

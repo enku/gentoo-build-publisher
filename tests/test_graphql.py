@@ -340,7 +340,7 @@ class DiffQueryTestCase(TestCase):
         }
         assert_data(self, result, expected)
 
-    def test_should_return_none_when_left_does_not_exist(self):
+    def test_should_return_error_when_left_does_not_exist(self):
         query = """query Diff($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 left {
@@ -358,10 +358,13 @@ class DiffQueryTestCase(TestCase):
         variables = {"left": "bogus.1", "right": self.right.id}
         result = execute(query, variables=variables)
 
-        # Then None is returned
-        assert_data(self, result, {"diff": None})
+        # Then an error is returned
+        self.assertEqual(result["data"]["diff"], None)
+        self.assertEqual(
+            result["errors"][0]["message"], "Build does not exist: bogus.1"
+        )
 
-    def test_should_return_none_when_right_does_not_exist(self):
+    def test_should_return_error_when_right_does_not_exist(self):
         query = """query ($left: ID!, $right: ID!) {
             diff(left: $left, right: $right) {
                 left {
@@ -379,8 +382,11 @@ class DiffQueryTestCase(TestCase):
         variables = {"left": self.left.id, "right": "bogus.1"}
         result = execute(query, variables=variables)
 
-        # Then None is returned
-        assert_data(self, result, {"diff": None})
+        # Then an error is returned
+        self.assertEqual(result["data"]["diff"], None)
+        self.assertEqual(
+            result["errors"][0]["message"], "Build does not exist: bogus.1"
+        )
 
 
 class MachinesQueryTestCase(TestCase):
