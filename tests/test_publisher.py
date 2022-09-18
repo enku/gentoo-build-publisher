@@ -11,6 +11,7 @@ from gentoo_build_publisher.models import BuildModel, DjangoDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Content
+from gentoo_build_publisher.utils import utctime
 
 from . import TestCase
 from .factories import BuildFactory
@@ -66,15 +67,15 @@ class BuildPublisherTestCase(TestCase):
 
     def test_pull_updates_build_models_completed_field(self):
         """Should update the completed field with the current timestamp"""
-        now = datetime.datetime.now()
+        now = utctime()
         build = BuildFactory()
 
-        with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_now:
+        with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_now:
             mock_now.return_value = now
             self.publisher.pull(build)
 
         record = self.publisher.record(build)
-        self.assertEqual(record.completed, now.replace(tzinfo=utc))
+        self.assertEqual(record.completed, now)
 
     def test_pull_updates_build_models_built_field(self):
         build = BuildFactory()

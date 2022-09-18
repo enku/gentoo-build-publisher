@@ -1,5 +1,6 @@
 """I heard you like tests..."""
 # pylint: disable=missing-docstring
+import datetime as dt
 import tarfile
 from unittest import TestCase, mock
 
@@ -16,10 +17,11 @@ class ArtifactBuilderTestCase(TestCase):
         self.builder = ArtifactBuilder(initial_packages=[])
 
     def test_timestamp(self):
-        with mock.patch("tests.time.time", return_value=1645750289.719158):
+        with mock.patch("tests.dt.datetime") as mock_datetime:
+            mock_datetime.utcnow.return_value = now = dt.datetime(2022, 9, 17, 18, 9)
             builder = ArtifactBuilder()
 
-        self.assertEqual(builder.timestamp, 1645750289719)
+        self.assertEqual(builder.timestamp, int(now.timestamp()))
 
     def test_advance(self):
         timer = self.builder.timer

@@ -8,7 +8,7 @@ from django.test.client import Client
 
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
-from gentoo_build_publisher.utils import get_version
+from gentoo_build_publisher.utils import get_version, utctime
 
 from . import PACKAGE_INDEX, TestCase
 from .factories import BuildFactory, BuildModelFactory
@@ -40,8 +40,8 @@ class BuildQueryTestCase(TestCase):
         self.artifact_builder.build(build, "x11-wm/mutter-41.3")
         self.artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
 
-        with mock.patch("gentoo_build_publisher.publisher.utcnow") as mock_utcnow:
-            mock_utcnow.return_value = dt.datetime(2022, 3, 1, 6, 28, 44)
+        with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_utctime:
+            mock_utctime.return_value = utctime(dt.datetime(2022, 3, 1, 6, 28, 44))
             self.publisher.pull(build)
 
         self.publisher.tag(build, "prod")
@@ -73,7 +73,7 @@ class BuildQueryTestCase(TestCase):
                 "published": False,
                 "tags": ["prod"],
                 "logs": "foo\n",
-                "built": "2022-03-01T06:11:34+00:00",
+                "built": "2022-03-01T06:28:44+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
                     {"cpv": "acct-group/sgx-0"},

@@ -1,7 +1,7 @@
 """Tests for the gentoo_build_publisher.utils module"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from gentoo_build_publisher import utils
 
@@ -98,3 +98,22 @@ class CheckTagNameTestCase(TestCase):
     def test_tag_name_cannot_have_non_ascii_chars(self):
         with self.assertRaises(utils.InvalidTagName):
             utils.check_tag_name("pròd")
+
+
+class UtcTime(TestCase):
+    """Tests for utils.utctime"""
+
+    def test_should_give_the_time_with_utc_timezone(self):
+        time = dt.datetime(2022, 9, 17, 17, 36)
+
+        result = utils.utctime(time)
+
+        self.assertEqual(result, time.replace(tzinfo=dt.timezone.utc))
+
+    @mock.patch("gentoo_build_publisher.utils.dt.datetime")
+    def test_time_defaults_to_now(self, datetime):
+        datetime.utcnow.return_value = utcnow = dt.datetime(2022, 9, 17, 17, 36)
+
+        result = utils.utctime()
+
+        self.assertEqual(result, utcnow.replace(tzinfo=dt.timezone.utc))

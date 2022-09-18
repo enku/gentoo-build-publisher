@@ -119,3 +119,11 @@ def check_tag_name(tag_name: str) -> None:
     for char in tag_name[1:]:
         if char not in VALID_TAG_CHARS:
             raise InvalidTagName(tag_name)
+
+
+def utctime(time: dt.datetime | None = None) -> dt.datetime:
+    """Return time but with the timezone being UTC"""
+    if time is None:
+        time = dt.datetime.utcnow()
+
+    return time.replace(tzinfo=dt.timezone.utc)

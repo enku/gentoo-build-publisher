@@ -21,7 +21,7 @@ import logging
 import math
 import tempfile
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import datetime
 from difflib import Differ
 from functools import cached_property
 
@@ -46,9 +46,9 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
     Status,
 )
+from gentoo_build_publisher.utils import utctime
 
 logger = logging.getLogger(__name__)
-utcnow = datetime.utcnow
 
 
 class PublisherDispatcher(Dispatcher):
@@ -129,9 +129,7 @@ class BuildPublisher:
             return False
 
         record = self.record(build)
-        self.records.save(
-            record, submitted=record.submitted or utcnow().replace(tzinfo=timezone.utc)
-        )
+        self.records.save(record, submitted=record.submitted or utctime())
         previous = self.records.previous(record)
 
         logger.info("Pulling build: %s", build)
@@ -159,15 +157,10 @@ class BuildPublisher:
         packages: list[Package] | None = None
         gbp_metadata: GBPMetadata | None = None
         jenkins_metadata = self.jenkins.get_metadata(record)
+        built = utctime(datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000))
+        logs = self.jenkins.get_logs(record)
 
-        self.records.save(
-            record,
-            logs=self.jenkins.get_logs(record),
-            completed=utcnow().replace(tzinfo=timezone.utc),
-            built=datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000).replace(
-                tzinfo=timezone.utc
-            ),
-        )
+        self.records.save(record, logs=logs, completed=utctime(), built=built)
 
         try:
             packages = self.storage.get_packages(record)

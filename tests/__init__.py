@@ -1,5 +1,6 @@
 """Tests for gentoo build publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
+import datetime as dt
 import io
 import json
 import logging
@@ -7,7 +8,6 @@ import math
 import os
 import tarfile
 import tempfile
-import time
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -154,7 +154,7 @@ class ArtifactBuilder:
 
     def __init__(self, initial_packages=None, timestamp=None):
         if timestamp is None:
-            self.timestamp = int(time.time() * 1000)
+            self.timestamp = int(dt.datetime.utcnow().timestamp() * 1000)
         else:
             self.timestamp = timestamp
 
@@ -297,7 +297,7 @@ class ArtifactBuilder:
         tar_info.mode = 0o0644
 
         if mtime is None:
-            tar_info.mtime = int(time.time())
+            tar_info.mtime = int(dt.datetime.utcnow().timestamp())
         else:
             tar_info.mtime = mtime
 
