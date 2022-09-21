@@ -10,8 +10,8 @@ from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version, utctime
 
-from . import PACKAGE_INDEX, TestCase
-from .factories import BuildFactory, BuildModelFactory
+from . import TestCase
+from .factories import PACKAGE_INDEX, BuildFactory, BuildModelFactory
 
 
 def execute(query, variables=None):

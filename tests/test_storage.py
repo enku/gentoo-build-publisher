@@ -18,8 +18,8 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import PACKAGE_INDEX, MockJenkins, TestCase
-from .factories import BuildFactory
+from . import MockJenkins, TestCase
+from .factories import PACKAGE_INDEX, BuildFactory
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"

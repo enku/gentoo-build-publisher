@@ -6,20 +6,19 @@ from unittest import TestCase, mock
 
 from gentoo_build_publisher.types import Content, Package
 
-from . import ArtifactBuilder, BuildInfo, PackageStatus
-from .factories import BuildFactory
+from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
 
 
-class ArtifactBuilderTestCase(TestCase):
+class ArtifactFactoryTestCase(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.builder = ArtifactBuilder(initial_packages=[])
+        self.builder = ArtifactFactory(initial_packages=[])
 
     def test_timestamp(self):
         with mock.patch("tests.dt.datetime") as mock_datetime:
             mock_datetime.utcnow.return_value = now = dt.datetime(2022, 9, 17, 18, 9)
-            builder = ArtifactBuilder()
+            builder = ArtifactFactory()
 
         self.assertEqual(builder.timestamp, int(now.timestamp()))
 
@@ -53,7 +52,7 @@ class ArtifactBuilderTestCase(TestCase):
 
     def test_remove_should_remove_package(self):
         build = BuildFactory()
-        builder = ArtifactBuilder()
+        builder = ArtifactFactory()
         package = builder.get_packages_for_build(build)[0]
 
         builder.remove(build, package)
@@ -78,7 +77,7 @@ class ArtifactBuilderTestCase(TestCase):
 
     def test_downloading_artifact_should_advance_timestamp(self):
         build = BuildFactory()
-        builder = ArtifactBuilder(timestamp=0)
+        builder = ArtifactFactory(timestamp=0)
         self.assertEqual(builder.timestamp, 0)
 
         builder.get_artifact(build)
@@ -120,7 +119,7 @@ class ArtifactBuilderTestCase(TestCase):
         self.assertEqual(expected, build_info)
 
     def test_get_packages_for_build(self):
-        builder = ArtifactBuilder()
+        builder = ArtifactFactory()
 
         # Do build1
         build1 = BuildFactory()
