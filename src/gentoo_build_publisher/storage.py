@@ -117,6 +117,11 @@ class Storage:
     def _extract(
         self, build: Build, tar_file: tarfile.TarFile, previous: Build | None
     ) -> None:
+        """Extract the given TarFile into the storage system as the given Build.
+
+        If previous is given, use its extracted files and, when possible, create hard
+        links from previous build's files to build's when they are the same file.
+        """
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
