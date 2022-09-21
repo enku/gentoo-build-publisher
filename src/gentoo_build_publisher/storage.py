@@ -59,6 +59,10 @@ class Storage:
         self.tmpdir = self.root / "tmp"
         self.tmpdir.mkdir(parents=True, exist_ok=True)
 
+        for content in Content:
+            content_path = self.root / content.value
+            content_path.mkdir(exist_ok=True)
+
     def __repr__(self) -> str:
         cls = type(self)
 
