@@ -40,17 +40,21 @@ class Command(BaseCommand):
                 self.stderr.write(f"Path missing for {record}: {missing}")
                 errors += 1
 
-        # Pass 2: check for orphans
+        # Pass 2: check for orphans and dangling tags
         for content in Content:
             directory = publisher.storage.root / content.value
 
-            for path in directory.glob("*.*"):
-                build = Build(path.name)
+            for path in directory.iterdir():
+                if "." in path.name:
+                    build = Build(path.name)
 
-                try:
-                    publisher.records.get(build)
-                except RecordNotFound:
-                    self.stderr.write(f"Record missing for {path}")
+                    try:
+                        publisher.records.get(build)
+                    except RecordNotFound:
+                        self.stderr.write(f"Record missing for {path}")
+                        errors += 1
+                elif path.is_symlink() and not path.exists():
+                    self.stderr.write(f"Broken tag: {path}")
                     errors += 1
 
         if errors:
