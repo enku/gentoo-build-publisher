@@ -3,21 +3,30 @@
 import io
 import itertools
 import shutil
+from argparse import Namespace
 from pathlib import Path
+from unittest import mock
 
-from django.core.management import call_command
-from django.core.management.base import CommandError
+from gbpcli import GBP
+from rich.console import Console
 
-from gentoo_build_publisher.management.commands.gbpchk import Command as GbpChk
+from gentoo_build_publisher import check
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
 from .factories import BuildFactory
 
+mock_stderr = mock.patch(
+    "gentoo_build_publisher.check.sys.stderr", new_callable=io.StringIO
+)
+
 
 class GBPChkTestCase(TestCase):
-    def call_command(self, *args, **kwargs):
-        return (call_command("gbpchk", *args, **kwargs),)
+    def setUp(self):
+        super().setUp()
+
+        self.console = mock.MagicMock(spec=Console)
+        self.gbp = GBP("http://gbp.invalid/")
 
     def build_with_missing_content(self, content):
         build = BuildFactory()
@@ -45,43 +54,44 @@ class GBPChkTestCase(TestCase):
         return build
 
     def test_empty_system(self):
-        self.call_command()
+        check.handler(Namespace(), self.gbp, self.console)
 
     def test_uncompleted_builds_are_skipped(self):
         build = BuildFactory()
         record = self.publisher.record(build)
         self.publisher.records.save(record, completed=None)
 
-        self.call_command()
+        exit_status = check.handler(Namespace(), self.gbp, self.console)
 
-    def test_check_build_content(self):
+        self.assertEqual(exit_status, 0)
+
+    @mock_stderr
+    def test_check_build_content(self, stderr):
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.build_with_missing_content(Content.BINPKGS)
 
-        stderr = io.StringIO()
-        command = GbpChk(stderr=stderr)
-        errors = command.check_build_content(self.publisher)
+        errors = check.check_build_content(self.publisher)
 
         self.assertEqual(errors, 1)
         self.assertRegex(stderr.getvalue(), f"^Path missing for {bad_build}:")
 
-    def test_check_orphans(self):
+    @mock_stderr
+    def test_check_orphans(self, stderr):
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.orphan_build(Content.BINPKGS)
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
-        stderr = io.StringIO()
-        command = GbpChk(stderr=stderr)
-        errors = command.check_orphans(self.publisher)
+        errors = check.check_orphans(self.publisher)
 
         self.assertEqual(errors, 1)
         self.assertRegex(stderr.getvalue(), f"^Record missing for {binpkg_path}")
 
-    def test_check_orphans_dangling_symlinks(self):
+    @mock_stderr
+    def test_check_orphans_dangling_symlinks(self, stderr):
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -93,9 +103,7 @@ class GBPChkTestCase(TestCase):
         # Delete the build. Symlinks are now broken
         self.publisher.delete(build)
 
-        stderr = io.StringIO()
-        command = GbpChk(stderr=stderr)
-        errors = command.check_orphans(self.publisher)
+        errors = check.check_orphans(self.publisher)
 
         self.assertEqual(errors, link_count)
 
@@ -103,7 +111,8 @@ class GBPChkTestCase(TestCase):
         for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
-    def test_check_inconsistent_tags(self):
+    @mock_stderr
+    def test_check_inconsistent_tags(self, stderr):
         # More than one build is represented by a tag
         good_build = BuildFactory()
         self.publisher.pull(good_build)
@@ -121,14 +130,13 @@ class GBPChkTestCase(TestCase):
             link = item_path.parent / "larry"
             link.symlink_to(item_path.name)
 
-        stderr = io.StringIO()
-        command = GbpChk(stderr=stderr)
-        errors = command.check_inconsistent_tags(self.publisher)
+        errors = check.check_inconsistent_tags(self.publisher)
 
         self.assertEqual(errors, 1)
         self.assertRegex(stderr.getvalue(), '^Tag "larry" has multiple targets: ')
 
-    def test_error_count_in_exit_status(self):
+    @mock_stderr
+    def test_error_count_in_exit_status(self, _stderr):
         for _ in range(2):
             good_build = BuildFactory()
             self.publisher.pull(good_build)
@@ -139,9 +147,6 @@ class GBPChkTestCase(TestCase):
         for _ in range(2):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
-        with self.assertRaises(CommandError) as context:
-            stderr = io.StringIO()
-            self.call_command(stderr=stderr)
+        exit_status = check.handler(Namespace(), self.gbp, self.console)
 
-        [exit_status] = context.exception.args
         self.assertEqual(exit_status, 5)
