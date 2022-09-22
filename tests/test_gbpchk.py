@@ -1,12 +1,14 @@
 """Tests for the gbpck management command"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import io
+import itertools
 import shutil
 from pathlib import Path
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from gentoo_build_publisher.management.commands.gbpchk import Command as GbpChk
 from gentoo_build_publisher.types import Content
 
 from . import TestCase
@@ -52,36 +54,34 @@ class GBPChkTestCase(TestCase):
 
         self.call_command()
 
-    def test_build_missing_content(self):
+    def test_check_build_content(self):
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.build_with_missing_content(Content.BINPKGS)
 
-        with self.assertRaises(CommandError) as context:
-            stderr = io.StringIO()
-            self.call_command(stderr=stderr)
+        stderr = io.StringIO()
+        command = GbpChk(stderr=stderr)
+        errors = command.check_build_content(self.publisher)
 
-        [exit_status] = context.exception.args
-        self.assertEqual(exit_status, 1)
+        self.assertEqual(errors, 1)
         self.assertRegex(stderr.getvalue(), f"^Path missing for {bad_build}:")
 
-    def test_orphan_builds(self):
+    def test_check_orphans(self):
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.orphan_build(Content.BINPKGS)
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
-        with self.assertRaises(CommandError) as context:
-            stderr = io.StringIO()
-            self.call_command(stderr=stderr)
+        stderr = io.StringIO()
+        command = GbpChk(stderr=stderr)
+        errors = command.check_orphans(self.publisher)
 
-        [exit_status] = context.exception.args
-        self.assertEqual(exit_status, 1)
+        self.assertEqual(errors, 1)
         self.assertRegex(stderr.getvalue(), f"^Record missing for {binpkg_path}")
 
-    def test_dangling_symlinks(self):
+    def test_check_orphans_dangling_symlinks(self):
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -93,16 +93,40 @@ class GBPChkTestCase(TestCase):
         # Delete the build. Symlinks are now broken
         self.publisher.delete(build)
 
-        with self.assertRaises(CommandError) as context:
-            stderr = io.StringIO()
-            self.call_command(stderr=stderr)
+        stderr = io.StringIO()
+        command = GbpChk(stderr=stderr)
+        errors = command.check_orphans(self.publisher)
 
-        [exit_status] = context.exception.args
-        self.assertEqual(exit_status, link_count)
+        self.assertEqual(errors, link_count)
 
         lines = stderr.getvalue().split("\n")
-        for line in lines[:link_count]:
+        for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
+
+    def test_check_inconsistent_tags(self):
+        # More than one build is represented by a tag
+        good_build = BuildFactory()
+        self.publisher.pull(good_build)
+
+        build1 = BuildFactory(machine="larry")
+        self.publisher.pull(build1)
+
+        build2 = BuildFactory(machine="larry")
+        self.publisher.pull(build2)
+
+        self.publisher.tag(build2, "good_tag")
+
+        for item, build in zip(Content, itertools.cycle([build1, build2])):
+            item_path = self.publisher.storage.get_path(build, item)
+            link = item_path.parent / "larry"
+            link.symlink_to(item_path.name)
+
+        stderr = io.StringIO()
+        command = GbpChk(stderr=stderr)
+        errors = command.check_inconsistent_tags(self.publisher)
+
+        self.assertEqual(errors, 1)
+        self.assertRegex(stderr.getvalue(), '^Tag "larry" has multiple targets: ')
 
     def test_error_count_in_exit_status(self):
         for _ in range(2):
