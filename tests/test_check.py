@@ -136,7 +136,7 @@ class GBPChkTestCase(TestCase):
         self.assertRegex(stderr.getvalue(), '^Tag "larry" has multiple targets: ')
 
     @mock_stderr
-    def test_error_count_in_exit_status(self, _stderr):
+    def test_error_count_in_exit_status(self, stderr):
         for _ in range(2):
             good_build = BuildFactory()
             self.publisher.pull(good_build)
@@ -148,5 +148,8 @@ class GBPChkTestCase(TestCase):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
         exit_status = check.handler(Namespace(), self.gbp, self.console)
-
         self.assertEqual(exit_status, 5)
+
+        stderr_lines = stderr.getvalue().split("\n")
+        last_error_line = stderr_lines[-2]
+        self.assertEqual(last_error_line, "gbp check: Errors were encountered")

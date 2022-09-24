@@ -30,7 +30,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, _console: Console) -> int:
     )
 
     if errors:
-        print("No builds exist for the given machine", file=sys.stderr)
+        print("gbp check: Errors were encountered", file=sys.stderr)
 
     return errors
 
