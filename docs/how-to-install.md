@@ -167,7 +167,9 @@ Install the Python packages in the `gbp` user's home directory.
 cd /home/gbp
 sudo -u gbp -H git clone https://github.com/enku/gentoo-build-publisher.git
 sudo -u gbp -H python3.10 -m venv .
-sudo -u gbp -H ./bin/pip install -e ./gentoo-build-publisher gunicorn psycopg2 shiv
+sudo -u gbp -H ./bin/pip install -e ./gentoo-build-publisher gunicorn psycopg2
+mkdir -p /usr/local/bin
+ln -s /home/gbp/bin/gbp /usr/local/bin/gbp
 ```
 
 ### Create the Django project
@@ -259,18 +261,6 @@ files exist for these in the gentoo-build-publisher repo.
 mkdir -p /usr/local/lib/systemd/system
 cp /home/gbp/gentoo-build-publisher/contrib/deployment/*.service /usr/local/lib/systemd/system
 systemctl daemon-reload
-```
-
-## Install the gbp CLI
-
-> **_NOTE:_**  This is a temporary method until
-> [`gbpcli`](https://github.com/enku/gbpcli) is packaged.
-
-Use shiv to create a `gbp` "binary".
-
-```sh
-mkdir -p /usr/local/bin
-/home/gbp/bin/shiv -o /usr/local/bin/gbp -e gbpcli:main gbpcli
 ```
 
 ## Configure nginx
