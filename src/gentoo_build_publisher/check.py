@@ -4,6 +4,7 @@ import itertools
 import sys
 from pathlib import Path
 
+import django
 from gbpcli import GBP
 from rich.console import Console
 
@@ -19,6 +20,7 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
 
 def handler(args: argparse.Namespace, _gbp: GBP, _console: Console) -> int:
     """Handle the check command"""
+    django.setup()
     publisher = get_publisher()
 
     errors = sum(
