@@ -19,6 +19,7 @@ from gentoo_build_publisher.types import TAG_SYM, Build, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
+NOT_CACHED = object()
 
 gradient = Color.gradient
 
@@ -92,9 +93,9 @@ def get_packages(build: Build) -> list[Package]:
     publisher = get_publisher()
     cache_key = f"packages-{build}"
 
-    cached = cache.get(cache_key, None)
+    cached = cache.get(cache_key, NOT_CACHED)
 
-    if cached is not None:
+    if cached is not NOT_CACHED:
         packages: list[Package] = cached
     else:
         try:
@@ -105,6 +106,26 @@ def get_packages(build: Build) -> list[Package]:
         cache.set(cache_key, packages)
 
     return packages
+
+
+def get_metadata(build: Build) -> Optional[GBPMetadata]:
+    """Return the GBPMetadata for a package.
+
+    This call may be cashed for performance.
+    """
+    cache_key = f"metadata-{build}"
+
+    cached = cache.get(cache_key, NOT_CACHED)
+
+    if cached is not NOT_CACHED:
+        metadata: GBPMetadata | None = cached
+        return metadata
+
+    publisher = get_publisher()
+    try:
+        return publisher.storage.get_metadata(build)
+    except LookupError:
+        return None
 
 
 def bot_to_list(
@@ -148,13 +169,10 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]) -> BuildSum
 
         latest_builds.append(latest_build)
         build_id = latest_build.id
-        try:
-            build_packages[build_id] = [
-                i.cpv
-                for i in publisher.storage.get_metadata(latest_build).packages.built
-            ]
-        except LookupError:
-            build_packages[build_id] = []
+        metadata = get_metadata(latest_build)
+        build_packages[build_id] = (
+            [i.cpv for i in metadata.packages.built] if metadata is not None else []
+        )
 
         if lapsed(record.completed, now) < 86400:
             built_recently.append(latest_build)
@@ -164,13 +182,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]) -> BuildSum
 
 def package_metadata(record: BuildRecord, context: DashboardContext) -> None:
     """Update `context` with `package_count` and `total_package_size`"""
-    metadata: Optional[GBPMetadata]
-    publisher = get_publisher()
-
-    try:
-        metadata = publisher.storage.get_metadata(record)
-    except LookupError:
-        metadata = None
+    metadata = get_metadata(record)
 
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total

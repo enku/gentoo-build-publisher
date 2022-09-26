@@ -10,6 +10,7 @@ from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.views import (
     get_build_summary,
+    get_metadata,
     get_packages,
     package_metadata,
 )
@@ -267,3 +268,23 @@ class BinReposDotConfTestCase(TestCase):
         self.assertEqual(response.headers["Content-Type"], "text/plain")
         self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
+
+
+class GetMetadataTestCase(TestCase):
+    """This is just cached Storage.get_metadata()"""
+
+    def test(self):
+        build = BuildFactory()
+        self.publisher.pull(build)
+
+        metadata = get_metadata(build)
+
+        self.assertEqual(metadata, self.publisher.storage.get_metadata(build))
+
+    def test_when_cached_return_cache(self):
+        build = BuildFactory()
+        cache.set(f"metadata-{build}", [1, 2, 3])  # not real metadata
+
+        metadata = get_metadata(build)
+
+        self.assertEqual(metadata, [1, 2, 3])
