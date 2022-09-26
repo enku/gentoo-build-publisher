@@ -123,7 +123,12 @@ def get_metadata(build: Build) -> Optional[GBPMetadata]:
 
     publisher = get_publisher()
     try:
-        return publisher.storage.get_metadata(build)
+        metadata = publisher.storage.get_metadata(build)
+
+        if metadata:
+            cache.set(cache_key, metadata)
+
+        return metadata
     except LookupError:
         return None
 
