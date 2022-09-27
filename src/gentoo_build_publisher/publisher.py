@@ -23,11 +23,10 @@ import tempfile
 from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
-from functools import cached_property
+from functools import cached_property, partial
 
 from pydispatch import Dispatcher
 
-from gentoo_build_publisher import io
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.records import (
@@ -143,7 +142,7 @@ class BuildPublisher:
             logger.info("Downloaded build: %s", build)
             temp.seek(0)
 
-            byte_stream = io.read_chunks(temp, chunk_size)
+            byte_stream = iter(partial(temp.read, chunk_size), b"")
             self.storage.extract_artifact(build, byte_stream, previous)
 
         logging.info("Pulled build %s", build)
