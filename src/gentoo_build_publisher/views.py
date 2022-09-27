@@ -19,7 +19,7 @@ from gentoo_build_publisher.types import TAG_SYM, Build, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
-NOT_CACHED = object()
+_NOT_FOUND = object()
 
 gradient = Color.gradient
 
@@ -90,20 +90,19 @@ def get_packages(build: Build) -> list[Package]:
 
     This call may be cached for performance.
     """
-    publisher = get_publisher()
     cache_key = f"packages-{build}"
+    cached = cache.get(cache_key, _NOT_FOUND)
 
-    cached = cache.get(cache_key, NOT_CACHED)
-
-    if cached is not NOT_CACHED:
-        packages: list[Package] = cached
-    else:
+    if cached is _NOT_FOUND:
+        publisher = get_publisher()
         try:
             packages = publisher.get_packages(build)
         except LookupError:
             packages = []
 
         cache.set(cache_key, packages)
+    else:
+        packages = cached
 
     return packages
 
@@ -114,23 +113,22 @@ def get_metadata(build: Build) -> Optional[GBPMetadata]:
     This call may be cashed for performance.
     """
     cache_key = f"metadata-{build}"
+    cached = cache.get(cache_key, _NOT_FOUND)
 
-    cached = cache.get(cache_key, NOT_CACHED)
+    if cached is _NOT_FOUND:
+        publisher = get_publisher()
+        try:
+            metadata = publisher.storage.get_metadata(build)
 
-    if cached is not NOT_CACHED:
-        metadata: GBPMetadata | None = cached
-        return metadata
+            if metadata:
+                cache.set(cache_key, metadata)
 
-    publisher = get_publisher()
-    try:
-        metadata = publisher.storage.get_metadata(build)
+            return metadata
+        except LookupError:
+            return None
 
-        if metadata:
-            cache.set(cache_key, metadata)
-
-        return metadata
-    except LookupError:
-        return None
+    metadata = cached
+    return metadata
 
 
 def bot_to_list(
