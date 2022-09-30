@@ -50,7 +50,7 @@ class TestCase(django.test.TestCase):
         self.addCleanup(patch.stop)
         patch.start()
 
-        self.publisher = BuildPublisherFactory()
+        self.publisher: publisher.BuildPublisher = BuildPublisherFactory()
         patch = mock.patch.object(publisher, "_PUBLISHER", new=self.publisher)
         self.addCleanup(patch.stop)
         patch.start()
