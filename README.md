@@ -35,14 +35,6 @@ Jenkins it is a gateway to publish builds. For my real machines it the source
 for repo syncs and binpkgs.
 
 
-## Table Of Contents
-
-- [Procedure](#procedure)
-- [Software](#software)
-- [Command Line Interface](#cli)
-- [Articles](#articles)
-
-
 ## Procedure
 
 * Build a Gentoo Build Publisher instance. Refer to the [Install
