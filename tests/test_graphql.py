@@ -489,6 +489,30 @@ class MachinesQueryTestCase(TestCase):
             {"machines": [{"machine": "babette"}, {"machine": "lighthouse"}]},
         )
 
+    def test_latest_build_is_published(self):
+        build = BuildFactory.create()
+        self.publisher.pull(build)
+
+        query = """
+        {
+            machines {
+                machine
+                buildCount
+                latestBuild {
+                    id
+                    published
+                }
+            }
+        }
+        """
+        result = execute(query)
+
+        self.assertFalse(result["data"]["machines"][0]["latestBuild"]["published"])
+
+        self.publisher.publish(build)
+        result = execute(query)
+        self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
+
 
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""

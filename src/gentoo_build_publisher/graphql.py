@@ -122,11 +122,35 @@ class BuildType:
         return self._record
 
 
+class MachineInfoProxy:  # pylint: disable=too-few-public-methods
+    """A wrapper around MachineInfo
+
+    We mostly need this to ensure that MachineInfo's Build objects get converted to
+    BuildType objects.
+    """
+
+    def __init__(self, machine_info: MachineInfo):
+        self.machine_info = machine_info
+
+    def __getattr__(self, name: str) -> Any:
+        if name in ["latest_build", "published_build"]:
+            value = getattr(self.machine_info, name)
+            return BuildType(value) if value else None
+
+        if name == "builds":
+            value = getattr(self.machine_info, name)
+            return [BuildType(i) for i in value]
+
+        return getattr(self.machine_info, name)
+
+
 @query.field("machines")
-def resolve_query_machines(_obj: Any, _info: GraphQLResolveInfo) -> list[MachineInfo]:
+def resolve_query_machines(
+    _obj: Any, _info: GraphQLResolveInfo
+) -> list[MachineInfoProxy]:
     publisher = get_publisher()
 
-    return publisher.machines()
+    return [MachineInfoProxy(machine_info) for machine_info in publisher.machines()]
 
 
 @query.field("build")
