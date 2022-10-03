@@ -63,14 +63,6 @@ build so that my machines can consume them.  There is a GraphQL interface for
 doing such tasks as well as a [command-line
 interface](https://github.com/enku/gbpcli).
 
-# Software
-
-This project hosts the application called gentoo-build-publisher. Combined
-with Jenkins, the above procedure,`rsyncd`, a web server to serve binary
-packages (e.g. nginx) and a [command-line interface](#cli) you can get all the
-advantages of a source-based Linux distribution like Gentoo combined with the
-advantages of binary distros plus even more.
-
 # CLI
 
 The [command-line interface](https://github.com/enku/gbpcli#readme) can
