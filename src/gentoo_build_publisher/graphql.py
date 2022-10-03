@@ -39,7 +39,7 @@ resolvers = [
 ]
 
 
-class BuildType:
+class BuildProxy:
     """Build Type resolvers"""
 
     def __init__(self, build: Build):
@@ -126,7 +126,7 @@ class MachineInfoProxy:  # pylint: disable=too-few-public-methods
     """A wrapper around MachineInfo
 
     We mostly need this to ensure that MachineInfo's Build objects get converted to
-    BuildType objects.
+    BuildProxy objects.
     """
 
     def __init__(self, machine_info: MachineInfo):
@@ -135,11 +135,11 @@ class MachineInfoProxy:  # pylint: disable=too-few-public-methods
     def __getattr__(self, name: str) -> Any:
         if name in ["latest_build", "published_build"]:
             value = getattr(self.machine_info, name)
-            return BuildType(value) if value else None
+            return BuildProxy(value) if value else None
 
         if name == "builds":
             value = getattr(self.machine_info, name)
-            return [BuildType(i) for i in value]
+            return [BuildProxy(i) for i in value]
 
         return getattr(self.machine_info, name)
 
@@ -156,31 +156,31 @@ def resolve_query_machines(
 @query.field("build")
 def resolve_query_build(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
     build = Build(id)
 
-    return None if not publisher.records.exists(build) else BuildType(build)
+    return None if not publisher.records.exists(build) else BuildProxy(build)
 
 
 @query.field("latest")
 def resolve_query_latest(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
-    return None if record is None else BuildType(record)
+    return None if record is None else BuildProxy(record)
 
 
 @query.field("builds")
 def resolve_query_builds(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> list[BuildType]:
+) -> list[BuildProxy]:
     publisher = get_publisher()
 
     return [
-        BuildType(record)
+        BuildProxy(record)
         for record in publisher.records.for_machine(machine)
         if record.completed
     ]
@@ -204,8 +204,8 @@ def resolve_query_diff(
     items = publisher.diff_binpkgs(left_build, right_build)
 
     return {
-        "left": BuildType(left_build),
-        "right": BuildType(right_build),
+        "left": BuildProxy(left_build),
+        "right": BuildProxy(right_build),
         "items": [*items],
     }
 
@@ -213,10 +213,10 @@ def resolve_query_diff(
 @query.field("searchNotes")
 def resolve_query_searchnotes(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
-) -> list[BuildType]:
+) -> list[BuildProxy]:
     publisher = get_publisher()
 
-    return [BuildType(i) for i in publisher.search_notes(machine, key)]
+    return [BuildProxy(i) for i in publisher.search_notes(machine, key)]
 
 
 @query.field("version")
@@ -225,7 +225,7 @@ def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
 
 
 @query.field("working")
-def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildType]:
+def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildProxy]:
     publisher = get_publisher()
     build_types = []
     machines = publisher.records.list_machines()
@@ -233,7 +233,7 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildTyp
     for machine in machines:
         for record in publisher.records.for_machine(machine):
             if not record.completed:
-                build_types.append(BuildType(record))
+                build_types.append(BuildProxy(record))
 
     return build_types
 
@@ -241,7 +241,7 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildTyp
 @query.field("resolveBuildTag")
 def resolve_query_resolvebuildtag(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
 
     try:
@@ -249,7 +249,7 @@ def resolve_query_resolvebuildtag(
     except FileNotFoundError:
         return None
 
-    return BuildType(result)
+    return BuildProxy(result)
 
 
 @mutation.field("publish")
@@ -288,7 +288,7 @@ def resolve_mutation_schedule_build(
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -298,13 +298,13 @@ def resolve_mutation_keepbuild(
     record = publisher.record(build)
     publisher.records.save(record, keep=True)
 
-    return BuildType(record)
+    return BuildProxy(record)
 
 
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -314,13 +314,13 @@ def resolve_mutation_releasebuild(
     record = publisher.record(build)
     publisher.records.save(record, keep=False)
 
-    return BuildType(record)
+    return BuildProxy(record)
 
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
     _obj: Any, _info: GraphQLResolveInfo, id: str, note: Optional[str] = None
-) -> Optional[BuildType]:
+) -> Optional[BuildProxy]:
     publisher = get_publisher()
     build = Build(id)
 
@@ -330,19 +330,19 @@ def resolve_mutation_createnote(
     record = publisher.record(build)
     publisher.records.save(record, note=note)
 
-    return BuildType(record)
+    return BuildProxy(record)
 
 
 @mutation.field("createBuildTag")
 def resolve_mutation_createbuildtag(
     _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
-) -> BuildType:
+) -> BuildProxy:
     publisher = get_publisher()
     build = Build(id)
 
     publisher.tag(build, tag)
 
-    return BuildType(build)
+    return BuildProxy(build)
 
 
 @mutation.field("removeBuildTag")
