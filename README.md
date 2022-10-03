@@ -81,61 +81,8 @@ advantages of binary distros plus even more.
 
 # CLI
 
-The command-line interface can inspect, publish and pull builds:
-
-```bash
-$ gbp list babette
-[ K  ]   104 04/25/21 08:51:19
-[    ]   132 05/21/21 13:27:50
-[*  N]   412 02/27/22 06:42:08
-[*   ]   413 02/28/22 06:43:32
-[*   ]   430 03/16/22 08:49:15
-[*   ]   431 03/17/22 08:54:43
-[*   ]   434 03/21/22 16:37:30
-[*   ]   435 03/22/22 12:01:48
-[* P ]   437 03/22/22 13:28:13
-[*   ]   438 03/23/22 13:09:26
-
-$ gbp status babette 412
-Build: babette/412
-BuildDate: Sun Feb 27 06:38:30 2022 -0500
-Submitted: Sun Feb 27 06:42:08 2022 -0500
-Completed: Sun Feb 27 06:45:00 2022 -0500
-Published: no
-Keep: no
-Packages-built:
-    app-text/opensp-1.5.2-r7
-
-This is a build note.
-
-$ gbp diff babette 437 438
-diff -r babette/437 babette/438
---- a/babette/437 Tue Mar 22 13:28:13 2022 -0500
-+++ b/babette/438 Wed Mar 23 13:09:26 2022 -0500
--app-admin/sudo-1.9.8_p2-1
-+app-admin/sudo-1.9.8_p2-r1-1
--app-crypt/gnupg-2.2.34-1
-+app-crypt/gnupg-2.2.34-r1-1
--dev-python/importlib_metadata-4.11.2-1
--dev-python/zipp-3.7.0-r1-1
--net-misc/curl-7.79.1-3
-+net-misc/curl-7.79.1-r1-1
-
-$ gbp publish babette 438
-```
-
-In the above example, the `* P` output for build `437` signifies that this
-build is currently published (`P`) and there were packages built (`*`).  The
-`N` for build `412` indicates a user note. The user note and packages built
-can be shown with the `gbp status` command.  `gbp diff` shows the differences
-between two builds (packages added/changed/removed). Builds are purged based
-on how old they are, but you can mark builds to keep.  The `K` next to a build
-means that it has been marked for keeping. To mark a build for keeping on the
-command line, simply:
-
-```bash
-$ gbp keep babette 172
-```
+The [command-line interface](https://github.com/enku/gbpcli#readme) can
+inspect, publish, pull, schedule builds and more.
 
 # Articles
 
