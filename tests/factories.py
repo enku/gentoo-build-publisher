@@ -3,6 +3,7 @@
 import datetime as dt
 import io
 import tarfile
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
@@ -10,7 +11,7 @@ import factory
 from django.utils import timezone
 
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.publisher import BuildPublisher
+from gentoo_build_publisher.publisher import BuildPublisher, get_publisher
 from gentoo_build_publisher.records import BuildRecord, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -63,6 +64,29 @@ class BuildFactory(factory.Factory):
             number = seq
 
         return f"{self.machine}.{number}"  # pylint: disable=no-member
+
+    @classmethod
+    def buncha_builds(
+        cls,
+        machines: list[str],
+        end_date: dt.datetime,
+        num_days: int,
+        per_day: int,
+    ) -> defaultdict[str, list[Build]]:
+        publisher = get_publisher()
+        buildmap = defaultdict(list)
+
+        for i in reversed(range(num_days)):
+            day = end_date - dt.timedelta(days=i)
+            for machine in machines:
+                builds = cls.create_batch(per_day, machine=machine)
+
+                for build in builds:
+                    publisher.records.save(publisher.record(build), submitted=day)
+
+                buildmap[machine].extend(builds)
+
+        return buildmap
 
 
 class BuildRecordFactory(BuildFactory):

@@ -1,13 +1,12 @@
 """Unit tests for gbp views"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-import datetime as dt
 from collections import defaultdict
 
 from django.core.cache import cache
 from django.utils import timezone
 
-from gentoo_build_publisher.publisher import MachineInfo, get_publisher
-from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.publisher import MachineInfo
+from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.views import (
     get_build_summary,
     get_metadata,
@@ -17,27 +16,6 @@ from gentoo_build_publisher.views import (
 
 from . import TestCase
 from .factories import BuildFactory
-
-
-def buncha_builds(
-    machines: list[str],
-    end_date,
-    num_days: int,
-    per_day: int,
-) -> defaultdict[str, list[Build]]:
-    publisher = get_publisher()
-    buildmap = defaultdict(list)
-
-    for i in reversed(range(num_days)):
-        day = end_date - dt.timedelta(days=i)
-        for machine in machines:
-            builds = BuildFactory.create_batch(per_day, machine=machine)
-
-            for build in builds:
-                publisher.records.save(publisher.record(build), submitted=day)
-
-            buildmap[machine].extend(builds)
-    return buildmap
 
 
 class GetPackagesTestCase(TestCase):
@@ -64,7 +42,7 @@ class GetBuildSummaryTestCase(TestCase):
     def test(self):
         now = timezone.now()
         machines = ["babette", "lighthouse", "web"]
-        builds = buncha_builds(machines, now, 3, 2)
+        builds = BuildFactory.buncha_builds(machines, now, 3, 2)
 
         lighthouse = builds["lighthouse"][-1]
         for cpv in [
@@ -152,7 +130,7 @@ class DashboardTestCase(TestCase):
 
         self.now = timezone.now()
         self.machines = ["babette", "lighthouse", "web"]
-        self.builds = buncha_builds(self.machines, self.now, 3, 2)
+        self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
     def test(self):
         lighthouse = self.builds["lighthouse"][-1]
@@ -176,7 +154,7 @@ class ReposDotConfTestCase(TestCase):
 
         self.now = timezone.now()
         self.machines = ["babette", "lighthouse", "web"]
-        self.builds = buncha_builds(self.machines, self.now, 3, 2)
+        self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
     def test(self):
         machine = "lighthouse"
@@ -225,7 +203,7 @@ class BinReposDotConfTestCase(TestCase):
 
         self.now = timezone.now()
         self.machines = ["babette", "lighthouse", "web"]
-        self.builds = buncha_builds(self.machines, self.now, 3, 2)
+        self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
     def test(self):
         machine = "lighthouse"
