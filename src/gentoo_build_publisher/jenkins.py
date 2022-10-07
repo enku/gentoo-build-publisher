@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Optional, Type, TypeVar
+from pathlib import PurePosixPath
+from typing import Any, Optional, Type, TypeVar
 
 import requests
 from dataclasses_json import dataclass_json
@@ -65,11 +66,50 @@ class JenkinsMetadata:
     timestamp: int  # Jenkins timestamps are in milliseconds
 
 
+class ProjectPath(PurePosixPath):
+    """Jenkins has the concept of "project paths" that are not the same as the Jenkins
+    URL path so we need something that can manipulate and convert between the two.  For
+    example the project path may be "Gentoo/repos/gentoo" but the URL path would be
+    "/job/Gentoo/job/repos/job/gentoo".
+
+    ProjectPaths are always absolute.
+    """
+
+    def __new__(cls, *args: Any) -> ProjectPath:
+        if not (args and args[0].startswith("/")):
+            args = ("/", *args)
+
+        return super().__new__(cls, *args)
+
+    @property
+    def url_path(self) -> str:
+        """Convert project path to an absolute URL path"""
+        parts = []
+
+        for part in self.parts:
+            if part == "/":
+                continue
+
+            parts.extend(["job", part])
+
+        return "/".join(parts)
+
+    def __str__(self) -> str:
+        return super().__str__().strip("/")
+
+
 class Jenkins:
     """Interface to Jenkins"""
 
     def __init__(self, config: JenkinsConfig) -> None:
         self.config = config
+
+    @property
+    def project_root(self) -> ProjectPath:
+        """Return the ProjectPath of the base_url"""
+        url_path = self.config.base_url.path
+
+        return ProjectPath("/".join(url_path.split("/job/")))
 
     def url(self, build: Build) -> URL:
         """Return the Jenkins url for the build"""

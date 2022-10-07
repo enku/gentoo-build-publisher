@@ -7,7 +7,12 @@ from unittest import TestCase, mock
 
 from yarl import URL
 
-from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
+from gentoo_build_publisher.jenkins import (
+    Jenkins,
+    JenkinsConfig,
+    JenkinsMetadata,
+    ProjectPath,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
 
@@ -124,6 +129,103 @@ class JenkinsTestCase(TestCase):
             timeout=jenkins.config.requests_timeout,
         )
         mock_requests_get.return_value.json.assert_called_once_with()
+
+    def test_project_root_typical_setting(self):
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid/job/Gentoo"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath("Gentoo"))
+
+    def test_project_root_typical_setting_with_trailing_slash(self):
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid/job/Gentoo/"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath("Gentoo"))
+
+    def test_project_root_from_url_root(self):
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid/"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath(""))
+
+    def test_project_root_from_url_root_with_no_trailing_slash(self):
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath(""))
+
+    def test_project_root_deeply_nested(self):
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid/job/foo/job/bar/job/baz"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath("foo/bar/baz"))
+
+    def test_project_root_bogus_jenkins_base(self):
+        # If the base url isn't of the form /job/foo/job/bar/job baz (should?) we return
+        # the original path
+        jenkins_config = JenkinsConfig(
+            base_url=URL("https://jenkins.invalid/i/think/this/is/invalid"),
+            api_key="foo",
+            user="jenkins",
+            artifact_name="build.tar.gz",
+        )
+        jenkins = Jenkins(jenkins_config)
+
+        self.assertEqual(jenkins.project_root, ProjectPath("i/think/this/is/invalid"))
+
+
+class ProjectPathTestCase(TestCase):
+    """Tests for the ProjectPath class"""
+
+    def test_job_path_with_root(self):
+        project_path = ProjectPath("/")
+
+        self.assertEqual(project_path.url_path, "")
+
+    def test_job_path_from_empty_path(self):
+        project_path = ProjectPath()
+
+        self.assertEqual(project_path.url_path, "")
+
+    def test_job_path_deeply_nested(self):
+        project_path = ProjectPath("/foo/bar/baz")
+
+        self.assertEqual(project_path.url_path, "job/foo/job/bar/job/baz")
+
+    def test_job_path_with_job_in_the_path(self):
+        project_path = ProjectPath("Gentoo/job/job")
+
+        self.assertEqual(project_path.url_path, "job/Gentoo/job/job/job/job")
+
+    def test_str(self):
+        project_path = ProjectPath("/Gentoo/repos/marduk/")
+
+        self.assertEqual(str(project_path), "Gentoo/repos/marduk")
 
 
 class ScheduleBuildTestCase(TestCase):
