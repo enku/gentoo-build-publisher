@@ -5,6 +5,7 @@ import json
 import os
 from unittest import TestCase, mock
 
+import requests
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
@@ -197,6 +198,66 @@ class JenkinsTestCase(TestCase):
         jenkins = Jenkins(jenkins_config)
 
         self.assertEqual(jenkins.project_root, ProjectPath("i/think/this/is/invalid"))
+
+
+class ProjectPathExistsTestCase(TestCase):
+    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
+    def test_should_return_false_when_does_not_exist(self, head):
+        def mock_head(url, *args, **kwargs):
+            status_code = 404
+            if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
+                status_code = 200
+
+            response = requests.Response()
+            response.status_code = status_code
+
+            return response
+
+        head.side_effect = mock_head
+
+        jenkins = Jenkins(JENKINS_CONFIG)
+
+        project_path = ProjectPath("Gentoo/repos/marduk")
+
+        self.assertEqual(jenkins.project_exists(project_path), True)
+
+    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
+    def test_should_return_true_when_exists(self, head):
+        def mock_head(url, *args, **kwargs):
+            status_code = 200
+            if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
+                status_code = 404
+
+            response = requests.Response()
+            response.status_code = status_code
+
+            return response
+
+        head.side_effect = mock_head
+
+        jenkins = Jenkins(JENKINS_CONFIG)
+
+        project_path = ProjectPath("Gentoo/repos/marduk")
+
+        self.assertEqual(jenkins.project_exists(project_path), False)
+
+    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
+    def test_should_return_true_when_error_response(self, head):
+        def mock_head(_url, *args, **kwargs):
+            response = requests.Response()
+            response.status_code = 401
+            response.reason = "Unauthorized"
+
+            return response
+
+        head.side_effect = mock_head
+
+        jenkins = Jenkins(JENKINS_CONFIG)
+
+        project_path = ProjectPath("Gentoo/repos/marduk")
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            jenkins.project_exists(project_path)
 
 
 class ProjectPathTestCase(TestCase):

@@ -177,3 +177,24 @@ class Jenkins:
         # All that Jenkins gives us is the location of the queued request.  Let's return
         # that.
         return response.headers["location"]
+
+    def project_exists(self, project_path: ProjectPath) -> bool:
+        """Return True iff project_path exists on the Jenkins instance"""
+        return self.url_path_exists(project_path.url_path)
+
+    def url_path_exists(self, url_path: str) -> bool:
+        """Return True iff url_path exists on the Jenkins instance"""
+        url = self.config.base_url.with_path(url_path)
+        response = requests.head(
+            str(url),
+            auth=self.config.auth(),
+            timeout=self.config.requests_timeout,
+            allow_redirects=True,
+        )
+
+        if response.status_code == 404:
+            return False
+
+        response.raise_for_status()
+
+        return True
