@@ -18,9 +18,16 @@ from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
 import django.test
+from requests import Response, Session
+from yarl import URL
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.jenkins import Jenkins, JenkinsConfig, JenkinsMetadata
+from gentoo_build_publisher.jenkins import (
+    Jenkins,
+    JenkinsConfig,
+    JenkinsMetadata,
+    ProjectPath,
+)
 from gentoo_build_publisher.types import Build, Content, Package
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
@@ -114,6 +121,67 @@ class Tree:
         return node.nodes[path[-1]].value
 
 
+class MockJenkinsSession(Session):
+    """Mock requests.Session for Jenkins"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.root = Tree()
+
+    @staticmethod
+    def response(status_code: int, content: bytes = b"") -> Response:
+        response = mock.MagicMock(wraps=Response)()
+        response.status_code = status_code
+        response.raw = io.BytesIO(content)
+
+        return response
+
+    def head(self, url: str, *args: Any, **kwargs: Any) -> Response:
+        path = URL(url).path
+        project_path = self.project_path(path)
+
+        try:
+            self.root.get(project_path.parts[1:])
+        except KeyError:
+            return self.response(404)
+
+        return self.response(200)
+
+    def post(self, url: str, *args, **kwargs) -> Response:
+        url_obj = URL(url)
+
+        if url_obj.name == "createItem":
+            path = url_obj.parent.path
+            project_path = self.project_path(path) / kwargs["params"]["name"]
+
+            try:
+                self.root.set(project_path.parts[1:], kwargs.get("data", ""))
+            except KeyError:
+                return self.response(404)
+
+            return self.response(200)
+
+        return self.response(400)
+
+    def get(self, url: str, *args, **kwargs) -> Response:
+        url_obj = URL(url)
+
+        if url_obj.name != "config.xml":
+            return self.response(400)
+
+        project_path = self.project_path(url_obj.parent.path)
+
+        try:
+            value = self.root.get(project_path.parts[1:])
+        except KeyError:
+            return self.response(404)
+
+        return self.response(200, value.encode())
+
+    def project_path(self, url_path: str) -> ProjectPath:
+        return ProjectPath("/".join(url_path.split("/job/")))
+
+
 class MockJenkins(Jenkins):
     """Jenkins with requests mocked out"""
 
@@ -128,6 +196,8 @@ class MockJenkins(Jenkins):
 
         self.artifact_builder = ArtifactFactory()
         self.scheduled_builds: list[str] = []
+        self.session = MockJenkinsSession()
+        self.session.auth = self.config.auth
 
     def download_artifact(self, build: Build):
         with mock.patch.object(self.session, "get") as mock_get:

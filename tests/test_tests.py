@@ -6,7 +6,7 @@ from unittest import TestCase, mock
 
 from gentoo_build_publisher.types import Content, Package
 
-from . import Tree
+from . import MockJenkinsSession, Tree
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
 
 
@@ -214,3 +214,79 @@ class TreeTestCase(TestCase):
 
         with self.assertRaises(KeyError):
             root.get(["B", "C", "D"])
+
+
+class MockJenkinsSessionTestCase(TestCase):
+    def test_head(self):
+        session = MockJenkinsSession()
+        session.root.set(["Test"], "test")
+
+        response = session.head("http://jenkins.invalid/job/Test")
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_head_404(self):
+        session = MockJenkinsSession()
+
+        response = session.head("http://jenkins.invalid/job/Test")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        session = MockJenkinsSession()
+
+        response = session.post(
+            "http://jenkins.invalid/createItem", data=b"test", params={"name": "Test"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(session.root.get(["Test"]), b"test")
+
+    def test_post_404(self):
+        session = MockJenkinsSession()
+
+        response = session.post(
+            "http://jenkins.invalid/job/Gentoo/createItem",
+            data=b"test",
+            params={"name": "Test"},
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        with self.assertRaises(KeyError):
+            session.root.get(["Gentoo", "Test"])
+
+    def test_post_without_createitem(self):
+        session = MockJenkinsSession()
+
+        response = session.post(
+            "http://jenkins.invalid/Test", data=b"test", params={"name": "Test"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_get(self):
+        session = MockJenkinsSession()
+        session.root.set(["Test"], "<jenkins>test</jenkins>")
+
+        response = session.get("http://jenkins.invalid/job/Test/config.xml")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"<jenkins>test</jenkins>")
+        self.assertEqual(response.text, "<jenkins>test</jenkins>")
+
+    def test_get_without_configxml(self):
+        """I don't think this happens in real life, but for testing..."""
+        session = MockJenkinsSession()
+        session.root.set(["Test"], "<jenkins>test</jenkins>")
+
+        response = session.get("http://jenkins.invalid/job/Test/")
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_404(self):
+        session = MockJenkinsSession()
+
+        response = session.get("http://jenkins.invalid/job/Test/config.xml")
+
+        self.assertEqual(response.status_code, 404)
