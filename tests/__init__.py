@@ -107,7 +107,7 @@ class MockJenkins(Jenkins):
         self.scheduled_builds: list[str] = []
 
     def download_artifact(self, build: Build):
-        with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
+        with mock.patch.object(self.session, "get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: self.artifact_builder.get_artifact(build)
             )
@@ -115,7 +115,7 @@ class MockJenkins(Jenkins):
             return super().download_artifact(build)
 
     def get_logs(self, build: Build):
-        with mock.patch("gentoo_build_publisher.jenkins.requests.get") as mock_get:
+        with mock.patch.object(self.session, "get") as mock_get:
             mock_get.return_value.text = "foo\n"
             self.get_build_logs_mock_get = mock_get
 

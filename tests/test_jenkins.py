@@ -65,7 +65,6 @@ class JenkinsTestCase(TestCase):
 
         jenkins.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            auth=("jenkins", "foo"),
             stream=True,
             timeout=jenkins.config.requests_timeout,
         )
@@ -83,7 +82,6 @@ class JenkinsTestCase(TestCase):
         # Then it requests the artifact with no auth
         jenkins.mock_get.assert_called_with(
             "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            auth=jenkins.config.auth(),
             stream=True,
             timeout=jenkins.config.requests_timeout,
         )
@@ -112,21 +110,20 @@ class JenkinsTestCase(TestCase):
         self.assertEqual(jenkins.config.user, "admin")
         self.assertEqual(jenkins.config.artifact_name, "stuff.tar")
 
-    @mock.patch("gentoo_build_publisher.jenkins.requests.get")
-    def test_get_metadata(self, mock_requests_get):
+    def test_get_metadata(self):
         mock_response = test_data("jenkins_build.json")
-        mock_requests_get.return_value.json.return_value = json.loads(mock_response)
         build = Build("babette.291")
         jenkins = Jenkins(JENKINS_CONFIG)
 
-        metadata = jenkins.get_metadata(build)
+        with mock.patch.object(jenkins.session, "get") as mock_requests_get:
+            mock_requests_get.return_value.json.return_value = json.loads(mock_response)
+            metadata = jenkins.get_metadata(build)
 
         self.assertEqual(
             metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)
         )
         mock_requests_get.assert_called_once_with(
             "https://jenkins.invalid/job/babette/291/api/json",
-            auth=("jenkins", "foo"),
             timeout=jenkins.config.requests_timeout,
         )
         mock_requests_get.return_value.json.assert_called_once_with()
@@ -201,8 +198,7 @@ class JenkinsTestCase(TestCase):
 
 
 class ProjectPathExistsTestCase(TestCase):
-    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
-    def test_should_return_false_when_does_not_exist(self, head):
+    def test_should_return_false_when_does_not_exist(self):
         def mock_head(url, *args, **kwargs):
             status_code = 404
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
@@ -213,16 +209,13 @@ class ProjectPathExistsTestCase(TestCase):
 
             return response
 
-        head.side_effect = mock_head
-
         jenkins = Jenkins(JENKINS_CONFIG)
-
         project_path = ProjectPath("Gentoo/repos/marduk")
 
-        self.assertEqual(jenkins.project_exists(project_path), True)
+        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
+            self.assertEqual(jenkins.project_exists(project_path), True)
 
-    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
-    def test_should_return_true_when_exists(self, head):
+    def test_should_return_true_when_exists(self):
         def mock_head(url, *args, **kwargs):
             status_code = 200
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
@@ -233,16 +226,14 @@ class ProjectPathExistsTestCase(TestCase):
 
             return response
 
-        head.side_effect = mock_head
-
         jenkins = Jenkins(JENKINS_CONFIG)
 
         project_path = ProjectPath("Gentoo/repos/marduk")
 
-        self.assertEqual(jenkins.project_exists(project_path), False)
+        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
+            self.assertEqual(jenkins.project_exists(project_path), False)
 
-    @mock.patch("gentoo_build_publisher.jenkins.requests.head")
-    def test_should_return_true_when_error_response(self, head):
+    def test_should_return_true_when_error_response(self):
         def mock_head(_url, *args, **kwargs):
             response = requests.Response()
             response.status_code = 401
@@ -250,14 +241,13 @@ class ProjectPathExistsTestCase(TestCase):
 
             return response
 
-        head.side_effect = mock_head
-
         jenkins = Jenkins(JENKINS_CONFIG)
 
         project_path = ProjectPath("Gentoo/repos/marduk")
 
-        with self.assertRaises(requests.exceptions.HTTPError):
-            jenkins.project_exists(project_path)
+        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
+            with self.assertRaises(requests.exceptions.HTTPError):
+                jenkins.project_exists(project_path)
 
 
 class ProjectPathTestCase(TestCase):
@@ -300,21 +290,19 @@ class ScheduleBuildTestCase(TestCase):
             JENKINS_USER="admin",
             STORAGE_PATH="/dev/null",
         )
-        path = "gentoo_build_publisher.jenkins.requests.post"
+        jenkins = Jenkins.from_settings(settings)
 
-        with mock.patch(path) as mock_post:
+        with mock.patch.object(jenkins.session, "post") as mock_post:
             mock_response = mock_post.return_value
             mock_response.status_code = 401
             mock_response.headers = {
                 "location": "https://jenkins.invalid/queue/item/31528/"
             }
-            jenkins = Jenkins.from_settings(settings)
             location = jenkins.schedule_build(name)
 
         self.assertEqual(location, "https://jenkins.invalid/queue/item/31528/")
         mock_post.assert_called_once_with(
             "https://jenkins.invalid/job/babette/build",
-            auth=("admin", "super secret key"),
             timeout=jenkins.config.requests_timeout,
         )
 
@@ -326,15 +314,14 @@ class ScheduleBuildTestCase(TestCase):
             JENKINS_USER="admin",
             STORAGE_PATH="/dev/null",
         )
-        path = "gentoo_build_publisher.jenkins.requests.post"
+        jenkins = Jenkins.from_settings(settings)
 
         class MyException(Exception):
             pass
 
-        with mock.patch(path) as mock_post:
+        with mock.patch.object(jenkins.session, "post") as mock_post:
             mock_response = mock_post.return_value
             mock_response.raise_for_status.side_effect = MyException
 
             with self.assertRaises(MyException):
-                jenkins = Jenkins.from_settings(settings)
                 jenkins.schedule_build(name)
