@@ -37,7 +37,7 @@ logging.basicConfig(handlers=[logging.NullHandler()])
 
 
 class TestCase(django.test.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # pylint: disable=import-outside-toplevel,cyclic-import
         from .factories import BuildPublisherFactory
 
@@ -64,7 +64,9 @@ class TestCase(django.test.TestCase):
 
         self.artifact_builder = self.publisher.jenkins.artifact_builder
 
-    def create_file(self, name, content=b"", mtime=None):
+    def create_file(
+        self, name: str, content: bytes = b"", mtime: dt.datetime | None = None
+    ) -> Path:
         path = self.tmpdir / name
 
         with path.open("wb") as outfile:
@@ -201,7 +203,7 @@ class MockJenkins(Jenkins):
         self.session = mock_jenkins_session
         self.root = mock_jenkins_session.root
 
-    def download_artifact(self, build: Build):
+    def download_artifact(self, build: Build) -> Iterable[bytes]:
         with mock.patch.object(self.session, "get") as mock_get:
             mock_get.return_value.iter_content.side_effect = (
                 lambda *args, **kwargs: self.artifact_builder.get_artifact(build)
@@ -209,7 +211,7 @@ class MockJenkins(Jenkins):
             self.mock_get = mock_get
             return super().download_artifact(build)
 
-    def get_logs(self, build: Build):
+    def get_logs(self, build: Build) -> str:
         with mock.patch.object(self.session, "get") as mock_get:
             mock_get.return_value.text = "foo\n"
             self.get_build_logs_mock_get = mock_get

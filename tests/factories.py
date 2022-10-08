@@ -131,7 +131,9 @@ PACKAGE_INDEX: list[str] = [
 class ArtifactFactory:
     """Build CI/CD artifacts dynamically"""
 
-    def __init__(self, initial_packages=None, timestamp=None):
+    def __init__(
+        self, initial_packages: list[str] | None = None, timestamp: int | None = None
+    ) -> None:
         if timestamp is None:
             self.timestamp = int(dt.datetime.utcnow().timestamp() * 1000)
         else:
@@ -150,7 +152,7 @@ class ArtifactFactory:
         self,
         build: Build,
         cpv: str,
-        repo="gentoo",
+        repo: str = "gentoo",
         build_id: int = 1,
         build_time: int | None = None,
     ) -> Package:
@@ -172,7 +174,7 @@ class ArtifactFactory:
         """Return the BuildInfo for the given build"""
         return self._builds.setdefault(build.id, BuildInfo(self.timer * 1000, []))
 
-    def remove(self, build: Build, package: Package):
+    def remove(self, build: Build, package: Package) -> None:
         """Remove a package from the build"""
         build_info = self.build_info(build)
 
@@ -269,7 +271,7 @@ class ArtifactFactory:
         arcname: str,
         content: bytes,
         mtime: int | None = None,
-    ):
+    ) -> None:
         file_obj = io.BytesIO(content)
         tar_info = tarfile.TarInfo(arcname)
         tar_info.size = len(content)
