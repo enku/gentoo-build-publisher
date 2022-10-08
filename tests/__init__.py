@@ -8,7 +8,7 @@ import math
 import os
 import tarfile
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from functools import wraps
@@ -89,6 +89,29 @@ def test_data(filename):
     """Return all the data in filename"""
     with open(BASE_DIR / filename, "rb") as file_obj:
         return file_obj.read()
+
+
+class Tree:
+    """Simple tree structure"""
+
+    def __init__(self, value: Any = None) -> None:
+        self.value = value
+        self.nodes: dict[str, Tree] = {}
+
+    def set(self, path: Sequence[str], value: Any) -> None:
+        """Set node given path. Parent nodes must exist"""
+        node = self
+        for item in path[:-1]:
+            node = node.nodes[item]
+
+        node.nodes[path[-1]] = Tree(value)
+
+    def get(self, path: Sequence[str]) -> Any:
+        node = self
+        for item in path[:-1]:
+            node = node.nodes[item]
+
+        return node.nodes[path[-1]].value
 
 
 class MockJenkins(Jenkins):

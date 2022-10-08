@@ -6,6 +6,7 @@ from unittest import TestCase, mock
 
 from gentoo_build_publisher.types import Content, Package
 
+from . import Tree
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
 
 
@@ -164,3 +165,52 @@ class ArtifactFactoryTestCase(TestCase):
             },
             build2_pkgs,
         )
+
+
+class TreeTestCase(TestCase):
+    """Tests for the Tree class"""
+
+    def test_emptytree(self):
+        """Get it? Emptyree :-)"""
+        root = Tree()
+
+        self.assertEqual(root.nodes, {})
+        self.assertEqual(root.value, None)
+
+    def test_get(self):
+        #
+        #              o
+        #         _____|____
+        #         |        |
+        #         A        B
+        #              ____|____
+        #              |       |
+        #              C       D
+        #
+        root = Tree()
+        root.nodes["A"] = Tree("A")
+        b_node = root.nodes["B"] = Tree("B")
+        b_node.nodes["C"] = Tree("C")
+        b_node.nodes["D"] = Tree("D")
+
+        self.assertEqual(root.get(["A"]), "A")
+        self.assertEqual(root.get(["B"]), "B")
+        self.assertEqual(root.get(["B", "D"]), "D")
+        self.assertEqual(b_node.get(["C"]), "C")
+
+        with self.assertRaises(KeyError):
+            root.get(["B", "C", "D"])
+
+    def test_set(self):
+        root = Tree()
+        root.set(["A"], "A")
+        root.set(["B"], "B")
+        root.set(["B", "C"], "C")
+        root.set(["B", "D"], "D")
+
+        self.assertEqual(root.get(["A"]), "A")
+        self.assertEqual(root.get(["B"]), "B")
+        self.assertEqual(root.get(["B", "D"]), "D")
+
+        with self.assertRaises(KeyError):
+            root.get(["B", "C", "D"])
