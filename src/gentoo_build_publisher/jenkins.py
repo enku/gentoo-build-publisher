@@ -19,6 +19,9 @@ from gentoo_build_publisher.types import Build
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
+CREATE_REPO_XML = importlib.resources.read_text(
+    "gentoo_build_publisher", "create_repo_job.xml", encoding="UTF-8"
+)
 FOLDER_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "folder.xml", encoding="UTF-8"
 )
@@ -269,3 +272,26 @@ class Jenkins:
         )
 
         response.raise_for_status()
+
+    def create_repo_job(self, repo_name: str, repo_url: str, repo_branch: str) -> None:
+        """Create a repo job in the "repos" folder
+
+        Assumes that the "repos" folder exists under the project root.
+        """
+        repo_path = self.project_root / "repos" / repo_name
+
+        self.create_item(repo_path, self.render_build_repo_xml(repo_url, repo_branch))
+
+    def render_build_repo_xml(self, repo_url: str, repo_branch: str) -> str:
+        """Return XML config for the given repo"""
+        xml = ET.fromstring(CREATE_REPO_XML)
+
+        branch = xml.find("scm/branches/hudson.plugins.git.BranchSpec/name")
+        assert branch is not None
+        branch.text = f"*/{repo_branch}"
+
+        url = xml.find("scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url")
+        assert url is not None
+        url.text = repo_url
+
+        return ET.tostring(xml).decode("UTF-8")

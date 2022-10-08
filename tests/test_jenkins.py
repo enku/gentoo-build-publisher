@@ -1,5 +1,6 @@
 """Tests for the Jenkins interface"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
+import dataclasses as dc
 import io
 import json
 import os
@@ -450,6 +451,64 @@ class InstallPluginTestCase(TestCase):
             "https://jenkins.invalid/pluginManager/installNecessaryPlugins",
             headers={"Content-Type": "text/xml"},
             data='<jenkins><install plugin="copyartifact@1.47" /></jenkins>',
+        )
+
+
+class CreateRepoJobTestCase(TestCase):
+    """Tests for the Jenkins.create_repo_job method"""
+
+    def test_creates_given_repo(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        jenkins.make_folder(ProjectPath("repos"))
+        jenkins.session.post.reset_mock()
+
+        repo_name = "gentoo"
+        repo_url = "https://github.com/gentoo-mirror/gentoo.git"
+        repo_branch = "master"
+
+        jenkins.create_repo_job(repo_name, repo_url, repo_branch)
+
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/job/repos/createItem",
+            data=jenkins.render_build_repo_xml(repo_url, repo_branch),
+            headers={"Content-Type": "text/xml"},
+            params={"name": "gentoo"},
+            timeout=10,
+        )
+
+    def test_when_base_url_is_not_root(self):
+        config = dc.replace(
+            JENKINS_CONFIG, base_url=URL("https://jenkins.invalid/job/Gentoo")
+        )
+        jenkins = MockJenkins(config)
+        jenkins.make_folder(ProjectPath("Gentoo/repos"), parents=True)
+        jenkins.session.post.reset_mock()
+
+        repo_name = "gentoo"
+        repo_url = "https://anongit.gentoo.org/git/repo/gentoo.git"
+        repo_branch = "feature"
+
+        jenkins.create_repo_job(repo_name, repo_url, repo_branch)
+
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/job/Gentoo/job/repos/createItem",
+            data=jenkins.render_build_repo_xml(repo_url, repo_branch),
+            headers={"Content-Type": "text/xml"},
+            params={"name": "gentoo"},
+            timeout=10,
+        )
+
+    def test_render_build_repo_xml(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        repo_url = "https://anongit.gentoo.org/git/repo/gentoo.git"
+        repo_branch = "feature"
+
+        xml = jenkins.render_build_repo_xml(repo_url, repo_branch)
+
+        self.assertRegex(xml, r"<name>\*/feature</name>")
+        self.assertRegex(
+            xml, r"<url>https://anongit\.gentoo\.org/git/repo/gentoo\.git</url>"
         )
 
 
