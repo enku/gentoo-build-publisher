@@ -9,6 +9,7 @@ import requests
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
+    FOLDER_XML,
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
@@ -358,6 +359,83 @@ class GetItemTestCase(TestCase):
         mock_get.assert_called_once_with(
             "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
         )
+
+
+class MakeFolderTestCase(TestCase):
+    """Tests for the Jenkins.make_folder method"""
+
+    def test_when_folder_does_not_exist_creates_folder(self):
+        project_path = ProjectPath("Gentoo")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.make_folder(project_path)
+
+        self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
+
+    def test_when_folder_already_exists(self):
+        project_path = ProjectPath("Gentoo")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.root.set(["Gentoo"], FOLDER_XML)
+
+        with self.assertRaises(FileExistsError):
+            jenkins.make_folder(project_path)
+
+    def test_when_item_exists_but_is_not_a_folder(self):
+        project_path = ProjectPath("Gentoo")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
+
+        with self.assertRaises(FileExistsError):
+            jenkins.make_folder(project_path)
+
+    def test_when_folder_already_exists_exist_ok_true(self):
+        project_path = ProjectPath("Gentoo")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.root.set(["Gentoo"], FOLDER_XML)
+        jenkins.make_folder(project_path, exist_ok=True)
+
+    def test_when_parent_folder_does_not_exist(self):
+        project_path = ProjectPath("Gentoo/repos")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        with self.assertRaises(FileNotFoundError):
+            jenkins.make_folder(project_path)
+
+    def test_when_parent_folder_does_not_exist_and_parents_true(self):
+        project_path = ProjectPath("Gentoo/repos")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.make_folder(project_path, parents=True)
+
+        self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
+        self.assertEqual(jenkins.root.get(["Gentoo", "repos"]), FOLDER_XML)
+
+
+class IsFolderTestCase(TestCase):
+    """Tests for the Jenkins.is_folder method"""
+
+    def test_when_is_a_folder_returns_true(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        project_path = ProjectPath("Gentoo")
+        jenkins.root.set(["Gentoo"], FOLDER_XML)
+
+        self.assertEqual(jenkins.is_folder(project_path), True)
+
+    def test_when_is_not_a_folder_returns_false(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        project_path = ProjectPath("Gentoo")
+        jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
+
+        self.assertEqual(jenkins.is_folder(project_path), False)
+
+    def test_when_does_not_exist_returns_false(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        project_path = ProjectPath("Gentoo")
+
+        self.assertEqual(jenkins.is_folder(project_path), False)
 
 
 class ProjectPathTestCase(TestCase):

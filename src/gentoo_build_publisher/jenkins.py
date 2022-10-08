@@ -1,7 +1,9 @@
 """Jenkins api for Gentoo Build Publisher"""
 from __future__ import annotations
 
+import importlib.resources
 import logging
+import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -17,6 +19,9 @@ from gentoo_build_publisher.types import Build
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
+FOLDER_XML = importlib.resources.read_text(
+    "gentoo_build_publisher", "folder.xml", encoding="UTF-8"
+)
 
 _T = TypeVar("_T", bound="JenkinsConfig")
 
@@ -217,6 +222,36 @@ class Jenkins:
 
         response = self.session.get(str(url), timeout=self.config.requests_timeout)
 
+        if response.status_code == 404:
+            raise FileNotFoundError(project_path.parent)
+
         response.raise_for_status()
 
         return response.text
+
+    def make_folder(
+        self, project_path: ProjectPath, parents: bool = False, exist_ok: bool = False
+    ) -> None:
+        """Create a project folder with the given path"""
+        if parents:
+            parent = project_path.parent
+
+            if parent != ProjectPath():
+                self.make_folder(parent, parents=True, exist_ok=True)
+
+        try:
+            self.create_item(project_path, FOLDER_XML)
+        except FileExistsError:
+            if not exist_ok or not self.is_folder(project_path):
+                raise
+
+    def is_folder(self, project_path: ProjectPath) -> bool:
+        """Return True if project_path is a folder"""
+        try:
+            xml = self.get_item(project_path)
+        except FileNotFoundError:
+            return False
+
+        tree = ET.fromstring(xml)
+
+        return tree.tag == "com.cloudbees.hudson.plugins.folder.Folder"
