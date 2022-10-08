@@ -2,16 +2,21 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 import json
+from typing import Any
 from unittest import mock
 
 from django.test.client import Client
+from graphql import GraphQLError, GraphQLResolveInfo
 
+from gentoo_build_publisher.graphql import require_localhost
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version, utctime
 
 from . import TestCase
 from .factories import PACKAGE_INDEX, BuildFactory, BuildModelFactory
+
+Mock = mock.Mock
 
 
 def execute(query, variables=None):
@@ -896,3 +901,49 @@ class VersionTestCase(TestCase):
         version = get_version()
 
         assert_data(self, result, {"version": version})
+
+
+@require_localhost
+def dummy_resolver(
+    _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
+) -> str:
+    """Test resolver for RequireLocalhostTestCase"""
+    return "permitted"
+
+
+class RequireLocalhostTestCase(TestCase):
+    def test_allows_ipv4_localhost(self):
+        remote_ip = "127.0.0.1"
+        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+
+        self.assertEqual(dummy_resolver(None, info), "permitted")
+
+    def test_allows_ipv6_localhost(self):
+        remote_ip = "::1"
+        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+
+        self.assertEqual(dummy_resolver(None, info), "permitted")
+
+    def test_allows_literal_localhost(self):
+        # I'm not sure if this ever could happen, but...
+        remote_ip = "localhost"
+        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+
+        self.assertEqual(dummy_resolver(None, info), "permitted")
+
+    def test_returns_error_when_not_localhost(self):
+        remote_ip = "192.0.2.23"
+        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+
+        with self.assertRaises(GraphQLError) as context:
+            dummy_resolver(None, info)
+
+        self.assertTrue(str(context.exception).startswith(""))
+
+    def test_returns_error_when_no_remote_addr_in_request(self):
+        info = Mock(context={"request": Mock(environ={})})
+
+        with self.assertRaises(GraphQLError) as context:
+            dummy_resolver(None, info)
+
+        self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))

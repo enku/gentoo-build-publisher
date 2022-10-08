@@ -7,9 +7,9 @@
 from __future__ import annotations
 
 import datetime as dt
-from functools import cached_property
+from functools import cached_property, wraps
 from importlib import resources
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from ariadne import (
     EnumType,
@@ -27,6 +27,8 @@ from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.types import TAG_SYM, Build, Package, Status
 from gentoo_build_publisher.utils import get_version
 
+LOCALHOST = "127.0.0.1", "::1", "localhost"
+
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
@@ -37,6 +39,23 @@ resolvers = [
     mutation := ObjectType("Mutation"),
     query := ObjectType("Query"),
 ]
+
+
+Resolver = Callable[..., Any]
+
+
+def require_localhost(fn: Resolver) -> Resolver:
+    """require localhost on this resolver"""
+
+    @wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        """type annotation"""
+        info: GraphQLResolveInfo = args[1]
+        if not info.context["request"].environ.get("REMOTE_ADDR", "") in LOCALHOST:
+            raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
+        return fn(args[0], info, *args[2:], **kwargs)
+
+    return wrapper
 
 
 class BuildProxy:
