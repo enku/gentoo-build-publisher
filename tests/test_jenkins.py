@@ -331,6 +331,35 @@ class CreateItemTestCase(TestCase):
         )
 
 
+class GetItemTestCase(TestCase):
+    def test_gets_item(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
+        project_path = ProjectPath("Gentoo")
+
+        self.assertEqual(jenkins.get_item(project_path), "<jenkins>Test</jenkins>")
+
+        jenkins.session.get.assert_called_once_with(
+            "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
+        )
+
+    def test_raises_exception_on_http_errors(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        project_path = ProjectPath("Gentoo")
+
+        with mock.patch.object(jenkins.session, "get") as mock_get:
+            response_400 = requests.Response()
+            response_400.status_code = 400
+            mock_get.return_value = response_400
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                jenkins.get_item(project_path)
+
+        mock_get.assert_called_once_with(
+            "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
+        )
+
+
 class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 

@@ -210,3 +210,13 @@ class Jenkins:
             raise FileNotFoundError(project_path.parent)
 
         response.raise_for_status()
+
+    def get_item(self, project_path: ProjectPath) -> str:
+        """Return the xml definition for the given project"""
+        url = self.config.base_url.with_path(project_path.url_path) / "config.xml"
+
+        response = self.session.get(str(url), timeout=self.config.requests_timeout)
+
+        response.raise_for_status()
+
+        return response.text
