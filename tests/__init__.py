@@ -196,8 +196,10 @@ class MockJenkins(Jenkins):
 
         self.artifact_builder = ArtifactFactory()
         self.scheduled_builds: list[str] = []
-        self.session = MockJenkinsSession()
-        self.session.auth = self.config.auth
+        mock_jenkins_session = mock.MagicMock(wraps=MockJenkinsSession())
+        mock_jenkins_session.auth = config.auth
+        self.session = mock_jenkins_session
+        self.root = mock_jenkins_session.root
 
     def download_artifact(self, build: Build):
         with mock.patch.object(self.session, "get") as mock_get:

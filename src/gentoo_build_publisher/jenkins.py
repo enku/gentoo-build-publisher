@@ -187,3 +187,26 @@ class Jenkins:
         response.raise_for_status()
 
         return True
+
+    def create_item(self, project_path: ProjectPath, xml: str) -> None:
+        """Given the xml and project path create an item in Jenkins"""
+        if self.project_exists(project_path):
+            raise FileExistsError(project_path)
+
+        parent_path = project_path.parent
+        url = self.config.base_url.with_path(parent_path.url_path) / "createItem"
+        params = {"name": project_path.name}
+        headers = {"Content-Type": "text/xml"}
+
+        response = self.session.post(
+            str(url),
+            data=xml,
+            headers=headers,
+            params=params,
+            timeout=self.config.requests_timeout,
+        )
+
+        if response.status_code == 404:
+            raise FileNotFoundError(project_path.parent)
+
+        response.raise_for_status()

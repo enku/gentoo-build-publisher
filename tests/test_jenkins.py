@@ -250,6 +250,87 @@ class ProjectPathExistsTestCase(TestCase):
                 jenkins.project_exists(project_path)
 
 
+class CreateItemTestCase(TestCase):
+    """Tests for the Jenkins.create_item method"""
+
+    def test_creates_item(self):
+        xml = "<jenkins>test</jenkins>"
+        project_path = ProjectPath("TestItem")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.create_item(project_path, xml)
+
+        self.assertEqual(jenkins.root.get(["TestItem"]), "<jenkins>test</jenkins>")
+        self.assertEqual(jenkins.session.auth(), ("jenkins", "foo"))
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/createItem",
+            data="<jenkins>test</jenkins>",
+            headers={"Content-Type": "text/xml"},
+            params={"name": "TestItem"},
+            timeout=10,
+        )
+
+    def test_when_parent_folder_does_not_exist(self):
+        xml = "<jenkins>test</jenkins>"
+        project_path = ProjectPath("Gentoo/TestItem")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        with self.assertRaises(FileNotFoundError) as context:
+            jenkins.create_item(project_path, xml)
+
+        exception = context.exception
+        self.assertEqual(exception.args, (project_path.parent,))
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/job/Gentoo/createItem",
+            data="<jenkins>test</jenkins>",
+            headers={"Content-Type": "text/xml"},
+            params={"name": "TestItem"},
+            timeout=10,
+        )
+
+    def test_when_parent_folder_does_exist(self):
+        xml = "<jenkins>test</jenkins>"
+        project_path = ProjectPath("Gentoo/TestItem")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        # Create parent
+        jenkins.root.set(["Gentoo"], None)
+
+        jenkins.create_item(project_path, xml)
+
+        self.assertEqual(
+            jenkins.root.get(["Gentoo", "TestItem"]), "<jenkins>test</jenkins>"
+        )
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/job/Gentoo/createItem",
+            data="<jenkins>test</jenkins>",
+            headers={"Content-Type": "text/xml"},
+            params={"name": "TestItem"},
+            timeout=10,
+        )
+
+    def test_raises_exception_on_http_errors(self):
+        xml = "<jenkins>test</jenkins>"
+        project_path = ProjectPath("TestItem")
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        with mock.patch.object(jenkins.session, "post") as mock_post:
+            response_400 = requests.Response()
+            response_400.status_code = 400
+            mock_post.return_value = response_400
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                jenkins.create_item(project_path, xml)
+
+        mock_post.assert_called_once_with(
+            "https://jenkins.invalid/createItem",
+            data="<jenkins>test</jenkins>",
+            headers={"Content-Type": "text/xml"},
+            params={"name": "TestItem"},
+            timeout=10,
+        )
+
+
 class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 
