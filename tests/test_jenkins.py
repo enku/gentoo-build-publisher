@@ -438,6 +438,21 @@ class IsFolderTestCase(TestCase):
         self.assertEqual(jenkins.is_folder(project_path), False)
 
 
+class InstallPluginTestCase(TestCase):
+    """Tests for the Jenkins.install_plugin method"""
+
+    def test_installs_plugin(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.install_plugin("copyartifact@1.47")
+
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/pluginManager/installNecessaryPlugins",
+            headers={"Content-Type": "text/xml"},
+            data='<jenkins><install plugin="copyartifact@1.47" /></jenkins>',
+        )
+
+
 class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 

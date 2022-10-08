@@ -8,6 +8,7 @@ import math
 import os
 import tarfile
 import tempfile
+import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -151,6 +152,19 @@ class MockJenkinsSession(Session):
 
     def post(self, url: str, *args, **kwargs) -> Response:
         url_obj = URL(url)
+
+        if url_obj.path == "/pluginManager/installNecessaryPlugins":
+            try:
+                assert "data" in kwargs
+                payload = kwargs["data"]
+                tree = ET.fromstring(payload)
+                install = tree.find("install")
+                assert install is not None
+                assert "plugin" in install.attrib
+            except AssertionError:
+                return self.response(500)
+
+            return self.response(200)
 
         if url_obj.name == "createItem":
             path = url_obj.parent.path

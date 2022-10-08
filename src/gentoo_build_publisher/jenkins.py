@@ -255,3 +255,17 @@ class Jenkins:
         tree = ET.fromstring(xml)
 
         return tree.tag == "com.cloudbees.hudson.plugins.folder.Folder"
+
+    def install_plugin(self, plugin: str) -> None:
+        """Ensure the given plugin is installed.
+
+        Jenkins uses name@version syntax for `plugin`, for example "copyartifact@1.47"
+        """
+        url = self.config.base_url.with_path("/pluginManager/installNecessaryPlugins")
+        response = self.session.post(
+            str(url),
+            headers={"Content-Type": "text/xml"},
+            data=f'<jenkins><install plugin="{plugin}" /></jenkins>',
+        )
+
+        response.raise_for_status()
