@@ -19,6 +19,9 @@ from gentoo_build_publisher.types import Build
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
+CREATE_BUILD_XML = importlib.resources.read_text(
+    "gentoo_build_publisher", "create_machine_job.xml", encoding="UTF-8"
+)
 CREATE_REPO_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "create_repo_job.xml", encoding="UTF-8"
 )
@@ -293,5 +296,50 @@ class Jenkins:
         url = xml.find("scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url")
         assert url is not None
         url.text = repo_url
+
+        return ET.tostring(xml).decode("UTF-8")
+
+    def create_machine_job(
+        self,
+        machine_name: str,
+        repo_url: str,
+        repo_branch: str,
+        ebuild_repos: list[str],
+    ) -> None:
+        """Create a machine job to build the given machine"""
+        machine_path = self.project_root / machine_name
+
+        self.create_item(
+            machine_path,
+            self.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
+        )
+
+    def render_build_machine_xml(
+        self, repo_url: str, repo_branch: str, ebuild_repos: list[str]
+    ) -> str:
+        """Return XML config for the given machine"""
+        xml = ET.fromstring(CREATE_BUILD_XML)
+
+        repos_path = (
+            "properties"
+            "/org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty"
+            "/triggers"
+            "/jenkins.triggers.ReverseBuildTrigger/upstreamProjects"
+        )
+        upstream_repos = xml.find(repos_path)
+        assert upstream_repos is not None
+        upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)
+
+        url_path = (
+            "definition/scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url"
+        )
+        url = xml.find(url_path)
+        assert url is not None
+        url.text = repo_url
+
+        branch_path = "definition/scm/branches/hudson.plugins.git.BranchSpec/name"
+        branch_name = xml.find(branch_path)
+        assert branch_name is not None
+        branch_name.text = f"*/{repo_branch}"
 
         return ET.tostring(xml).decode("UTF-8")

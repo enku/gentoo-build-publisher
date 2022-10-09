@@ -512,6 +512,44 @@ class CreateRepoJobTestCase(TestCase):
         )
 
 
+class CreateMachineJobTestCase(TestCase):
+    """Tests for the Jenkins.create_machine_job method"""
+
+    def test_creates_given_machine(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        jenkins.session.post.reset_mock()
+
+        machine_name = "base"
+        repo_url = "https://github.com/enku/gbp-machines.git"
+        repo_branch = "master"
+        ebuild_repos = ["gentoo"]
+
+        jenkins.create_machine_job(machine_name, repo_url, repo_branch, ebuild_repos)
+
+        jenkins.session.post.assert_called_once_with(
+            "https://jenkins.invalid/createItem",
+            data=jenkins.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
+            headers={"Content-Type": "text/xml"},
+            params={"name": "base"},
+            timeout=10,
+        )
+
+    def test_render_build_machine_xml(self):
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        repo_url = "https://github.com/enku/gbp-machines.git"
+        repo_branch = "feature"
+        ebuild_repos = ["gentoo", "marduk"]
+
+        xml = jenkins.render_build_machine_xml(repo_url, repo_branch, ebuild_repos)
+
+        self.assertRegex(
+            xml, r"<upstreamProjects>repos/gentoo,repos/marduk</upstreamProjects>"
+        )
+        self.assertRegex(xml, r"<url>https://github\.com/enku/gbp-machines\.git</url>")
+        self.assertRegex(xml, r"<name>\*/feature</name>")
+
+
 class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 
