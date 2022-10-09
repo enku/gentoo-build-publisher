@@ -239,6 +239,13 @@ class Jenkins:
         self, project_path: ProjectPath, parents: bool = False, exist_ok: bool = False
     ) -> None:
         """Create a project folder with the given path"""
+        if project_path == ProjectPath():
+            # Cannot create the root
+            if not exist_ok:
+                raise FileExistsError(project_path)
+
+            return
+
         if parents:
             parent = project_path.parent
 

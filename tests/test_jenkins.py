@@ -414,6 +414,19 @@ class MakeFolderTestCase(TestCase):
         self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
         self.assertEqual(jenkins.root.get(["Gentoo", "repos"]), FOLDER_XML)
 
+    def test_when_passing_root_and_not_exists_ok_returns_error(self):
+        project_path = ProjectPath()
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        with self.assertRaises(FileExistsError):
+            jenkins.make_folder(project_path)
+
+    def test_when_passing_root_and_exists_ok_succeeds(self):
+        project_path = ProjectPath()
+        jenkins = MockJenkins(JENKINS_CONFIG)
+
+        jenkins.make_folder(project_path)
+
 
 class IsFolderTestCase(TestCase):
     """Tests for the Jenkins.is_folder method"""
