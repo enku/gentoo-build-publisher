@@ -425,7 +425,7 @@ class MakeFolderTestCase(TestCase):
         project_path = ProjectPath()
         jenkins = MockJenkins(JENKINS_CONFIG)
 
-        jenkins.make_folder(project_path)
+        jenkins.make_folder(project_path, exist_ok=True)
 
 
 class IsFolderTestCase(TestCase):
