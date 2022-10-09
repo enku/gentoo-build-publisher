@@ -404,4 +404,26 @@ def resolve_mutation_createrepo(
     return None
 
 
+@mutation.field("createMachine")
+@require_localhost
+def resolve_mutation_create_machine(
+    _obj: Any,
+    _info: GraphQLResolveInfo,
+    name: str,
+    repo: str,
+    branch: str,
+    ebuild_repos: list[str],
+) -> Optional[Error]:
+    jenkins = get_publisher().jenkins
+
+    jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)
+
+    try:
+        jenkins.create_machine_job(name, repo, branch, ebuild_repos)
+    except (FileExistsError, FileNotFoundError) as error:
+        return Error.from_exception(error)
+
+    return None
+
+
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

@@ -948,6 +948,53 @@ class CreateRepoTestCase(TestCase):
         )
 
 
+class CreateMachineTestCase(TestCase):
+    """Tests for the createMachine mutation"""
+
+    query = """
+    mutation ($name: String!, $repo: String!, $branch: String!, $ebuild_repos: [String!]!) {
+     createMachine(name: $name, repo: $repo, branch: $branch, ebuild_repos: $ebuild_repos) {
+        message
+      }
+    }
+    """
+
+    def test_creates_machine_when_does_not_exist(self):
+        result = execute(
+            self.query,
+            variables={
+                "name": "babette",
+                "repo": "https://github.com/enku/gbp-machines.git",
+                "branch": "master",
+                "ebuild_repos": ["gentoo"],
+            },
+        )
+
+        assert_data(self, result, {"createMachine": None})
+        self.assertTrue(self.publisher.jenkins.project_exists(ProjectPath("babette")))
+
+    def test_returns_error_when_already_exists(self):
+        self.publisher.jenkins.create_machine_job(
+            "babette", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
+        )
+
+        result = execute(
+            self.query,
+            variables={
+                "name": "babette",
+                "repo": "https://github.com/enku/gbp-machines.git",
+                "branch": "master",
+                "ebuild_repos": ["gentoo"],
+            },
+        )
+
+        assert_data(
+            self,
+            result,
+            {"createMachine": {"message": "FileExistsError: babette"}},
+        )
+
+
 @require_localhost
 def dummy_resolver(
     _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
