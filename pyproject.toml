@@ -38,6 +38,7 @@ django = "gentoo_build_publisher.models:DjangoDB"
 [project.optional-dependencies]
 
 [project.entry-points."gbpcli.subcommands"]
+addrepo = "gentoo_build_publisher.addrepo"
 check = "gentoo_build_publisher.check"
 
 [build-system]
