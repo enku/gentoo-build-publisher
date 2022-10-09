@@ -19,6 +19,7 @@ from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
 import django.test
+from django.test.client import Client
 from requests import Response, Session
 from yarl import URL
 
@@ -240,3 +241,18 @@ class MockJenkins(Jenkins):
         self.scheduled_builds.append(machine)
 
         return str(self.config.base_url / "job" / machine / "build")
+
+
+def graphql(query: str, variables: dict[str, Any] | None = None) -> Any:
+    """Execute GraphQL query on the Django test client.
+
+    Return the parsed JSON response
+    """
+    client = Client()
+    response = client.post(
+        "/graphql",
+        {"query": query, "variables": variables},
+        content_type="application/json",
+    )
+
+    return response.json()

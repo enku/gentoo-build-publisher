@@ -1,11 +1,9 @@
 """Tests for the GraphQL interface for Gentoo Build Publisher"""
 # pylint: disable=missing-docstring,too-many-lines
 import datetime as dt
-import json
 from typing import Any
 from unittest import mock
 
-from django.test.client import Client
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.graphql import require_localhost
@@ -14,21 +12,10 @@ from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version, utctime
 
-from . import TestCase
+from . import TestCase, graphql
 from .factories import PACKAGE_INDEX, BuildFactory, BuildModelFactory
 
 Mock = mock.Mock
-
-
-def execute(query, variables=None):
-    client = Client()
-    response = client.post(
-        "/graphql",
-        {"query": query, "variables": variables},
-        content_type="application/json",
-    )
-
-    return json.loads(response.content)
 
 
 def assert_data(test_case: TestCase, result: dict, expected: dict):
@@ -70,7 +57,7 @@ class BuildQueryTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build.id})
+        result = graphql(query, variables={"id": build.id})
 
         expected = {
             "build": {
@@ -104,7 +91,7 @@ class BuildQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query, {"id": build.id})
+        result = graphql(query, {"id": build.id})
 
         # Then we get the list of packages in the build
         assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
@@ -122,7 +109,7 @@ class BuildQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query, {"id": build.id})
+        result = graphql(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
@@ -142,7 +129,7 @@ class BuildQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query, {"id": build.id})
+        result = graphql(query, {"id": build.id})
 
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
@@ -165,7 +152,7 @@ class BuildQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query, {"id": build.id})
+        result = graphql(query, {"id": build.id})
 
         self.assertEqual(
             result["data"]["build"],
@@ -199,7 +186,7 @@ class BuildsQueryTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"machine": builds[0].machine})
+        result = graphql(query, variables={"machine": builds[0].machine})
 
         expected = [
             {"id": build.id, "completed": "2021-09-30T20:17:00+00:00"}
@@ -234,7 +221,7 @@ class BuildsQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query, variables={"machine": "lighthouse"})
+        result = graphql(query, variables={"machine": "lighthouse"})
 
         assert_data(
             self,
@@ -271,7 +258,7 @@ class LatestQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query)
+        result = graphql(query)
 
         assert_data(self, result, {"latest": None})
 
@@ -283,7 +270,7 @@ class LatestQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query)
+        result = graphql(query)
 
         assert_data(self, result, {"latest": {"id": str(self.latest)}})
 
@@ -324,7 +311,7 @@ class DiffQueryTestCase(TestCase):
         }
         """
         variables = {"left": self.left.id, "right": self.right.id}
-        result = execute(query, variables=variables)
+        result = graphql(query, variables=variables)
 
         # Then the differences are given between the two builds
         expected = {
@@ -352,7 +339,7 @@ class DiffQueryTestCase(TestCase):
         """
         variables = {"left": self.left.id, "right": self.right.id}
 
-        result = execute(query, variables=variables)
+        result = graphql(query, variables=variables)
 
         # Then the differences are given between the two builds
         expected = {
@@ -383,7 +370,7 @@ class DiffQueryTestCase(TestCase):
         }
         """
         variables = {"left": "bogus.1", "right": self.right.id}
-        result = execute(query, variables=variables)
+        result = graphql(query, variables=variables)
 
         # Then an error is returned
         self.assertEqual(result["data"]["diff"], None)
@@ -409,7 +396,7 @@ class DiffQueryTestCase(TestCase):
         }
         """
         variables = {"left": self.left.id, "right": "bogus.1"}
-        result = execute(query, variables=variables)
+        result = graphql(query, variables=variables)
 
         # Then an error is returned
         self.assertEqual(result["data"]["diff"], None)
@@ -452,7 +439,7 @@ class MachinesQueryTestCase(TestCase):
         }
         """
 
-        result = execute(query)
+        result = graphql(query)
 
         expected = [
             {
@@ -487,7 +474,7 @@ class MachinesQueryTestCase(TestCase):
           }
         }
         """
-        result = execute(query)
+        result = graphql(query)
 
         assert_data(
             self,
@@ -511,12 +498,12 @@ class MachinesQueryTestCase(TestCase):
             }
         }
         """
-        result = execute(query)
+        result = graphql(query)
 
         self.assertFalse(result["data"]["machines"][0]["latestBuild"]["published"])
 
         self.publisher.publish(build)
-        result = execute(query)
+        result = graphql(query)
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
 
@@ -537,7 +524,7 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        result = execute(query, variables={"id": build.id})
+        result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
@@ -555,7 +542,7 @@ class PublishMutationTestCase(TestCase):
         with mock.patch(
             "gentoo_build_publisher.graphql.publish_build.delay"
         ) as publish_delay:
-            execute(query)
+            graphql(query)
 
         publish_delay.assert_called_once_with("babette.193")
 
@@ -576,7 +563,7 @@ class PullMutationTestCase(TestCase):
           }
         }"""
         with mock.patch("gentoo_build_publisher.graphql.pull_build") as mock_pull:
-            result = execute(query, variables={"id": build.id})
+            result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
         mock_pull.delay.assert_called_once_with(build.id)
@@ -594,7 +581,7 @@ class ScheduleBuildMutationTestCase(TestCase):
             mock_schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
             )
-            result = execute(query)
+            result = graphql(query)
 
         self.assertEqual(
             result,
@@ -607,7 +594,7 @@ class ScheduleBuildMutationTestCase(TestCase):
 
         with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
             mock_schedule_build.side_effect = Exception("The end is near")
-            result = execute(query)
+            result = graphql(query)
 
         expected = {
             "data": {"scheduleBuild": None},
@@ -637,7 +624,7 @@ class KeepBuildMutationTestCase(TestCase):
           }
         }
         """
-        result = execute(query, variables={"id": str(model)})
+        result = graphql(query, variables={"id": str(model)})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
@@ -650,7 +637,7 @@ class KeepBuildMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": "bogus.309"})
+        result = graphql(query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"keepBuild": None})
 
@@ -671,7 +658,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build.id})
+        result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"releaseBuild": {"keep": False}})
 
@@ -684,7 +671,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": "bogus.309"})
+        result = graphql(query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"releaseBuild": None})
 
@@ -703,7 +690,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": str(model), "note": note_text})
+        result = graphql(query, variables={"id": str(model), "note": note_text})
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
         model.refresh_from_db()
@@ -721,7 +708,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build.id, "note": None})
+        result = graphql(query, variables={"id": build.id, "note": None})
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
@@ -737,7 +724,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": "bogus.309", "note": None})
+        result = graphql(query, variables={"id": "bogus.309", "note": None})
 
         assert_data(self, result, {"createNote": None})
 
@@ -754,7 +741,7 @@ class TagsTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"id": build.id, "tag": "prod"})
+        result = graphql(query, variables={"id": build.id, "tag": "prod"})
 
         assert_data(self, result, {"createBuildTag": {"tags": ["prod"]}})
 
@@ -771,7 +758,7 @@ class TagsTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+        result = graphql(query, variables={"machine": build.machine, "tag": "prod"})
 
         assert_data(self, result, {"removeBuildTag": {"tags": []}})
 
@@ -788,7 +775,7 @@ class TagsTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+        result = graphql(query, variables={"machine": build.machine, "tag": "prod"})
 
         assert_data(self, result, {"resolveBuildTag": {"id": build.id}})
 
@@ -804,7 +791,7 @@ class TagsTestCase(TestCase):
         }
         """
 
-        result = execute(query, variables={"machine": build.machine, "tag": "prod"})
+        result = graphql(query, variables={"machine": build.machine, "tag": "prod"})
 
         assert_data(self, result, {"resolveBuildTag": None})
 
@@ -832,14 +819,14 @@ class SearchNotesQueryTestCase(TestCase):
         self.publisher.records.save(record, note="test bar")
 
     def test_single_match(self):
-        result = execute(self.query, variables={"machine": "babette", "key": "foo"})
+        result = graphql(self.query, variables={"machine": "babette", "key": "foo"})
 
         assert_data(
             self, result, {"searchNotes": [{"id": self.build1.id, "notes": "test foo"}]}
         )
 
     def test_multiple_match(self):
-        result = execute(self.query, variables={"machine": "babette", "key": "test"})
+        result = graphql(self.query, variables={"machine": "babette", "key": "test"})
 
         assert_data(
             self,
@@ -858,7 +845,7 @@ class SearchNotesQueryTestCase(TestCase):
         record = self.publisher.record(build)
         self.publisher.records.save(record, note="test foo")
 
-        result = execute(self.query, variables={"machine": "lighthouse", "key": "test"})
+        result = graphql(self.query, variables={"machine": "lighthouse", "key": "test"})
 
         assert_data(
             self,
@@ -867,7 +854,7 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
     def test_when_named_machine_does_not_exist(self):
-        result = execute(self.query, variables={"machine": "bogus", "key": "test"})
+        result = graphql(self.query, variables={"machine": "bogus", "key": "test"})
 
         assert_data(self, result, {"searchNotes": []})
 
@@ -887,7 +874,7 @@ class WorkingTestCase(TestCase):
         working = BuildFactory()
         self.publisher.records.save(BuildRecord(working.id))
 
-        result = execute(self.query)
+        result = graphql(self.query)
 
         assert_data(self, result, {"working": [{"id": working.id}]})
 
@@ -898,7 +885,7 @@ class VersionTestCase(TestCase):
     query = """query { version }"""
 
     def test(self):
-        result = execute(self.query)
+        result = graphql(self.query)
         version = get_version()
 
         assert_data(self, result, {"version": version})
@@ -916,7 +903,7 @@ class CreateRepoTestCase(TestCase):
     """
 
     def test_creates_repo_when_does_not_exist(self):
-        result = execute(
+        result = graphql(
             self.query,
             variables={
                 "name": "gentoo",
@@ -934,7 +921,7 @@ class CreateRepoTestCase(TestCase):
         self.publisher.jenkins.make_folder(ProjectPath("repos"))
         self.publisher.jenkins.create_repo_job("gentoo", "foo", "master")
 
-        result = execute(
+        result = graphql(
             self.query,
             variables={
                 "name": "gentoo",
@@ -960,7 +947,7 @@ class CreateMachineTestCase(TestCase):
     """
 
     def test_creates_machine_when_does_not_exist(self):
-        result = execute(
+        result = graphql(
             self.query,
             variables={
                 "name": "babette",
@@ -978,7 +965,7 @@ class CreateMachineTestCase(TestCase):
             "babette", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
         )
 
-        result = execute(
+        result = graphql(
             self.query,
             variables={
                 "name": "babette",
