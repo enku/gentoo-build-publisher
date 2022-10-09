@@ -1,5 +1,5 @@
 """Tests for the GraphQL interface for Gentoo Build Publisher"""
-# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=missing-docstring,too-many-lines
 import datetime as dt
 import json
 from typing import Any
@@ -9,6 +9,7 @@ from django.test.client import Client
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.graphql import require_localhost
+from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version, utctime
@@ -901,6 +902,50 @@ class VersionTestCase(TestCase):
         version = get_version()
 
         assert_data(self, result, {"version": version})
+
+
+class CreateRepoTestCase(TestCase):
+    """Tests for the createRepo mutation"""
+
+    query = """
+    mutation ($name: String!, $repo: String!, $branch: String!) {
+     createRepo(name: $name, repo: $repo, branch: $branch) {
+        message
+      }
+    }
+    """
+
+    def test_creates_repo_when_does_not_exist(self):
+        result = execute(
+            self.query,
+            variables={
+                "name": "gentoo",
+                "repo": "https://anongit.gentoo.org/git/repo/gentoo.git",
+                "branch": "master",
+            },
+        )
+
+        assert_data(self, result, {"createRepo": None})
+        self.assertTrue(
+            self.publisher.jenkins.project_exists(ProjectPath("repos/gentoo"))
+        )
+
+    def test_returns_error_when_already_exists(self):
+        self.publisher.jenkins.make_folder(ProjectPath("repos"))
+        self.publisher.jenkins.create_repo_job("gentoo", "foo", "master")
+
+        result = execute(
+            self.query,
+            variables={
+                "name": "gentoo",
+                "repo": "https://anongit.gentoo.org/git/repo/gentoo.git",
+                "branch": "master",
+            },
+        )
+
+        assert_data(
+            self, result, {"createRepo": {"message": "FileExistsError: repos/gentoo"}}
+        )
 
 
 @require_localhost

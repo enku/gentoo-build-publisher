@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from dataclasses import dataclass
 from functools import cached_property, wraps
 from importlib import resources
 from typing import Any, Callable, Optional
@@ -56,6 +57,17 @@ def require_localhost(fn: Resolver) -> Resolver:
         return fn(args[0], info, *args[2:], **kwargs)
 
     return wrapper
+
+
+@dataclass
+class Error:
+    """Return Type for errors"""
+
+    message: str
+
+    @classmethod
+    def from_exception(cls, exception: Exception) -> Error:
+        return cls(f"{exception.__class__.__name__}: {exception}")
 
 
 class BuildProxy:
@@ -373,6 +385,23 @@ def resolve_mutation_removebuildtag(
     publisher.untag(machine, tag)
 
     return MachineInfo(machine)
+
+
+@mutation.field("createRepo")
+@require_localhost
+def resolve_mutation_createrepo(
+    _obj: Any, _info: GraphQLResolveInfo, name: str, repo: str, branch: str
+) -> Optional[Error]:
+    jenkins = get_publisher().jenkins
+
+    jenkins.make_folder(jenkins.project_root / "repos", parents=True, exist_ok=True)
+
+    try:
+        jenkins.create_repo_job(name, repo, branch)
+    except (FileExistsError, FileNotFoundError) as error:
+        return Error.from_exception(error)
+
+    return None
 
 
 schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)

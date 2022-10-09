@@ -49,6 +49,10 @@ type DiffStat {
   items: [Change!]!
 }
 
+type Error {
+  message: String!
+}
+
 type Query {
   build(id: ID!): Build
   builds(machine: String!): [Build!]!
@@ -70,4 +74,5 @@ type Mutation {
   removeBuildTag(machine: String!, tag: String!) : MachineSummary
   releaseBuild(id: ID!): Build
   createNote(id: ID!, note: String): Build
+  createRepo(name: String!, repo: String!, branch: String!): Error
 }
