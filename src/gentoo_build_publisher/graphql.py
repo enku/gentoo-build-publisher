@@ -52,7 +52,18 @@ def require_localhost(fn: Resolver) -> Resolver:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         """type annotation"""
         info: GraphQLResolveInfo = args[1]
-        if not info.context["request"].environ.get("REMOTE_ADDR", "") in LOCALHOST:
+        environ = info.context["request"].environ
+        client_ip = (
+            (
+                environ.get("HTTP_FORWARD", "")
+                or environ.get("HTTP_X_FORWARDED_FOR", "")
+                or environ.get("REMOTE_ADDR", "")
+            )
+            .split(",", 1)[0]
+            .strip()
+        )
+
+        if not client_ip in LOCALHOST:
             raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
         return fn(args[0], info, *args[2:], **kwargs)
 

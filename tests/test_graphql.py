@@ -1039,3 +1039,18 @@ class RequireLocalhostTestCase(TestCase):
             dummy_resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
+
+    def test_returns_error_when_going_through_reverse_proxy(self):
+        # Fix for gunicorn
+        environ = {
+            "CONTENT_TYPE": "application/json",
+            "HTTP_X_FORWARDED_FOR": "192.0.2.23",
+            "PATH_INFO": "/graphql",
+            "REMOTE_ADDR": "127.0.0.1",
+        }
+        info = Mock(context={"request": Mock(environ=environ)})
+
+        with self.assertRaises(GraphQLError) as context:
+            dummy_resolver(None, info)
+
+        self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
