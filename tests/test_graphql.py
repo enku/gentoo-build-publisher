@@ -939,8 +939,8 @@ class CreateMachineTestCase(TestCase):
     """Tests for the createMachine mutation"""
 
     query = """
-    mutation ($name: String!, $repo: String!, $branch: String!, $ebuild_repos: [String!]!) {
-     createMachine(name: $name, repo: $repo, branch: $branch, ebuild_repos: $ebuild_repos) {
+    mutation ($name: String!, $repo: String!, $branch: String!, $ebuildRepos: [String!]!) {
+     createMachine(name: $name, repo: $repo, branch: $branch, ebuildRepos: $ebuildRepos) {
         message
       }
     }
@@ -953,7 +953,7 @@ class CreateMachineTestCase(TestCase):
                 "name": "babette",
                 "repo": "https://github.com/enku/gbp-machines.git",
                 "branch": "master",
-                "ebuild_repos": ["gentoo"],
+                "ebuildRepos": ["gentoo"],
             },
         )
 
@@ -971,7 +971,7 @@ class CreateMachineTestCase(TestCase):
                 "name": "babette",
                 "repo": "https://github.com/enku/gbp-machines.git",
                 "branch": "master",
-                "ebuild_repos": ["gentoo"],
+                "ebuildRepos": ["gentoo"],
             },
         )
 

@@ -75,5 +75,5 @@ type Mutation {
   releaseBuild(id: ID!): Build
   createNote(id: ID!, note: String): Build
   createRepo(name: String!, repo: String!, branch: String!): Error
-  createMachine(name: String!, repo: String!, branch: String!, ebuild_repos: [String!]!): Error
+  createMachine(name: String!, repo: String!, branch: String!, ebuildRepos: [String!]!): Error
 }

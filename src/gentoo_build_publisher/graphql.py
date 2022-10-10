@@ -423,14 +423,14 @@ def resolve_mutation_create_machine(
     name: str,
     repo: str,
     branch: str,
-    ebuild_repos: list[str],
+    ebuildRepos: list[str],
 ) -> Optional[Error]:
     jenkins = get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)
 
     try:
-        jenkins.create_machine_job(name, repo, branch, ebuild_repos)
+        jenkins.create_machine_job(name, repo, branch, ebuildRepos)
     except (FileExistsError, FileNotFoundError) as error:
         return Error.from_exception(error)
 

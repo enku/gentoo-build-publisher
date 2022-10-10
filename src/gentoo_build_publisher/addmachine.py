@@ -9,8 +9,8 @@ from gbpcli import GBP
 from rich.console import Console
 
 GRAPHQL_QUERY = """\
-mutation ($name: String!, $repo: String!, $branch: String!, $ebuild_repos: [String!]!) {
- createMachine(name: $name, repo: $repo, branch: $branch, ebuild_repos: $ebuild_repos) {
+mutation ($name: String!, $repo: String!, $branch: String!, $ebuildRepos: [String!]!) {
+ createMachine(name: $name, repo: $repo, branch: $branch, ebuildRepos: $ebuildRepos) {
     message
   }
 }
@@ -21,7 +21,7 @@ def handler(args: argparse.Namespace, gbp: GBP, _console: Console) -> int:
     """Subcommand handler"""
     query_vars = {
         "branch": args.branch,
-        "ebuild_repos": args.deps,
+        "ebuildRepos": args.deps,
         "name": args.name,
         "repo": args.repo,
     }
