@@ -19,6 +19,7 @@ from gentoo_build_publisher.types import Build
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
+COPY_ARTIFACT_PLUGIN = "copyartifact@1.47"
 CREATE_BUILD_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "create_machine_job.xml", encoding="UTF-8"
 )
@@ -316,6 +317,7 @@ class Jenkins:
         """Create a machine job to build the given machine"""
         machine_path = self.project_root / machine_name
 
+        self.install_plugin(COPY_ARTIFACT_PLUGIN)
         self.create_item(
             machine_path,
             self.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),

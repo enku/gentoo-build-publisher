@@ -10,6 +10,7 @@ import requests
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
+    COPY_ARTIFACT_PLUGIN,
     FOLDER_XML,
     Jenkins,
     JenkinsConfig,
@@ -539,12 +540,23 @@ class CreateMachineJobTestCase(TestCase):
 
         jenkins.create_machine_job(machine_name, repo_url, repo_branch, ebuild_repos)
 
-        jenkins.session.post.assert_called_once_with(
-            "https://jenkins.invalid/createItem",
-            data=jenkins.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
-            headers={"Content-Type": "text/xml"},
-            params={"name": "base"},
-            timeout=10,
+        jenkins.session.post.assert_has_calls(
+            [
+                mock.call(
+                    "https://jenkins.invalid/pluginManager/installNecessaryPlugins",
+                    headers={"Content-Type": "text/xml"},
+                    data=f'<jenkins><install plugin="{COPY_ARTIFACT_PLUGIN}" /></jenkins>',
+                ),
+                mock.call(
+                    "https://jenkins.invalid/createItem",
+                    data=jenkins.render_build_machine_xml(
+                        repo_url, repo_branch, ebuild_repos
+                    ),
+                    headers={"Content-Type": "text/xml"},
+                    params={"name": "base"},
+                    timeout=10,
+                ),
+            ]
         )
 
     def test_render_build_machine_xml(self):
