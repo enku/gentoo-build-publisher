@@ -115,10 +115,6 @@ After entering the password, select the button to "Install suggested plugins".
 Continue through the wizard filling out the forms.  When finished click the
 "Start using Jenkins" button.
 
-Click on "Manage Jenkins", "Manage Plugins".  Click on the "Available" tab and
-enter "CopyArtifact". Select the CopyArtifact plugin and click "Install
-without restart".
-
 ### Create a Jenkins API key
 
 From the top bar in the Jenkins UI, click on your user/name. Then from the left
@@ -299,58 +295,38 @@ sudo -u jenkins -H mkdir -p /var/lib/jenkins/.config/containers
 sudo -u jenkins -H cp /home/gbp/gentoo-build-publisher/contrib/deployment/containers.conf /var/lib/jenkins/.config/containers/containers.conf
 ```
 
-Go back to your virtual machine in a browser on port 8080.
-
-I prefer having all my Gentoo items in a separate Jenkins folder.  From the Dashboard
-click the "New Item" link in the upper left. Give it the name "Gentoo", click the
-"Folder" type and confirm. On the next page, click "Save".
-
 ### Create a job for the Gentoo repo
 
-In the Jenkins UI, under the Gentoo folder create another folder called "repos".  Under
-the repos folder create a new item.  Call it "gentoo" (lower case "g").  Make it of type
-"Freestyle project" and confirm. In the next page, configure the "gentoo" project.
-Select "git" for Source Code Management. For the repository URL enter
-"https://anongit.gentoo.org/git/repo/gentoo.git". Under "Additional Behaviors" add
-"Advanced clone behaviours", then click on the "Shallow clone" checkbox. For Build
-Triggers set it to build periodically on a schedule of once per day ("@daily"). For
-Build Steps add an "Execute Shell" step with the following script content:
+Tell Gentoo Build Publisher to create a ebuild repo job from the official
+Gentoo repo.
 
 ```sh
-artifact="${JOB_BASE_NAME}"-repo.tar.gz
-date -R -u > ./metadata/timestamp.chk
-python -c 'import json, os, sys; json.dump({"source": os.environ["GIT_URL"], "commit": os.environ["GIT_COMMIT"], "build": int(os.environ["BUILD_ID"])}, sys.stdout)' > ./metadata/build.json
-rm -f "${artifact}"
-mkdir -p "${WORKSPACE_TMP}"
-tar cf "${WORKSPACE_TMP}"/"${artifact}" -I 'gzip -9' --exclude-vcs --exclude-vcs-ignores .
-mv "${WORKSPACE_TMP}"/"${artifact}" .
+gbp addrepo gentoo https://anongit.gentoo.org/git/repo/gentoo.git
 ```
 
-For Post-build Actions add "Archive the artifacts".  Enter `*-repo.tar.gz`
-for Files to archive.
-
-Click Save.
-
-Now that we have a Gentoo repo job. Let's give it a whirl.  Click on the
-"Build Now" link on the left.  The job should start running, pulling (cloning,
-since it's the first time), the official Gentoo repo and then creating an
-artifact.  This artifact can then be used for machine builds.
+Now that we have a Gentoo repo job. Let's give it a whirl.  From the Jenkins
+web interface, navigate to the "Gentoo" folder and then the "repos" folder.
+Click on the "gentoo" item.  This is your Gentoo ebuild repository build.
+Click on the "Build Now" link on the left.  The job should start running,
+pulling (cloning, since it's the first time), the official Gentoo repo and
+then creating an artifact. This artifact can then be used for machine builds.
+This job will run periodically, polling the git repository and building new
+artifacts.
 
 
 ### Create your first machine job
 
-In the Jenkins UI navigate over to the "Dashboard > Gentoo" folder. Click on
-"New Item". For the name call it "base".  For type choose "Pipeline" and
-confirm.  Click on "Do not allow concurrent builds".  Under "Build Triggers",
-click on "Build after other projects are built".  For "Projects to watch"
-enter "repos/gentoo".  Under "Pipeline" select "Pipleline script from SCM"
-from the dropdown.  For "SCM" select "Git". Under "Repository URL" enter
-"https://github.com/enku/gbp-machines.git".  Click "Save".
+Now let's tell Gentoo Build Publisher to create a machine job.
 
-Now that we have a machine build job, let's give it a whirl.  From the shell
-prompt:
-
+```sh
+gbp addmachine base https://github.com/enku/gbp-machines.git
 ```
+
+Now that we have a machine build job, let's give it a whirl.  Ordinarily this
+job will trigger automatically after sucessful repo builds. However we can
+trigger a build manually from the shell:
+
+```sh
 gbp build base
 ```
 
@@ -375,21 +351,23 @@ gbp publish base
 
 ### Create subsequent machine jobs
 
-Creating subsequent machine jobs is easy because it is as simple as copying
-from the base job and giving it the right name from the machine definitions in
-your [`gbp-machines`](https://github.com/enku/gbp-machines) git repo.
+Now let's create a build for the GBP instance itself.  There already exists a
+build definition in the [`gbp-machines`](https://github.com/enku/gbp-machines)
+git repo.
 
-In Jenkins, from Dashboard > Gentoo click on "New Item".  For the item name
-write "gbpbox".  Then in "Copy from" write "base".  Confirm, then Save, then
-
+```sh
+gbp addmachine gbpbox https://github.com/enku/gbp-machines.git
 ```
+
+```sh
 gbp build gbpbox
 ```
 
-This creates and builds a machine that represents the GBP instance.  You can
-now use that to upgrade your GBP instance.  Publish the (latest) build.
+This creates and builds a machine that represents the GBP instance.  After the
+build has completed, you can now use it to upgrade your GBP instance.  Publish
+the (latest) build.
 
-```
+```sh
 gbp publish gbpbox
 ```
 
@@ -410,3 +388,22 @@ Sync and update from the GBP instance.
 emerge --sync --quiet
 emerge --deep --update --verbose --ask --newuse --getbinpkg @world
 ```
+
+## The Dashboard and CLI
+
+There is a dashboard for [showing a visual
+representation](https://raw.githubusercontent.com/enku/gentoo-build-publisher/master/docs/media/dashboard.png)
+of your Gentoo Build Publisher (less the Jenkins parts). Point your web
+browser to the GBP instance on port 80, e.g. http://10.10.100.12/.
+
+In addition the `gbp` [command line
+interface](https://github.com/enku/gbpcli#readme) has useful commands for
+interacting with your GBP instance.  You can use it from the instance itself
+or install it on a local machine via pip:
+
+```sh
+pip install gbpcli
+```
+
+Note that some CLI commands, for example `addmachine` and `addrepo` are only
+available from the GBP server instance.
