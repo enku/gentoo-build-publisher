@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import AnyHttpUrl, BaseModel  # pylint: disable=no-name-in-module
 
@@ -17,10 +17,10 @@ class Settings(BaseModel):
 
     ENABLE_PURGE: bool = False
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
-    JENKINS_API_KEY: Optional[str] = None
+    JENKINS_API_KEY: str | None = None
     JENKINS_BASE_URL: AnyHttpUrl
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
-    JENKINS_USER: Optional[str] = None
+    JENKINS_USER: str | None = None
     STORAGE_PATH: Path
     RECORDS_BACKEND: str = "django"
 

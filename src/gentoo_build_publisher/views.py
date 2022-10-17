@@ -5,7 +5,7 @@ import datetime as dt
 import itertools
 from collections import defaultdict
 from dataclasses import astuple, dataclass
-from typing import Mapping, Optional, TypedDict
+from typing import Mapping, TypedDict
 
 from django.conf import settings
 from django.core.cache import cache
@@ -107,7 +107,7 @@ def get_packages(build: Build) -> list[Package]:
     return packages
 
 
-def get_metadata(build: Build) -> Optional[GBPMetadata]:
+def get_metadata(build: Build) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.

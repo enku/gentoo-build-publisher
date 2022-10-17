@@ -10,7 +10,7 @@ import datetime as dt
 from dataclasses import dataclass
 from functools import cached_property, wraps
 from importlib import resources
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from ariadne import (
     EnumType,
@@ -198,7 +198,7 @@ def resolve_query_machines(
 @query.field("build")
 def resolve_query_build(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildProxy]:
+) -> BuildProxy | None:
     publisher = get_publisher()
     build = Build(id)
 
@@ -208,7 +208,7 @@ def resolve_query_build(
 @query.field("latest")
 def resolve_query_latest(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> Optional[BuildProxy]:
+) -> BuildProxy | None:
     publisher = get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
@@ -231,7 +231,7 @@ def resolve_query_builds(
 @query.field("diff")
 def resolve_query_diff(
     _obj: Any, _info: GraphQLResolveInfo, left: str, right: str
-) -> Optional[Object]:
+) -> Object | None:
     publisher = get_publisher()
     left_build = Build(left)
 
@@ -283,7 +283,7 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildPro
 @query.field("resolveBuildTag")
 def resolve_query_resolvebuildtag(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
-) -> Optional[BuildProxy]:
+) -> BuildProxy | None:
     publisher = get_publisher()
 
     try:
@@ -330,7 +330,7 @@ def resolve_mutation_schedule_build(
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildProxy]:
+) -> BuildProxy | None:
     publisher = get_publisher()
     build = Build(id)
 
@@ -346,7 +346,7 @@ def resolve_mutation_keepbuild(
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> Optional[BuildProxy]:
+) -> BuildProxy | None:
     publisher = get_publisher()
     build = Build(id)
 
@@ -361,8 +361,8 @@ def resolve_mutation_releasebuild(
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
-    _obj: Any, _info: GraphQLResolveInfo, id: str, note: Optional[str] = None
-) -> Optional[BuildProxy]:
+    _obj: Any, _info: GraphQLResolveInfo, id: str, note: str | None = None
+) -> BuildProxy | None:
     publisher = get_publisher()
     build = Build(id)
 
@@ -402,7 +402,7 @@ def resolve_mutation_removebuildtag(
 @require_localhost
 def resolve_mutation_createrepo(
     _obj: Any, _info: GraphQLResolveInfo, name: str, repo: str, branch: str
-) -> Optional[Error]:
+) -> Error | None:
     jenkins = get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root / "repos", parents=True, exist_ok=True)
@@ -424,7 +424,7 @@ def resolve_mutation_create_machine(
     repo: str,
     branch: str,
     ebuildRepos: list[str],
-) -> Optional[Error]:
+) -> Error | None:
     jenkins = get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)

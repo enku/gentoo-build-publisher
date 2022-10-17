@@ -2,7 +2,7 @@
 # pylint: disable=missing-docstring
 import io
 from argparse import ArgumentParser, Namespace
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 from gbpcli import GBP
@@ -18,7 +18,7 @@ mock_stderr = mock.patch(
 )
 
 
-def query(query_: str, variables: Optional[dict[str, Any]] = None) -> Any:
+def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
     response = graphql(query_, variables)
 
     return response.get("data"), response.get("errors")

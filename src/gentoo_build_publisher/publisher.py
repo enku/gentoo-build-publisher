@@ -260,8 +260,8 @@ class MachineInfo:
 
         machine: str
         build_count: int
-        latest_build: Optional[BuildRecord]
-        published_build: Optional[Build]
+        latest_build: BuildRecord | None
+        published_build: Build | None
     """
 
     # pylint: disable=missing-docstring

@@ -7,7 +7,7 @@ able to use it for purging builds or anything else for that matter.
 from __future__ import annotations
 
 import datetime
-from typing import Callable, Generic, Iterable, Optional, TypeVar
+from typing import Callable, Generic, Iterable, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 
@@ -22,8 +22,8 @@ class Purger(Generic[T]):
         self,
         items: Iterable[T],
         key: Callable[[T], datetime.datetime],
-        start: Optional[datetime.datetime] = None,
-        end: Optional[datetime.datetime] = None,
+        start: datetime.datetime | None = None,
+        end: datetime.datetime | None = None,
     ):
         self.items = [*items]
         self.key = key
@@ -58,7 +58,7 @@ class Purger(Generic[T]):
 
         return lst
 
-    def append_latest(self, items: list[T], append_to: list[T]) -> Optional[T]:
+    def append_latest(self, items: list[T], append_to: list[T]) -> T | None:
         """
         If items is a non-empty list of datetime T items, take the one with the later
         datetime and append it to append_to.  If items is empty, do nothing.

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, Type, TypeVar
 
 import requests
 from dataclasses_json import dataclass_json
@@ -38,8 +38,8 @@ class JenkinsConfig:
     """Configuration for JenkinsBuild"""
 
     base_url: URL
-    user: Optional[str] = None
-    api_key: Optional[str] = None
+    user: str | None = None
+    api_key: str | None = None
     artifact_name: str = "build.tar.gz"
     download_chunk_size: int = JENKINS_DEFAULT_CHUNK_SIZE
     requests_timeout: int = 10  # seconds
@@ -55,7 +55,7 @@ class JenkinsConfig:
             download_chunk_size=settings.JENKINS_DOWNLOAD_CHUNK_SIZE,
         )
 
-    def auth(self) -> Optional[AuthTuple]:
+    def auth(self) -> AuthTuple | None:
         """The auth used for requests
 
         Either a 2-tuple or `None`
