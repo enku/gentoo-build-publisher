@@ -51,12 +51,7 @@ class Purger(Generic[T]):
         Given a list of items, return a subset of items between start and end
         (inclusive).
         """
-        lst = []
-        for item in items:
-            if start <= self.key(item) <= end:
-                lst.append(item)
-
-        return lst
+        return [item for item in items if start <= self.key(item) <= end]
 
     def append_latest(self, items: list[T], append_to: list[T]) -> T | None:
         """
@@ -93,15 +88,10 @@ class Purger(Generic[T]):
 
     def yesterday_plus(self) -> list[T]:
         """Return every datetime object in items from yesterday up."""
-        lst = []
         yesterday = self.end - datetime.timedelta(hours=24)
         yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        for item in self.items:
-            if self.key(item) >= yesterday:
-                lst.append(item)
-
-        return lst
+        return [item for item in self.items if self.key(item) >= yesterday]
 
     def one_per_day_last_week(self) -> list[T]:
         """Return one item for every day within the past week."""
