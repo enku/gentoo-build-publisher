@@ -18,7 +18,7 @@ mutation ($name: String!, $repo: String!, $branch: String!) {
 
 
 def handler(args: argparse.Namespace, gbp: GBP, _console: Console) -> int:
-    """Subcommand handler"""
+    """Add a an ebuild repo to Jenkins"""
     query_vars = {"name": args.name, "repo": args.repo, "branch": args.branch}
     response = gbp.check(GRAPHQL_QUERY, query_vars)
 

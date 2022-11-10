@@ -18,7 +18,7 @@ mutation ($name: String!, $repo: String!, $branch: String!, $ebuildRepos: [Strin
 
 
 def handler(args: argparse.Namespace, gbp: GBP, _console: Console) -> int:
-    """Subcommand handler"""
+    """Add a an ebuild repo to Jenkins"""
     query_vars = {
         "branch": args.branch,
         "ebuildRepos": args.deps,

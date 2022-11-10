@@ -19,7 +19,7 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
 
 
 def handler(args: argparse.Namespace, _gbp: GBP, _console: Console) -> int:
-    """Handle the check command"""
+    """Check GBP storage and records"""
     django.setup()
     publisher = get_publisher()
 
