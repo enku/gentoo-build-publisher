@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "gbpcli"
-version = "1.2.0"
+version = "1.3.0"
 requires_python = ">=3.10"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
@@ -604,8 +604,8 @@ dependencies = [
 ]
 
 [metadata]
-lock_version = "4.0"
-content_hash = "sha256:8bb0e519cd87c753c0448f03ef5a9901d0201837c36cac9585c6a46532617b92"
+lock_version = "4.1"
+content_hash = "sha256:c4419642616c8abc143617139b9eb442f75572424b9ced36514036090de62700"
 
 [metadata.files]
 "amqp 5.1.1" = [
@@ -781,9 +781,9 @@ content_hash = "sha256:8bb0e519cd87c753c0448f03ef5a9901d0201837c36cac9585c6a4653
     {url = "https://files.pythonhosted.org/packages/85/59/0bd705c91d58012286bd0eb148b79ad426bdf33ee49bb2afed1ca3f425d8/Faker-14.2.0-py3-none-any.whl", hash = "sha256:e02c55a5b0586caaf913cc6c254b3de178e08b031c5922e590fd033ebbdbfd02"},
     {url = "https://files.pythonhosted.org/packages/ba/6a/49945ec8ee51eabb10562d8acae0348a10a3b98497db90e715201a8709d6/Faker-14.2.0.tar.gz", hash = "sha256:6db56e2c43a2b74250d1c332ef25fef7dc07dcb6c5fab5329dd7b4467b8ed7b9"},
 ]
-"gbpcli 1.2.0" = [
-    {url = "https://files.pythonhosted.org/packages/17/30/6a5b993dec2a3540216f4cf0690ddab2c41bde78fad3a34c801dea00987f/gbpcli-1.2.0-py3-none-any.whl", hash = "sha256:5480138e6ab7c64b065a4c64da2d3c43a06a16c3bfd6fff7c6087094548130e4"},
-    {url = "https://files.pythonhosted.org/packages/d6/04/355f782c3155cc02b4f9a13488478ab3b4f9689250c1dc89feb9dd817c61/gbpcli-1.2.0.tar.gz", hash = "sha256:7aee45e47464af43f362a78dfae4111c9480a9ad5985ad467d10719d00c8b839"},
+"gbpcli 1.3.0" = [
+    {url = "https://files.pythonhosted.org/packages/1f/bc/e2c9ad2e8110728cf1cc1bbde145e5eb531ae69b97259984503c71736e6b/gbpcli-1.3.0-py3-none-any.whl", hash = "sha256:3216e5244a7dbf3dffa25911027e158fe9347dec31b96cce7c942ecb6d573652"},
+    {url = "https://files.pythonhosted.org/packages/d3/41/c24e33f2f761305111862c292717868f9bb1a2f59c3097e896a71aa6c1f8/gbpcli-1.3.0.tar.gz", hash = "sha256:b6c9e9a2c820c845eb02621e688ac7584e79149f202970aee0cb700b3e7c07d0"},
 ]
 "graphql-core 3.2.1" = [
     {url = "https://files.pythonhosted.org/packages/14/28/c308fc9a5914b9a2333a546f4976d96e0d95230f16593223d727cbc19d52/graphql_core-3.2.1-py3-none-any.whl", hash = "sha256:f83c658e4968998eed1923a2e3e3eddd347e005ac0315fbb7ca4d70ea9156323"},
