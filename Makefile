@@ -16,8 +16,9 @@ export PYTHONDONTWRITEBYTECODE
 .coverage: $(venv) $(src) $(tests)
 	pdm run coverage run ./tests/runtests.py
 
-.PHONY: test
 test: .coverage
+.PHONY: test
+
 
 coverage-report: .coverage
 	pdm run coverage html
@@ -25,11 +26,13 @@ coverage-report: .coverage
 
 build: $(sdist) $(wheel)
 
-.PHONY: wheel
 wheel: $(wheel)
+.PHONY: wheel
 
-.PHONY: sdist
+
 sdist: $(sdist)
+.PHONY: sdist
+
 
 $(sdist): $(src) $(venv)
 	pdm build --no-wheel
@@ -42,51 +45,55 @@ $(venv):
 	pdm sync --dev
 	touch $@
 
-.PHONY: venv
 venv: $(venv)
+.PHONY: venv
 
 
-.PHONY: clean
 clean: clean-build clean-venv
 	rm -rf .coverage htmlcov .mypy_cache node_modules
+.PHONY: clean
 
-.PHONY: clean-build
+
 clean-build:
 	rm -rf dist build
+.PHONY: clean-build
 
-.PHONY: clean-venv
+
 clean-venv:
 	rm -rf .venv
+.PHONY: clean-venv
 
-.PHONY: shell
+
 shell: $(venv)
 	pdm run $(.SHELL) -l
+.PHONY: shell
 
 
-.PHONY: pylint
 pylint:
 	pdm run pylint src tests
+.PHONY: pylint
 
 
-.PHONY: eslint
 eslint:
 	npx eslint src/gentoo_build_publisher/static
+.PHONY: eslint
 
 
-.PHONY: mypy
 mypy:
 	pdm run mypy
+.PHONY: mypy
 
 
-.PHONY: csslint
 csslint:
 	npx csslint src/gentoo_build_publisher/static
+.PHONY: csslint
 
-.PHONY: lint
+
 lint: pylint mypy csslint eslint
+.PHONY: lint
 
 
-.PHONY: fmt
 fmt: $(venv)
 	pdm run python -m isort --line-width=88 src tests
 	pdm run python -m black src tests
+.PHONY: fmt
