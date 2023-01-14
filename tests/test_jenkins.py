@@ -33,22 +33,36 @@ JENKINS_CONFIG = JenkinsConfig(
 class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
 
-    def test_artifact_url(self):
+    def test_url_artifact(self):
         """.build_url() should return the url of the given build artifact"""
-        # Given the build id
+        # Given the build
         build = Build("babette.193")
 
         # Given the Jenkins instance
         jenkins = Jenkins(JENKINS_CONFIG)
 
-        # When we call .build_url
-        build_url = jenkins.artifact_url(build)
+        # When we call .url to get the artifact url
+        build_url = jenkins.url(build, "artifact")
 
         # Then we get the expected url
         self.assertEqual(
             build_url,
             URL("https://jenkins.invalid/job/babette/193/artifact/build.tar.gz"),
         )
+
+    def test_url_raises_valueeror_on_unknown_url_type(self):
+        # Given the build
+        build = Build("babette.193")
+
+        # Given the Jenkins instance
+        jenkins = Jenkins(JENKINS_CONFIG)
+
+        # Then ValueError is raised
+        with self.assertRaises(ValueError) as context:
+            # When we call .url to get an unknown url type
+            jenkins.url(build, "bogus")
+
+        self.assertEqual(str(context.exception), "Unknown url_type: 'bogus'")
 
     def test_download_artifact(self):
         """.download_artifact should download the given build artifact"""

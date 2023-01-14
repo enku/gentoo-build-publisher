@@ -126,21 +126,21 @@ class Jenkins:
 
         return ProjectPath("/".join(url_path.split("/job/")))
 
-    def url(self, build: Build) -> URL:
-        """Return the Jenkins url for the build"""
-        return self.config.base_url / "job" / build.machine / build.build_id
+    def url(self, build: Build, url_type: str = "build") -> URL:
+        """Return the given url_type for the given Build"""
+        match url_type:
+            case "build":
+                return self.config.base_url / "job" / build.machine / build.build_id
+            case "artifact":
+                return self.url(build) / "artifact" / self.config.artifact_name
+            case "logs":
+                return self.url(build) / "consoleText"
 
-    def artifact_url(self, build: Build) -> URL:
-        """Return the artifact url for build"""
-        return self.url(build) / "artifact" / self.config.artifact_name
-
-    def logs_url(self, build: Build) -> URL:
-        """Return the url for the build's console logs"""
-        return self.url(build) / "consoleText"
+        raise ValueError(f"Unknown url_type: {url_type!r}")
 
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
-        url = self.artifact_url(build)
+        url = self.url(build, "artifact")
         response = self.session.get(str(url), stream=True, timeout=self.timeout)
         response.raise_for_status()
 
@@ -150,7 +150,7 @@ class Jenkins:
 
     def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
-        url = self.logs_url(build)
+        url = self.url(build, "logs")
         response = self.session.get(str(url), timeout=self.timeout)
         response.raise_for_status()
 
