@@ -42,6 +42,7 @@ $(wheel): $(src) $(venv)
 
 $(venv):
 	rm -rf .venv
+	pdm venv create
 	pdm sync --dev
 	touch $@
 
