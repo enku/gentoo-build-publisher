@@ -53,20 +53,6 @@ class Purger(Generic[T]):
         """
         return [item for item in items if start <= self.key(item) <= end]
 
-    def append_latest(self, items: list[T], append_to: list[T]) -> T | None:
-        """
-        If items is a non-empty list of datetime T items, take the one with the later
-        datetime and append it to append_to.  If items is empty, do nothing.
-
-        Return the item appended or None.
-        """
-        if items:
-            latest = sorted(items, key=self.key)[-1]
-            append_to.append(latest)
-            return latest
-
-        return None
-
     @staticmethod
     def last_day_of_month(timestamp: datetime.datetime) -> datetime.datetime:
         """
@@ -103,7 +89,8 @@ class Purger(Generic[T]):
             day = last_week + datetime.timedelta(days=i)
             end_of_day = day.replace(hour=23, minute=59, second=59)
             day_list = self.filter_range(self.items, day, end_of_day)
-            self.append_latest(day_list, lst)
+            day_list.sort(key=self.key)
+            lst.extend(day_list[-1:])
 
         return lst
 
@@ -134,7 +121,8 @@ class Purger(Generic[T]):
                 second=59,
             )
             weeks_backups = self.filter_range(self.items, start_day, end_of_week)
-            self.append_latest(weeks_backups, lst)
+            weeks_backups.sort(key=self.key)
+            lst.extend(weeks_backups[-1:])
             start_day = start_day + datetime.timedelta(days=7)
 
         return lst
@@ -155,7 +143,8 @@ class Purger(Generic[T]):
             )
             end_of_month = self.last_day_of_month(start_of_month)
             months_dts = self.filter_range(self.items, start_of_month, end_of_month)
-            self.append_latest(months_dts, lst)
+            months_dts.sort(key=self.key)
+            lst.extend(months_dts[-1:])
             timestamp = end_of_month + datetime.timedelta(seconds=1)
 
         return lst
