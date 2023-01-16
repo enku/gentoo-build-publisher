@@ -2,7 +2,6 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from collections import defaultdict
 
-from django.core.cache import cache
 from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo
@@ -14,7 +13,7 @@ from gentoo_build_publisher.views import (
     package_metadata,
 )
 
-from . import TestCase
+from . import QuickCache, TestCase
 from .factories import BuildFactory
 
 
@@ -23,17 +22,20 @@ class GetPackagesTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
+        cache = QuickCache()
         self.publisher.pull(build)
 
-        packages = get_packages(build)
+        packages = get_packages(build, cache)
 
         self.assertEqual(packages, self.publisher.get_packages(build))
+        self.assertEqual(cache.cache, {f"packages-{build}": packages})
 
     def test_when_cached_return_cache(self):
         build = BuildFactory()
+        cache = QuickCache()
         cache.set(f"packages-{build}", [1, 2, 3])  # not real packages
 
-        packages = get_packages(build)
+        packages = get_packages(build, cache)
 
         self.assertEqual(packages, [1, 2, 3])
 
@@ -253,16 +255,19 @@ class GetMetadataTestCase(TestCase):
 
     def test(self):
         build = BuildFactory()
+        cache = QuickCache()
         self.publisher.pull(build)
 
-        metadata = get_metadata(build)
+        metadata = get_metadata(build, cache)
 
         self.assertEqual(metadata, self.publisher.storage.get_metadata(build))
+        self.assertEqual(cache.cache, {f"metadata-{build}": metadata})
 
     def test_when_cached_return_cache(self):
         build = BuildFactory()
+        cache = QuickCache()
         cache.set(f"metadata-{build}", [1, 2, 3])  # not real metadata
 
-        metadata = get_metadata(build)
+        metadata = get_metadata(build, cache)
 
         self.assertEqual(metadata, [1, 2, 3])

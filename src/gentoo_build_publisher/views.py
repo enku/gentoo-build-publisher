@@ -8,14 +8,20 @@ from dataclasses import astuple, dataclass
 from typing import Mapping, TypedDict
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import cache as django_cache
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import TAG_SYM, Build, GBPMetadata, Package
+from gentoo_build_publisher.types import (
+    TAG_SYM,
+    Build,
+    CacheProtocol,
+    GBPMetadata,
+    Package,
+)
 from gentoo_build_publisher.utils import Color, lapsed
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -85,7 +91,7 @@ class BuildSummary:
     latest_published: set[BuildRecord]
 
 
-def get_packages(build: Build) -> list[Package]:
+def get_packages(build: Build, cache: CacheProtocol) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
     This call may be cached for performance.
@@ -107,7 +113,7 @@ def get_packages(build: Build) -> list[Package]:
     return packages
 
 
-def get_metadata(build: Build) -> GBPMetadata | None:
+def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.
@@ -172,7 +178,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]) -> BuildSum
 
         latest_builds.append(latest_build)
         build_id = latest_build.id
-        metadata = get_metadata(latest_build)
+        metadata = get_metadata(latest_build, django_cache)
         build_packages[build_id] = (
             [i.cpv for i in metadata.packages.built] if metadata is not None else []
         )
@@ -185,7 +191,7 @@ def get_build_summary(now: dt.datetime, machines: list[MachineInfo]) -> BuildSum
 
 def package_metadata(record: BuildRecord, context: DashboardContext) -> None:
     """Update `context` with `package_count` and `total_package_size`"""
-    metadata = get_metadata(record)
+    metadata = get_metadata(record, django_cache)
 
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total
@@ -199,7 +205,7 @@ def package_metadata(record: BuildRecord, context: DashboardContext) -> None:
                 ):
                     context["recent_packages"][package.cpv].add(record.machine)
     else:
-        packages = get_packages(record)
+        packages = get_packages(record, django_cache)
         context["package_count"] += len(packages)
         context["total_package_size"][record.machine] += sum(i.size for i in packages)
 

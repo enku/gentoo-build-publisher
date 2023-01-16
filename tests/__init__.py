@@ -82,6 +82,19 @@ class TestCase(django.test.TestCase):
         return path
 
 
+class QuickCache:
+    """Supports the CacheProtocol"""
+
+    def __init__(self) -> None:
+        self.cache: dict[str, Any] = {}
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.cache.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        self.cache[key] = value
+
+
 def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:
     def dec(func: Callable):
         @wraps(func)

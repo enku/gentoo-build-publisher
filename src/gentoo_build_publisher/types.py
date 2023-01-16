@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Any
+from typing import Any, Protocol
 
 from dataclasses_json import dataclass_json
 
@@ -111,3 +111,14 @@ class GBPMetadata:
     packages: PackageMetadata
     gbp_hostname: str = utils.get_hostname()
     gbp_version: str = utils.get_version()
+
+
+class CacheProtocol(Protocol):  # pragma: no cover
+    """Something that can cache... like Django's cache"""
+
+    # pylint: disable=missing-docstring
+    def get(self, key: str, default: Any = None) -> Any:
+        ...
+
+    def set(self, key: str, value: Any) -> None:
+        ...
