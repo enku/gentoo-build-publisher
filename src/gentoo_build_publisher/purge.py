@@ -11,6 +11,11 @@ from typing import Callable, Generic, Iterable, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 
+ONE_DAY = datetime.timedelta(days=1)
+ONE_WEEK = ONE_DAY * 7
+ONE_YEAR = ONE_DAY * 365
+ONE_SECOND = datetime.timedelta(seconds=1)
+
 
 class Purger(Generic[T]):
     """Purger of items
@@ -70,11 +75,11 @@ class Purger(Generic[T]):
             second=59,
             microsecond=0,
         )
-        return next_month - datetime.timedelta(days=1)
+        return next_month - ONE_DAY
 
     def yesterday_plus(self) -> list[T]:
         """Return every datetime object in items from yesterday up."""
-        yesterday = self.end - datetime.timedelta(hours=24)
+        yesterday = self.end - ONE_DAY
         yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
 
         return [item for item in self.items if self.key(item) >= yesterday]
@@ -82,15 +87,14 @@ class Purger(Generic[T]):
     def one_per_day_last_week(self) -> list[T]:
         """Return one item for every day within the past week."""
         lst: list[T] = []
-        last_week = self.end - datetime.timedelta(days=7)
+        last_week = self.end - ONE_WEEK
         last_week = last_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
         for i in range(7):
-            day = last_week + datetime.timedelta(days=i)
+            day = last_week + i * ONE_DAY
             end_of_day = day.replace(hour=23, minute=59, second=59)
-            day_list = self.filter_range(self.items, day, end_of_day)
-            day_list.sort(key=self.key)
-            lst.extend(day_list[-1:])
+            days_items = self.filter_range(self.items, day, end_of_day)
+            lst = lst + sorted(days_items[-1:], key=self.key)
 
         return lst
 
@@ -101,9 +105,9 @@ class Purger(Generic[T]):
         """
         lst: list[T] = []
         today = self.end.replace(hour=0, minute=0, second=0, microsecond=0)
-        last_month = today - datetime.timedelta(days=31)
+        last_month = today - ONE_DAY * 31
         start_of_month = last_month.replace(day=1)
-        end_of_month = today.replace(day=1) - datetime.timedelta(days=1)
+        end_of_month = today.replace(day=1) - ONE_DAY
 
         start_day = start_of_month
         while start_day <= end_of_month:
@@ -120,10 +124,9 @@ class Purger(Generic[T]):
                 minute=59,
                 second=59,
             )
-            weeks_backups = self.filter_range(self.items, start_day, end_of_week)
-            weeks_backups.sort(key=self.key)
-            lst.extend(weeks_backups[-1:])
-            start_day = start_day + datetime.timedelta(days=7)
+            weeks_items = self.filter_range(self.items, start_day, end_of_week)
+            lst = lst + sorted(weeks_items, key=self.key)[-1:]
+            start_day = start_day + ONE_WEEK
 
         return lst
 
@@ -133,7 +136,7 @@ class Purger(Generic[T]):
         If multiple datetimes fit the criteria for a month, use the latest.
         """
         lst: list[T] = []
-        last_year = self.end - datetime.timedelta(days=365)
+        last_year = self.end - ONE_YEAR
         last_year = last_year.replace(hour=0, minute=0, second=0, microsecond=0)
 
         timestamp = last_year
@@ -143,9 +146,8 @@ class Purger(Generic[T]):
             )
             end_of_month = self.last_day_of_month(start_of_month)
             months_dts = self.filter_range(self.items, start_of_month, end_of_month)
-            months_dts.sort(key=self.key)
-            lst.extend(months_dts[-1:])
-            timestamp = end_of_month + datetime.timedelta(seconds=1)
+            lst = lst + sorted(months_dts, key=self.key)[-1:]
+            timestamp = end_of_month + ONE_SECOND
 
         return lst
 
