@@ -1,70 +1,12 @@
 """DB interface for Gentoo Build Publisher"""
 from __future__ import annotations
 
-import datetime as dt
 import importlib.metadata
 from collections.abc import Iterable
 from typing import Any, Protocol, Type
 
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
-
-
-class BuildRecord(Build):
-    """A Build record from the database"""
-
-    def __init__(
-        self,
-        id_: str,
-        *,
-        note: str | None = None,
-        logs: str | None = None,
-        keep: bool = False,
-        submitted: dt.datetime | None = None,
-        completed: dt.datetime | None = None,
-        built: dt.datetime | None = None,
-    ) -> None:
-        super().__init__(id_)
-        self.note = note
-        self.logs = logs
-        self.keep = keep
-        self.submitted = submitted
-        self.completed = completed
-        self.built = built
-
-    def __eq__(self, other: Any) -> bool:
-        if type(self) is not type(other):
-            return False
-
-        return (
-            self.id,
-            self.note,
-            self.logs,
-            self.keep,
-            self.submitted,
-            self.completed,
-            self.built,
-        ) == (
-            other.id,
-            other.note,
-            other.logs,
-            other.keep,
-            other.submitted,
-            other.completed,
-            other.built,
-        )
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}({(self.id)!r})"
-
-    def __hash__(self) -> int:
-        return hash(self.id)
-
-    def purge_key(self) -> dt.datetime:
-        """Purge key for build records.  Purge on submitted date"""
-        submitted = self.submitted or dt.datetime.fromtimestamp(0)
-
-        return submitted.replace(tzinfo=None)
+from gentoo_build_publisher.types import Build, BuildRecord
 
 
 class RecordDB(Protocol):  # pragma: no cover

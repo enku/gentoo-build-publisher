@@ -23,9 +23,8 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
-from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.tasks import publish_build, pull_build
-from gentoo_build_publisher.types import TAG_SYM, Build, Package, Status
+from gentoo_build_publisher.types import TAG_SYM, Build, BuildRecord, Package, Status
 from gentoo_build_publisher.utils import get_version
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"

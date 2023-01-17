@@ -7,25 +7,15 @@ from pathlib import Path
 from django.test import TestCase
 
 from gentoo_build_publisher.models import DjangoDB
-from gentoo_build_publisher.records import BuildRecord, RecordDB, Records
+from gentoo_build_publisher.records import RecordDB, Records
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build, RecordNotFound
+from gentoo_build_publisher.types import Build, BuildRecord, RecordNotFound
 
 from . import parametrized
 from .factories import BuildRecordFactory
 
 BACKENDS = [["django"]]
 UTC = timezone.utc
-
-
-class BuildRecordTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.record = BuildRecordFactory()
-
-    def test_repr_buildrecord(self):
-        self.assertEqual(repr(self.record), f"BuildRecord('{self.record}')")
 
 
 class RecordsTestCase(TestCase):

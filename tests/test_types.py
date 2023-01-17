@@ -4,6 +4,8 @@ from unittest import TestCase
 
 from gentoo_build_publisher.types import Build, InvalidBuild
 
+from .factories import BuildRecordFactory
+
 
 class BuildTestCase(TestCase):
     def test_string_with_name_and_number(self):
@@ -25,3 +27,13 @@ class BuildTestCase(TestCase):
         build = Build("babette.16")
 
         self.assertEqual("Build('babette.16')", repr(build))
+
+
+class BuildRecordTestCase(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.record = BuildRecordFactory()
+
+    def test_repr_buildrecord(self):
+        self.assertEqual(repr(self.record), f"BuildRecord('{self.record}')")

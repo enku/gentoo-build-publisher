@@ -14,10 +14,10 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
-from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
+    BuildRecord,
     CacheProtocol,
     GBPMetadata,
     Package,

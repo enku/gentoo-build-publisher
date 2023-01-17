@@ -9,8 +9,7 @@ from gentoo_build_publisher.models import (
     DjangoDB,
     KeptBuild,
 )
-from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import Build, RecordNotFound
+from gentoo_build_publisher.types import Build, BuildRecord, RecordNotFound
 
 from . import TestCase
 from .factories import BuildModelFactory, BuildRecordFactory
