@@ -29,12 +29,7 @@ from pydispatch import Dispatcher
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
-from gentoo_build_publisher.records import (
-    BuildRecord,
-    RecordDB,
-    RecordNotFound,
-    Records,
-)
+from gentoo_build_publisher.records import BuildRecord, RecordDB, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import (
@@ -43,6 +38,7 @@ from gentoo_build_publisher.types import (
     GBPMetadata,
     Package,
     PackageMetadata,
+    RecordNotFound,
     Status,
 )
 from gentoo_build_publisher.utils import utctime

@@ -9,8 +9,7 @@ from gbpcli import GBP
 from rich.console import Console
 
 from gentoo_build_publisher.publisher import BuildPublisher, get_publisher
-from gentoo_build_publisher.records import RecordNotFound
-from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.types import Build, Content, RecordNotFound
 
 
 def parse_args(_parser: argparse.ArgumentParser) -> None:

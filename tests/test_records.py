@@ -7,14 +7,9 @@ from pathlib import Path
 from django.test import TestCase
 
 from gentoo_build_publisher.models import DjangoDB
-from gentoo_build_publisher.records import (
-    BuildRecord,
-    RecordDB,
-    RecordNotFound,
-    Records,
-)
+from gentoo_build_publisher.records import BuildRecord, RecordDB, Records
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import Build, RecordNotFound
 
 from . import parametrized
 from .factories import BuildRecordFactory

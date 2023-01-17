@@ -17,6 +17,10 @@ class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""
 
 
+class RecordNotFound(LookupError):
+    """Not found exception for the .get() method"""
+
+
 class Build:
     """A build ID (machine.build_id)"""
 

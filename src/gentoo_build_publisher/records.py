@@ -10,10 +10,6 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
 
 
-class RecordNotFound(LookupError):
-    """Not found exception for the .get() method"""
-
-
 class BuildRecord(Build):
     """A Build record from the database"""
 
