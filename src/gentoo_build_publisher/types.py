@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Any, Iterable, Protocol
+from typing import Any, Iterable, NamedTuple, Protocol, TypeAlias, Union
 
 from dataclasses_json import dataclass_json
 
@@ -22,85 +22,56 @@ class RecordNotFound(LookupError):
     """Not found exception for the .get() method"""
 
 
-class Build:
+class Build(NamedTuple):
     """A build ID (machine.build_id)"""
 
-    def __init__(self, id_: str):
-        self._id = id_
-
-        if not all(parts := id_.partition(".")):
-            raise InvalidBuild(self)
-
-        self.machine = parts[0]
-        self.build_id = parts[2]
+    machine: str
+    build_id: str
 
     @property
     def id(self) -> str:  # pylint: disable=invalid-name
         """Return the string representation of the Build"""
-        return self._id
+        return ".".join(self)
+
+    @classmethod
+    def from_id(cls, build_id: str) -> Build:
+        """Instantiate Build gienven the build id"""
+        machine, build_id = build_id.split(".", 1)
+
+        if not (machine and build_id):
+            raise InvalidBuild(build_id)
+
+        return cls(machine, build_id)
 
     def __str__(self) -> str:
-        return self._id
-
-    def __hash__(self) -> int:
-        return hash(self._id)
-
-    def __eq__(self, other: Any) -> bool:
-        return type(self) is type(other) and self.id == other.id
+        return self.id
 
     def __repr__(self) -> str:
-        return f"{type(self).__qualname__}({self._id!r})"
+        return f"{type(self).__qualname__}({self.id!r})"
 
 
-class BuildRecord(Build):
+class BuildRecord(NamedTuple):
     """A Build record from the database"""
 
-    def __init__(
-        self,
-        id_: str,
-        *,
-        note: str | None = None,
-        logs: str | None = None,
-        keep: bool = False,
-        submitted: dt.datetime | None = None,
-        completed: dt.datetime | None = None,
-        built: dt.datetime | None = None,
-    ) -> None:
-        super().__init__(id_)
-        self.note = note
-        self.logs = logs
-        self.keep = keep
-        self.submitted = submitted
-        self.completed = completed
-        self.built = built
+    machine: str
+    build_id: str
+    note: str | None = None
+    logs: str | None = None
+    keep: bool = False
+    submitted: dt.datetime | None = None
+    completed: dt.datetime | None = None
+    built: dt.datetime | None = None
 
-    def __eq__(self, other: Any) -> bool:
-        if type(self) is not type(other):
-            return False
-
-        return (
-            self.id,
-            self.note,
-            self.logs,
-            self.keep,
-            self.submitted,
-            self.completed,
-            self.built,
-        ) == (
-            other.id,
-            other.note,
-            other.logs,
-            other.keep,
-            other.submitted,
-            other.completed,
-            other.built,
-        )
+    def __str__(self) -> str:
+        return self.id
 
     def __repr__(self) -> str:
         return f"{self.__class__.__qualname__}({(self.id)!r})"
 
-    def __hash__(self) -> int:
-        return hash(self.id)
+    @property
+    def id(self) -> str:  # pylint: disable=invalid-name
+        """Return the string representation of the Build"""
+        return f"{self.machine}.{self.build_id}"
 
     def purge_key(self) -> dt.datetime:
         """Purge key for build records.  Purge on submitted date"""
@@ -108,13 +79,17 @@ class BuildRecord(Build):
 
         return submitted.replace(tzinfo=None)
 
+    def save(self, record_db: RecordDB, **fields: Any) -> BuildRecord:
+        """Save changes to record_db. Return new record"""
+        return record_db.save(self, **fields)
+
 
 class RecordDB(Protocol):  # pragma: no cover
     """Repository for BuildRecords"""
 
     # pylint: disable=unnecessary-ellipsis
 
-    def save(self, build_record: BuildRecord, **fields: Any) -> None:
+    def save(self, build_record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save changes back to the database"""
         ...
 
@@ -126,7 +101,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Return BuildRecords for the given machine"""
         ...
 
-    def delete(self, build: Build) -> None:
+    def delete(self, build: BuildLike) -> None:
         """Delete this Build from the db"""
         ...
 
@@ -243,3 +218,7 @@ class CacheProtocol(Protocol):  # pragma: no cover
 
     def set(self, key: str, value: Any) -> None:
         ...
+
+
+# Note: typing.Protocol doesn't work do to typing.NamedTuple hackery
+BuildLike: TypeAlias = Union[Build, BuildRecord]

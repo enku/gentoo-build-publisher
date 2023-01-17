@@ -24,7 +24,14 @@ from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.tasks import publish_build, pull_build
-from gentoo_build_publisher.types import TAG_SYM, Build, BuildRecord, Package, Status
+from gentoo_build_publisher.types import (
+    TAG_SYM,
+    Build,
+    BuildLike,
+    BuildRecord,
+    Package,
+    Status,
+)
 from gentoo_build_publisher.utils import get_version
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"
@@ -83,7 +90,7 @@ class Error:
 class BuildProxy:
     """Build Type resolvers"""
 
-    def __init__(self, build: Build):
+    def __init__(self, build: BuildLike):
 
         self.build = build
         self._record = build if isinstance(build, BuildRecord) else None
@@ -199,7 +206,7 @@ def resolve_query_build(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     return None if not publisher.records.exists(build) else BuildProxy(build)
 
@@ -232,12 +239,12 @@ def resolve_query_diff(
     _obj: Any, _info: GraphQLResolveInfo, left: str, right: str
 ) -> Object | None:
     publisher = get_publisher()
-    left_build = Build(left)
+    left_build = Build.from_id(left)
 
     if not publisher.records.exists(left_build):
         raise GraphQLError(f"Build does not exist: {left}")
 
-    right_build = Build(right)
+    right_build = Build.from_id(right)
 
     if not publisher.records.exists(right_build):
         raise GraphQLError(f"Build does not exist: {right}")
@@ -298,7 +305,7 @@ def resolve_mutation_publish(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> MachineInfo:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     if publisher.pulled(build):
         publisher.publish(build)
@@ -310,7 +317,7 @@ def resolve_mutation_publish(
 
 @mutation.field("pull")
 def resolve_mutation_pull(_obj: Any, _info: GraphQLResolveInfo, id: str) -> MachineInfo:
-    build = Build(id)
+    build = Build.from_id(id)
 
     pull_build.delay(id)
 
@@ -331,13 +338,12 @@ def resolve_mutation_keepbuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build)
-    publisher.records.save(record, keep=True)
+    record = publisher.record(build).save(publisher.records, keep=True)
 
     return BuildProxy(record)
 
@@ -347,13 +353,12 @@ def resolve_mutation_releasebuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build)
-    publisher.records.save(record, keep=False)
+    record = publisher.record(build).save(publisher.records, keep=False)
 
     return BuildProxy(record)
 
@@ -363,13 +368,12 @@ def resolve_mutation_createnote(
     _obj: Any, _info: GraphQLResolveInfo, id: str, note: str | None = None
 ) -> BuildProxy | None:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build)
-    publisher.records.save(record, note=note)
+    record = publisher.record(build).save(publisher.records, note=note)
 
     return BuildProxy(record)
 
@@ -379,7 +383,7 @@ def resolve_mutation_createbuildtag(
     _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
 ) -> BuildProxy:
     publisher = get_publisher()
-    build = Build(id)
+    build = Build.from_id(id)
 
     publisher.tag(build, tag)
 

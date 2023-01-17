@@ -17,6 +17,7 @@ from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
+    BuildLike,
     BuildRecord,
     CacheProtocol,
     GBPMetadata,
@@ -40,7 +41,7 @@ class DashboardContext(TypedDict):
     build_count: int
 
     # Builds not yet completed
-    builds_to_do: list[Build]
+    builds_to_do: list[BuildRecord]
 
     # Each machine gets it's own #rrggbb color
     machine_colors: list[str]
@@ -91,7 +92,7 @@ class BuildSummary:
     latest_published: set[BuildRecord]
 
 
-def get_packages(build: Build, cache: CacheProtocol) -> list[Package]:
+def get_packages(build: BuildLike, cache: CacheProtocol) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 
     This call may be cached for performance.
@@ -113,7 +114,7 @@ def get_packages(build: Build, cache: CacheProtocol) -> list[Package]:
     return packages
 
 
-def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
+def get_metadata(build: BuildLike, cache: CacheProtocol) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.

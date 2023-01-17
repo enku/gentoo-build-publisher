@@ -105,11 +105,13 @@ class DjangoDBTestCase(TestCase):
             built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
-        self.record = self.records.get(Build(str(self.build_model)))
+        self.record = self.records.get(Build.from_id(str(self.build_model)))
 
     def test_submitted_set(self):
-        self.record.submitted = dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
-        self.records.save(self.record)
+        record = self.record._replace(
+            submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
+        )
+        self.records.save(record)
 
         self.build_model.refresh_from_db()
 
@@ -125,8 +127,10 @@ class DjangoDBTestCase(TestCase):
         )
 
     def test_completed_set(self):
-        self.record.completed = dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
-        self.records.save(self.record)
+        record = self.record._replace(
+            completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
+        )
+        self.records.save(record)
 
         self.build_model.refresh_from_db()
 
@@ -136,8 +140,7 @@ class DjangoDBTestCase(TestCase):
         )
 
     def test_save_note(self):
-        record = self.record
-        record.note = "This is a test"
+        record = self.record._replace(note="This is a test")
         self.records.save(record)
 
         self.build_model.refresh_from_db()
@@ -200,7 +203,7 @@ class DjangoDBTestCase(TestCase):
         self.assertEqual(build_model, self.build_model)
 
     def test_get(self):
-        build = Build(str(self.build_model))
+        build = Build.from_id(str(self.build_model))
         record = self.records.get(build)
 
         self.assertEqual(record.id, build.id)
@@ -208,7 +211,7 @@ class DjangoDBTestCase(TestCase):
 
     def test_get_does_not_exist(self):
         with self.assertRaises(RecordNotFound):
-            self.records.get(Build("bogus.955"))
+            self.records.get(Build("bogus", "955"))
 
     def test_previous_should_return_none_when_there_are_none(self):
         previous = self.records.previous(self.record)
@@ -225,8 +228,7 @@ class DjangoDBTestCase(TestCase):
         self.assertIs(self.records.previous(record), None)
 
     def test_previous_when_not_completed_and_completed_arg_is_false(self):
-        previous_build = self.record
-        self.records.save(previous_build, completed=None)
+        previous_build = self.records.save(self.record, completed=None)
         record = BuildModelFactory().record()
 
         assert previous_build.machine == record.machine
@@ -243,7 +245,7 @@ class DjangoDBTestCase(TestCase):
         self.assertEqual(self.records.previous(current_build_record), self.record)
 
     def test_next_should_return_none_when_there_are_none(self):
-        build = BuildRecordFactory.build(machine="bogus", number=1)
+        build = BuildRecordFactory.build(machine="bogus", build_id="1")
         next_build = self.records.next(build)
 
         self.assertIs(next_build, None)

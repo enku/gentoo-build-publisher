@@ -14,7 +14,7 @@ from dataclasses_json import dataclass_json
 from yarl import URL
 
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import BuildLike
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ class Jenkins:
 
         return ProjectPath("/".join(url_path.split("/job/")))
 
-    def url(self, build: Build, url_type: str = "build") -> URL:
+    def url(self, build: BuildLike, url_type: str = "build") -> URL:
         """Return the given url_type for the given Build"""
         match url_type:
             case "build":
@@ -138,7 +138,7 @@ class Jenkins:
 
         raise ValueError(f"Unknown url_type: {url_type!r}")
 
-    def download_artifact(self, build: Build) -> Iterable[bytes]:
+    def download_artifact(self, build: BuildLike) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.url(build, "artifact")
         response = self.session.get(str(url), stream=True, timeout=self.timeout)
@@ -148,7 +148,7 @@ class Jenkins:
             chunk_size=self.config.download_chunk_size, decode_unicode=False
         )
 
-    def get_logs(self, build: Build) -> str:
+    def get_logs(self, build: BuildLike) -> str:
         """Get and return the build's jenkins logs"""
         url = self.url(build, "logs")
         response = self.session.get(str(url), timeout=self.timeout)
@@ -156,7 +156,7 @@ class Jenkins:
 
         return response.text
 
-    def get_metadata(self, build: Build) -> JenkinsMetadata:
+    def get_metadata(self, build: BuildLike) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url(build) / "api" / "json"
         response = self.session.get(str(url), timeout=self.timeout)

@@ -49,18 +49,19 @@ class BuildModel(models.Model):
     def record(self) -> BuildRecord:
         """Convert BuildModel to BuildRecord"""
         record = BuildRecord(
-            str(self),
+            machine=self.machine,
+            build_id=self.build_id,
             submitted=self.submitted,
             completed=self.completed,
             built=self.built,
         )
         try:
-            record.note = self.buildnote.note
+            record = record._replace(note=self.buildnote.note)
         except BuildNote.DoesNotExist:
             pass
 
         try:
-            record.logs = self.buildlog.logs
+            record = record._replace(logs=self.buildlog.logs)
         except BuildLog.DoesNotExist:
             pass
 
@@ -69,7 +70,7 @@ class BuildModel(models.Model):
         except KeptBuild.DoesNotExist:
             pass
         else:
-            record.keep = True
+            record = record._replace(keep=True)
 
         return record
 
@@ -156,10 +157,9 @@ class DjangoDB:
     """Implements the RecordDB Protocol"""
 
     @staticmethod
-    def save(build_record: BuildRecord, **fields: Any) -> None:
+    def save(build_record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save changes back to the database"""
-        for name, value in fields.items():
-            setattr(build_record, name, value)
+        build_record = build_record._replace(**fields)
 
         try:
             model = BuildModel.objects.get(
@@ -170,10 +170,9 @@ class DjangoDB:
                 machine=build_record.machine, build_id=build_record.build_id
             )
 
-        if build_record.submitted is None:
-            build_record.submitted = timezone.now()
-
-        model.submitted = build_record.submitted
+        submitted = build_record.submitted or timezone.now()
+        build_record = build_record._replace(submitted=submitted)
+        model.submitted = submitted
         model.completed = build_record.completed
         model.built = build_record.built
 
@@ -182,6 +181,8 @@ class DjangoDB:
         KeptBuild.update(model, build_record.keep)
         BuildLog.update(model, build_record.logs)
         BuildNote.update(model, build_record.note)
+
+        return build_record
 
     @staticmethod
     def get(build: Build) -> BuildRecord:

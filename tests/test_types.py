@@ -25,23 +25,23 @@ UTC = timezone.utc
 
 
 class BuildTestCase(TestCase):
-    def test_string_with_name_and_number(self):
-        build = Build("babette.16")
+    def test_from_id_with_name_and_number(self):
+        build = Build.from_id("babette.16")
 
         self.assertEqual(str(build), "babette.16")
 
-    def test_string_with_no_name(self):
+    def test_from_id_with_no_name(self):
         with self.assertRaises(InvalidBuild):
-            Build(".16")
+            Build.from_id(".16")
 
     def test_has_machine_and_build_id_attrs(self):
-        build = Build("babette.16")
+        build = Build("babette", "16")
 
         self.assertEqual(build.machine, "babette")
         self.assertEqual(build.build_id, "16")
 
     def test_repr(self):
-        build = Build("babette.16")
+        build = Build("babette", "16")
 
         self.assertEqual("Build('babette.16')", repr(build))
 
@@ -70,45 +70,44 @@ class RecordDBTestCase(DjangoTestCase):
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
 
-        build_record = BuildRecord("lighthouse.8924", completed=timestamp)
-        records.save(build_record)
+        build_record = records.save(
+            BuildRecord("lighthouse", "8924", completed=timestamp)
+        )
 
-        self.assertEqual(records.get(Build("lighthouse.8924")), build_record)
-        self.assertEqual(records.get(Build("lighthouse.8924")).completed, timestamp)
+        self.assertEqual(records.get(Build("lighthouse", "8924")), build_record)
+        self.assertEqual(records.get(Build("lighthouse", "8924")).completed, timestamp)
 
     @parametrized(BACKENDS)
     def test_save_with_given_fields_updates_fields(self, backend: str):
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
 
-        build_record = BuildRecord("lighthouse.8924", completed=timestamp)
-        records.save(build_record, logs="Build succeeded!", keep=True)
+        build_record = BuildRecord("lighthouse", "8924", completed=timestamp)
+        build_record = records.save(build_record, logs="Build succeeded!", keep=True)
 
-        self.assertEqual(records.get(Build("lighthouse.8924")), build_record)
-        self.assertEqual(records.get(Build("lighthouse.8924")).logs, "Build succeeded!")
-        self.assertEqual(records.get(Build("lighthouse.8924")).keep, True)
+        self.assertEqual(records.get(Build("lighthouse", "8924")), build_record)
+        self.assertEqual(
+            records.get(Build("lighthouse", "8924")).logs, "Build succeeded!"
+        )
+        self.assertEqual(records.get(Build("lighthouse", "8924")).keep, True)
 
     @parametrized(BACKENDS)
     def test_get(self, backend: str):
         records = self.backend(backend)
-        build_record = BuildRecord("lighthouse.8924")
-        records.save(build_record)
+        build_record = records.save(BuildRecord("lighthouse", "8924"))
 
-        self.assertEqual(records.get(Build("lighthouse.8924")), build_record)
+        self.assertEqual(records.get(Build("lighthouse", "8924")), build_record)
 
         with self.assertRaises(RecordNotFound):
-            records.get(Build("anchor.0"))
+            records.get(Build("anchor", "0"))
 
     @parametrized(BACKENDS)
     def test_for_machine(self, backend: str):
         records = self.backend(backend)
         builds: list[BuildRecord] = [
-            BuildRecord("lighthouse.8923"),
-            BuildRecord("lighthouse.8924"),
+            records.save(BuildRecord("lighthouse", "8923")),
+            records.save(BuildRecord("lighthouse", "8924")),
         ]
-
-        for build in builds:
-            records.save(build)
 
         self.assertListEqual([*records.for_machine("lighthouse")], [*reversed(builds)])
         self.assertListEqual([*records.for_machine("anchor")], [])
@@ -127,11 +126,11 @@ class RecordDBTestCase(DjangoTestCase):
     @parametrized(BACKENDS)
     def test_exists(self, backend: str):
         records = self.backend(backend)
-        build_record = BuildRecord("lighthouse.8924")
+        build_record = BuildRecord("lighthouse", "8924")
         records.save(build_record)
-        bogus_build = Build("anchor.0")
+        bogus_build = Build("anchor", "0")
 
-        self.assertIs(records.exists(Build("lighthouse.8924")), True)
+        self.assertIs(records.exists(Build("lighthouse", "8924")), True)
         self.assertIs(records.exists(bogus_build), False)
 
     @parametrized(BACKENDS)
@@ -139,9 +138,9 @@ class RecordDBTestCase(DjangoTestCase):
         records = self.backend(backend)
         self.assertEqual(records.list_machines(), [])
 
-        records.save(BuildRecord("lighthouse.8923"))
-        records.save(BuildRecord("lighthouse.8924"))
-        records.save(BuildRecord("anchor.1"))
+        records.save(BuildRecord("lighthouse", "8923"))
+        records.save(BuildRecord("lighthouse", "8924"))
+        records.save(BuildRecord("anchor", "1"))
 
         machines = records.list_machines()
 

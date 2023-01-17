@@ -32,7 +32,7 @@ def publish_build(build_id: str) -> bool:
         logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
 
-    publisher.publish(Build(build_id))
+    publisher.publish(Build.from_id(build_id))
 
     return True
 
@@ -41,7 +41,7 @@ def publish_build(build_id: str) -> bool:
 def pull_build(build_id: str) -> None:
     """Pull the build into storage"""
     publisher = get_publisher()
-    build = Build(build_id)
+    build = Build.from_id(build_id)
 
     try:
         publisher.pull(build)
@@ -78,7 +78,7 @@ def purge_machine(machine: str) -> None:
 def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
     publisher = get_publisher()
-    build = Build(build_id)
+    build = Build.from_id(build_id)
 
     logger.info("Deleting build: %s", build)
 

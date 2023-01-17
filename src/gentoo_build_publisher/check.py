@@ -72,7 +72,7 @@ def check_orphans(publisher: BuildPublisher) -> int:
 
         for path in directory.iterdir():
             if "." in path.name:
-                build = Build(path.name)
+                build = Build(*path.name.split(".", 1))
 
                 try:
                     publisher.records.get(build)

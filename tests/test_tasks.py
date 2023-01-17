@@ -27,7 +27,7 @@ class PublishBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             result = publish_build.s("babette.193").apply()
 
-        build = Build("babette.193")
+        build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
         self.assertIs(result.result, True)
 
@@ -62,7 +62,7 @@ class PullBuildTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             pull_build.s("lima.1012").apply()
 
-        build = Build("lima.1012")
+        build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
 
     def test_calls_purge_machine(self):
@@ -97,7 +97,7 @@ class PullBuildTestCase(TestCase):
             pull_build.s("oscar.197").apply()
 
         with self.assertRaises(RecordNotFound):
-            records.get(Build("oscar.197"))
+            records.get(Build("oscar", "197"))
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_retry_on_retryable_exceptions(self):
@@ -135,4 +135,4 @@ class DeleteBuildTestCase(TestCase):
         with mock.patch.object(self.publisher, "delete") as mock_delete:
             delete_build.s("zulu.56").apply()
 
-        mock_delete.assert_called_once_with(Build("zulu.56"))
+        mock_delete.assert_called_once_with(Build("zulu", "56"))

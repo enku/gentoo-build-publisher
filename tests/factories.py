@@ -49,21 +49,9 @@ class BuildFactory(factory.Factory):
 
     class Meta:
         model = Build
-        inline_args = ("build_id",)
 
-    class Params:
-        machine = "babette"
-        number = None
-
-    @factory.lazy_attribute_sequence
-    def build_id(self, seq):
-
-        if self.number is not None:  # pylint: disable=no-member
-            number = self.number  # pylint: disable=no-member
-        else:
-            number = seq
-
-        return f"{self.machine}.{number}"  # pylint: disable=no-member
+    machine = "babette"
+    build_id = factory.Sequence(str)
 
     @classmethod
     def buncha_builds(
@@ -232,7 +220,7 @@ class ArtifactFactory:
         # ordered here
         build_machine = build.machine
         for build_id, build_data in self._builds.items():
-            if Build(build_id).machine != build_machine:
+            if Build.from_id(build_id).machine != build_machine:
                 continue
 
             for package, status in build_data.package_info:

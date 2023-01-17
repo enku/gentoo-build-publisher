@@ -84,7 +84,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
     def test_extract_artifact_moves_repos_and_binpkgs(self):
         """Should extract artifacts and move to repos/ and binpkgs/"""
-        build = Build("babette.19")
+        build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         storage.extract_artifact(build, jenkins.download_artifact(build))
@@ -94,7 +94,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
     def test_extract_artifact_creates_etc_portage_dir(self):
         """Should extract artifacts and move to etc-portage/"""
-        build = Build("babette.19")
+        build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         storage.extract_artifact(build, jenkins.download_artifact(build))
@@ -103,7 +103,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
     def test_extract_artifact_creates_var_lib_portage_dir(self):
         """Should extract artifacts and move to var-lib-portage/"""
-        build = Build("babette.19")
+        build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         storage.extract_artifact(build, jenkins.download_artifact(build))
@@ -136,7 +136,7 @@ class StoragePublishTestCase(TestCase):
     def test_publish_raises_exception_repos_dir_does_not_exist(self):
         """Should raise an exception if the build has not been pulled"""
         # Given the build
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -167,7 +167,7 @@ class StoragePublishedTestCase(TestCase):
     def test_published_true(self):
         """.publshed should return True when published"""
         # Given the build
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -188,7 +188,7 @@ class StoragePublishedTestCase(TestCase):
     def test_published_false(self):
         """.publshed should return False when not published"""
         # Given the unpublished build
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -201,7 +201,7 @@ class StoragePublishedTestCase(TestCase):
 
     def test_other_published(self):
         # Given the first build published
-        build1_id = Build("babette.192")
+        build1_id = Build("babette", "192")
 
         # Given the storage
         storage = Storage(self.tmpdir)
@@ -214,7 +214,7 @@ class StoragePublishedTestCase(TestCase):
         storage.publish(build1_id)
 
         # Given the second build published
-        build2_id = Build("babette.193")
+        build2_id = Build("babette", "193")
         storage.extract_artifact(build2_id, jenkins.download_artifact(build2_id))
         storage.publish(build2_id)
 
@@ -229,7 +229,7 @@ class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
 
     def test_deletes_expected_directories(self):
-        build = Build("babette.19")
+        build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         storage.extract_artifact(build, jenkins.download_artifact(build))
@@ -251,7 +251,7 @@ class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
 
     def test_does_not_extract_already_pulled_build(self):
-        build = Build("build.19")
+        build = Build("build", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
@@ -267,7 +267,7 @@ class StorageExtractArtifactTestCase(TestCase):
             self.fail("extract_artifact() should not have attempted to extract")
 
     def test_extracts_bytesteam_and_content(self):
-        build = Build("babette.19")
+        build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
 
@@ -276,7 +276,7 @@ class StorageExtractArtifactTestCase(TestCase):
         self.assertIs(storage.pulled(build), True)
 
     def test_uses_hard_link_if_previous_build_exists(self):
-        previous_build = Build("babette.19")
+        previous_build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
         timestamp = jenkins.artifact_builder.timer
@@ -284,7 +284,7 @@ class StorageExtractArtifactTestCase(TestCase):
             previous_build, jenkins.download_artifact(previous_build)
         )
 
-        current_build = Build("babette.20")
+        current_build = Build("babette", "20")
 
         # Reverse time so we have duplicate mtimes
         jenkins.artifact_builder.timer = timestamp

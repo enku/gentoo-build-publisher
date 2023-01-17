@@ -196,14 +196,14 @@ class BuildsQueryTestCase(TestCase):
 
     def test_older_build_pulled_after_newer_should_not_sort_before(self):
         # Build first build
-        first_build = BuildFactory(build_id="lighthouse.10000")
+        first_build = BuildFactory(machine="lighthouse", build_id="10000")
         self.publisher.jenkins.artifact_builder.build_info(first_build)
 
         # Wait one hour
         self.publisher.jenkins.artifact_builder.advance(3600)
 
         # Build second build
-        second_build = BuildFactory(build_id="lighthouse.10001")
+        second_build = BuildFactory(machine="lighthouse", build_id="10001")
         self.publisher.jenkins.artifact_builder.build_info(second_build)
 
         # Pull second build
@@ -871,7 +871,7 @@ class WorkingTestCase(TestCase):
         self.publisher.pull(BuildFactory())
         self.publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
-        self.publisher.records.save(BuildRecord(working.id))
+        self.publisher.records.save(BuildRecord(working.machine, working.build_id))
 
         result = graphql(self.query)
 

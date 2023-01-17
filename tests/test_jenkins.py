@@ -36,7 +36,7 @@ class JenkinsTestCase(TestCase):
     def test_url_artifact(self):
         """.build_url() should return the url of the given build artifact"""
         # Given the build
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the Jenkins instance
         jenkins = Jenkins(JENKINS_CONFIG)
@@ -52,7 +52,7 @@ class JenkinsTestCase(TestCase):
 
     def test_url_raises_valueeror_on_unknown_url_type(self):
         # Given the build
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the Jenkins instance
         jenkins = Jenkins(JENKINS_CONFIG)
@@ -67,7 +67,7 @@ class JenkinsTestCase(TestCase):
     def test_download_artifact(self):
         """.download_artifact should download the given build artifact"""
         # Given the build id
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the Jenkins instance
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -88,7 +88,7 @@ class JenkinsTestCase(TestCase):
 
     def test_download_artifact_with_no_auth(self):
         # Given the build id
-        build = Build("babette.193")
+        build = Build("babette", "193")
 
         # Given the Jenkins instance having no user/api_key
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -129,7 +129,7 @@ class JenkinsTestCase(TestCase):
 
     def test_get_metadata(self):
         mock_response = test_data("jenkins_build.json")
-        build = Build("babette.291")
+        build = Build("babette", "291")
         jenkins = Jenkins(JENKINS_CONFIG)
 
         with mock.patch.object(jenkins.session, "get") as mock_requests_get:

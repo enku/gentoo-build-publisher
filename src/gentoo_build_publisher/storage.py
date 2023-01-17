@@ -13,7 +13,14 @@ from typing import IO, Callable
 
 from gentoo_build_publisher import utils
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.types import TAG_SYM, Build, Content, GBPMetadata, Package
+from gentoo_build_publisher.types import (
+    TAG_SYM,
+    Build,
+    BuildLike,
+    Content,
+    GBPMetadata,
+    Package,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,9 +99,9 @@ class Storage:
 
     def extract_artifact(
         self,
-        build: Build,
+        build: BuildLike,
         byte_stream: Iterable[bytes],
-        previous: Build | None = None,
+        previous: BuildLike | None = None,
     ) -> None:
         """Pull and unpack the artifact
 
@@ -119,7 +126,7 @@ class Storage:
             logger.info("Extracted build: %s", build)
 
     def _extract(
-        self, build: Build, tar_file: tarfile.TarFile, previous: Build | None
+        self, build: BuildLike, tar_file: tarfile.TarFile, previous: BuildLike | None
     ) -> None:
         """Extract the given TarFile into the storage system as the given Build.
 
@@ -144,21 +151,21 @@ class Storage:
                 else:
                     os.renames(src, dst)
 
-    def pulled(self, build: Build) -> bool:
+    def pulled(self, build: BuildLike) -> bool:
         """Returns True if build has been pulled
 
         By "pulled" we mean all Build components exist on the filesystem
         """
         return all(self.get_path(build, item).exists() for item in Content)
 
-    def publish(self, build: Build) -> None:
+    def publish(self, build: BuildLike) -> None:
         """Make this build 'active'
 
         Alias for tag(build, "")
         """
         self.tag(build)
 
-    def tag(self, build: Build, tag_name: str = "") -> None:
+    def tag(self, build: BuildLike, tag_name: str = "") -> None:
         """Create a "tag" for this build
 
         If tag is non-empty then the resulting symlink will be like, e.g.
@@ -191,7 +198,7 @@ class Storage:
             if path.is_symlink():
                 path.unlink()
 
-    def get_tags(self, build: Build) -> list[str]:
+    def get_tags(self, build: BuildLike) -> list[str]:
         """Return the tags for the given build.
 
         If the build is published, the list will contain the empty string.
@@ -241,12 +248,11 @@ class Storage:
             if len(target_builds) != 1:
                 break
         else:
-            build_id = f"{machine}.{next(iter(target_builds))}"
-            return Build(build_id)
+            return Build(machine, next(iter(target_builds)))
 
         raise FileNotFoundError(f"Tag is broken or does not exist: {tag}")
 
-    def published(self, build: Build) -> bool:
+    def published(self, build: BuildLike) -> bool:
         """Return True if the build currently published.
 
         By "published" we mean all content are symlinked. Partially symlinked is
@@ -254,7 +260,7 @@ class Storage:
         """
         return self.check_symlinks(build, build.machine)
 
-    def check_symlinks(self, build: Build, name: str) -> bool:
+    def check_symlinks(self, build: BuildLike, name: str) -> bool:
         """Return True if the given symlinks point to the given build
 
         Symlinks have to exist for all `Content`.
@@ -274,7 +280,7 @@ class Storage:
 
         return {path.name for path in repos_path.iterdir() if path.is_dir()}
 
-    def delete(self, build: Build) -> None:
+    def delete(self, build: BuildLike) -> None:
         """Delete files/dirs associated with build
 
         Does not fix dangling symlinks.
@@ -292,7 +298,7 @@ class Storage:
 
         os.symlink(source, target)
 
-    def package_index_file(self, build: Build) -> IO[str]:
+    def package_index_file(self, build: BuildLike) -> IO[str]:
         """Return a file object for the Packages index file"""
         package_index_path = self.get_path(build, Content.BINPKGS) / "Packages"
 
@@ -302,7 +308,7 @@ class Storage:
 
         return package_index_path.open(encoding="utf-8")
 
-    def get_packages(self, build: Build) -> list[Package]:
+    def get_packages(self, build: BuildLike) -> list[Package]:
         """Return the list of packages for this build"""
         packages = []
 
@@ -338,7 +344,7 @@ class Storage:
 
         return packages
 
-    def get_metadata(self, build: Build) -> GBPMetadata:
+    def get_metadata(self, build: BuildLike) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
 
         If the file does not exist (e.g. not pulled), raise LookupError
@@ -351,7 +357,7 @@ class Storage:
         except FileNotFoundError:
             raise LookupError(f"gbp.json does not exist for {build}") from None
 
-    def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
+    def set_metadata(self, build: BuildLike, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
         with path.open("w") as gbp_json:
