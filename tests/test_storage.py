@@ -9,7 +9,12 @@ from unittest import mock
 
 from gentoo_build_publisher import utils
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.storage import Storage, quick_check
+from gentoo_build_publisher.storage import (
+    Storage,
+    make_package_from_lines,
+    package_sections,
+    quick_check,
+)
 from gentoo_build_publisher.types import (
     Build,
     Content,
@@ -18,7 +23,7 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import MockJenkins, TestCase
+from . import MockJenkins, TestCase, data
 from .factories import PACKAGE_INDEX, BuildFactory
 
 TEST_SETTINGS = Settings(
@@ -653,3 +658,43 @@ class QuickCheckTestCase(TestCase):
         result = quick_check(file1, file2)
 
         self.assertIs(result, False)
+
+
+class MakePackageFromLinesTestCase(TestCase):
+    """Tests for the make_package_from_lines method"""
+
+    def test(self) -> None:
+        result = make_package_from_lines(data.PACKAGE_LINES)
+
+        self.assertIsInstance(result, Package)
+
+    def test_when_line_missing(self) -> None:
+        lines = [line for line in data.PACKAGE_LINES if not line.startswith("CPV:")]
+
+        with self.assertRaises(ValueError) as context:
+            make_package_from_lines(lines)
+
+        self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
+
+
+class PackageSectionsTestCase(TestCase):
+    """Tests for the package_sections method"""
+
+    def test(self) -> None:
+        build = BuildFactory()
+        self.publisher.pull(build)
+        index_file = (
+            self.publisher.storage.get_path(build, Content.BINPKGS) / "Packages"
+        )
+
+        with index_file.open(encoding="UTF-8") as opened_index_file:
+            for line in opened_index_file:  # skip preamble
+                if not line.strip():
+                    break
+            sections = [*package_sections(opened_index_file)]
+
+        self.assertEqual(len(sections), 4)
+
+        for section in sections:
+            for name in ["BUILD_ID", "CPV", "SIZE", "REPO", "PATH", "BUILD_TIME"]:
+                self.assertTrue(any(line.startswith(f"{name}: ") for line in section))

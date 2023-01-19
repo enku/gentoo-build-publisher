@@ -317,30 +317,8 @@ class Storage:
             while package_index_file.readline().rstrip():
                 pass
 
-            while True:
-                lines = []
-                while line := package_index_file.readline().rstrip():
-                    lines.append(line)
-                if not lines:
-                    break
-
-                package_info = {}
-                for line in lines:
-                    key, _, value = line.partition(":")
-                    key = key.rstrip().lower()
-                    value = value.lstrip()
-                    package_info[key] = value
-
-                packages.append(
-                    Package(
-                        package_info["cpv"],
-                        package_info["repo"],
-                        package_info["path"],
-                        int(package_info["build_id"]),
-                        int(package_info["size"]),
-                        int(package_info["build_time"]),
-                    )
-                )
+            for section in package_sections(package_index_file):
+                packages.append(make_package_from_lines(section))
 
         return packages
 
@@ -387,3 +365,44 @@ def copy_or_link(link_dest: Path, dst_root: Path) -> Callable[[str, str], None]:
             shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
 
     return copy
+
+
+def make_package_from_lines(lines: Iterable[str]) -> Package:
+    """Given the appropriate lines from Packages, return a Package object"""
+    package_info: dict[str, str] = {}
+
+    for line in lines:
+        key, _, value = line.partition(":")
+        key = key.rstrip().lower()
+        value = value.lstrip()
+        package_info[key] = value
+
+    try:
+        return Package(
+            package_info["cpv"],
+            package_info["repo"],
+            package_info["path"],
+            int(package_info["build_id"]),
+            int(package_info["size"]),
+            int(package_info["build_time"]),
+        )
+    except KeyError as error:
+        raise ValueError(
+            f"Package lines missing {error.args[0].upper()} value"
+        ) from None
+
+
+def package_sections(package_index_file: IO[str]) -> Iterable[list[str]]:
+    """Yield section lines from Package index file
+
+    Assumes file pointer is after the preamble.
+    """
+    while True:
+        section_lines: list[str] = []
+        while line := package_index_file.readline().rstrip():
+            section_lines.append(line)
+
+        if not section_lines:
+            break
+
+        yield section_lines
