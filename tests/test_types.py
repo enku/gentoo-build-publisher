@@ -25,34 +25,34 @@ UTC = timezone.utc
 
 
 class BuildTestCase(TestCase):
-    def test_from_id_with_name_and_number(self):
+    def test_from_id_with_name_and_number(self) -> None:
         build = Build.from_id("babette.16")
 
         self.assertEqual(str(build), "babette.16")
 
-    def test_from_id_with_no_name(self):
+    def test_from_id_with_no_name(self) -> None:
         with self.assertRaises(InvalidBuild):
             Build.from_id(".16")
 
-    def test_has_machine_and_build_id_attrs(self):
+    def test_has_machine_and_build_id_attrs(self) -> None:
         build = Build("babette", "16")
 
         self.assertEqual(build.machine, "babette")
         self.assertEqual(build.build_id, "16")
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         build = Build("babette", "16")
 
         self.assertEqual("Build('babette.16')", repr(build))
 
 
 class BuildRecordTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.record = BuildRecordFactory()
 
-    def test_repr_buildrecord(self):
+    def test_repr_buildrecord(self) -> None:
         self.assertEqual(repr(self.record), f"BuildRecord('{self.record}')")
 
 
@@ -66,7 +66,7 @@ class RecordDBTestCase(DjangoTestCase):
         return Records.from_settings(settings)
 
     @parametrized(BACKENDS)
-    def test_save(self, backend: str):
+    def test_save(self, backend: str) -> None:
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
 
@@ -78,7 +78,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).completed, timestamp)
 
     @parametrized(BACKENDS)
-    def test_save_with_given_fields_updates_fields(self, backend: str):
+    def test_save_with_given_fields_updates_fields(self, backend: str) -> None:
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
 
@@ -92,7 +92,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).keep, True)
 
     @parametrized(BACKENDS)
-    def test_get(self, backend: str):
+    def test_get(self, backend: str) -> None:
         records = self.backend(backend)
         build_record = records.save(BuildRecord("lighthouse", "8924"))
 
@@ -102,7 +102,7 @@ class RecordDBTestCase(DjangoTestCase):
             records.get(Build("anchor", "0"))
 
     @parametrized(BACKENDS)
-    def test_for_machine(self, backend: str):
+    def test_for_machine(self, backend: str) -> None:
         records = self.backend(backend)
         builds: list[BuildRecord] = [
             records.save(BuildRecord("lighthouse", "8923")),
@@ -113,7 +113,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertListEqual([*records.for_machine("anchor")], [])
 
     @parametrized(BACKENDS)
-    def test_delete(self, backend):
+    def test_delete(self, backend: str) -> None:
         build_record = BuildRecordFactory()
         records = self.backend(backend)
         records.save(build_record)
@@ -124,7 +124,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertFalse(records.exists(build_record))
 
     @parametrized(BACKENDS)
-    def test_exists(self, backend: str):
+    def test_exists(self, backend: str) -> None:
         records = self.backend(backend)
         build_record = BuildRecord("lighthouse", "8924")
         records.save(build_record)
@@ -134,7 +134,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertIs(records.exists(bogus_build), False)
 
     @parametrized(BACKENDS)
-    def test_list_machines(self, backend: str):
+    def test_list_machines(self, backend: str) -> None:
         records = self.backend(backend)
         self.assertEqual(records.list_machines(), [])
 
@@ -147,7 +147,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual(machines, ["anchor", "lighthouse"])
 
     @parametrized(BACKENDS)
-    def test_previous(self, backend: str):
+    def test_previous(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             built=dt.datetime.fromtimestamp(1662310204, UTC),
@@ -162,7 +162,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertIsNone(records.previous(BuildRecordFactory(machine="bogus")))
 
     @parametrized(BACKENDS)
-    def test_next(self, backend):
+    def test_next(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             built=dt.datetime.fromtimestamp(1662310204, UTC),
@@ -179,7 +179,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertIsNone(records.next(BuildRecordFactory(machine="bogus")))
 
     @parametrized(BACKENDS)
-    def test_latest_with_completed_true(self, backend):
+    def test_latest_with_completed_true(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
@@ -199,7 +199,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual(records.latest("lighthouse", completed=True), None)
 
     @parametrized(BACKENDS)
-    def test_latest_with_completed_false(self, backend):
+    def test_latest_with_completed_false(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
@@ -219,7 +219,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual(records.latest("lighthouse", completed=False).id, build1.id)
 
     @parametrized(BACKENDS)
-    def test_search_notes(self, backend):
+    def test_search_notes(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
@@ -246,7 +246,7 @@ class RecordDBTestCase(DjangoTestCase):
         self.assertEqual([build.id for build in builds], [])
 
     @parametrized(BACKENDS)
-    def test_count(self, backend: str):
+    def test_count(self, backend: str) -> None:
         records = self.backend(backend)
         today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=UTC)
 

@@ -22,7 +22,7 @@ mock_stderr = mock.patch(
 
 
 class GBPChkTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.console = mock.MagicMock(spec=Console)
@@ -53,10 +53,10 @@ class GBPChkTestCase(TestCase):
 
         return build
 
-    def test_empty_system(self):
+    def test_empty_system(self) -> None:
         check.handler(Namespace(), self.gbp, self.console)
 
-    def test_uncompleted_builds_are_skipped(self):
+    def test_uncompleted_builds_are_skipped(self) -> None:
         build = BuildFactory()
         record = self.publisher.record(build)
         self.publisher.records.save(record, completed=None)
@@ -66,7 +66,7 @@ class GBPChkTestCase(TestCase):
         self.assertEqual(exit_status, 0)
 
     @mock_stderr
-    def test_check_build_content(self, stderr):
+    def test_check_build_content(self, stderr) -> None:
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
@@ -78,7 +78,7 @@ class GBPChkTestCase(TestCase):
         self.assertRegex(stderr.getvalue(), f"^Path missing for {bad_build}:")
 
     @mock_stderr
-    def test_check_orphans(self, stderr):
+    def test_check_orphans(self, stderr) -> None:
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
@@ -91,7 +91,7 @@ class GBPChkTestCase(TestCase):
         self.assertRegex(stderr.getvalue(), f"^Record missing for {binpkg_path}")
 
     @mock_stderr
-    def test_check_orphans_dangling_symlinks(self, stderr):
+    def test_check_orphans_dangling_symlinks(self, stderr) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -112,7 +112,7 @@ class GBPChkTestCase(TestCase):
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
     @mock_stderr
-    def test_check_inconsistent_tags(self, stderr):
+    def test_check_inconsistent_tags(self, stderr) -> None:
         # More than one build is represented by a tag
         good_build = BuildFactory()
         self.publisher.pull(good_build)
@@ -136,7 +136,7 @@ class GBPChkTestCase(TestCase):
         self.assertRegex(stderr.getvalue(), '^Tag "larry" has multiple targets: ')
 
     @mock_stderr
-    def test_error_count_in_exit_status(self, stderr):
+    def test_error_count_in_exit_status(self, stderr) -> None:
         for _ in range(2):
             good_build = BuildFactory()
             self.publisher.pull(good_build)

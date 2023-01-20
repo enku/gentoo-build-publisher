@@ -1,6 +1,5 @@
 """Unit tests for the tasks module"""
-# pylint: disable=missing-class-docstring,missing-function-docstring
-# pylint: disable=no-value-for-parameter
+# pylint: disable=missing-docstring,no-value-for-parameter
 import os
 from unittest import mock
 
@@ -22,7 +21,7 @@ from . import TestCase
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    def test_publishes_build(self):
+    def test_publishes_build(self) -> None:
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             result = publish_build.s("babette.193").apply()
@@ -32,7 +31,7 @@ class PublishBuildTestCase(TestCase):
         self.assertIs(result.result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
-    def test_should_give_up_when_publish_raises_httperror(self, log_error_mock):
+    def test_should_give_up_when_publish_raises_httperror(self, log_error_mock) -> None:
         with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
             apply_mock.side_effect = HTTPError
             result = publish_build.s("babette.193").apply()
@@ -47,7 +46,7 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_machine task"""
 
-    def test(self):
+    def test(self) -> None:
         with mock.patch.object(self.publisher, "purge") as purge_mock:
             purge_machine.s("foo").apply()
 
@@ -57,7 +56,7 @@ class PurgeBuildTestCase(TestCase):
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    def test_pulls_build(self):
+    def test_pulls_build(self) -> None:
         """Should actually pull the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
             pull_build.s("lima.1012").apply()
@@ -65,7 +64,7 @@ class PullBuildTestCase(TestCase):
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
 
-    def test_calls_purge_machine(self):
+    def test_calls_purge_machine(self) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
             "gentoo_build_publisher.tasks.purge_machine"
@@ -75,7 +74,7 @@ class PullBuildTestCase(TestCase):
 
         mock_purge_machine.delay.assert_called_with("charlie")
 
-    def test_does_not_call_purge_machine(self):
+    def test_does_not_call_purge_machine(self) -> None:
         """Should not issue the purge_machine task when setting is false"""
         with mock.patch(
             "gentoo_build_publisher.tasks.purge_machine"
@@ -86,7 +85,7 @@ class PullBuildTestCase(TestCase):
         mock_purge_machine.delay.assert_not_called()
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_delete_db_model_when_download_fails(self):
+    def test_should_delete_db_model_when_download_fails(self) -> None:
         settings = Settings.from_environ()
         records = Records.from_settings(settings)
 
@@ -100,7 +99,7 @@ class PullBuildTestCase(TestCase):
             records.get(Build("oscar", "197"))
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_retry_on_retryable_exceptions(self):
+    def test_should_retry_on_retryable_exceptions(self) -> None:
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
@@ -113,7 +112,7 @@ class PullBuildTestCase(TestCase):
         retry_mock.assert_called_once_with(exc=eof_error)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_not_retry_on_404_response(self):
+    def test_should_not_retry_on_404_response(self) -> None:
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
@@ -131,7 +130,7 @@ class PullBuildTestCase(TestCase):
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
-    def test_should_delete_the_build(self):
+    def test_should_delete_the_build(self) -> None:
         with mock.patch.object(self.publisher, "delete") as mock_delete:
             delete_build.s("zulu.56").apply()
 

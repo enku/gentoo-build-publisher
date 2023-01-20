@@ -20,7 +20,7 @@ utc = datetime.timezone.utc
 
 
 class BuildPublisherTestCase(TestCase):
-    def test_from_settings_returns_publisher_with_given_settings(self):
+    def test_from_settings_returns_publisher_with_given_settings(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="https://testserver.invalid/",
             RECORDS_BACKEND="django",
@@ -34,7 +34,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
         self.assertIsInstance(publisher.records, DjangoDB)
 
-    def test_publish(self):
+    def test_publish(self) -> None:
         """.publish should publish the build artifact"""
         build = BuildFactory()
 
@@ -42,7 +42,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertIs(self.publisher.storage.published(build), True)
 
-    def test_pull_without_db(self):
+    def test_pull_without_db(self) -> None:
         """pull creates db record and pulls from jenkins"""
         build = BuildFactory()
 
@@ -51,7 +51,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertIs(self.publisher.storage.pulled(build), True)
         self.assertIs(self.publisher.records.exists(build), True)
 
-    def test_pull_stores_build_logs(self):
+    def test_pull_stores_build_logs(self) -> None:
         """Should store the logs of the build"""
         build = BuildFactory()
 
@@ -65,7 +65,7 @@ class BuildPublisherTestCase(TestCase):
         record = self.publisher.record(build)
         self.assertEqual(record.logs, "foo\n")
 
-    def test_pull_updates_build_models_completed_field(self):
+    def test_pull_updates_build_models_completed_field(self) -> None:
         """Should update the completed field with the current timestamp"""
         now = utctime()
         build = BuildFactory()
@@ -77,7 +77,7 @@ class BuildPublisherTestCase(TestCase):
         record = self.publisher.record(build)
         self.assertEqual(record.completed, now)
 
-    def test_pull_updates_build_models_built_field(self):
+    def test_pull_updates_build_models_built_field(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -88,7 +88,7 @@ class BuildPublisherTestCase(TestCase):
         ).replace(tzinfo=utc)
         self.assertEqual(record.built, jenkins_timestamp)
 
-    def test_pull_does_not_download_when_already_pulled(self):
+    def test_pull_does_not_download_when_already_pulled(self) -> None:
         build = BuildFactory()
 
         self.publisher.pull(build)
@@ -98,7 +98,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertFalse(pulled)
 
-    def test_pulled_when_storage_is_ok_but_db_is_not(self):
+    def test_pulled_when_storage_is_ok_but_db_is_not(self) -> None:
         # On rare occasion (server crash) the build appears to be extracted but the
         # record.completed field is None.  In this case Publisher.pulled(build) should
         # be False
@@ -110,7 +110,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertFalse(self.publisher.pulled(build))
 
-    def test_purge_deletes_old_build(self):
+    def test_purge_deletes_old_build(self) -> None:
         """Should remove purgable builds"""
 
         old_build = BuildFactory()
@@ -135,7 +135,7 @@ class BuildPublisherTestCase(TestCase):
             path = self.publisher.storage.get_path(old_build, item)
             self.assertIs(path.exists(), False, path)
 
-    def test_purge_does_not_delete_old_tagged_builds(self):
+    def test_purge_does_not_delete_old_tagged_builds(self) -> None:
         """Should remove purgable builds"""
 
         kept_build = BuildFactory(machine="lighthouse")
@@ -161,7 +161,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertIs(self.publisher.records.exists(kept_build), True)
         self.assertIs(self.publisher.records.exists(tagged_build), True)
 
-    def test_purge_doesnt_delete_old_published_build(self):
+    def test_purge_doesnt_delete_old_published_build(self) -> None:
         """Should not delete old build if published"""
         build = BuildFactory()
 
@@ -179,7 +179,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertIs(self.publisher.records.exists(build), True)
 
-    def test_update_build_metadata(self):
+    def test_update_build_metadata(self) -> None:
         # pylint: disable=protected-access
         build = BuildFactory()
         record = self.publisher.record(build)
@@ -190,7 +190,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(record.logs, "foo\n")
         self.assertIsNot(record.completed, None)
 
-    def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self):
+    def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self) -> None:
         left = BuildFactory()
         self.publisher.get_packages = mock.Mock(wraps=self.publisher.get_packages)
         right = left
@@ -202,7 +202,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(diff, [])
         self.assertEqual(self.publisher.get_packages.call_count, 0)
 
-    def test_tags_returns_the_list_of_tags_except_empty_tag(self):
+    def test_tags_returns_the_list_of_tags_except_empty_tag(self) -> None:
         build = BuildFactory()
         self.publisher.publish(build)
         self.publisher.storage.tag(build, "prod")
@@ -210,7 +210,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(self.publisher.storage.get_tags(build), ["", "prod"])
         self.assertEqual(self.publisher.tags(build), ["prod"])
 
-    def test_tag_tags_the_build_at_the_storage_layer(self):
+    def test_tag_tags_the_build_at_the_storage_layer(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.tag(build, "prod")
@@ -218,7 +218,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertEqual(self.publisher.storage.get_tags(build), ["albert", "prod"])
 
-    def test_untag_removes_tag_from_the_build(self):
+    def test_untag_removes_tag_from_the_build(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.tag(build, "prod")
@@ -228,7 +228,7 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertEqual(self.publisher.storage.get_tags(build), ["prod"])
 
-    def test_untag_with_empty_unpublishes_the_build(self):
+    def test_untag_with_empty_unpublishes_the_build(self) -> None:
         build = BuildFactory()
         self.publisher.publish(build)
         self.assertTrue(self.publisher.published(build))
@@ -241,7 +241,7 @@ class BuildPublisherTestCase(TestCase):
 class DispatcherTestCase(TestCase):
     maxDiff = None
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.publish_events = []
@@ -258,7 +258,7 @@ class DispatcherTestCase(TestCase):
     def pull_handler(self, *, build, packages, gbp_metadata):
         self.pull_events.append([build, packages, gbp_metadata])
 
-    def test_pull_single(self):
+    def test_pull_single(self) -> None:
         new_build = BuildFactory()
         self.publisher.pull(new_build)
 
@@ -272,7 +272,7 @@ class DispatcherTestCase(TestCase):
         ]
         self.assertEqual(self.pull_events, [expected])
 
-    def test_pull_multi(self):
+    def test_pull_multi(self) -> None:
         build1 = BuildFactory()
         build2 = BuildFactory(machine="fileserver")
         self.publisher.pull(build1)
@@ -299,7 +299,7 @@ class DispatcherTestCase(TestCase):
         ]
         self.assertEqual(self.pull_events, [event1, event2])
 
-    def test_publish(self):
+    def test_publish(self) -> None:
         new_build = BuildFactory()
         self.publisher.publish(new_build)
 
@@ -310,7 +310,7 @@ class DispatcherTestCase(TestCase):
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
 
-    def test(self):
+    def test(self) -> None:
         # Given the "foo" builds, one of which is published
         first_build = BuildFactory(machine="foo")
         self.publisher.publish(first_build)
@@ -330,7 +330,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.latest_build, self.publisher.record(latest_build))
         self.assertEqual(machine_info.published_build, first_build)
 
-    def test_empty_db(self):
+    def test_empty_db(self) -> None:
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
 
@@ -340,7 +340,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published_build, None)
 
-    def test_builds_property(self):
+    def test_builds_property(self) -> None:
         # Given the "foo" builds
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
@@ -355,7 +355,7 @@ class MachineInfoTestCase(TestCase):
         # Then we get the list of builds in reverse chronological order
         self.assertEqual(result, [self.publisher.record(i) for i in reversed(builds)])
 
-    def test_tags_property_shows_tags_across_machines_builds(self):
+    def test_tags_property_shows_tags_across_machines_builds(self) -> None:
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
             self.publisher.pull(build)
@@ -371,7 +371,7 @@ class MachineInfoTestCase(TestCase):
 class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         # So for this case let's say we have 4 builds.  None have built timestamps.  The
@@ -401,22 +401,22 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         )
         self.machine_info = MachineInfo(build1.machine)
 
-    def test_build_count(self):
+    def test_build_count(self) -> None:
         self.assertEqual(self.machine_info.build_count, 4)
 
-    def test_builds(self):
+    def test_builds(self) -> None:
         builds = self.machine_info.builds
 
         expected = list(reversed([self.publisher.record(i) for i in self.builds]))
         self.assertEqual(expected, builds)
 
-    def test_latest_build(self):
+    def test_latest_build(self) -> None:
         build4 = self.builds[3]
         latest_build = self.machine_info.latest_build
 
         self.assertEqual(self.publisher.record(build4), latest_build)
 
-    def test_latest_with_latest_having_built_timestamp(self):
+    def test_latest_with_latest_having_built_timestamp(self) -> None:
         build5 = BuildFactory()
         self.publisher.pull(build5)
 
@@ -424,7 +424,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
 
         self.assertEqual(self.publisher.record(build5), latest_build)
 
-    def test_published_build(self):
+    def test_published_build(self) -> None:
         build3 = self.builds[2]
         published_build = self.machine_info.published_build
 
@@ -435,7 +435,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def test(self):
+    def test(self) -> None:
         response = self.publisher.schedule_build("babette")
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)
@@ -445,13 +445,13 @@ class ScheduleBuildTestCase(TestCase):
 class GetPublisherTestCase(TestCase):
     """Tests for the get_publisher function"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         # pylint: disable=protected-access
         gentoo_build_publisher.publisher._PUBLISHER = None
 
-    def test_creates_publisher_from_env_variables_when_global_is_none(self):
+    def test_creates_publisher_from_env_variables_when_global_is_none(self) -> None:
         env = {
             "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://testserver.invalid/",
             "BUILD_PUBLISHER_RECORDS_BACKEND": "django",

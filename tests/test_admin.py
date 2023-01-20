@@ -14,7 +14,7 @@ User = get_user_model()
 
 
 class BuildModelListViewFilterTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         BuildModelFactory.create()
@@ -24,21 +24,21 @@ class BuildModelListViewFilterTestCase(TestCase):
         BuildNote.objects.create(build_model=kept, note="Test log")
         self.user = User.objects.create_superuser("root")
 
-    def test_filter_on_keep_true(self):
+    def test_filter_on_keep_true(self) -> None:
         client = self.client
 
         client.force_login(self.user)
         response = client.get("/admin/gentoo_build_publisher/buildmodel/?keep=true")
         self.assertContains(response, "1 Build")
 
-    def test_filter_on_keep_false(self):
+    def test_filter_on_keep_false(self) -> None:
         client = self.client
 
         client.force_login(self.user)
         response = client.get("/admin/gentoo_build_publisher/buildmodel/?keep=false")
         self.assertContains(response, "2 Builds")
 
-    def test_filter_on_unfiltered(self):
+    def test_filter_on_unfiltered(self) -> None:
         client = self.client
 
         client.force_login(self.user)
@@ -47,13 +47,13 @@ class BuildModelListViewFilterTestCase(TestCase):
 
 
 class BuildModelChangeViewTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.build_model = BuildModelFactory.create()
         self.user = User.objects.create_superuser("root")
 
-    def test_keep_in_context(self):
+    def test_keep_in_context(self) -> None:
         client = self.client
         build = self.build_model
 
@@ -63,7 +63,7 @@ class BuildModelChangeViewTestCase(TestCase):
         )
         self.assertEqual(response.context["keep"], False)
 
-    def test_keep_action_unkept(self):
+    def test_keep_action_unkept(self) -> None:
         client = self.client
         build = self.build_model
 
@@ -78,7 +78,7 @@ class BuildModelChangeViewTestCase(TestCase):
 
         self.assertTrue(KeptBuild.objects.filter(build_model=build).exists())
 
-    def test_keep_action_kept(self):
+    def test_keep_action_kept(self) -> None:
         client = self.client
         build = self.build_model
         KeptBuild.objects.create(build_model=build)
@@ -94,7 +94,7 @@ class BuildModelChangeViewTestCase(TestCase):
 
         self.assertFalse(KeptBuild.objects.filter(build_model=build).exists())
 
-    def test_publish_action(self):
+    def test_publish_action(self) -> None:
         client = self.client
         build = BuildModelFactory.create()
 

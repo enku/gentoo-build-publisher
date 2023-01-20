@@ -32,7 +32,7 @@ TEST_SETTINGS = Settings(
 
 
 class StorageInitTestCase(TestCase):
-    def test_creates_dir_if_not_exists(self):
+    def test_creates_dir_if_not_exists(self) -> None:
         shutil.rmtree(self.tmpdir)
 
         Storage(self.tmpdir)
@@ -40,7 +40,7 @@ class StorageInitTestCase(TestCase):
 
 
 class StorageReprTestCase(TestCase):
-    def test(self):
+    def test(self) -> None:
         storage = Storage(self.tmpdir)
 
         self.assertEqual(repr(storage), f"Storage({repr(self.tmpdir)})")
@@ -49,19 +49,19 @@ class StorageReprTestCase(TestCase):
 class StorageEqTestCase(TestCase):
     """Test Storage.__eq__"""
 
-    def test_if_roots_are_the_same_returns_true(self):
+    def test_if_roots_are_the_same_returns_true(self) -> None:
         storage1 = Storage(self.tmpdir / "test_eq")
         storage2 = Storage(self.tmpdir / "test_eq")
 
         self.assertIs(storage1 == storage2, True)
 
-    def test_if_roots_are_not_the_same_returns_false(self):
+    def test_if_roots_are_not_the_same_returns_false(self) -> None:
         storage1 = Storage(self.tmpdir / "test_eq1")
         storage2 = Storage(self.tmpdir / "test_eq2")
 
         self.assertIs(storage1 == storage2, False)
 
-    def test_returns_false_when_not_compared_to_another_storage(self):
+    def test_returns_false_when_not_compared_to_another_storage(self) -> None:
         storage = Storage(self.tmpdir / "test_eq")
 
         self.assertIs(storage == 16, False)
@@ -70,7 +70,7 @@ class StorageEqTestCase(TestCase):
 
 class StorageFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
-    def test(self):
+    def test(self) -> None:
         """Should intantiate Storage from settings"""
         # Given the settings
         settings = TEST_SETTINGS.copy()
@@ -87,7 +87,7 @@ class StorageFromSettings(TestCase):
 class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
 
-    def test_extract_artifact_moves_repos_and_binpkgs(self):
+    def test_extract_artifact_moves_repos_and_binpkgs(self) -> None:
         """Should extract artifacts and move to repos/ and binpkgs/"""
         build = Build("babette", "19")
         storage = Storage(self.tmpdir)
@@ -97,7 +97,7 @@ class StorageDownloadArtifactTestCase(TestCase):
         self.assertIs(storage.get_path(build, Content.REPOS).is_dir(), True)
         self.assertIs(storage.get_path(build, Content.BINPKGS).is_dir(), True)
 
-    def test_extract_artifact_creates_etc_portage_dir(self):
+    def test_extract_artifact_creates_etc_portage_dir(self) -> None:
         """Should extract artifacts and move to etc-portage/"""
         build = Build("babette", "19")
         storage = Storage(self.tmpdir)
@@ -106,7 +106,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
         self.assertIs(storage.get_path(build, Content.ETC_PORTAGE).is_dir(), True)
 
-    def test_extract_artifact_creates_var_lib_portage_dir(self):
+    def test_extract_artifact_creates_var_lib_portage_dir(self) -> None:
         """Should extract artifacts and move to var-lib-portage/"""
         build = Build("babette", "19")
         storage = Storage(self.tmpdir)
@@ -115,7 +115,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 
         self.assertIs(storage.get_path(build, Content.VAR_LIB_PORTAGE).is_dir(), True)
 
-    def test_extract_artifact_should_remove_dst_if_it_already_exists(self):
+    def test_extract_artifact_should_remove_dst_if_it_already_exists(self) -> None:
         # Given the extractable build
         build = BuildFactory()
 
@@ -138,7 +138,7 @@ class StorageDownloadArtifactTestCase(TestCase):
 class StoragePublishTestCase(TestCase):
     """Tests for Storage.publish"""
 
-    def test_publish_raises_exception_repos_dir_does_not_exist(self):
+    def test_publish_raises_exception_repos_dir_does_not_exist(self) -> None:
         """Should raise an exception if the build has not been pulled"""
         # Given the build
         build = Build("babette", "193")
@@ -151,7 +151,7 @@ class StoragePublishTestCase(TestCase):
             # When we call publish
             storage.publish(build)
 
-    def test_raise_exception_when_symlink_target_exists_and_not_symlink(self):
+    def test_raise_exception_when_symlink_target_exists_and_not_symlink(self) -> None:
         # Given the source and target which is not a symlink
         source = self.create_file("source")
         target = self.create_file("target")
@@ -169,7 +169,7 @@ class StoragePublishTestCase(TestCase):
 class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
 
-    def test_published_true(self):
+    def test_published_true(self) -> None:
         """.publshed should return True when published"""
         # Given the build
         build = Build("babette", "193")
@@ -190,7 +190,7 @@ class StoragePublishedTestCase(TestCase):
         # Then it returns True
         self.assertTrue(published)
 
-    def test_published_false(self):
+    def test_published_false(self) -> None:
         """.publshed should return False when not published"""
         # Given the unpublished build
         build = Build("babette", "193")
@@ -204,7 +204,7 @@ class StoragePublishedTestCase(TestCase):
         # Then it returns False
         self.assertFalse(published)
 
-    def test_other_published(self):
+    def test_other_published(self) -> None:
         # Given the first build published
         build1_id = Build("babette", "192")
 
@@ -233,7 +233,7 @@ class StoragePublishedTestCase(TestCase):
 class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
 
-    def test_deletes_expected_directories(self):
+    def test_deletes_expected_directories(self) -> None:
         build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
@@ -255,7 +255,7 @@ class StorageDeleteTestCase(TestCase):
 class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
 
-    def test_does_not_extract_already_pulled_build(self):
+    def test_does_not_extract_already_pulled_build(self) -> None:
         build = Build("build", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
@@ -271,7 +271,7 @@ class StorageExtractArtifactTestCase(TestCase):
         except tarfile.ReadError:
             self.fail("extract_artifact() should not have attempted to extract")
 
-    def test_extracts_bytesteam_and_content(self):
+    def test_extracts_bytesteam_and_content(self) -> None:
         build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
@@ -280,7 +280,7 @@ class StorageExtractArtifactTestCase(TestCase):
 
         self.assertIs(storage.pulled(build), True)
 
-    def test_uses_hard_link_if_previous_build_exists(self):
+    def test_uses_hard_link_if_previous_build_exists(self) -> None:
         previous_build = Build("babette", "19")
         storage = Storage(self.tmpdir)
         jenkins = MockJenkins.from_settings(TEST_SETTINGS)
@@ -310,14 +310,14 @@ class StorageExtractArtifactTestCase(TestCase):
 class StorageGetPackagesTestCase(TestCase):
     """tests for the Storage.get_packages() method"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.build = BuildFactory()
         self.publisher.pull(self.build)
         self.storage = self.publisher.storage
 
-    def test_should_return_list_of_packages_from_index(self):
+    def test_should_return_list_of_packages_from_index(self) -> None:
         packages = self.storage.get_packages(self.build)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
@@ -329,7 +329,7 @@ class StorageGetPackagesTestCase(TestCase):
         self.assertEqual(package.size, 484)
         self.assertEqual(package.build_time, 0)
 
-    def test_should_raise_lookuperror_when_index_file_missing(self):
+    def test_should_raise_lookuperror_when_index_file_missing(self) -> None:
         index_file = self.storage.get_path(self.build, Content.BINPKGS) / "Packages"
         index_file.unlink()
 
@@ -340,7 +340,7 @@ class StorageGetPackagesTestCase(TestCase):
 class StorageGetMetadataTestCase(TestCase):
     """tests for the Storage.get_metadata() method"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.build = BuildFactory()
@@ -351,7 +351,7 @@ class StorageGetMetadataTestCase(TestCase):
         self.publisher.pull(self.build)
         self.storage = self.publisher.storage
 
-    def test_should_return_gbpmetadata_when_gbp_json_exists(self):
+    def test_should_return_gbpmetadata_when_gbp_json_exists(self) -> None:
         metadata = self.storage.get_metadata(self.build)
 
         expected = GBPMetadata(
@@ -389,7 +389,7 @@ class StorageGetMetadataTestCase(TestCase):
         )
         self.assertEqual(metadata, expected)
 
-    def test_should_raise_lookuperror_when_file_does_not_exist(self):
+    def test_should_raise_lookuperror_when_file_does_not_exist(self) -> None:
         path = self.storage.get_path(self.build, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
@@ -403,7 +403,7 @@ class StorageGetMetadataTestCase(TestCase):
 class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.build = BuildFactory()
         self.publisher.pull(self.build)
@@ -413,7 +413,7 @@ class StorageSetMetadataTestCase(TestCase):
         if self.path.exists():
             self.path.unlink()
 
-    def test(self):
+    def test(self) -> None:
         package_metadata = PackageMetadata(
             total=666,
             size=666,
@@ -457,7 +457,7 @@ class StorageSetMetadataTestCase(TestCase):
 
 
 class StorageReposTestCase(TestCase):
-    def test(self):
+    def test(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -465,7 +465,7 @@ class StorageReposTestCase(TestCase):
 
         self.assertEqual(repos, {"gentoo", "marduk"})
 
-    def test_raise_exception_when_not_pulled(self):
+    def test_raise_exception_when_not_pulled(self) -> None:
         build = BuildFactory()
 
         with self.assertRaises(FileNotFoundError) as context:
@@ -475,7 +475,7 @@ class StorageReposTestCase(TestCase):
 
 
 class StorageTaggingTestCase(TestCase):
-    def test_can_create_tagged_directory_symlinks(self):
+    def test_can_create_tagged_directory_symlinks(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -490,7 +490,7 @@ class StorageTaggingTestCase(TestCase):
             self.assertTrue(source_path.is_symlink())
             self.assertEqual(source_path.resolve(), target_path)
 
-    def test_can_retag(self):
+    def test_can_retag(self) -> None:
         build1 = BuildFactory()
         self.publisher.pull(build1)
         self.publisher.storage.tag(build1, "prod")
@@ -508,7 +508,7 @@ class StorageTaggingTestCase(TestCase):
             self.assertTrue(source_path.is_symlink())
             self.assertEqual(source_path.resolve(), target_path)
 
-    def test_can_untag(self):
+    def test_can_untag(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")
@@ -524,13 +524,13 @@ class StorageTaggingTestCase(TestCase):
             self.assertFalse(source_path.exists())
             self.assertTrue(target_path.exists())
 
-    def test_can_untag_if_no_such_tag_exists(self):
+    def test_can_untag_if_no_such_tag_exists(self) -> None:
         """Removing a non-existant tag should fail silently"""
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.untag(build, "prod")
 
-    def test_non_published_builds_have_no_tags(self):
+    def test_non_published_builds_have_no_tags(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -538,7 +538,7 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, [])
 
-    def test_builds_can_have_multiple_tags(self):
+    def test_builds_can_have_multiple_tags(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")
@@ -553,7 +553,7 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, ["", "albert", "prod"])
 
-    def test_published_builds_have_the_empty_tag(self):
+    def test_published_builds_have_the_empty_tag(self) -> None:
         build = BuildFactory()
         self.publisher.publish(build)
 
@@ -561,14 +561,14 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, [""])
 
-    def test_unpulled_builds_have_no_tags(self):
+    def test_unpulled_builds_have_no_tags(self) -> None:
         build = BuildFactory()
 
         tags = self.publisher.storage.get_tags(build)
 
         self.assertEqual(tags, [])
 
-    def test_partially_tagged_directories_are_not_tagged(self):
+    def test_partially_tagged_directories_are_not_tagged(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")
@@ -588,7 +588,7 @@ class StorageTaggingTestCase(TestCase):
 class StorageResolveTagTestCase(TestCase):
     """Tests for the Storage.resolve_tag method"""
 
-    def test_resolve_tag_returns_the_build_that_it_belongs_to(self):
+    def test_resolve_tag_returns_the_build_that_it_belongs_to(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")
@@ -598,13 +598,13 @@ class StorageResolveTagTestCase(TestCase):
 
         self.assertEqual(target, build)
 
-    def test_resolve_tag_raises_exception_when_given_invalid_tag(self):
+    def test_resolve_tag_raises_exception_when_given_invalid_tag(self) -> None:
         with self.assertRaises(ValueError) as context:
             self.publisher.storage.resolve_tag("notatag")
 
         self.assertEqual(context.exception.args[0], "Invalid tag: notatag")
 
-    def test_resolve_tag_raises_exception_when_build_doesnt_exist(self):
+    def test_resolve_tag_raises_exception_when_build_doesnt_exist(self) -> None:
         build = BuildFactory(machine="lighthouse")
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")
@@ -622,7 +622,7 @@ class StorageResolveTagTestCase(TestCase):
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 
-    def test(self):
+    def test(self) -> None:
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
         file1 = str(self.create_file("foo", b"test", timestamp))
         file2 = str(self.create_file("bar", b"xxxx", timestamp))
@@ -631,7 +631,7 @@ class QuickCheckTestCase(TestCase):
 
         self.assertIs(result, True)
 
-    def test_should_return_false_when_file_does_not_exist(self):
+    def test_should_return_false_when_file_does_not_exist(self) -> None:
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
         file1 = str(self.create_file("foo", b"test", timestamp))
         file2 = str(self.tmpdir / "bogus")
@@ -640,7 +640,7 @@ class QuickCheckTestCase(TestCase):
 
         self.assertIs(result, False)
 
-    def test_should_return_false_when_mtimes_differ(self):
+    def test_should_return_false_when_mtimes_differ(self) -> None:
         timestamp1 = datetime.datetime(2021, 10, 30, 7, 10, 39)
         timestamp2 = datetime.datetime(2021, 10, 30, 7, 10, 40)
         file1 = str(self.create_file("foo", b"test", timestamp1))
@@ -650,7 +650,7 @@ class QuickCheckTestCase(TestCase):
 
         self.assertIs(result, False)
 
-    def test_should_return_false_when_sizes_differ(self):
+    def test_should_return_false_when_sizes_differ(self) -> None:
         timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
         file1 = str(self.create_file("foo", b"test", timestamp))
         file2 = str(self.create_file("bar", b"tst", timestamp))

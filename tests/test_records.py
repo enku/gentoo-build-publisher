@@ -10,7 +10,7 @@ from gentoo_build_publisher.settings import Settings
 
 
 class RecordsTestCase(TestCase):
-    def test_from_settings_django(self):
+    def test_from_settings_django(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             STORAGE_PATH=Path("/dev/null"),
@@ -20,7 +20,7 @@ class RecordsTestCase(TestCase):
         recorddb = Records.from_settings(settings)
         self.assertIsInstance(recorddb, DjangoDB)
 
-    def test_unknown_records_backend(self):
+    def test_unknown_records_backend(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             STORAGE_PATH=Path("/dev/null"),

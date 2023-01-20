@@ -33,7 +33,7 @@ JENKINS_CONFIG = JenkinsConfig(
 class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
 
-    def test_url_artifact(self):
+    def test_url_artifact(self) -> None:
         """.build_url() should return the url of the given build artifact"""
         # Given the build
         build = Build("babette", "193")
@@ -50,7 +50,7 @@ class JenkinsTestCase(TestCase):
             URL("https://jenkins.invalid/job/babette/193/artifact/build.tar.gz"),
         )
 
-    def test_url_raises_valueeror_on_unknown_url_type(self):
+    def test_url_raises_valueeror_on_unknown_url_type(self) -> None:
         # Given the build
         build = Build("babette", "193")
 
@@ -64,7 +64,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(str(context.exception), "Unknown url_type: 'bogus'")
 
-    def test_download_artifact(self):
+    def test_download_artifact(self) -> None:
         """.download_artifact should download the given build artifact"""
         # Given the build id
         build = Build("babette", "193")
@@ -86,7 +86,7 @@ class JenkinsTestCase(TestCase):
             timeout=jenkins.config.requests_timeout,
         )
 
-    def test_download_artifact_with_no_auth(self):
+    def test_download_artifact_with_no_auth(self) -> None:
         # Given the build id
         build = Build("babette", "193")
 
@@ -104,7 +104,7 @@ class JenkinsTestCase(TestCase):
         )
 
     @mock.patch.dict(os.environ, {}, clear=True)
-    def test_from_settings(self):
+    def test_from_settings(self) -> None:
         """.from_settings() should return an instance instantiated from settings"""
         # Given the settings
         settings = Settings(
@@ -127,7 +127,7 @@ class JenkinsTestCase(TestCase):
         self.assertEqual(jenkins.config.user, "admin")
         self.assertEqual(jenkins.config.artifact_name, "stuff.tar")
 
-    def test_get_metadata(self):
+    def test_get_metadata(self) -> None:
         mock_response = test_data("jenkins_build.json")
         build = Build("babette", "291")
         jenkins = Jenkins(JENKINS_CONFIG)
@@ -145,7 +145,7 @@ class JenkinsTestCase(TestCase):
         )
         mock_requests_get.return_value.json.assert_called_once_with()
 
-    def test_project_root_typical_setting(self):
+    def test_project_root_typical_setting(self) -> None:
         jenkins_config = JenkinsConfig(
             base_url=URL("https://jenkins.invalid/job/Gentoo"),
             api_key="foo",
@@ -156,7 +156,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(jenkins.project_root, ProjectPath("Gentoo"))
 
-    def test_project_root_typical_setting_with_trailing_slash(self):
+    def test_project_root_typical_setting_with_trailing_slash(self) -> None:
         jenkins_config = JenkinsConfig(
             base_url=URL("https://jenkins.invalid/job/Gentoo/"),
             api_key="foo",
@@ -167,7 +167,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(jenkins.project_root, ProjectPath("Gentoo"))
 
-    def test_project_root_from_url_root(self):
+    def test_project_root_from_url_root(self) -> None:
         jenkins_config = JenkinsConfig(
             base_url=URL("https://jenkins.invalid/"),
             api_key="foo",
@@ -178,7 +178,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(jenkins.project_root, ProjectPath(""))
 
-    def test_project_root_from_url_root_with_no_trailing_slash(self):
+    def test_project_root_from_url_root_with_no_trailing_slash(self) -> None:
         jenkins_config = JenkinsConfig(
             base_url=URL("https://jenkins.invalid"),
             api_key="foo",
@@ -189,7 +189,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(jenkins.project_root, ProjectPath(""))
 
-    def test_project_root_deeply_nested(self):
+    def test_project_root_deeply_nested(self) -> None:
         jenkins_config = JenkinsConfig(
             base_url=URL("https://jenkins.invalid/job/foo/job/bar/job/baz"),
             api_key="foo",
@@ -200,7 +200,7 @@ class JenkinsTestCase(TestCase):
 
         self.assertEqual(jenkins.project_root, ProjectPath("foo/bar/baz"))
 
-    def test_project_root_bogus_jenkins_base(self):
+    def test_project_root_bogus_jenkins_base(self) -> None:
         # If the base url isn't of the form /job/foo/job/bar/job baz (should?) we return
         # the original path
         jenkins_config = JenkinsConfig(
@@ -215,7 +215,7 @@ class JenkinsTestCase(TestCase):
 
 
 class ProjectPathExistsTestCase(TestCase):
-    def test_should_return_false_when_does_not_exist(self):
+    def test_should_return_false_when_does_not_exist(self) -> None:
         def mock_head(url, *args, **kwargs):
             status_code = 404
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
@@ -232,7 +232,7 @@ class ProjectPathExistsTestCase(TestCase):
         with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
             self.assertEqual(jenkins.project_exists(project_path), True)
 
-    def test_should_return_true_when_exists(self):
+    def test_should_return_true_when_exists(self) -> None:
         def mock_head(url, *args, **kwargs):
             status_code = 200
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
@@ -250,7 +250,7 @@ class ProjectPathExistsTestCase(TestCase):
         with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
             self.assertEqual(jenkins.project_exists(project_path), False)
 
-    def test_should_return_true_when_error_response(self):
+    def test_should_return_true_when_error_response(self) -> None:
         def mock_head(_url, *args, **kwargs):
             response = requests.Response()
             response.status_code = 401
@@ -270,7 +270,7 @@ class ProjectPathExistsTestCase(TestCase):
 class CreateItemTestCase(TestCase):
     """Tests for the Jenkins.create_item method"""
 
-    def test_creates_item(self):
+    def test_creates_item(self) -> None:
         xml = "<jenkins>test</jenkins>"
         project_path = ProjectPath("TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -287,7 +287,7 @@ class CreateItemTestCase(TestCase):
             timeout=10,
         )
 
-    def test_when_parent_folder_does_not_exist(self):
+    def test_when_parent_folder_does_not_exist(self) -> None:
         xml = "<jenkins>test</jenkins>"
         project_path = ProjectPath("Gentoo/TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -305,7 +305,7 @@ class CreateItemTestCase(TestCase):
             timeout=10,
         )
 
-    def test_when_parent_folder_does_exist(self):
+    def test_when_parent_folder_does_exist(self) -> None:
         xml = "<jenkins>test</jenkins>"
         project_path = ProjectPath("Gentoo/TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -326,7 +326,7 @@ class CreateItemTestCase(TestCase):
             timeout=10,
         )
 
-    def test_raises_exception_on_http_errors(self):
+    def test_raises_exception_on_http_errors(self) -> None:
         xml = "<jenkins>test</jenkins>"
         project_path = ProjectPath("TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -349,7 +349,7 @@ class CreateItemTestCase(TestCase):
 
 
 class GetItemTestCase(TestCase):
-    def test_gets_item(self):
+    def test_gets_item(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
         project_path = ProjectPath("Gentoo")
@@ -360,7 +360,7 @@ class GetItemTestCase(TestCase):
             "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
         )
 
-    def test_raises_exception_on_http_errors(self):
+    def test_raises_exception_on_http_errors(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         project_path = ProjectPath("Gentoo")
 
@@ -380,7 +380,7 @@ class GetItemTestCase(TestCase):
 class MakeFolderTestCase(TestCase):
     """Tests for the Jenkins.make_folder method"""
 
-    def test_when_folder_does_not_exist_creates_folder(self):
+    def test_when_folder_does_not_exist_creates_folder(self) -> None:
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -388,7 +388,7 @@ class MakeFolderTestCase(TestCase):
 
         self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
 
-    def test_when_folder_already_exists(self):
+    def test_when_folder_already_exists(self) -> None:
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -397,7 +397,7 @@ class MakeFolderTestCase(TestCase):
         with self.assertRaises(FileExistsError):
             jenkins.make_folder(project_path)
 
-    def test_when_item_exists_but_is_not_a_folder(self):
+    def test_when_item_exists_but_is_not_a_folder(self) -> None:
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -406,21 +406,21 @@ class MakeFolderTestCase(TestCase):
         with self.assertRaises(FileExistsError):
             jenkins.make_folder(project_path)
 
-    def test_when_folder_already_exists_exist_ok_true(self):
+    def test_when_folder_already_exists_exist_ok_true(self) -> None:
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         jenkins.root.set(["Gentoo"], FOLDER_XML)
         jenkins.make_folder(project_path, exist_ok=True)
 
-    def test_when_parent_folder_does_not_exist(self):
+    def test_when_parent_folder_does_not_exist(self) -> None:
         project_path = ProjectPath("Gentoo/repos")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         with self.assertRaises(FileNotFoundError):
             jenkins.make_folder(project_path)
 
-    def test_when_parent_folder_does_not_exist_and_parents_true(self):
+    def test_when_parent_folder_does_not_exist_and_parents_true(self) -> None:
         project_path = ProjectPath("Gentoo/repos")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -429,14 +429,14 @@ class MakeFolderTestCase(TestCase):
         self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
         self.assertEqual(jenkins.root.get(["Gentoo", "repos"]), FOLDER_XML)
 
-    def test_when_passing_root_and_not_exists_ok_returns_error(self):
+    def test_when_passing_root_and_not_exists_ok_returns_error(self) -> None:
         project_path = ProjectPath()
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         with self.assertRaises(FileExistsError):
             jenkins.make_folder(project_path)
 
-    def test_when_passing_root_and_exists_ok_succeeds(self):
+    def test_when_passing_root_and_exists_ok_succeeds(self) -> None:
         project_path = ProjectPath()
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -446,21 +446,21 @@ class MakeFolderTestCase(TestCase):
 class IsFolderTestCase(TestCase):
     """Tests for the Jenkins.is_folder method"""
 
-    def test_when_is_a_folder_returns_true(self):
+    def test_when_is_a_folder_returns_true(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         project_path = ProjectPath("Gentoo")
         jenkins.root.set(["Gentoo"], FOLDER_XML)
 
         self.assertEqual(jenkins.is_folder(project_path), True)
 
-    def test_when_is_not_a_folder_returns_false(self):
+    def test_when_is_not_a_folder_returns_false(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         project_path = ProjectPath("Gentoo")
         jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
 
         self.assertEqual(jenkins.is_folder(project_path), False)
 
-    def test_when_does_not_exist_returns_false(self):
+    def test_when_does_not_exist_returns_false(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         project_path = ProjectPath("Gentoo")
 
@@ -470,7 +470,7 @@ class IsFolderTestCase(TestCase):
 class InstallPluginTestCase(TestCase):
     """Tests for the Jenkins.install_plugin method"""
 
-    def test_installs_plugin(self):
+    def test_installs_plugin(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         jenkins.install_plugin("copyartifact@1.47")
@@ -485,7 +485,7 @@ class InstallPluginTestCase(TestCase):
 class CreateRepoJobTestCase(TestCase):
     """Tests for the Jenkins.create_repo_job method"""
 
-    def test_creates_given_repo(self):
+    def test_creates_given_repo(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.make_folder(ProjectPath("repos"))
         jenkins.session.post.reset_mock()
@@ -504,7 +504,7 @@ class CreateRepoJobTestCase(TestCase):
             timeout=10,
         )
 
-    def test_when_base_url_is_not_root(self):
+    def test_when_base_url_is_not_root(self) -> None:
         config = dc.replace(
             JENKINS_CONFIG, base_url=URL("https://jenkins.invalid/job/Gentoo")
         )
@@ -526,7 +526,7 @@ class CreateRepoJobTestCase(TestCase):
             timeout=10,
         )
 
-    def test_render_build_repo_xml(self):
+    def test_render_build_repo_xml(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         repo_url = "https://anongit.gentoo.org/git/repo/gentoo.git"
@@ -543,7 +543,7 @@ class CreateRepoJobTestCase(TestCase):
 class CreateMachineJobTestCase(TestCase):
     """Tests for the Jenkins.create_machine_job method"""
 
-    def test_creates_given_machine(self):
+    def test_creates_given_machine(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.session.post.reset_mock()
 
@@ -573,7 +573,7 @@ class CreateMachineJobTestCase(TestCase):
             ]
         )
 
-    def test_render_build_machine_xml(self):
+    def test_render_build_machine_xml(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         repo_url = "https://github.com/enku/gbp-machines.git"
@@ -592,27 +592,27 @@ class CreateMachineJobTestCase(TestCase):
 class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 
-    def test_job_path_with_root(self):
+    def test_job_path_with_root(self) -> None:
         project_path = ProjectPath("/")
 
         self.assertEqual(project_path.url_path, "")
 
-    def test_job_path_from_empty_path(self):
+    def test_job_path_from_empty_path(self) -> None:
         project_path = ProjectPath()
 
         self.assertEqual(project_path.url_path, "")
 
-    def test_job_path_deeply_nested(self):
+    def test_job_path_deeply_nested(self) -> None:
         project_path = ProjectPath("/foo/bar/baz")
 
         self.assertEqual(project_path.url_path, "job/foo/job/bar/job/baz")
 
-    def test_job_path_with_job_in_the_path(self):
+    def test_job_path_with_job_in_the_path(self) -> None:
         project_path = ProjectPath("Gentoo/job/job")
 
         self.assertEqual(project_path.url_path, "job/Gentoo/job/job/job/job")
 
-    def test_str(self):
+    def test_str(self) -> None:
         project_path = ProjectPath("/Gentoo/repos/marduk/")
 
         self.assertEqual(str(project_path), "Gentoo/repos/marduk")
@@ -621,7 +621,7 @@ class ProjectPathTestCase(TestCase):
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def test(self):
+    def test(self) -> None:
         name = "babette"
         settings = Settings(
             JENKINS_BASE_URL="https://jenkins.invalid",
@@ -645,7 +645,7 @@ class ScheduleBuildTestCase(TestCase):
             timeout=jenkins.config.requests_timeout,
         )
 
-    def test_should_raise_on_http_error(self):
+    def test_should_raise_on_http_error(self) -> None:
         name = "babette"
         settings = Settings(
             JENKINS_BASE_URL="https://jenkins.invalid",

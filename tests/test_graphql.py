@@ -17,7 +17,7 @@ from .factories import PACKAGE_INDEX, BuildFactory, BuildModelFactory
 Mock = mock.Mock
 
 
-def assert_data(test_case: TestCase, result: dict, expected: dict):
+def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(result, {"data": expected})
 
 
@@ -26,7 +26,7 @@ class BuildQueryTestCase(TestCase):
 
     maxDiff = None
 
-    def test(self):
+    def test(self) -> None:
         build = BuildFactory()
         self.artifact_builder.timer = 1646115094
         self.artifact_builder.build(build, "x11-wm/mutter-41.3")
@@ -77,7 +77,7 @@ class BuildQueryTestCase(TestCase):
 
         assert_data(self, result, expected)
 
-    def test_packages(self):
+    def test_packages(self) -> None:
         # given the pulled build with packages
         build = BuildFactory()
         self.publisher.pull(build)
@@ -95,7 +95,7 @@ class BuildQueryTestCase(TestCase):
         # Then we get the list of packages in the build
         assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
 
-    def test_packages_when_not_pulled_returns_none(self):
+    def test_packages_when_not_pulled_returns_none(self) -> None:
         # given the unpulled package
         build = BuildFactory()
         self.publisher.records.save(self.publisher.record(build))
@@ -113,7 +113,7 @@ class BuildQueryTestCase(TestCase):
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
-    def test_packages_should_return_none_when_package_index_missing(self):
+    def test_packages_should_return_none_when_package_index_missing(self) -> None:
         # given the pulled build with index file missing
         build = BuildFactory()
         self.publisher.pull(build)
@@ -133,7 +133,7 @@ class BuildQueryTestCase(TestCase):
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
-    def test_packagesbuild_should_return_error_when_gbpjson_missing(self):
+    def test_packagesbuild_should_return_error_when_gbpjson_missing(self) -> None:
         # given the pulled build with gbp.json missing
         build = BuildFactory()
         self.publisher.pull(build)
@@ -167,7 +167,7 @@ class BuildsQueryTestCase(TestCase):
 
     maxDiff = None
 
-    def test(self):
+    def test(self) -> None:
         now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.timezone.utc)
         builds = BuildFactory.create_batch(3)
 
@@ -194,7 +194,7 @@ class BuildsQueryTestCase(TestCase):
 
         assert_data(self, result, {"builds": expected})
 
-    def test_older_build_pulled_after_newer_should_not_sort_before(self):
+    def test_older_build_pulled_after_newer_should_not_sort_before(self) -> None:
         # Build first build
         first_build = BuildFactory(machine="lighthouse", build_id="10000")
         self.publisher.jenkins.artifact_builder.build_info(first_build)
@@ -232,7 +232,7 @@ class BuildsQueryTestCase(TestCase):
 class LatestQueryTestCase(TestCase):
     """Tests for the latest query"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         BuildModelFactory.create(
@@ -249,7 +249,7 @@ class LatestQueryTestCase(TestCase):
             submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.timezone.utc),
         )
 
-    def test_when_no_builds_should_respond_with_none(self):
+    def test_when_no_builds_should_respond_with_none(self) -> None:
         query = """
         {
           latest(machine: "bogus") {
@@ -261,7 +261,7 @@ class LatestQueryTestCase(TestCase):
 
         assert_data(self, result, {"latest": None})
 
-    def test_should_return_the_latest_submitted_completed(self):
+    def test_should_return_the_latest_submitted_completed(self) -> None:
         query = """
         {
           latest(machine: "babette") {
@@ -277,7 +277,7 @@ class LatestQueryTestCase(TestCase):
 class DiffQueryTestCase(TestCase):
     """Tests for the diff query"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         # Given the first build with tar-1.34
@@ -291,7 +291,7 @@ class DiffQueryTestCase(TestCase):
         self.artifact_builder.remove(self.right, old)
         self.publisher.pull(self.right)
 
-    def test(self):
+    def test(self) -> None:
         # When we call get the diff view given the 2 builds
         query = """
         query Diff($left: ID!, $right: ID!) {
@@ -325,7 +325,7 @@ class DiffQueryTestCase(TestCase):
         }
         assert_data(self, result, expected)
 
-    def test_should_exclude_build_data_when_not_selected(self):
+    def test_should_exclude_build_data_when_not_selected(self) -> None:
         query = """
         query ($left: ID!, $right: ID!) {
           diff(left: $left, right: $right) {
@@ -351,7 +351,7 @@ class DiffQueryTestCase(TestCase):
         }
         assert_data(self, result, expected)
 
-    def test_should_return_error_when_left_does_not_exist(self):
+    def test_should_return_error_when_left_does_not_exist(self) -> None:
         query = """
         query Diff($left: ID!, $right: ID!) {
           diff(left: $left, right: $right) {
@@ -377,7 +377,7 @@ class DiffQueryTestCase(TestCase):
             result["errors"][0]["message"], "Build does not exist: bogus.1"
         )
 
-    def test_should_return_error_when_right_does_not_exist(self):
+    def test_should_return_error_when_right_does_not_exist(self) -> None:
         query = """
         query ($left: ID!, $right: ID!) {
           diff(left: $left, right: $right) {
@@ -409,7 +409,7 @@ class MachinesQueryTestCase(TestCase):
 
     maxDiff = None
 
-    def test(self):
+    def test(self) -> None:
         babette_builds = BuildFactory.create_batch(3, machine="babette")
         lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
 
@@ -458,7 +458,7 @@ class MachinesQueryTestCase(TestCase):
         ]
         assert_data(self, result, {"machines": expected})
 
-    def test_only_machine(self):
+    def test_only_machine(self) -> None:
         # basically test that only selecting the name doesn't query other infos
         # (coverage.py)
         for build in BuildFactory.create_batch(
@@ -481,7 +481,7 @@ class MachinesQueryTestCase(TestCase):
             {"machines": [{"machine": "babette"}, {"machine": "lighthouse"}]},
         )
 
-    def test_latest_build_is_published(self):
+    def test_latest_build_is_published(self) -> None:
         build = BuildFactory.create()
         self.publisher.pull(build)
 
@@ -509,7 +509,7 @@ class MachinesQueryTestCase(TestCase):
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""
 
-    def test_publish_when_pulled(self):
+    def test_publish_when_pulled(self) -> None:
         """Should publish builds"""
         build = BuildFactory()
         self.publisher.pull(build)
@@ -527,7 +527,7 @@ class PublishMutationTestCase(TestCase):
 
         assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
-    def test_publish_when_not_pulled(self):
+    def test_publish_when_not_pulled(self) -> None:
         """Should publish builds"""
         query = """
         mutation {
@@ -549,7 +549,7 @@ class PublishMutationTestCase(TestCase):
 class PullMutationTestCase(TestCase):
     """Tests for the pull mutation"""
 
-    def test(self):
+    def test(self) -> None:
         """Should publish builds"""
         build = BuildFactory()
 
@@ -573,7 +573,7 @@ class ScheduleBuildMutationTestCase(TestCase):
 
     maxDiff = None
 
-    def test(self):
+    def test(self) -> None:
         query = 'mutation { scheduleBuild(machine: "babette") }'
 
         with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
@@ -588,7 +588,7 @@ class ScheduleBuildMutationTestCase(TestCase):
         )
         mock_schedule_build.assert_called_once_with("babette")
 
-    def test_should_return_error_when_schedule_build_fails(self):
+    def test_should_return_error_when_schedule_build_fails(self) -> None:
         query = 'mutation { scheduleBuild(machine: "babette") }'
 
         with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
@@ -614,7 +614,7 @@ class KeepBuildMutationTestCase(TestCase):
 
     maxDiff = None
 
-    def test_should_keep_existing_build(self):
+    def test_should_keep_existing_build(self) -> None:
         model = BuildModelFactory.create()
         query = """
         mutation ($id: ID!) {
@@ -627,7 +627,7 @@ class KeepBuildMutationTestCase(TestCase):
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
-    def test_should_return_none_when_build_doesnt_exist(self):
+    def test_should_return_none_when_build_doesnt_exist(self) -> None:
         query = """
         mutation KeepBuild($id: ID!) {
          keepBuild(id: $id) {
@@ -644,7 +644,7 @@ class KeepBuildMutationTestCase(TestCase):
 class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
-    def test_should_release_existing_build(self):
+    def test_should_release_existing_build(self) -> None:
         build = BuildFactory()
         record = self.publisher.record(build)
         self.publisher.records.save(record, keep=True)
@@ -661,7 +661,7 @@ class ReleaseBuildMutationTestCase(TestCase):
 
         assert_data(self, result, {"releaseBuild": {"keep": False}})
 
-    def test_should_return_none_when_build_doesnt_exist(self):
+    def test_should_return_none_when_build_doesnt_exist(self) -> None:
         query = """
         mutation ($id: ID!) {
          releaseBuild(id: $id) {
@@ -678,7 +678,7 @@ class ReleaseBuildMutationTestCase(TestCase):
 class CreateNoteMutationTestCase(TestCase):
     """Tests for the createNote mutation"""
 
-    def test_set_text(self):
+    def test_set_text(self) -> None:
         model = BuildModelFactory.create()
         note_text = "Hello, world!"
         query = """
@@ -695,7 +695,7 @@ class CreateNoteMutationTestCase(TestCase):
         model.refresh_from_db()
         self.assertEqual(model.buildnote.note, note_text)
 
-    def test_set_none(self):
+    def test_set_none(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -714,7 +714,7 @@ class CreateNoteMutationTestCase(TestCase):
         record = self.publisher.record(build)
         self.assertEqual(record.note, None)
 
-    def test_should_return_none_when_build_doesnt_exist(self):
+    def test_should_return_none_when_build_doesnt_exist(self) -> None:
         query = """
         mutation ($id: ID!, $note: String) {
          createNote(id: $id, note: $note) {
@@ -729,7 +729,7 @@ class CreateNoteMutationTestCase(TestCase):
 
 
 class TagsTestCase(TestCase):
-    def test_createbuildtag_mutation_tags_the_build(self):
+    def test_createbuildtag_mutation_tags_the_build(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         query = """
@@ -744,7 +744,7 @@ class TagsTestCase(TestCase):
 
         assert_data(self, result, {"createBuildTag": {"tags": ["prod"]}})
 
-    def test_removebuildtag_mutation_removes_tag_from_the_build(self):
+    def test_removebuildtag_mutation_removes_tag_from_the_build(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.tag(build, "prod")
@@ -761,7 +761,7 @@ class TagsTestCase(TestCase):
 
         assert_data(self, result, {"removeBuildTag": {"tags": []}})
 
-    def test_resolvetag_query_resolves_tag(self):
+    def test_resolvetag_query_resolves_tag(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.tag(build, "prod")
@@ -778,7 +778,7 @@ class TagsTestCase(TestCase):
 
         assert_data(self, result, {"resolveBuildTag": {"id": build.id}})
 
-    def test_resolvetag_query_resolves_to_none_when_tag_does_not_exist(self):
+    def test_resolvetag_query_resolves_to_none_when_tag_does_not_exist(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -807,7 +807,7 @@ class SearchNotesQueryTestCase(TestCase):
     }
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.build1 = BuildFactory()
@@ -817,14 +817,14 @@ class SearchNotesQueryTestCase(TestCase):
         record = self.publisher.record(self.build2)
         self.publisher.records.save(record, note="test bar")
 
-    def test_single_match(self):
+    def test_single_match(self) -> None:
         result = graphql(self.query, variables={"machine": "babette", "key": "foo"})
 
         assert_data(
             self, result, {"searchNotes": [{"id": self.build1.id, "notes": "test foo"}]}
         )
 
-    def test_multiple_match(self):
+    def test_multiple_match(self) -> None:
         result = graphql(self.query, variables={"machine": "babette", "key": "test"})
 
         assert_data(
@@ -838,7 +838,7 @@ class SearchNotesQueryTestCase(TestCase):
             },
         )
 
-    def test_only_matches_given_machine(self):
+    def test_only_matches_given_machine(self) -> None:
         build = BuildFactory(machine="lighthouse")
         self.publisher.pull(build)
         record = self.publisher.record(build)
@@ -852,7 +852,7 @@ class SearchNotesQueryTestCase(TestCase):
             {"searchNotes": [{"id": build.id, "notes": "test foo"}]},
         )
 
-    def test_when_named_machine_does_not_exist(self):
+    def test_when_named_machine_does_not_exist(self) -> None:
         result = graphql(self.query, variables={"machine": "bogus", "key": "test"})
 
         assert_data(self, result, {"searchNotes": []})
@@ -867,7 +867,7 @@ class WorkingTestCase(TestCase):
     }
     """
 
-    def test(self):
+    def test(self) -> None:
         self.publisher.pull(BuildFactory())
         self.publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
@@ -883,7 +883,7 @@ class VersionTestCase(TestCase):
 
     query = """query { version }"""
 
-    def test(self):
+    def test(self) -> None:
         result = graphql(self.query)
         version = get_version()
 
@@ -901,7 +901,7 @@ class CreateRepoTestCase(TestCase):
     }
     """
 
-    def test_creates_repo_when_does_not_exist(self):
+    def test_creates_repo_when_does_not_exist(self) -> None:
         result = graphql(
             self.query,
             variables={
@@ -916,7 +916,7 @@ class CreateRepoTestCase(TestCase):
             self.publisher.jenkins.project_exists(ProjectPath("repos/gentoo"))
         )
 
-    def test_returns_error_when_already_exists(self):
+    def test_returns_error_when_already_exists(self) -> None:
         self.publisher.jenkins.make_folder(ProjectPath("repos"))
         self.publisher.jenkins.create_repo_job("gentoo", "foo", "master")
 
@@ -945,7 +945,7 @@ class CreateMachineTestCase(TestCase):
     }
     """
 
-    def test_creates_machine_when_does_not_exist(self):
+    def test_creates_machine_when_does_not_exist(self) -> None:
         result = graphql(
             self.query,
             variables={
@@ -959,7 +959,7 @@ class CreateMachineTestCase(TestCase):
         assert_data(self, result, {"createMachine": None})
         self.assertTrue(self.publisher.jenkins.project_exists(ProjectPath("babette")))
 
-    def test_returns_error_when_already_exists(self):
+    def test_returns_error_when_already_exists(self) -> None:
         self.publisher.jenkins.create_machine_job(
             "babette", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
         )
@@ -990,26 +990,26 @@ def dummy_resolver(
 
 
 class RequireLocalhostTestCase(TestCase):
-    def test_allows_ipv4_localhost(self):
+    def test_allows_ipv4_localhost(self) -> None:
         remote_ip = "127.0.0.1"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
 
         self.assertEqual(dummy_resolver(None, info), "permitted")
 
-    def test_allows_ipv6_localhost(self):
+    def test_allows_ipv6_localhost(self) -> None:
         remote_ip = "::1"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
 
         self.assertEqual(dummy_resolver(None, info), "permitted")
 
-    def test_allows_literal_localhost(self):
+    def test_allows_literal_localhost(self) -> None:
         # I'm not sure if this ever could happen, but...
         remote_ip = "localhost"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
 
         self.assertEqual(dummy_resolver(None, info), "permitted")
 
-    def test_returns_error_when_not_localhost(self):
+    def test_returns_error_when_not_localhost(self) -> None:
         remote_ip = "192.0.2.23"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
 
@@ -1018,7 +1018,7 @@ class RequireLocalhostTestCase(TestCase):
 
         self.assertTrue(str(context.exception).startswith(""))
 
-    def test_returns_error_when_no_remote_addr_in_request(self):
+    def test_returns_error_when_no_remote_addr_in_request(self) -> None:
         info = Mock(context={"request": Mock(environ={})})
 
         with self.assertRaises(GraphQLError) as context:
@@ -1026,7 +1026,7 @@ class RequireLocalhostTestCase(TestCase):
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
 
-    def test_returns_error_when_going_through_reverse_proxy(self):
+    def test_returns_error_when_going_through_reverse_proxy(self) -> None:
         # Fix for gunicorn
         environ = {
             "CONTENT_TYPE": "application/json",

@@ -7,7 +7,7 @@ from gentoo_build_publisher.settings import Settings
 
 
 class SettingsTestCase(TestCase):
-    def test_from_dict(self):
+    def test_from_dict(self) -> None:
         data_dict = dict(
             BUILD_PUBLISHER_JENKINS_USER="fail",
             TODAY_STORAGE_PATH="/home/today",
@@ -26,7 +26,7 @@ class SettingsTestCase(TestCase):
         with self.assertRaises(AttributeError):
             settings.IS  # pylint: disable=no-member,pointless-statement
 
-    def test_init_with_invalid_value(self):
+    def test_init_with_invalid_value(self) -> None:
         """Should raise ValueError when given setting not defined in DEFAULTS"""
         with self.assertRaises(ValueError):
             Settings(foo="bar")

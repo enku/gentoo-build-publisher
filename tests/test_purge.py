@@ -2,6 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
 import random
+import typing as t
 from dataclasses import dataclass
 from unittest import TestCase
 
@@ -58,21 +59,21 @@ class Item:
 
     timestamp: datetime.datetime
 
-    def __eq__(self, other):
+    def __eq__(self, other: t.Any) -> bool:
         return self is other
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.timestamp)
 
 
-def str2dt(string):
+def str2dt(string: str) -> datetime.datetime:
     year, month, day = [int(i) for i in string.split("-")]
 
     return datetime.datetime(year, month, day)
 
 
 class PurgeTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         dates = [*DATES]
@@ -82,7 +83,7 @@ class PurgeTestCase(TestCase):
             self.items, key=lambda i: i.timestamp, start=START, end=END
         )
 
-    def assertDates(self, items, expected):
+    def assertDates(self, items, expected) -> None:
         # pylint: disable=invalid-name
         item_dates = [
             datetime.datetime.strftime(i.timestamp, "%Y-%m-%d") for i in items
@@ -90,13 +91,13 @@ class PurgeTestCase(TestCase):
 
         self.assertEqual(set(item_dates), set(expected))
 
-    def test_last_day_of_month(self):
+    def test_last_day_of_month(self) -> None:
         self.assertEqual(
             self.purger.last_day_of_month(END),
             datetime.datetime(2021, 4, 30, 23, 59, 59),
         )
 
-    def test_yesterday_plus(self):
+    def test_yesterday_plus(self) -> None:
         items = self.purger.yesterday_plus()
 
         expected = [
@@ -110,13 +111,13 @@ class PurgeTestCase(TestCase):
         ]
         self.assertDates(items, expected)
 
-    def test_one_per_day_last_week(self):
+    def test_one_per_day_last_week(self) -> None:
         items = self.purger.one_per_day_last_week()
 
         expected = ["2021-04-14", "2021-04-16", "2021-04-17", "2021-04-20"]
         self.assertDates(items, expected)
 
-    def test_one_per_week_last_month(self):
+    def test_one_per_week_last_month(self) -> None:
         items = self.purger.one_per_week_last_month()
 
         expected = [
@@ -128,7 +129,7 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def test_one_per_month_last_year(self):
+    def test_one_per_month_last_year(self) -> None:
         items = self.purger.one_per_month_last_year()
 
         expected = [
@@ -142,7 +143,7 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def test_one_per_year(self):
+    def test_one_per_year(self) -> None:
         items = self.purger.one_per_year()
 
         expected = [
@@ -164,7 +165,7 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def test_filter_range(self):
+    def test_filter_range(self) -> None:
         start = datetime.datetime(2017, 4, 21)
         end = datetime.datetime(2019, 12, 31)
 
@@ -178,7 +179,7 @@ class PurgeTestCase(TestCase):
 
         self.assertEqual(set(i.timestamp for i in filtered), expected)
 
-    def test_purge(self):
+    def test_purge(self) -> None:
         to_purge = self.purger.purge()
 
         expected = [

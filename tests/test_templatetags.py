@@ -8,42 +8,42 @@ from gentoo_build_publisher.templatetags.gbp import numberize
 
 
 class NumberizeTestCase(TestCase):
-    def test_should_return_whole_number_when_precision_0(self):
+    def test_should_return_whole_number_when_precision_0(self) -> None:
         value = 96_858_412
 
         result = numberize(value, 0)
 
         self.assertEqual(result, "96M")
 
-    def test_number_less_than_1000(self):
+    def test_number_less_than_1000(self) -> None:
         value = 968
 
         result = numberize(value, 2)
 
         self.assertEqual(result, "968")
 
-    def test_number_less_than_1_000_000(self):
+    def test_number_less_than_1_000_000(self) -> None:
         value = 968_584
 
         result = numberize(value, 1)
 
         self.assertEqual(result, "968.5k")
 
-    def test_number_less_than_1_000_000_000(self):
+    def test_number_less_than_1_000_000_000(self) -> None:
         value = 96_858_412
 
         result = numberize(value, 2)
 
         self.assertEqual(result, "96.85M")
 
-    def test_number_greater_than_1_000_000_000(self):
+    def test_number_greater_than_1_000_000_000(self) -> None:
         value = 6_123_000_548
 
         result = numberize(value, 2)
 
         self.assertEqual(result, "6.12G")
 
-    def test_invalid_value(self):
+    def test_invalid_value(self) -> None:
         value = "this is not a number"
 
         with self.assertRaises(TemplateSyntaxError):
