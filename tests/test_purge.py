@@ -158,10 +158,10 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def past(self):
+    def test_past(self) -> None:
         items = self.purger.past()
 
-        expected = ["2015-12-31"]
+        expected = ["2015-12-30", "2015-12-31"]
 
         self.assertDates(items, expected)
 
