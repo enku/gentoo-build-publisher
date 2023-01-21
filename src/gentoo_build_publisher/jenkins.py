@@ -14,7 +14,7 @@ from dataclasses_json import dataclass_json
 from yarl import URL
 
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.types import BuildLike
+from gentoo_build_publisher.types import Build, BuildLike
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
@@ -131,10 +131,14 @@ class Jenkins:
         match url_type:
             case "build":
                 return self.config.base_url / "job" / build.machine / build.build_id
+            case "build_scheduler":
+                return self.config.base_url / "job" / build.machine / "build"
             case "artifact":
                 return self.url(build) / "artifact" / self.config.artifact_name
             case "logs":
                 return self.url(build) / "consoleText"
+            case "metadata":
+                return self.url(build) / "api" / "json"
 
         raise ValueError(f"Unknown url_type: {url_type!r}")
 
@@ -158,7 +162,7 @@ class Jenkins:
 
     def get_metadata(self, build: BuildLike) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
-        url = self.url(build) / "api" / "json"
+        url = self.url(build, "metadata")
         response = self.session.get(str(url), timeout=self.timeout)
         response.raise_for_status()
 
@@ -174,7 +178,9 @@ class Jenkins:
 
     def schedule_build(self, machine: str) -> str:
         """Schedule a build on Jenkins"""
-        url = self.config.base_url / "job" / machine / "build"
+        # Here self.url needs a BuildLike, but we only have the machine name. Just pass
+        # a bogus Build with that name
+        url = self.url(Build(machine, "bogus"), "build_scheduler")
         response = self.session.post(str(url), timeout=self.timeout)
         response.raise_for_status()
 
