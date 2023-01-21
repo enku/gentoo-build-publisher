@@ -16,6 +16,7 @@ from gentoo_build_publisher.jenkins import (
     JenkinsConfig,
     JenkinsMetadata,
     ProjectPath,
+    URLBuilder,
 )
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
@@ -32,37 +33,6 @@ JENKINS_CONFIG = JenkinsConfig(
 
 class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
-
-    def test_url_artifact(self) -> None:
-        """.build_url() should return the url of the given build artifact"""
-        # Given the build
-        build = Build("babette", "193")
-
-        # Given the Jenkins instance
-        jenkins = Jenkins(JENKINS_CONFIG)
-
-        # When we call .url to get the artifact url
-        build_url = jenkins.url(build, "artifact")
-
-        # Then we get the expected url
-        self.assertEqual(
-            build_url,
-            URL("https://jenkins.invalid/job/babette/193/artifact/build.tar.gz"),
-        )
-
-    def test_url_raises_valueeror_on_unknown_url_type(self) -> None:
-        # Given the build
-        build = Build("babette", "193")
-
-        # Given the Jenkins instance
-        jenkins = Jenkins(JENKINS_CONFIG)
-
-        # Then ValueError is raised
-        with self.assertRaises(ValueError) as context:
-            # When we call .url to get an unknown url type
-            jenkins.url(build, "bogus")
-
-        self.assertEqual(str(context.exception), "Unknown url_type: 'bogus'")
 
     def test_download_artifact(self) -> None:
         """.download_artifact should download the given build artifact"""
@@ -664,3 +634,27 @@ class ScheduleBuildTestCase(TestCase):
 
             with self.assertRaises(MyException):
                 jenkins.schedule_build(name)
+
+
+class URLBuildeTestCase(TestCase):
+    """Tests for the URLBuilder"""
+
+    config = JenkinsConfig(base_url=URL("https://jenkins.invalid"))
+    builder = URLBuilder(config)
+    build = Build("jenny", "8675309")
+
+    def test_get_builders(self) -> None:
+        builders = self.builder.get_builders()
+
+        self.assertIsInstance(builders, list)
+        self.assertIn("build", builders)
+
+    def test_getattr_returns_a_builder_function(self) -> None:
+        url = self.builder.artifact(self.build)
+        self.assertEqual(
+            url, URL("https://jenkins.invalid/job/jenny/8675309/artifact/build.tar.gz")
+        )
+
+    def test_getattr_raises_attribute_error(self) -> None:
+        with self.assertRaises(AttributeError):
+            self.builder.bogus  # pylint: disable=pointless-statement

@@ -6,6 +6,7 @@ import logging
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
+from functools import partial
 from pathlib import PurePosixPath
 from typing import Any, Type, TypeVar
 
@@ -110,6 +111,49 @@ class ProjectPath(PurePosixPath):
         return super().__str__().strip("/")
 
 
+class URLBuilder:
+    """We build Jenkins build URLs 👷
+
+    This is an object that stores url builders for builds in Jenkins. You use it
+    something like this:
+
+        >>> builder = URLBuilder(jenkins_config)
+        >>> build_url = builder.build(my_build)
+        >>> build_logs_url = builder.logs(my_build)
+    """
+
+    # Format strings using "build" and "config" arguments
+    formatters: dict[str, str] = {
+        "artifact": "job/{build.machine}/{build.build_id}/artifact/{config.artifact_name}",
+        "build": "job/{build.machine}/{build.build_id}",
+        "build_scheduler": "job/{build.machine}/build",
+        "logs": "job/{build.machine}/{build.build_id}/consoleText",
+        "metadata": "job/{build.machine}/{build.build_id}/api/json",
+    }
+
+    def __init__(self, config: JenkinsConfig):
+        self.config = config
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            formatter = self.formatters[name]
+        except KeyError as error:
+            raise AttributeError(repr(name)) from error
+
+        return partial(self.builder, formatter)
+
+    def builder(self, formatter: str, build: BuildLike) -> URL:
+        """Given the parts, and build, build a URL"""
+        return self.config.base_url / formatter.format(config=self.config, build=build)
+
+    def get_builders(self) -> list[str]:
+        """Return the names of all the builders
+
+        Not names like "Bob" but names like "logs"
+        """
+        return [*self.formatters]
+
+
 class Jenkins:
     """Interface to Jenkins"""
 
@@ -118,6 +162,7 @@ class Jenkins:
         self.session = requests.Session()
         self.session.auth = config.auth()
         self.timeout = config.requests_timeout
+        self.url = URLBuilder(config)
 
     @property
     def project_root(self) -> ProjectPath:
@@ -126,25 +171,9 @@ class Jenkins:
 
         return ProjectPath("/".join(url_path.split("/job/")))
 
-    def url(self, build: BuildLike, url_type: str = "build") -> URL:
-        """Return the given url_type for the given Build"""
-        match url_type:
-            case "build":
-                return self.config.base_url / "job" / build.machine / build.build_id
-            case "build_scheduler":
-                return self.config.base_url / "job" / build.machine / "build"
-            case "artifact":
-                return self.url(build) / "artifact" / self.config.artifact_name
-            case "logs":
-                return self.url(build) / "consoleText"
-            case "metadata":
-                return self.url(build) / "api" / "json"
-
-        raise ValueError(f"Unknown url_type: {url_type!r}")
-
     def download_artifact(self, build: BuildLike) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
-        url = self.url(build, "artifact")
+        url = self.url.artifact(build)
         response = self.session.get(str(url), stream=True, timeout=self.timeout)
         response.raise_for_status()
 
@@ -154,7 +183,7 @@ class Jenkins:
 
     def get_logs(self, build: BuildLike) -> str:
         """Get and return the build's jenkins logs"""
-        url = self.url(build, "logs")
+        url = self.url.logs(build)
         response = self.session.get(str(url), timeout=self.timeout)
         response.raise_for_status()
 
@@ -162,7 +191,7 @@ class Jenkins:
 
     def get_metadata(self, build: BuildLike) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
-        url = self.url(build, "metadata")
+        url = self.url.metadata(build)
         response = self.session.get(str(url), timeout=self.timeout)
         response.raise_for_status()
 
@@ -180,7 +209,7 @@ class Jenkins:
         """Schedule a build on Jenkins"""
         # Here self.url needs a BuildLike, but we only have the machine name. Just pass
         # a bogus Build with that name
-        url = self.url(Build(machine, "bogus"), "build_scheduler")
+        url = self.url.build_scheduler(Build(machine, "bogus"))
         response = self.session.post(str(url), timeout=self.timeout)
         response.raise_for_status()
 
