@@ -618,6 +618,30 @@ class StorageResolveTagTestCase(TestCase):
             "Tag is broken or does not exist: lighthouse@prod",
         )
 
+    def test_resolve_tag_resolves_to_more_than_one_build(self) -> None:
+        build1 = BuildFactory()
+        self.publisher.pull(build1)
+        build2 = BuildFactory()
+        self.publisher.pull(build2)
+        self.publisher.storage.tag(build1, "prod")
+        symlink = self.publisher.storage.root / "repos" / f"{build1.machine}@prod"
+        symlink.unlink()
+        symlink.symlink_to(self.publisher.storage.get_path(build2, Content.REPOS))
+
+        with self.assertRaises(FileNotFoundError):
+            self.publisher.storage.resolve_tag(f"{build1.machine}@prod")
+
+    def test_resovle_tag_when_symlink_points_to_nonbuild(self) -> None:
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.storage.tag(build, "prod")
+        symlink = self.publisher.storage.root / "repos" / f"{build.machine}@prod"
+        symlink.unlink()
+        symlink.symlink_to(self.publisher.storage.root / "repos")
+
+        with self.assertRaises(FileNotFoundError):
+            self.publisher.storage.resolve_tag(f"{build.machine}@prod")
+
 
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
