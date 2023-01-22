@@ -12,10 +12,6 @@ from gentoo_build_publisher import addmachine
 
 from . import TestCase, graphql
 
-mock_stderr = mock.patch(
-    "gentoo_build_publisher.addmachine.sys.stderr", new_callable=io.StringIO
-)
-
 
 def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
     response = graphql(query_, variables)
@@ -51,12 +47,12 @@ class AddMachineTestCase(TestCase):
             },
         )
 
-    @mock_stderr
-    def test_when_item_already_exists(self, stderr: io.StringIO) -> None:
+    def test_when_item_already_exists(self) -> None:
         self.publisher.jenkins.create_machine_job(
             "base", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
         )
 
+        errorf = io.StringIO()
         args = Namespace(
             name="base",
             repo="https://github.com/enku/gbp-machines.git",
@@ -64,10 +60,10 @@ class AddMachineTestCase(TestCase):
             deps=["gentoo"],
         )
         with mock.patch.object(self.gbp, "query", side_effect=query):
-            exit_status = addmachine.handler(args, self.gbp, self.console)
+            exit_status = addmachine.handler(args, self.gbp, self.console, errorf)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(stderr.getvalue(), "error: FileExistsError: base\n")
+        self.assertEqual(errorf.getvalue(), "error: FileExistsError: base\n")
 
 
 class CheckParseArgs(TestCase):

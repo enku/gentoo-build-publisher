@@ -4,6 +4,7 @@ This adds an ebuild repo to Jenkins that can be used by machine builds.
 """
 import argparse
 import sys
+from typing import TextIO
 
 from gbpcli import GBP
 from rich.console import Console
@@ -17,13 +18,15 @@ mutation ($name: String!, $repo: String!, $branch: String!) {
 """
 
 
-def handler(args: argparse.Namespace, gbp: GBP, _console: Console) -> int:
+def handler(
+    args: argparse.Namespace, gbp: GBP, _console: Console, errorf: TextIO = sys.stderr
+) -> int:
     """Add a an ebuild repo to Jenkins"""
     query_vars = {"name": args.name, "repo": args.repo, "branch": args.branch}
     response = gbp.check(GRAPHQL_QUERY, query_vars)
 
     if error := response["createRepo"]:
-        print(f"error: {error['message']}", file=sys.stderr)
+        print(f"error: {error['message']}", file=errorf)
 
         return 1
 

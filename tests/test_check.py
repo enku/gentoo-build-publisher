@@ -16,10 +16,6 @@ from gentoo_build_publisher.types import Content
 from . import TestCase
 from .factories import BuildFactory
 
-mock_stderr = mock.patch(
-    "gentoo_build_publisher.check.sys.stderr", new_callable=io.StringIO
-)
-
 
 class GBPChkTestCase(TestCase):
     def setUp(self) -> None:
@@ -65,33 +61,32 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(exit_status, 0)
 
-    @mock_stderr
-    def test_check_build_content(self, stderr) -> None:
+    def test_check_build_content(self) -> None:
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.build_with_missing_content(Content.BINPKGS)
+        errorf = io.StringIO()
 
-        errors = check.check_build_content(self.publisher)
+        errors = check.check_build_content(self.publisher, errorf)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(stderr.getvalue(), f"^Path missing for {bad_build}:")
+        self.assertRegex(errorf.getvalue(), f"^Path missing for {bad_build}:")
 
-    @mock_stderr
-    def test_check_orphans(self, stderr) -> None:
+    def test_check_orphans(self) -> None:
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
         bad_build = self.orphan_build(Content.BINPKGS)
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
-        errors = check.check_orphans(self.publisher)
+        errorf = io.StringIO()
+        errors = check.check_orphans(self.publisher, errorf)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(stderr.getvalue(), f"^Record missing for {binpkg_path}")
+        self.assertRegex(errorf.getvalue(), f"^Record missing for {binpkg_path}")
 
-    @mock_stderr
-    def test_check_orphans_dangling_symlinks(self, stderr) -> None:
+    def test_check_orphans_dangling_symlinks(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
 
@@ -103,16 +98,16 @@ class GBPChkTestCase(TestCase):
         # Delete the build. Symlinks are now broken
         self.publisher.delete(build)
 
-        errors = check.check_orphans(self.publisher)
+        errorf = io.StringIO()
+        errors = check.check_orphans(self.publisher, errorf)
 
         self.assertEqual(errors, link_count)
 
-        lines = stderr.getvalue().split("\n")
+        lines = errorf.getvalue().split("\n")
         for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
-    @mock_stderr
-    def test_check_inconsistent_tags(self, stderr) -> None:
+    def test_check_inconsistent_tags(self) -> None:
         # More than one build is represented by a tag
         good_build = BuildFactory()
         self.publisher.pull(good_build)
@@ -130,13 +125,13 @@ class GBPChkTestCase(TestCase):
             link = item_path.parent / "larry"
             link.symlink_to(item_path.name)
 
-        errors = check.check_inconsistent_tags(self.publisher)
+        errorf = io.StringIO()
+        errors = check.check_inconsistent_tags(self.publisher, errorf)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(stderr.getvalue(), '^Tag "larry" has multiple targets: ')
+        self.assertRegex(errorf.getvalue(), '^Tag "larry" has multiple targets: ')
 
-    @mock_stderr
-    def test_error_count_in_exit_status(self, stderr) -> None:
+    def test_error_count_in_exit_status(self) -> None:
         for _ in range(2):
             good_build = BuildFactory()
             self.publisher.pull(good_build)
@@ -147,10 +142,11 @@ class GBPChkTestCase(TestCase):
         for _ in range(2):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
-        exit_status = check.handler(Namespace(), self.gbp, self.console)
+        errorf = io.StringIO()
+        exit_status = check.handler(Namespace(), self.gbp, self.console, errorf)
         self.assertEqual(exit_status, 5)
 
-        stderr_lines = stderr.getvalue().split("\n")
+        stderr_lines = errorf.getvalue().split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
 

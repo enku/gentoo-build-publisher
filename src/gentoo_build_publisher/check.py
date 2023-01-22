@@ -3,6 +3,7 @@ import argparse
 import itertools
 import sys
 from pathlib import Path
+from typing import TextIO
 
 import django
 from gbpcli import GBP
@@ -17,26 +18,28 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
     return
 
 
-def handler(args: argparse.Namespace, _gbp: GBP, _console: Console) -> int:
+def handler(
+    args: argparse.Namespace, _gbp: GBP, _console: Console, errorf: TextIO = sys.stderr
+) -> int:
     """Check GBP storage and records"""
     django.setup()
     publisher = get_publisher()
 
     errors = sum(
         (
-            check_build_content(publisher),
-            check_orphans(publisher),
-            check_inconsistent_tags(publisher),
+            check_build_content(publisher, errorf),
+            check_orphans(publisher, errorf),
+            check_inconsistent_tags(publisher, errorf),
         )
     )
 
     if errors:
-        print("gbp check: Errors were encountered", file=sys.stderr)
+        print("gbp check: Errors were encountered", file=errorf)
 
     return errors
 
 
-def check_build_content(publisher: BuildPublisher) -> int:
+def check_build_content(publisher: BuildPublisher, errorf: TextIO) -> int:
     """Check build content"""
     errors = 0
 
@@ -57,13 +60,13 @@ def check_build_content(publisher: BuildPublisher) -> int:
                 missing.append(path)
 
         if missing:
-            print(f"Path missing for {record}: {missing}", file=sys.stderr)
+            print(f"Path missing for {record}: {missing}", file=errorf)
             errors += 1
 
     return errors
 
 
-def check_orphans(publisher: BuildPublisher) -> int:
+def check_orphans(publisher: BuildPublisher, errorf: TextIO) -> int:
     """Check orphans (builds with no records)"""
     errors = 0
 
@@ -77,16 +80,16 @@ def check_orphans(publisher: BuildPublisher) -> int:
                 try:
                     publisher.records.get(build)
                 except RecordNotFound:
-                    print(f"Record missing for {path}", file=sys.stderr)
+                    print(f"Record missing for {path}", file=errorf)
                     errors += 1
             elif path.is_symlink() and not path.exists():
-                print(f"Broken tag: {path}", file=sys.stderr)
+                print(f"Broken tag: {path}", file=errorf)
                 errors += 1
 
     return errors
 
 
-def check_inconsistent_tags(publisher: BuildPublisher) -> int:
+def check_inconsistent_tags(publisher: BuildPublisher, errorf: TextIO) -> int:
     """Check for tags that have inconsistent targets"""
     errors = 0
 
@@ -109,7 +112,7 @@ def check_inconsistent_tags(publisher: BuildPublisher) -> int:
 
     for tag, targets in tags.items():
         if len(targets) != 1:
-            print(f'Tag "{tag}" has multiple targets: {targets}', file=sys.stderr)
+            print(f'Tag "{tag}" has multiple targets: {targets}', file=errorf)
             errors += 1
 
     return errors

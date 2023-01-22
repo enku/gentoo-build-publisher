@@ -13,10 +13,6 @@ from gentoo_build_publisher.jenkins import ProjectPath
 
 from . import TestCase, graphql
 
-mock_stderr = mock.patch(
-    "gentoo_build_publisher.addrepo.sys.stderr", new_callable=io.StringIO
-)
-
 
 def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
     response = graphql(query_, variables)
@@ -50,8 +46,7 @@ class AddRepoTestCase(TestCase):
             },
         )
 
-    @mock_stderr
-    def test_when_item_already_exists(self, stderr: io.StringIO) -> None:
+    def test_when_item_already_exists(self) -> None:
         self.publisher.jenkins.make_folder(ProjectPath("repos"))
         self.publisher.jenkins.create_repo_job("gentoo", "foo", "master")
 
@@ -60,11 +55,12 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
+        errorf = io.StringIO()
         with mock.patch.object(self.gbp, "query", side_effect=query):
-            exit_status = addrepo.handler(args, self.gbp, self.console)
+            exit_status = addrepo.handler(args, self.gbp, self.console, errorf)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(stderr.getvalue(), "error: FileExistsError: repos/gentoo\n")
+        self.assertEqual(errorf.getvalue(), "error: FileExistsError: repos/gentoo\n")
 
 
 class CheckParseArgs(TestCase):
