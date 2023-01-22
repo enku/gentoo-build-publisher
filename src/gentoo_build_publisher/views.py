@@ -257,8 +257,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
         package_metadata(record, context)
 
-        if record.submitted is None:
-            continue
+        assert record.submitted is not None
 
         day_submitted = record.submitted.astimezone(current_timezone).date()
         if day_submitted >= bot_days[0]:
