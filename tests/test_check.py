@@ -3,7 +3,7 @@
 import io
 import itertools
 import shutil
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from unittest import mock
 
@@ -153,3 +153,8 @@ class GBPChkTestCase(TestCase):
         stderr_lines = stderr.getvalue().split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
+
+    def test_parse_args(self) -> None:
+        # here for completeness
+        parser = ArgumentParser("gbp")
+        check.parse_args(parser)
