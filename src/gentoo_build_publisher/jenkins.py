@@ -136,11 +136,9 @@ class URLBuilder:
 
     def __getattr__(self, name: str) -> Any:
         try:
-            formatter = self.formatters[name]
+            return partial(self.builder, self.formatters[name])
         except KeyError as error:
             raise AttributeError(repr(name)) from error
-
-        return partial(self.builder, formatter)
 
     def builder(self, formatter: str, build: BuildLike) -> URL:
         """Given the parts, and build, build a URL"""
