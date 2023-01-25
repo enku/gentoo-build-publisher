@@ -148,8 +148,7 @@ class ArtifactFactory:
         build_info = self.build_info(build)
 
         if build_time is None:
-            timestamp = self.advance()
-            build_time = timestamp
+            build_time = self.advance()
 
         path = cpv_to_path(cpv, build_id)
         size = len(cpv) ** 2
