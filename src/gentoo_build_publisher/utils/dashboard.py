@@ -224,7 +224,6 @@ def bot_to_list(
         return []
 
     machines = [*builds_over_time[days[0]].keys()]
-    machines.sort()
 
     for machine in machines:
         tally = []

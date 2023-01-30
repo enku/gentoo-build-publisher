@@ -183,9 +183,9 @@ class BOTToListTestCase(TestCase):
 
     def test(self) -> None:
         bot = {
-            dt.date(2023, 1, 24): {"babette": 4, "polaris": 0},
-            dt.date(2023, 1, 25): {"babette": 0, "polaris": 4},
-            dt.date(2023, 1, 26): {"babette": 4, "polaris": 4},
+            dt.date(2023, 1, 24): {"polaris": 4, "babette": 0},
+            dt.date(2023, 1, 25): {"polaris": 0, "babette": 4},
+            dt.date(2023, 1, 26): {"polaris": 4, "babette": 4},
         }
 
         lst = bot_to_list(bot)
