@@ -40,13 +40,13 @@ class GBPChkTestCase(TestCase):
         # There is a post-signal for django models so that if I delete the model it will
         # delete the storage, but for this test I want to keep the storage, so let's
         # move something out of the way first
-        binpkg_path = self.publisher.storage.get_path(build, content)
-        tmp_name = str(binpkg_path) + ".tmp"
-        binpkg_path.rename(tmp_name)
+        content_path = self.publisher.storage.get_path(build, content)
+        tmp_name = str(content_path) + ".tmp"
+        content_path.rename(tmp_name)
         self.publisher.records.delete(build)
 
         # Rename it back
-        Path(tmp_name).rename(str(binpkg_path))
+        Path(tmp_name).rename(str(content_path))
 
         return build
 
