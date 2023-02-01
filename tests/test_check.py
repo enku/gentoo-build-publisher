@@ -28,8 +28,8 @@ class GBPChkTestCase(TestCase):
     def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()
         self.publisher.pull(build)
-        binpkg_path = self.publisher.storage.get_path(build, content)
-        shutil.rmtree(binpkg_path)
+        content_path = self.publisher.storage.get_path(build, content)
+        shutil.rmtree(content_path)
 
         return build
 
