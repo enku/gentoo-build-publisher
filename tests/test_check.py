@@ -11,7 +11,7 @@ from gbpcli import GBP
 from rich.console import Console
 
 from gentoo_build_publisher import check
-from gentoo_build_publisher.types import Content
+from gentoo_build_publisher.types import Build, Content
 
 from . import TestCase
 from .factories import BuildFactory
@@ -24,7 +24,7 @@ class GBPChkTestCase(TestCase):
         self.console = mock.MagicMock(spec=Console)
         self.gbp = GBP("http://gbp.invalid/")
 
-    def build_with_missing_content(self, content):
+    def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()
         self.publisher.pull(build)
         binpkg_path = self.publisher.storage.get_path(build, content)
@@ -32,7 +32,7 @@ class GBPChkTestCase(TestCase):
 
         return build
 
-    def orphan_build(self, content):
+    def orphan_build(self, content: Content) -> Build:
         build = BuildFactory()
         self.publisher.pull(build)
 
