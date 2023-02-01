@@ -2,6 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import io
 import itertools
+import re
 import shutil
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -71,7 +72,9 @@ class GBPChkTestCase(TestCase):
         errors = check.check_build_content(self.publisher, errorf)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(errorf.getvalue(), f"^Path missing for {bad_build}:")
+        self.assertRegex(
+            errorf.getvalue(), f"^Path missing for {re.escape(str(bad_build))}:"
+        )
 
     def test_check_orphans(self) -> None:
         good_build = BuildFactory()
@@ -84,7 +87,9 @@ class GBPChkTestCase(TestCase):
         errors = check.check_orphans(self.publisher, errorf)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(errorf.getvalue(), f"^Record missing for {binpkg_path}")
+        self.assertRegex(
+            errorf.getvalue(), f"^Record missing for {re.escape(str(binpkg_path))}"
+        )
 
     def test_check_orphans_dangling_symlinks(self) -> None:
         build = BuildFactory()
