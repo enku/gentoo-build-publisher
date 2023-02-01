@@ -33,20 +33,20 @@ class GBPChkTestCase(TestCase):
 
         return build
 
-    def orphan_build(self, content: Content) -> Build:
+    def orphan_build(self) -> Build:
         build = BuildFactory()
         self.publisher.pull(build)
 
         # There is a post-signal for django models so that if I delete the model it will
         # delete the storage, but for this test I want to keep the storage, so let's
         # move something out of the way first
-        content_path = self.publisher.storage.get_path(build, content)
-        tmp_name = str(content_path) + ".tmp"
-        content_path.rename(tmp_name)
+        orphan_path = self.publisher.storage.get_path(build, Content.BINPKGS)
+        tmp_name = str(orphan_path) + ".tmp"
+        orphan_path.rename(tmp_name)
         self.publisher.records.delete(build)
 
         # Rename it back
-        Path(tmp_name).rename(str(content_path))
+        Path(tmp_name).rename(str(orphan_path))
 
         return build
 
@@ -80,7 +80,7 @@ class GBPChkTestCase(TestCase):
         good_build = BuildFactory()
         self.publisher.pull(good_build)
 
-        bad_build = self.orphan_build(Content.BINPKGS)
+        bad_build = self.orphan_build()
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
         errorf = io.StringIO()
@@ -142,7 +142,7 @@ class GBPChkTestCase(TestCase):
             self.publisher.pull(good_build)
 
         for _ in range(3):
-            self.orphan_build(Content.BINPKGS)
+            self.orphan_build()
 
         for _ in range(2):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
