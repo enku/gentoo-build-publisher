@@ -5,7 +5,6 @@ import itertools
 import re
 import shutil
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from unittest import mock
 
 from gbpcli import GBP
@@ -37,16 +36,7 @@ class GBPChkTestCase(TestCase):
         build = BuildFactory()
         self.publisher.pull(build)
 
-        # There is a post-signal for django models so that if I delete the model it will
-        # delete the storage, but for this test I want to keep the storage, so let's
-        # move something out of the way first
-        orphan_path = self.publisher.storage.get_path(build, Content.BINPKGS)
-        tmp_name = str(orphan_path) + ".tmp"
-        orphan_path.rename(tmp_name)
         self.publisher.records.delete(build)
-
-        # Rename it back
-        Path(tmp_name).rename(str(orphan_path))
 
         return build
 
@@ -86,9 +76,9 @@ class GBPChkTestCase(TestCase):
         errorf = io.StringIO()
         errors = check.check_orphans(self.publisher, errorf)
 
-        self.assertEqual(errors, 1)
+        self.assertEqual(errors, len(Content))
         self.assertRegex(
-            errorf.getvalue(), f"^Record missing for {re.escape(str(binpkg_path))}"
+            errorf.getvalue(), f"Record missing for {re.escape(str(binpkg_path))}"
         )
 
     def test_check_orphans_dangling_symlinks(self) -> None:
@@ -149,7 +139,7 @@ class GBPChkTestCase(TestCase):
 
         errorf = io.StringIO()
         exit_status = check.handler(Namespace(), self.gbp, self.console, errorf)
-        self.assertEqual(exit_status, 5)
+        self.assertEqual(exit_status, len(Content) * 3 + 2)
 
         stderr_lines = errorf.getvalue().split("\n")
         last_error_line = stderr_lines[-2]
