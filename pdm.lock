@@ -22,11 +22,11 @@ dependencies = [
 
 [[package]]
 name = "ariadne"
-version = "0.15.1"
+version = "0.17.1"
 summary = "Ariadne is a Python library for implementing GraphQL servers."
 dependencies = [
     "graphql-core<3.3,>=3.2.0",
-    "starlette>0.17<0.20",
+    "starlette<1.0",
     "typing-extensions>=3.6.0",
 ]
 
@@ -619,9 +619,9 @@ content_hash = "sha256:c4419642616c8abc143617139b9eb442f75572424b9ced36514036090
     {url = "https://files.pythonhosted.org/packages/67/c4/fd50bbb2fb72532a4b778562e28ba581da15067cfb2537dbd3a2e64689c1/anyio-3.6.1.tar.gz", hash = "sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b"},
     {url = "https://files.pythonhosted.org/packages/c3/22/4cba7e1b4f45ffbefd2ca817a6800ba1c671c26f288d7705f20289872012/anyio-3.6.1-py3-none-any.whl", hash = "sha256:cb29b9c70620506a9a8f87a309591713446953302d7d995344d0d7c6c0c9a7be"},
 ]
-"ariadne 0.15.1" = [
-    {url = "https://files.pythonhosted.org/packages/c9/32/e242cbf05e4ceab63b4bc29ea2aa6bf6418a7b15faf8ac512dc393d32250/ariadne-0.15.1-py3-none-any.whl", hash = "sha256:c87835e895ab0fcf9b3a0ab2b4a692ee56e9b043f449aece2d9b8da7e61a7ccc"},
-    {url = "https://files.pythonhosted.org/packages/f2/b1/2d61cdad8582eacd78877be57fc186dd09d4143ce58543700a0d52f203f8/ariadne-0.15.1.tar.gz", hash = "sha256:678851826887ecf27a791135fb9ea9a67305243ebb03f9814fbc50fb7e8251f4"},
+"ariadne 0.17.1" = [
+    {url = "https://files.pythonhosted.org/packages/55/74/12fb77f7b66c832720048345d25a6dcbf3e658aeb51f77b6a6141291deca/ariadne-0.17.1.tar.gz", hash = "sha256:07df3097f36434ecaaf7d00ab1541e9bd4d9d2678e9ef83b21d588100236bf2f"},
+    {url = "https://files.pythonhosted.org/packages/b8/78/b844925c6c8873929a47560b741dbb9acc6347506b1333726fdf39bd29e2/ariadne-0.17.1-py3-none-any.whl", hash = "sha256:62e50d28e40ebf6d99c690e261798d28b6bee21ad14154e409d0c0fc941ab83d"},
 ]
 "ariadne-django 0.3.0" = [
     {url = "https://files.pythonhosted.org/packages/c0/55/a57ab018b1c685cba22d8ca468f870cdbe299e4eb660e762947eaed5875d/ariadne_django-0.3.0-py3-none-any.whl", hash = "sha256:3c638993e2cf1d2f579ec8735a7dfdbb57d5420c8eb2ae09b93880746e2764c6"},
