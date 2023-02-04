@@ -2,6 +2,7 @@
 .coverage
 /.envrc
 /.pdm.toml
+/.python-version
 /.venv/
 /__pypackages__/
 /build/
