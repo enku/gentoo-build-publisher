@@ -8,12 +8,12 @@ from gentoo_build_publisher.settings import Settings
 
 class SettingsTestCase(TestCase):
     def test_from_dict(self) -> None:
-        data_dict = dict(
-            BUILD_PUBLISHER_JENKINS_USER="fail",
-            TODAY_STORAGE_PATH="/home/today",
-            TODAY_IS="your birthday",
-            TODAY_JENKINS_BASE_URL="https://jenkins.invalid/",
-        )
+        data_dict = {
+            "BUILD_PUBLISHER_JENKINS_USER": "fail",
+            "TODAY_STORAGE_PATH": "/home/today",
+            "TODAY_IS": "your birthday",
+            "TODAY_JENKINS_BASE_URL": "https://jenkins.invalid/",
+        }
         prefix = "TODAY_"
 
         settings = Settings.from_dict(prefix, data_dict)
