@@ -10,7 +10,6 @@ import requests
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
-    COPY_ARTIFACT_PLUGIN,
     FOLDER_XML,
     Jenkins,
     JenkinsConfig,
@@ -437,21 +436,6 @@ class IsFolderTestCase(TestCase):
         self.assertEqual(jenkins.is_folder(project_path), False)
 
 
-class InstallPluginTestCase(TestCase):
-    """Tests for the Jenkins.install_plugin method"""
-
-    def test_installs_plugin(self) -> None:
-        jenkins = MockJenkins(JENKINS_CONFIG)
-
-        jenkins.install_plugin("copyartifact@1.47")
-
-        jenkins.session.post.assert_called_once_with(
-            "https://jenkins.invalid/pluginManager/installNecessaryPlugins",
-            headers={"Content-Type": "text/xml"},
-            data='<jenkins><install plugin="copyartifact@1.47" /></jenkins>',
-        )
-
-
 class CreateRepoJobTestCase(TestCase):
     """Tests for the Jenkins.create_repo_job method"""
 
@@ -526,11 +510,6 @@ class CreateMachineJobTestCase(TestCase):
 
         jenkins.session.post.assert_has_calls(
             [
-                mock.call(
-                    "https://jenkins.invalid/pluginManager/installNecessaryPlugins",
-                    headers={"Content-Type": "text/xml"},
-                    data=f'<jenkins><install plugin="{COPY_ARTIFACT_PLUGIN}" /></jenkins>',
-                ),
                 mock.call(
                     "https://jenkins.invalid/createItem",
                     data=jenkins.render_build_machine_xml(
