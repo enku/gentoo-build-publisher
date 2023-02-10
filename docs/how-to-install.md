@@ -77,7 +77,8 @@ Install the required Gentoo packages:
 
 ```sh
 # unmask jenkins-bin if in the stable tree
-echo dev-util/jenkins-bin >> /etc/portage/package.accept_keywords/gbp
+echo dev-util/jenkins-bin >> /etc/portage/package.accept_keywords
+echo app-misc/mime-types nginx >> /etc/portage/package.use
 emerge --verbose --ask --noreplace \
     app-admin/sudo \
     app-containers/buildah \
