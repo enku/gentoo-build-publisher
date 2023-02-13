@@ -90,12 +90,12 @@ class Storage:
         return cls(settings.STORAGE_PATH)
 
     @lru_cache(maxsize=256 * len(Content))
-    def get_path(self, build: Build, item: Content) -> Path:
+    def get_path(self, build: Build, content: Content) -> Path:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
         """
-        return self.root / item.value / str(build)
+        return self.root / content.value / str(build)
 
     def extract_artifact(
         self,
@@ -136,9 +136,9 @@ class Storage:
         with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
             tar_file.extractall(dirpath)
 
-            for item in Content:
-                src = Path(dirpath) / item.value
-                dst = self.get_path(build, item)
+            for content in Content:
+                src = Path(dirpath) / content.value
+                dst = self.get_path(build, content)
 
                 if dst.exists():
                     msg = "Extract destination already exists: %s. Removing"
@@ -146,7 +146,7 @@ class Storage:
                     shutil.rmtree(dst)
 
                 if previous:
-                    copy = copy_or_link(self.get_path(previous, item), dst)
+                    copy = copy_or_link(self.get_path(previous, content), dst)
                     shutil.copytree(src, dst, symlinks=True, copy_function=copy)
                 else:
                     os.renames(src, dst)
