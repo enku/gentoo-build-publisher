@@ -26,7 +26,10 @@ class Build(NamedTuple):
     """A build ID (machine.build_id)"""
 
     machine: str
+    """Machine name for the build"""
+
     build_id: str
+    """Machine "id" for the build.  For Jenkins this an integer sequence"""
 
     @property
     def id(self) -> str:  # pylint: disable=invalid-name
@@ -54,13 +57,28 @@ class BuildRecord(NamedTuple):
     """A Build record from the database"""
 
     machine: str
+    """Machine name for the build"""
+
     build_id: str
+    """Machine "id" for the build.  For Jenkins this an integer sequence"""
+
     note: str | None = None
+    """Optional user-created build note"""
+
     logs: str | None = None
+    """(Jenkins) build log"""
+
     keep: bool = False
+    """Whether nor not the purger should skip this build record"""
+
     submitted: dt.datetime | None = None
+    """Timestamp the build was submitted to gbp"""
+
     completed: dt.datetime | None = None
+    """Timestamp when the build was completely pulled by gbp"""
+
     built: dt.datetime | None = None
+    """(Jenkins) timestamp when the build started"""
 
     def __str__(self) -> str:
         return self.id
@@ -158,11 +176,22 @@ class Package:
     """A Gentoo binary package"""
 
     cpv: str
+    """Gentoo CPV (category-package-version)"""
+
     repo: str
+    """The repo (overlay) name where the package came"""
+
     path: str
+    """Path name of the binary package"""
+
     build_id: int
+    """Binary package build id"""
+
     size: int
+    """Size (in bytes) of the files in the package"""
+
     build_time: int
+    """Unix time that the package was built"""
 
     def cpvb(self) -> str:
         """return cpv + build id"""

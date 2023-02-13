@@ -270,16 +270,19 @@ class MachineInfo:
 
     @cached_property
     def build_count(self) -> int:
+        """Number of builds held for the machine"""
         return len(self.builds)
 
     @cached_property
     def builds(self) -> list[BuildRecord]:
+        """List of builds held for the machine"""
         publisher = get_publisher()
 
         return [*publisher.records.for_machine(self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
+        """The latest completed build, or None"""
         try:
             return next(build for build in self.builds if build.completed)
         except StopIteration:
@@ -287,6 +290,7 @@ class MachineInfo:
 
     @cached_property
     def published_build(self) -> Build | None:
+        """The latest published build, or None"""
         publisher = get_publisher()
 
         try:
@@ -300,6 +304,7 @@ class MachineInfo:
 
     @cached_property
     def tags(self) -> list[str]:
+        """All the machines build tags"""
         machine_tags = []
         publisher = get_publisher()
 
