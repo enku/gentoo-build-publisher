@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Any, Iterable, NamedTuple, Protocol, TypeAlias, Union
+from typing import Any, Iterable, NamedTuple, Protocol
 
 from dataclasses_json import dataclass_json
 
@@ -93,7 +93,7 @@ class RecordDB(Protocol):  # pragma: no cover
         """Save changes back to the database"""
         ...
 
-    def get(self, build: Build) -> BuildRecord:
+    def get(self, build: BuildLike) -> BuildRecord:
         """Retrieve db record"""
         ...
 
@@ -220,5 +220,20 @@ class CacheProtocol(Protocol):  # pragma: no cover
         ...
 
 
-# Note: typing.Protocol doesn't work do to typing.NamedTuple hackery
-BuildLike: TypeAlias = Union[Build, BuildRecord]
+class BuildLike(Protocol):
+    """That which has a machine name and build_id"""
+
+    @property
+    def machine(self) -> str:
+        """Machine name for the build"""
+
+    @property
+    def build_id(self) -> str:
+        """Machine "id" for the build.  For Jenkins this an integer sequence"""
+
+    @property
+    def id(self) -> str:  # pylint: disable=invalid-name
+        """{build.machine}.{build.build_id}"""
+
+    def __hash__(self) -> int:
+        ...
