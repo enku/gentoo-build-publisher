@@ -163,9 +163,9 @@ class Storage:
 
         Alias for tag(build, "")
         """
-        self.tag(build)
+        self.tag(build, "")
 
-    def tag(self, build: BuildLike, tag_name: str = "") -> None:
+    def tag(self, build: BuildLike, tag_name: str) -> None:
         """Create a "tag" for this build
 
         If tag is non-empty then the resulting symlink will be like, e.g.
