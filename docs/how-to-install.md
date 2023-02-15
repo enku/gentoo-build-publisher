@@ -46,7 +46,7 @@ from all the machines it will publish for.
 ### On Resource Requirements
 
 As the primary purpose of GBP is to store lots of files, the GBP instance
-should have adequate storage.  How much is needed depends on the usuall "how
+should have adequate storage.  How much is needed depends on the usual "how
 much space do I need for Gentoo" factors, as well as how many machine types it
 will be hosting and how often builds are made.  For reference a by the (this)
 book GBP instance with a single build from a single machine takes up about
@@ -268,7 +268,8 @@ Copy the `contrib/deployment/nginx.conf` nginx configuration file.
 cp /home/gbp/gentoo-build-publisher/contrib/deployment/nginx.conf /etc/nginx/nginx.conf
 ```
 
-Edit `/etc/nginx/nginx.conf` if needed.
+Edit `/etc/nginx/nginx.conf` if needed, though the included one is sufficient
+for most cases.
 
 ## Configure rsyncd
 
@@ -406,5 +407,5 @@ or install it on a local machine via pip:
 pip install gbpcli
 ```
 
-Note that some CLI commands, for example `addmachine` and `addrepo` are only
-available from the GBP server instance.
+Note that some CLI commands, for example `addmachine`, `addrepo` and `check`
+are only available from the GBP server instance.
