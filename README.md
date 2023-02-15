@@ -6,9 +6,10 @@
 
 ## Introduction
 
-The idea is to combine best practices with [continuous
+Gentoo Build Publisher (GBP) uses [continuous
 integration](https://en.wikipedia.org/wiki/Continuous_integration) and other
-tools to deliver successful, consistent "builds" to your Gentoo machine(s).
+tools to deliver successful, consistent "builds" for a single machine or
+multiple heterogeneous Gentoo machines.
 
 In case you didn't know, [Gentoo Linux](https://www.gentoo.org/) is a
 source-based rolling-release meta-distribution that you can twist and mold
@@ -16,7 +17,7 @@ into pretty much anything you like. That's just a verbose way of saying Gentoo
 is awesome.
 
 If you run a Gentoo system, say a laptop, you may be updating your system
-using the standard `emerge --sync` followed by a world update.  This pulls in
+using the standard `emerge --sync` followed by a world update. This pulls in
 the latest ebuilds from the Gentoo repo and if there are any updates
 applicable to your system then they get built on your system.
 
@@ -29,10 +30,10 @@ Sometimes a build takes a long time and you don't want to wait.
 Well since Gentoo is the distribution you build yourself, CI/CD seems like a
 natural fit. Enter Gentoo Build Publisher.
 
-Gentoo Build Publisher is the combination of an rsync server (for ebuild repos
-and machine configs) and HTTP server (for binpkgs) for successful builds.  For
-Jenkins it is a gateway to publish builds. For my real machines it the source
-for repo syncs and binpkgs.
+Gentoo Build Publisher combines a repo/overlay server, basic configuration
+management, and binary package server (binhost) for complete and atomic
+builds.  Successful builds performed by Jenkins are served by GBP where client
+machines sync from.
 
 
 ## Procedure
@@ -40,7 +41,9 @@ for repo syncs and binpkgs.
 * Build a Gentoo Build Publisher instance. Refer to the [Install
   Guide](https://github.com/enku/gentoo-build-publisher/blob/master/docs/how-to-install.md).
 * Create "machines" and "repos" jobs in Jenkins.  Use [the following git
-  repo](https://github.com/enku/gbp-machines) as a starting point.
+  repo](https://github.com/enku/gbp-machines) as a starting point. This can be
+  done "manually" in the Jenkins interface or using the GBP command line
+  interface (`gbp addrepo`/`gbp addmachine`).
 * Once a Jenkins job has been pulled by Gentoo Build Publisher it can be
   published so that actual machines can use it (e.g. rsync for repos, http for
   binpkgs).  Use the CLI (`gbp publish`) to publish a pulled build.
@@ -53,15 +56,6 @@ for repo syncs and binpkgs.
 <p align="center">
 <img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
 </p>
-
-I have a git repo called `machines` that contains the profiles for all the
-machines whose builds I want to push to the publisher.  You can fork the
-[gbp-machines](https://github.com/enku/gbp-machines) repo as a starting point.
-
-My Jenkins job does not publish a build by default. I (can) later publish the
-build so that my machines can consume them.  There is a GraphQL interface for
-doing such tasks as well as a [command-line
-interface](https://github.com/enku/gbpcli).
 
 # CLI
 
