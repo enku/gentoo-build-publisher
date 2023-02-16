@@ -29,19 +29,21 @@ from pydispatch import Dispatcher
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
-from gentoo_build_publisher.records import Records
+from gentoo_build_publisher.records import (
+    BuildRecord,
+    RecordDB,
+    RecordNotFound,
+    Records,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import (
     Build,
     BuildLike,
-    BuildRecord,
     Change,
     GBPMetadata,
     Package,
     PackageMetadata,
-    RecordDB,
-    RecordNotFound,
     Status,
 )
 from gentoo_build_publisher.utils import utctime
@@ -151,7 +153,6 @@ class BuildPublisher:
         return True
 
     def _update_build_metadata(self, record: BuildRecord) -> None:
-
         packages: list[Package] | None = None
         gbp_metadata: GBPMetadata | None = None
         jenkins_metadata = self.jenkins.get_metadata(record)

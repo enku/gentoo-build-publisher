@@ -9,7 +9,8 @@ from typing import Any
 from django.db import models
 from django.utils import timezone
 
-from gentoo_build_publisher.types import Build, BuildRecord, RecordNotFound
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.types import Build
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 

@@ -8,7 +8,8 @@ from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.graphql import require_localhost
 from gentoo_build_publisher.jenkins import ProjectPath
-from gentoo_build_publisher.types import BuildRecord, Content
+from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import get_version, utctime
 
 from . import TestCase, graphql

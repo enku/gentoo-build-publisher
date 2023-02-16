@@ -5,7 +5,7 @@ from unittest import mock
 
 from requests import HTTPError
 
-from gentoo_build_publisher.records import Records
+from gentoo_build_publisher.records import RecordNotFound, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import (
     delete_build,
@@ -13,7 +13,7 @@ from gentoo_build_publisher.tasks import (
     pull_build,
     purge_machine,
 )
-from gentoo_build_publisher.types import Build, RecordNotFound
+from gentoo_build_publisher.types import Build
 
 from . import TestCase
 
