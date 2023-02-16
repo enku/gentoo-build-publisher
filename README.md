@@ -64,8 +64,8 @@ inspect, publish, pull, schedule builds and more.
 
 # Articles
 
-Below are some articles I've written that explain some aspects of Build
-Publisher in detail.
+Below are some articles that explain some aspects of Build Publisher in
+detail.
 
 - [Introducing Gentoo Build Publisher](https://lunarcowboy.com/introducing-gentoo-build-publisher.html): June 2021
 - [Exploring the Gentoo Build Publisher Dashboard](https://lunarcowboy.com/exploring-the-gentoo-build-publisher-dashboard.html): November 2021
