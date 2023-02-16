@@ -121,7 +121,6 @@ class URLBuilder:
         >>> build_logs_url = builder.logs(my_build)
     """
 
-    # Format strings using "build" and "config" arguments
     formatters: dict[str, str] = {
         "artifact": "job/{build.machine}/{build.build_id}/artifact/{config.artifact_name}",
         "build": "job/{build.machine}/{build.build_id}",
@@ -129,6 +128,7 @@ class URLBuilder:
         "logs": "job/{build.machine}/{build.build_id}/consoleText",
         "metadata": "job/{build.machine}/{build.build_id}/api/json",
     }
+    """Format strings using "build" and "config" arguments"""
 
     def __init__(self, config: JenkinsConfig):
         self.config = config
