@@ -125,15 +125,15 @@ class GBPMetadata:
     gbp_version: str = utils.get_version()
 
 
-class CacheProtocol(Protocol):  # pragma: no cover
+class CacheProtocol(Protocol):
     """Something that can cache... like Django's cache"""
 
     # pylint: disable=missing-docstring
     def get(self, key: str, default: Any = None) -> Any:
-        ...
+        """Return the given key from the cache or `default` if it doesn't exist"""
 
     def set(self, key: str, value: Any) -> None:
-        ...
+        """Set a value in the cache"""
 
 
 class BuildLike(Protocol):
@@ -152,4 +152,4 @@ class BuildLike(Protocol):
         """{build.machine}.{build.build_id}"""
 
     def __hash__(self) -> int:
-        ...
+        """Return the hash value for the BuildLike object"""
