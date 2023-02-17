@@ -7,9 +7,9 @@ import requests
 import requests.exceptions
 from celery import shared_task
 
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.publisher import get_publisher
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
 
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
 PULL_RETRYABLE_EXCEPTIONS = (

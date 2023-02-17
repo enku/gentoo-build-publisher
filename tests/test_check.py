@@ -11,7 +11,7 @@ from gbpcli import GBP
 from rich.console import Console
 
 from gentoo_build_publisher import check
-from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.common import Build, Content
 
 from . import TestCase
 from .factories import BuildFactory

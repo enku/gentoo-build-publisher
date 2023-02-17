@@ -9,6 +9,7 @@ from unittest import TestCase, mock
 import requests
 from yarl import URL
 
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.jenkins import (
     FOLDER_XML,
     Jenkins,
@@ -18,7 +19,6 @@ from gentoo_build_publisher.jenkins import (
     URLBuilder,
 )
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
 
 from . import MockJenkins, test_data
 

@@ -4,15 +4,15 @@ import itertools
 from dataclasses import astuple, dataclass
 from typing import Mapping, TypedDict
 
-from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
-from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import (
+from gentoo_build_publisher.common import (
     Build,
     BuildLike,
     CacheProtocol,
     GBPMetadata,
     Package,
 )
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color, lapsed
 
 BuildID = str

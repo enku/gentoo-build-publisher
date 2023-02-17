@@ -5,8 +5,8 @@ import datetime as dt
 import importlib.metadata
 from typing import Any, Iterable, NamedTuple, Protocol, Type
 
+from gentoo_build_publisher.common import Build, BuildLike
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build, BuildLike
 
 
 class RecordNotFound(LookupError):

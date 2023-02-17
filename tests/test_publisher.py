@@ -7,10 +7,10 @@ from unittest import mock
 from yarl import URL
 
 import gentoo_build_publisher.publisher
+from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.models import BuildModel, DjangoDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import utctime
 
 from . import TestCase

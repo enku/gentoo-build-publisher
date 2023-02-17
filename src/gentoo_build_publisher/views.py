@@ -7,8 +7,8 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
+from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
-from gentoo_build_publisher.types import TAG_SYM, Build
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.dashboard import create_dashboard_context
 

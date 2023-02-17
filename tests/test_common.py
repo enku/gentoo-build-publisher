@@ -1,8 +1,8 @@
-"""Tests for the types module"""
+"""Tests for the common module"""
 # pylint: disable=missing-docstring
 from unittest import TestCase
 
-from gentoo_build_publisher.types import Build, InvalidBuild
+from gentoo_build_publisher.common import Build, InvalidBuild
 
 
 class BuildTestCase(TestCase):

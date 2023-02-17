@@ -24,13 +24,13 @@ from requests import Response, Session
 from yarl import URL
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.common import Build, Content, Package
 from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
     ProjectPath,
 )
-from gentoo_build_publisher.types import Build, Content, Package
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 

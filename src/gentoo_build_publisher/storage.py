@@ -12,8 +12,7 @@ from pathlib import Path
 from typing import IO, Callable
 
 from gentoo_build_publisher import utils
-from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.types import (
+from gentoo_build_publisher.common import (
     TAG_SYM,
     Build,
     BuildLike,
@@ -21,6 +20,7 @@ from gentoo_build_publisher.types import (
     GBPMetadata,
     Package,
 )
+from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 
 logger = logging.getLogger(__name__)
 

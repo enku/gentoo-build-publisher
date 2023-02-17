@@ -5,8 +5,8 @@ from typing import cast
 
 from django.utils import timezone
 
+from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.publisher import MachineInfo
-from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.dashboard import (
     DashboardContext,

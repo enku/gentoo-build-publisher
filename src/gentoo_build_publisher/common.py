@@ -1,4 +1,4 @@
-"""Basic Build interface for Gentoo Build Publisher"""
+"""Common data types for Gentoo Build Publisher"""
 from __future__ import annotations
 
 from dataclasses import dataclass

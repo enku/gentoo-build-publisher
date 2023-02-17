@@ -8,19 +8,19 @@ import tarfile
 from unittest import mock
 
 from gentoo_build_publisher import utils
+from gentoo_build_publisher.common import (
+    Build,
+    Content,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     Storage,
     make_package_from_lines,
     package_sections,
     quick_check,
-)
-from gentoo_build_publisher.types import (
-    Build,
-    Content,
-    GBPMetadata,
-    Package,
-    PackageMetadata,
 )
 
 from . import MockJenkins, TestCase, data
