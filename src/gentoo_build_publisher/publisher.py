@@ -145,7 +145,7 @@ class BuildPublisher:
             byte_stream = iter(partial(temp.read, chunk_size), b"")
             self.storage.extract_artifact(build, byte_stream, previous)
 
-        logging.info("Pulled build %s", build)
+        logger.info("Pulled build %s", build)
 
         self._update_build_metadata(record)
 
