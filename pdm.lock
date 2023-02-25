@@ -450,7 +450,7 @@ dependencies = [
 
 [[package]]
 name = "python-dispatch"
-version = "0.2.0"
+version = "0.2.1"
 summary = "Lightweight Event Handling"
 
 [[package]]
@@ -604,7 +604,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:c4419642616c8abc143617139b9eb442f75572424b9ced36514036090de62700"
+content_hash = "sha256:f838057e8284877ba5e51fc915502a442aa2f6235a70e420bb22785c6b6cc803"
 
 [metadata.files]
 "amqp 5.1.1" = [
@@ -1080,9 +1080,9 @@ content_hash = "sha256:c4419642616c8abc143617139b9eb442f75572424b9ced36514036090
     {url = "https://files.pythonhosted.org/packages/36/7a/87837f39d0296e723bb9b62bbb257d0355c7f6128853c78955f57342a56d/python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
     {url = "https://files.pythonhosted.org/packages/4c/c4/13b4776ea2d76c115c1d1b84579f3764ee6d57204f6be27119f13a61d0a9/python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
 ]
-"python-dispatch 0.2.0" = [
-    {url = "https://files.pythonhosted.org/packages/c3/41/f2fa1a4090e7dd7933eb8b3dd2e8f19dbcbb686d4fc802743d8363657a75/python_dispatch-0.2.0-py3-none-any.whl", hash = "sha256:639c641665171dc91eac0675661161aeef6f51a3b7e0bbfa8e7e7a4cf2a8abee"},
-    {url = "https://files.pythonhosted.org/packages/f9/c4/0e2de1c0c71b1140c40162897c81081283d1d8fa39bfca7eade01f392deb/python-dispatch-0.2.0.tar.gz", hash = "sha256:b42c62e2313578353ba300c7c231e69fdf8879cce9ec02e62df48a55ba114adc"},
+"python-dispatch 0.2.1" = [
+    {url = "https://files.pythonhosted.org/packages/e4/13/25e76424a4bc90bcfb34b2dbb6ef985a54fb2f770067dbb0447a6fb61cf2/python-dispatch-0.2.1.tar.gz", hash = "sha256:ca166addfdedd11fef80a004b930503b30c5c2a6f23cec0395986fd7cc8a5f1c"},
+    {url = "https://files.pythonhosted.org/packages/f3/64/139e84f0dd578d40fd9e9aa89448e07778860823e1670807a2d545d6c335/python_dispatch-0.2.1-py3-none-any.whl", hash = "sha256:43fb413a87404b212281bfc5733ef23d4b4ed3b7452faddb3c82517ea58634f1"},
 ]
 "pytz 2022.2.1" = [
     {url = "https://files.pythonhosted.org/packages/24/0c/401283bb1499768e33ddd2e1a35817c775405c1f047a9dc088a29ce2ea5d/pytz-2022.2.1.tar.gz", hash = "sha256:cea221417204f2d1a2aa03ddae3e867921971d0d76f14d87abb4414415bbdcf5"},

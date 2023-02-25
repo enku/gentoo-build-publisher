@@ -13,7 +13,7 @@ dependencies = [
     "django",
     "pydantic",
     "python-dateutil",
-    "python-dispatch>=0.2.0",
+    "python-dispatch>=0.2.1",
     "requests",
     "simplejson",
     "yarl",
