@@ -57,20 +57,6 @@ class Storage:
         self.root = root
         self.tmpdir = root / "tmp"
 
-    def __repr__(self) -> str:
-        cls = type(self)
-
-        return f"{cls.__qualname__}({repr(self.root)})"
-
-    def __hash__(self) -> int:
-        return hash(self.root)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Storage):
-            return NotImplemented
-
-        return self.root == other.root
-
     @classmethod
     def from_settings(cls, settings: Settings) -> Storage:
         """Instatiate from settings"""
