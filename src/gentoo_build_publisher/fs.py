@@ -92,3 +92,11 @@ def symlink(source: str, target: str) -> None:
         raise EnvironmentError(f"{target} exists but is not a symlink")
 
     os.symlink(source, target)
+
+
+def check_symlink(symlink_: str, target: str) -> bool:
+    """Return True if the given symlinks point to the given target"""
+    if not os.path.islink(symlink_):
+        return False
+
+    return os.path.realpath(symlink_) == target

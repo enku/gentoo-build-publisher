@@ -1,5 +1,6 @@
 # pylint: disable=missing-docstring
 import datetime as dt
+import os
 import shutil
 
 from gentoo_build_publisher import fs
@@ -95,3 +96,26 @@ class SymlinkTestCase(TestCase):
         exception = cxt.exception
 
         self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
+
+
+class CheckSymlink(TestCase):
+    def test_good_symlink(self) -> None:
+        target = self.create_file("target")
+        symlink = self.tmpdir / "symlink"
+        os.symlink(target, symlink)
+
+        self.assertIs(fs.check_symlink(str(symlink), str(target)), True)
+
+    def test_symlink_points_to_different_target(self) -> None:
+        target = self.create_file("target")
+        symlink = self.tmpdir / "symlink"
+        os.symlink(target, symlink)
+        other = self.create_file("other")
+
+        self.assertIs(fs.check_symlink(str(symlink), str(other)), False)
+
+    def test_dangling_symlink(self) -> None:
+        name = self.tmpdir / "symlink"
+        os.symlink("bogus", name)
+
+        self.assertIs(fs.check_symlink(str(name), "bogus"), False)

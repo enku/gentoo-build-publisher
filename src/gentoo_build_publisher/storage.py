@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 import tempfile
 from collections.abc import Iterable
@@ -235,8 +234,10 @@ class Storage:
         Symlinks have to exist for all `Content`.
         """
         return all(
-            (symlink := self.root / item.value / name).exists()
-            and os.path.realpath(symlink) == str(self.get_path(build, item))
+            fs.check_symlink(
+                str(self.root.joinpath(item.value, name)),
+                str(self.get_path(build, item)),
+            )
             for item in Content
         )
 
