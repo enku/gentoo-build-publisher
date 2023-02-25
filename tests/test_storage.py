@@ -18,6 +18,7 @@ from gentoo_build_publisher.common import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     Storage,
+    ensure_storage_root,
     make_package_from_lines,
     make_packages,
     quick_check,
@@ -31,12 +32,16 @@ TEST_SETTINGS = Settings(
 )
 
 
-class StorageInitTestCase(TestCase):
+class EnsureStorageRootTestCase(TestCase):
     def test_creates_dir_if_not_exists(self) -> None:
         shutil.rmtree(self.tmpdir)
 
-        Storage(self.tmpdir)
+        ensure_storage_root(self.tmpdir)
         self.assertIs(os.path.isdir(self.tmpdir), True)
+        self.assertIs((self.tmpdir / "tmp").is_dir(), True)
+
+        for content in Content:
+            self.assertIs((self.tmpdir / content.value).is_dir(), True)
 
 
 class StorageReprTestCase(TestCase):

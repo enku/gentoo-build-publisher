@@ -55,13 +55,9 @@ class Storage:
     """
 
     def __init__(self, root: Path):
+        ensure_storage_root(root)
         self.root = root
-        self.tmpdir = self.root / "tmp"
-        self.tmpdir.mkdir(parents=True, exist_ok=True)
-
-        for content in Content:
-            content_path = self.root / content.value
-            content_path.mkdir(exist_ok=True)
+        self.tmpdir = root / "tmp"
 
     def __repr__(self) -> str:
         cls = type(self)
@@ -394,3 +390,13 @@ def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
             break
 
         yield make_package_from_lines(section_lines)
+
+
+def ensure_storage_root(root: Path) -> None:
+    """Initialize storage root, if necessary"""
+    tmpdir = root / "tmp"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+
+    for content in Content:
+        content_path = root / content.value
+        content_path.mkdir(exist_ok=True)
