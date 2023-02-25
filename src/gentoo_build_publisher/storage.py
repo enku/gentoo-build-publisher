@@ -284,16 +284,14 @@ class Storage:
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
 
         try:
-            with path.open("r") as gbp_json:
-                return GBPMetadata.from_json(gbp_json.read())  # type: ignore # pylint: disable=no-member
+            return GBPMetadata.from_json(path.read_text("UTF-8"))  # type: ignore # pylint: disable=no-member
         except FileNotFoundError:
             raise LookupError(f"gbp.json does not exist for {build}") from None
 
     def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
-        with path.open("w") as gbp_json:
-            gbp_json.write(metadata.to_json())  # type: ignore # pylint: disable=no-member
+        path.write_text(metadata.to_json(), "UTF-8")  # type: ignore # pylint: disable=no-member
 
 
 def make_package_from_lines(lines: Iterable[str]) -> Package:
