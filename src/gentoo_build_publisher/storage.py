@@ -4,16 +4,15 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import tarfile
 import tempfile
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Callable
+from typing import IO
 
-from gentoo_build_publisher import utils
+from gentoo_build_publisher import fs, utils
 from gentoo_build_publisher.common import TAG_SYM, Build, Content, GBPMetadata, Package
-from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
+from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class Storage:
     """
 
     def __init__(self, root: Path):
-        ensure_storage_root(root)
+        fs.init_root(root, ["tmp"] + [content.value for content in Content])
         self.root = root
         self.tmpdir = root / "tmp"
 
@@ -84,7 +83,7 @@ class Storage:
 
         Were it to be downloaded.
         """
-        return self.root / content.value / str(build)
+        return self.root.joinpath(content.value, str(build))
 
     def extract_artifact(
         self,
@@ -102,43 +101,24 @@ class Storage:
         if self.pulled(build):
             return
 
-        with tempfile.NamedTemporaryFile(dir=self.tmpdir, suffix="tar.gz") as artifact:
-            artifact.writelines(byte_stream)
-            artifact.flush()
+        logger.info("Extracting build: %s", build)
 
-            logger.info("Extracting build: %s", build)
-            bufsize = JENKINS_DEFAULT_CHUNK_SIZE
+        artifact_file = tempfile.NamedTemporaryFile(dir=self.tmpdir, suffix=".tar.gz")
+        artifact_dir = tempfile.TemporaryDirectory(dir=self.tmpdir)
+        with artifact_file, artifact_dir:
+            dirpath = Path(artifact_dir.name)
 
-            with tarfile.open(artifact.name, mode="r", bufsize=bufsize) as tar_file:
-                self._extract(build, tar_file, previous)
+            fs.save_stream(byte_stream, artifact_file)
+            fs.extract(Path(artifact_file.name), dirpath)
 
-            logger.info("Extracted build: %s", build)
+            for item in Content:
+                src = dirpath / item.value
+                dst = self.get_path(build, item)
+                link_dest = self.get_path(previous, item) if previous else None
 
-    def _extract(
-        self, build: Build, tar_file: tarfile.TarFile, previous: Build | None
-    ) -> None:
-        """Extract the given TarFile into the storage system as the given Build.
+                fs.copy_path(src, dst, link_dest)
 
-        If previous is given, use its extracted files and, when possible, create hard
-        links from previous build's files to build's when they are the same file.
-        """
-        with tempfile.TemporaryDirectory(dir=self.tmpdir) as dirpath:
-            tar_file.extractall(dirpath)
-
-            for content in Content:
-                src = Path(dirpath) / content.value
-                dst = self.get_path(build, content)
-
-                if dst.exists():
-                    msg = "Extract destination already exists: %s. Removing"
-                    logger.warning(msg, dst)
-                    shutil.rmtree(dst)
-
-                if previous:
-                    copy = copy_or_link(self.get_path(previous, content), dst)
-                    shutil.copytree(src, dst, symlinks=True, copy_function=copy)
-                else:
-                    os.renames(src, dst)
+        logger.info("Extracted build: %s", build)
 
     def pulled(self, build: Build) -> bool:
         """Returns True if build has been pulled
@@ -169,7 +149,7 @@ class Storage:
 
         for item in Content:
             path = self.root / item.value / name
-            self.symlink(str(build), str(path))
+            fs.symlink(str(build), str(path))
 
     def untag(self, machine: str, tag_name: str = "") -> None:
         """Untag a build.
@@ -277,16 +257,6 @@ class Storage:
         for item in Content:
             shutil.rmtree(self.get_path(build, item), ignore_errors=True)
 
-    @staticmethod
-    def symlink(source: str, target: str) -> None:
-        """If target is a symlink remove it. If it otherwise exists raise an error"""
-        if os.path.islink(target):
-            os.unlink(target)
-        elif os.path.exists(target):
-            raise EnvironmentError(f"{target} exists but is not a symlink")
-
-        os.symlink(source, target)
-
     def package_index_file(self, build: Build) -> IO[str]:
         """Return a file object for the Packages index file"""
         package_index_path = self.get_path(build, Content.BINPKGS) / "Packages"
@@ -324,31 +294,6 @@ class Storage:
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
         with path.open("w") as gbp_json:
             gbp_json.write(metadata.to_json())  # type: ignore # pylint: disable=no-member
-
-
-def quick_check(file1: str, file2: str) -> bool:
-    """Do an rsync-style quick check. Return true if files appear identical"""
-    try:
-        stat1 = os.stat(file1, follow_symlinks=False)
-        stat2 = os.stat(file2, follow_symlinks=False)
-    except FileNotFoundError:
-        return False
-
-    return stat1.st_mtime == stat2.st_mtime and stat1.st_size == stat2.st_size
-
-
-def copy_or_link(link_dest: Path, dst_root: Path) -> Callable[[str, str], None]:
-    """Create a copytree copy_function that uses rsync's link_dest logic"""
-
-    def copy(src: str, dst: str, follow_symlinks: bool = True) -> None:
-        relative = Path(dst).relative_to(dst_root)
-        target = str(link_dest / relative)
-        if quick_check(src, target):
-            os.link(target, dst, follow_symlinks=follow_symlinks)
-        else:
-            shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
-
-    return copy
 
 
 def make_package_from_lines(lines: Iterable[str]) -> Package:
@@ -390,13 +335,3 @@ def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
             break
 
         yield make_package_from_lines(section_lines)
-
-
-def ensure_storage_root(root: Path) -> None:
-    """Initialize storage root, if necessary"""
-    tmpdir = root / "tmp"
-    tmpdir.mkdir(parents=True, exist_ok=True)
-
-    for content in Content:
-        content_path = root / content.value
-        content_path.mkdir(exist_ok=True)

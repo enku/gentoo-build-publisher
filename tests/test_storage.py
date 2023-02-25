@@ -1,9 +1,7 @@
 """Tests for the storage type"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-import datetime
 import json
 import os
-import shutil
 import tarfile
 from unittest import mock
 
@@ -18,10 +16,8 @@ from gentoo_build_publisher.common import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     Storage,
-    ensure_storage_root,
     make_package_from_lines,
     make_packages,
-    quick_check,
 )
 
 from . import MockJenkins, TestCase, data
@@ -30,18 +26,6 @@ from .factories import PACKAGE_INDEX, BuildFactory
 TEST_SETTINGS = Settings(
     STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
 )
-
-
-class EnsureStorageRootTestCase(TestCase):
-    def test_creates_dir_if_not_exists(self) -> None:
-        shutil.rmtree(self.tmpdir)
-
-        ensure_storage_root(self.tmpdir)
-        self.assertIs(os.path.isdir(self.tmpdir), True)
-        self.assertIs((self.tmpdir / "tmp").is_dir(), True)
-
-        for content in Content:
-            self.assertIs((self.tmpdir / content.value).is_dir(), True)
 
 
 class StorageReprTestCase(TestCase):
@@ -155,20 +139,6 @@ class StoragePublishTestCase(TestCase):
         with self.assertRaises(FileNotFoundError):
             # When we call publish
             storage.publish(build)
-
-    def test_raise_exception_when_symlink_target_exists_and_not_symlink(self) -> None:
-        # Given the source and target which is not a symlink
-        source = self.create_file("source")
-        target = self.create_file("target")
-
-        # Then an exception is raised
-        with self.assertRaises(EnvironmentError) as cxt:
-            # When we call synlink on source and target
-            Storage.symlink(str(source), str(target))
-
-        exception = cxt.exception
-
-        self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
 
 
 class StoragePublishedTestCase(TestCase):
@@ -646,47 +616,6 @@ class StorageResolveTagTestCase(TestCase):
 
         with self.assertRaises(FileNotFoundError):
             self.publisher.storage.resolve_tag(f"{build.machine}@prod")
-
-
-class QuickCheckTestCase(TestCase):
-    """Tests for the quick_check() helper method"""
-
-    def test(self) -> None:
-        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = str(self.create_file("foo", b"test", timestamp))
-        file2 = str(self.create_file("bar", b"xxxx", timestamp))
-
-        result = quick_check(file1, file2)
-
-        self.assertIs(result, True)
-
-    def test_should_return_false_when_file_does_not_exist(self) -> None:
-        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = str(self.create_file("foo", b"test", timestamp))
-        file2 = str(self.tmpdir / "bogus")
-
-        result = quick_check(file1, file2)
-
-        self.assertIs(result, False)
-
-    def test_should_return_false_when_mtimes_differ(self) -> None:
-        timestamp1 = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        timestamp2 = datetime.datetime(2021, 10, 30, 7, 10, 40)
-        file1 = str(self.create_file("foo", b"test", timestamp1))
-        file2 = str(self.create_file("bar", b"test", timestamp2))
-
-        result = quick_check(file1, file2)
-
-        self.assertIs(result, False)
-
-    def test_should_return_false_when_sizes_differ(self) -> None:
-        timestamp = datetime.datetime(2021, 10, 30, 7, 10, 39)
-        file1 = str(self.create_file("foo", b"test", timestamp))
-        file2 = str(self.create_file("bar", b"tst", timestamp))
-
-        result = quick_check(file1, file2)
-
-        self.assertIs(result, False)
 
 
 class MakePackageFromLinesTestCase(TestCase):
