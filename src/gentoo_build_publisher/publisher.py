@@ -19,11 +19,10 @@ from __future__ import annotations
 
 import logging
 import math
-import tempfile
 from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
-from functools import cached_property, partial
+from functools import cached_property
 
 from pydispatch import Dispatcher
 
@@ -133,17 +132,8 @@ class BuildPublisher:
 
         logger.info("Pulling build: %s", build)
 
-        chunk_size = self.jenkins.config.download_chunk_size
-        tmpdir = str(self.storage.tmpdir)
-        with tempfile.TemporaryFile(buffering=chunk_size, dir=tmpdir) as temp:
-            logger.info("Downloading build: %s", build)
-            temp.writelines(self.jenkins.download_artifact(build))
-
-            logger.info("Downloaded build: %s", build)
-            temp.seek(0)
-
-            byte_stream = iter(partial(temp.read, chunk_size), b"")
-            self.storage.extract_artifact(build, byte_stream, previous)
+        byte_stream = self.jenkins.download_artifact(build)
+        self.storage.extract_artifact(build, byte_stream, previous)
 
         logger.info("Pulled build %s", build)
 
