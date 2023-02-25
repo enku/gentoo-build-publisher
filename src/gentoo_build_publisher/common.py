@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Any, NamedTuple, Protocol
+from typing import Any, Protocol
 
 from dataclasses_json import dataclass_json
 
@@ -17,7 +17,8 @@ class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""
 
 
-class Build(NamedTuple):
+@dataclass(frozen=True)
+class Build:
     """A build ID (machine.build_id)"""
 
     machine: str
@@ -29,7 +30,7 @@ class Build(NamedTuple):
     @property
     def id(self) -> str:  # pylint: disable=invalid-name
         """Return the string representation of the Build"""
-        return ".".join(self)
+        return f"{self.machine}.{self.build_id}"
 
     @classmethod
     def from_id(cls, build_id: str) -> Build:
@@ -134,22 +135,3 @@ class CacheProtocol(Protocol):
 
     def set(self, key: str, value: Any) -> None:
         """Set a value in the cache"""
-
-
-class BuildLike(Protocol):
-    """That which has a machine name and build_id"""
-
-    @property
-    def machine(self) -> str:
-        """Machine name for the build"""
-
-    @property
-    def build_id(self) -> str:
-        """Machine "id" for the build.  For Jenkins this an integer sequence"""
-
-    @property
-    def id(self) -> str:  # pylint: disable=invalid-name
-        """{build.machine}.{build.build_id}"""
-
-    def __hash__(self) -> int:
-        """Return the hash value for the BuildLike object"""

@@ -29,7 +29,6 @@ from pydispatch import Dispatcher
 
 from gentoo_build_publisher.common import (
     Build,
-    BuildLike,
     Change,
     GBPMetadata,
     Package,
@@ -75,7 +74,7 @@ class BuildPublisher:
 
         return cls(jenkins=jenkins, storage=storage, records=records)
 
-    def record(self, build: BuildLike) -> BuildRecord:
+    def record(self, build: Build) -> BuildRecord:
         """Return BuildRecord for this build.
 
         If we already have one, return it.
@@ -90,7 +89,7 @@ class BuildPublisher:
         except RecordNotFound:
             return BuildRecord(build.machine, build.build_id)
 
-    def publish(self, build: BuildLike) -> None:
+    def publish(self, build: Build) -> None:
         """Publish the build"""
         if not self.pulled(build):
             self.pull(build)
@@ -112,18 +111,18 @@ class BuildPublisher:
         """
         self.storage.untag(machine, tag_name)
 
-    def tags(self, build: BuildLike) -> list[str]:
+    def tags(self, build: Build) -> list[str]:
         """Return the list of tags for the given build
 
         Does not include the empty (published) tag.
         """
         return [tag for tag in self.storage.get_tags(build) if tag]
 
-    def published(self, build: BuildLike) -> bool:
+    def published(self, build: Build) -> bool:
         """Return True if this Build is published"""
         return self.storage.published(build)
 
-    def pull(self, build: BuildLike) -> bool:
+    def pull(self, build: Build) -> bool:
         """pull the Build to storage"""
         if self.pulled(build):
             return False
@@ -173,16 +172,16 @@ class BuildPublisher:
             "pulled", build=record, packages=packages, gbp_metadata=gbp_metadata
         )
 
-    def pulled(self, build: BuildLike) -> bool:
+    def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""
         return self.storage.pulled(build) and self.record(build).completed is not None
 
-    def delete(self, build: BuildLike) -> None:
+    def delete(self, build: Build) -> None:
         """Delete this build"""
         self.records.delete(build)
         self.storage.delete(build)
 
-    def get_packages(self, build: BuildLike) -> list[Package]:
+    def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
 

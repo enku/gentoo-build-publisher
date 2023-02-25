@@ -22,7 +22,7 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher.common import TAG_SYM, Build, BuildLike, Package, Status
+from gentoo_build_publisher.common import TAG_SYM, Build, Package, Status
 from gentoo_build_publisher.publisher import MachineInfo, get_publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.tasks import publish_build, pull_build
@@ -84,7 +84,7 @@ class Error:
 class BuildProxy:
     """Build Type resolvers"""
 
-    def __init__(self, build: BuildLike):
+    def __init__(self, build: Build):
         self.build = build
         self._record = build if isinstance(build, BuildRecord) else None
 

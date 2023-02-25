@@ -1,16 +1,9 @@
 """Functions/data to support the dashboard view"""
 import datetime as dt
 import itertools
-from dataclasses import astuple, dataclass
-from typing import Mapping, TypedDict
+from typing import Mapping, NamedTuple, TypedDict
 
-from gentoo_build_publisher.common import (
-    Build,
-    BuildLike,
-    CacheProtocol,
-    GBPMetadata,
-    Package,
-)
+from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color, lapsed
@@ -48,7 +41,7 @@ class DashboardContext(TypedDict):
     build_packages: dict[str, list[str]]
 
     # set of latest_packages that are published
-    latest_published: set[Build]
+    latest_published: set[BuildRecord]
 
     # recently built packages (for all machines)
     recent_packages: dict[str, set[str]]
@@ -57,10 +50,10 @@ class DashboardContext(TypedDict):
     total_package_size: dict[str, int]
 
     # List of the latest builds for each machine, if the machine has one
-    latest_builds: list[Build]
+    latest_builds: list[BuildRecord]
 
     # List of builds from the last 24 hours
-    built_recently: list[Build]
+    built_recently: list[BuildRecord]
 
     builds_over_time: list[list[int]]
 
@@ -68,8 +61,7 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
-@dataclass
-class BuildSummary:
+class BuildSummary(NamedTuple):
     """Struct returned by get_build_summary()"""
 
     latest_builds: list[BuildRecord]
@@ -136,7 +128,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
         context["built_recently"],
         context["build_packages"],
         context["latest_published"],
-    ) = astuple(get_build_summary(start, machines, publisher, cache))
+    ) = get_build_summary(start, machines, publisher, cache)
     context["unpublished_builds_count"] = len(
         [build for build in context["latest_builds"] if not publisher.published(build)]
     )
@@ -236,7 +228,7 @@ def bot_to_list(
 
 
 def get_metadata(
-    build: BuildLike, publisher: BuildPublisher, cache: CacheProtocol
+    build: Build, publisher: BuildPublisher, cache: CacheProtocol
 ) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
@@ -261,7 +253,7 @@ def get_metadata(
 
 
 def get_packages(
-    build: BuildLike, publisher: BuildPublisher, cache: CacheProtocol
+    build: Build, publisher: BuildPublisher, cache: CacheProtocol
 ) -> list[Package]:
     """Return a list of packages from a build by looking up the index.
 

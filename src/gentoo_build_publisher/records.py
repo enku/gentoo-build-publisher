@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.metadata
-from typing import Any, Iterable, NamedTuple, Protocol, Type
+from dataclasses import dataclass
+from typing import Any, Iterable, Protocol, Type
 
-from gentoo_build_publisher.common import Build, BuildLike
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import Settings
 
 
@@ -13,14 +14,9 @@ class RecordNotFound(LookupError):
     """Not found exception for the .get() method"""
 
 
-class BuildRecord(NamedTuple):
+@dataclass(frozen=True)
+class BuildRecord(Build):
     """A Build record from the database"""
-
-    machine: str
-    """Machine name for the build"""
-
-    build_id: str
-    """Machine "id" for the build.  For Jenkins this an integer sequence"""
 
     note: str | None = None
     """Optional user-created build note"""
@@ -40,16 +36,11 @@ class BuildRecord(NamedTuple):
     built: dt.datetime | None = None
     """(Jenkins) timestamp when the build started"""
 
+    def __post_init__(self) -> None:
+        super().__init__(self.machine, self.build_id)
+
     def __str__(self) -> str:
         return self.id
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}({(self.id)!r})"
-
-    @property
-    def id(self) -> str:  # pylint: disable=invalid-name
-        """Return the string representation of the Build"""
-        return f"{self.machine}.{self.build_id}"
 
     def purge_key(self) -> dt.datetime:
         """Purge key for build records.  Purge on submitted date"""
@@ -68,13 +59,13 @@ class RecordDB(Protocol):  # pragma: no cover
     def save(self, build_record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save changes back to the database"""
 
-    def get(self, build: BuildLike) -> BuildRecord:
+    def get(self, build: Build) -> BuildRecord:
         """Retrieve db record"""
 
     def for_machine(self, machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
 
-    def delete(self, build: BuildLike) -> None:
+    def delete(self, build: Build) -> None:
         """Delete this Build from the db"""
 
     def exists(self, build: Build) -> bool:

@@ -23,16 +23,6 @@ BACKENDS = [["django"]]
 UTC = timezone.utc
 
 
-class BuildRecordTestCase(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.record = BuildRecordFactory()
-
-    def test_repr_buildrecord(self) -> None:
-        self.assertEqual(repr(self.record), f"BuildRecord('{self.record}')")
-
-
 class RecordDBTestCase(TestCase):
     def backend(self, backend_name: str) -> RecordDB:
         settings = Settings(

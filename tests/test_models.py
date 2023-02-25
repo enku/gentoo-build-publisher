@@ -1,6 +1,7 @@
 """Unit tests for gbp models"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
+from dataclasses import replace
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.models import (
@@ -109,8 +110,9 @@ class DjangoDBTestCase(TestCase):
         self.record = self.records.get(Build.from_id(str(self.build_model)))
 
     def test_submitted_set(self) -> None:
-        record = self.record._replace(
-            submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
+        record = replace(
+            self.record,
+            submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
         )
         self.records.save(record)
 
@@ -128,8 +130,9 @@ class DjangoDBTestCase(TestCase):
         )
 
     def test_completed_set(self) -> None:
-        record = self.record._replace(
-            completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc)
+        record = replace(
+            self.record,
+            completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
         )
         self.records.save(record)
 
@@ -141,7 +144,7 @@ class DjangoDBTestCase(TestCase):
         )
 
     def test_save_note(self) -> None:
-        record = self.record._replace(note="This is a test")
+        record = replace(self.record, note="This is a test")
         self.records.save(record)
 
         self.build_model.refresh_from_db()

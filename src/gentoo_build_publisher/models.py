@@ -4,6 +4,7 @@ Django models for Gentoo Build Publisher
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import replace
 from typing import Any
 
 from django.db import models
@@ -57,12 +58,12 @@ class BuildModel(models.Model):
             built=self.built,
         )
         try:
-            record = record._replace(note=self.buildnote.note)
+            record = replace(record, note=self.buildnote.note)
         except BuildNote.DoesNotExist:
             pass
 
         try:
-            record = record._replace(logs=self.buildlog.logs)
+            record = replace(record, logs=self.buildlog.logs)
         except BuildLog.DoesNotExist:
             pass
 
@@ -71,7 +72,7 @@ class BuildModel(models.Model):
         except KeptBuild.DoesNotExist:
             pass
         else:
-            record = record._replace(keep=True)
+            record = replace(record, keep=True)
 
         return record
 
@@ -160,7 +161,7 @@ class DjangoDB:
     @staticmethod
     def save(build_record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save changes back to the database"""
-        build_record = build_record._replace(**fields)
+        build_record = replace(build_record, **fields)
 
         try:
             model = BuildModel.objects.get(
@@ -172,7 +173,7 @@ class DjangoDB:
             )
 
         submitted = build_record.submitted or timezone.now()
-        build_record = build_record._replace(submitted=submitted)
+        build_record = replace(build_record, submitted=submitted)
         model.submitted = submitted
         model.completed = build_record.completed
         model.built = build_record.built

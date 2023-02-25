@@ -14,7 +14,7 @@ import requests
 from dataclasses_json import dataclass_json
 from yarl import URL
 
-from gentoo_build_publisher.common import Build, BuildLike
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 
 AuthTuple = tuple[str, str]
@@ -139,7 +139,7 @@ class URLBuilder:
         except KeyError as error:
             raise AttributeError(repr(name)) from error
 
-    def builder(self, formatter: str, build: BuildLike) -> URL:
+    def builder(self, formatter: str, build: Build) -> URL:
         """Given the parts, and build, build a URL"""
         return self.config.base_url / formatter.format(config=self.config, build=build)
 
@@ -168,7 +168,7 @@ class Jenkins:
 
         return ProjectPath("/".join(url_path.split("/job/")))
 
-    def download_artifact(self, build: BuildLike) -> Iterable[bytes]:
+    def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.url.artifact(build)
         response = self.session.get(str(url), stream=True, timeout=self.timeout)
@@ -178,7 +178,7 @@ class Jenkins:
             chunk_size=self.config.download_chunk_size, decode_unicode=False
         )
 
-    def get_logs(self, build: BuildLike) -> str:
+    def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
         url = self.url.logs(build)
         response = self.session.get(str(url), timeout=self.timeout)
@@ -186,7 +186,7 @@ class Jenkins:
 
         return response.text
 
-    def get_metadata(self, build: BuildLike) -> JenkinsMetadata:
+    def get_metadata(self, build: Build) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url.metadata(build)
         response = self.session.get(str(url), timeout=self.timeout)
@@ -204,7 +204,7 @@ class Jenkins:
 
     def schedule_build(self, machine: str) -> str:
         """Schedule a build on Jenkins"""
-        # Here self.url needs a BuildLike, but we only have the machine name. Just pass
+        # Here self.url needs a Build, but we only have the machine name. Just pass
         # a bogus Build with that name
         url = self.url.build_scheduler(Build(machine, "bogus"))
         response = self.session.post(str(url), timeout=self.timeout)
