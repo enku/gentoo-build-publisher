@@ -53,7 +53,7 @@ class BuildRecord(Build):
         return record_db.save(self, **fields)
 
 
-class RecordDB(Protocol):  # pragma: no cover
+class RecordDB(Protocol):
     """Repository for BuildRecords"""
 
     def save(self, build_record: BuildRecord, **fields: Any) -> BuildRecord:
