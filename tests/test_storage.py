@@ -19,7 +19,7 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     Storage,
     make_package_from_lines,
-    package_sections,
+    make_packages,
     quick_check,
 )
 
@@ -701,8 +701,8 @@ class MakePackageFromLinesTestCase(TestCase):
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
 
-class PackageSectionsTestCase(TestCase):
-    """Tests for the package_sections method"""
+class MakePackagesTestCase(TestCase):
+    """Tests for the make_packages method"""
 
     def test(self) -> None:
         build = BuildFactory()
@@ -715,10 +715,6 @@ class PackageSectionsTestCase(TestCase):
             for line in opened_index_file:  # skip preamble
                 if not line.strip():
                     break
-            sections = [*package_sections(opened_index_file)]
+            packages = [*make_packages(opened_index_file)]
 
-        self.assertEqual(len(sections), 4)
-
-        for section in sections:
-            for name in ["BUILD_ID", "CPV", "SIZE", "REPO", "PATH", "BUILD_TIME"]:
-                self.assertTrue(any(line.startswith(f"{name}: ") for line in section))
+        self.assertEqual(len(packages), 4)

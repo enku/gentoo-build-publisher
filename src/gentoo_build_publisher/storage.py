@@ -303,17 +303,12 @@ class Storage:
 
     def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
-        packages = []
-
         with self.package_index_file(build) as package_index_file:
             # Skip preamble (for now)
             while package_index_file.readline().rstrip():
                 pass
 
-            for section in package_sections(package_index_file):
-                packages.append(make_package_from_lines(section))
-
-        return packages
+            return [*make_packages(package_index_file)]
 
     def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
@@ -385,8 +380,8 @@ def make_package_from_lines(lines: Iterable[str]) -> Package:
         ) from None
 
 
-def package_sections(package_index_file: IO[str]) -> Iterable[list[str]]:
-    """Yield section lines from Package index file
+def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
+    """Yield Packages from Package index file
 
     Assumes file pointer is after the preamble.
     """
@@ -398,4 +393,4 @@ def package_sections(package_index_file: IO[str]) -> Iterable[list[str]]:
         if not section_lines:
             break
 
-        yield section_lines
+        yield make_package_from_lines(section_lines)
