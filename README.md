@@ -40,10 +40,11 @@ machines sync from.
 
 * Build a Gentoo Build Publisher instance. Refer to the [Install
   Guide](https://github.com/enku/gentoo-build-publisher/blob/master/docs/how-to-install.md).
-* Create "machines" and "repos" jobs in Jenkins.  Use [the following git
-  repo](https://github.com/enku/gbp-machines) as a starting point. This can be
-  done "manually" in the Jenkins interface or using the GBP command line
-  interface (`gbp addrepo`/`gbp addmachine`).
+* Create "machines" and "repos" jobs in Jenkins.  For example `gbp addrepo
+  gentoo https://anongit.gentoo.org/git/repo/gentoo.git; gbp addmachine base
+  https://github.com/enku/gbp-machines.git` Use [the gbp-machines
+  repo](https://github.com/enku/gbp-machines) as a starting point. This can
+  also be done manually within the Jenkins UI.
 * Once a Jenkins job has been pulled by Gentoo Build Publisher it can be
   published so that actual machines can use it (e.g. rsync for repos, http for
   binpkgs).  Use the CLI (`gbp publish`) to publish a pulled build.
