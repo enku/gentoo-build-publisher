@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import IO
 
-from gentoo_build_publisher import fs, utils
+from gentoo_build_publisher import fs, string, utils
 from gentoo_build_publisher.common import TAG_SYM, Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.settings import Settings
 
@@ -283,13 +283,10 @@ class Storage:
 
 def make_package_from_lines(lines: Iterable[str]) -> Package:
     """Given the appropriate lines from Packages, return a Package object"""
-    package_info: dict[str, str] = {}
-
-    for line in lines:
-        key, _, value = line.partition(":")
-        key = key.rstrip().lower()
-        value = value.lstrip()
-        package_info[key] = value
+    package_info = {
+        name.lower(): value.rstrip()
+        for (name, value) in (string.namevalue(line, ":") for line in lines)
+    }
 
     try:
         return Package(
@@ -311,12 +308,5 @@ def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
 
     Assumes file pointer is after the preamble.
     """
-    while True:
-        section_lines: list[str] = []
-        while line := package_index_file.readline().rstrip():
-            section_lines.append(line)
-
-        if not section_lines:
-            break
-
-        yield make_package_from_lines(section_lines)
+    for section in string.get_sections(package_index_file):
+        yield make_package_from_lines(section)
