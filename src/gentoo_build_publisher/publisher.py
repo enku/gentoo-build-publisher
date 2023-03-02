@@ -115,7 +115,7 @@ class BuildPublisher:
 
         Does not include the empty (published) tag.
         """
-        return [tag for tag in self.storage.get_tags(build) if tag]
+        return self.storage.get_tags(build, include_published=False)
 
     def published(self, build: Build) -> bool:
         """Return True if this Build is published"""

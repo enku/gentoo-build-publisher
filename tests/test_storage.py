@@ -507,6 +507,15 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, [""])
 
+    def test_published_tags_when_include_published_is_false(self) -> None:
+        build = BuildFactory()
+        self.publisher.publish(build)
+        self.publisher.storage.tag(build, "stable")
+
+        tags = self.publisher.storage.get_tags(build, include_published=False)
+
+        self.assertEqual(tags, ["stable"])
+
     def test_unpulled_builds_have_no_tags(self) -> None:
         build = BuildFactory()
 

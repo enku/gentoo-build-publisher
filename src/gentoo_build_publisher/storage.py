@@ -152,7 +152,7 @@ class Storage:
             if path.is_symlink():
                 path.unlink()
 
-    def get_tags(self, build: Build) -> list[str]:
+    def get_tags(self, build: Build, include_published: bool = True) -> list[str]:
         """Return the tags for the given build.
 
         If the build is published, the list will contain the empty string.
@@ -161,7 +161,7 @@ class Storage:
         tags = []
         machine = build.machine
 
-        if self.published(build):
+        if include_published and self.published(build):
             tags.append("")
 
         for path in (self.root / Content.BINPKGS.value).glob(f"{machine}{TAG_SYM}*"):
