@@ -32,7 +32,7 @@ def extract(infile: Path, outdir: Path) -> None:
 
 
 def save_stream(byte_stream: Iterable[bytes], outfile: IO[bytes]) -> None:
-    """Gven the byte stream, save and buffer it to given outfile
+    """Given the byte stream, save and buffer it to given outfile
 
     These are buffered writes if the given file is opened with buffering.
     """
@@ -71,7 +71,13 @@ def quick_check(file1: str, file2: str) -> bool:
 
 
 def copy_or_link(link_dest: Path, dst_root: Path) -> Callable[[str, str], None]:
-    """Create a copytree copy_function that uses rsync's link_dest logic"""
+    """Create a shutil.copytree copy_function that uses rsync's link_dest logic
+
+    Utilize shutil.copy2 (the default copy_function) when the quick_check() fails,
+    otherwise instead of copying create a (hard) link from source to destination.
+
+    https://docs.python.org/3/library/shutil.html#shutil.copytree
+    """
 
     def copy(src: str, dst: str, follow_symlinks: bool = True) -> None:
         relative = Path(dst).relative_to(dst_root)
