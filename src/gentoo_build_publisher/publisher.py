@@ -22,7 +22,7 @@ import math
 from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
-from functools import cached_property
+from functools import cache, cached_property
 
 from pydispatch import Dispatcher
 
@@ -306,14 +306,7 @@ class MachineInfo:
         return machine_tags
 
 
-_PUBLISHER: BuildPublisher | None = None
-
-
+@cache
 def get_publisher() -> BuildPublisher:
     """Return the "system" publisher"""
-    global _PUBLISHER  # pylint: disable=global-statement
-
-    if _PUBLISHER is None:
-        _PUBLISHER = BuildPublisher.from_settings(Settings.from_environ())
-
-    return _PUBLISHER
+    return BuildPublisher.from_settings(Settings.from_environ())

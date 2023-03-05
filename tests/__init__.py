@@ -60,7 +60,10 @@ class TestCase(django.test.TestCase):
         patch.start()
 
         self.publisher: publisher.BuildPublisher = BuildPublisherFactory()
-        patch = mock.patch.object(publisher, "_PUBLISHER", new=self.publisher)
+        publisher.get_publisher.cache_clear()
+        patch = mock.patch.object(
+            publisher.BuildPublisher, "from_settings", return_value=self.publisher
+        )
         self.addCleanup(patch.stop)
         patch.start()
 

@@ -2,11 +2,13 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
 import os
+import tempfile
+import unittest
+from pathlib import Path
 from unittest import mock
 
 from yarl import URL
 
-import gentoo_build_publisher.publisher
 from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.models import BuildModel, DjangoDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
@@ -19,7 +21,19 @@ from .factories import BuildFactory
 utc = datetime.timezone.utc
 
 
-class BuildPublisherTestCase(TestCase):
+def set_up_tmpdir_for_test(test_case: unittest.TestCase) -> Path:
+    tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+    test_case.addCleanup(tmpdir.cleanup)
+
+    return Path(tmpdir.name)
+
+
+class BuildPublisherFromSettingsTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.tmpdir = set_up_tmpdir_for_test(self)
+
     def test_from_settings_returns_publisher_with_given_settings(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="https://testserver.invalid/",
@@ -34,6 +48,8 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
         self.assertIsInstance(publisher.records, DjangoDB)
 
+
+class BuildPublisherTestCase(TestCase):
     def test_publish(self) -> None:
         """.publish should publish the build artifact"""
         build = BuildFactory()
@@ -442,14 +458,14 @@ class ScheduleBuildTestCase(TestCase):
         self.assertEqual(self.publisher.jenkins.scheduled_builds, ["babette"])
 
 
-class GetPublisherTestCase(TestCase):
+class GetPublisherTestCase(unittest.TestCase):
     """Tests for the get_publisher function"""
 
     def setUp(self) -> None:
         super().setUp()
 
-        # pylint: disable=protected-access
-        gentoo_build_publisher.publisher._PUBLISHER = None
+        get_publisher.cache_clear()
+        self.tmpdir = set_up_tmpdir_for_test(self)
 
     def test_creates_publisher_from_env_variables_when_global_is_none(self) -> None:
         env = {
