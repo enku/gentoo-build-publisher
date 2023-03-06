@@ -2,9 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime
 import os
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import mock
 
 from yarl import URL
@@ -15,17 +13,10 @@ from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_pu
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import utctime
 
-from . import TestCase
+from . import TestCase, set_up_tmpdir_for_test
 from .factories import BuildFactory
 
 utc = datetime.timezone.utc
-
-
-def set_up_tmpdir_for_test(test_case: unittest.TestCase) -> Path:
-    tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-    test_case.addCleanup(tmpdir.cleanup)
-
-    return Path(tmpdir.name)
 
 
 class BuildPublisherFromSettingsTestCase(unittest.TestCase):

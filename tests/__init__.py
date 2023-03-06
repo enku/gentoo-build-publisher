@@ -45,13 +45,11 @@ class TestCase(django.test.TestCase):
 
         super().setUp()
 
-        tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        self.addCleanup(tmpdir.cleanup)
-        self.tmpdir = Path(tmpdir.name)
+        self.tmpdir = set_up_tmpdir_for_test(self)
         patch = mock.patch.dict(
             os.environ,
             {
-                "BUILD_PUBLISHER_STORAGE_PATH": tmpdir.name,
+                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
                 "BUILD_PUBLISHER_RECORDS_BACKEND": "django",
             },
@@ -272,3 +270,10 @@ def graphql(query: str, variables: dict[str, Any] | None = None) -> Any:
     )
 
     return response.json()
+
+
+def set_up_tmpdir_for_test(test_case: UnitTestTestCase) -> Path:
+    tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+    test_case.addCleanup(tmpdir.cleanup)
+
+    return Path(tmpdir.name)
