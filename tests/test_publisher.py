@@ -8,8 +8,8 @@ from unittest import mock
 from yarl import URL
 
 from gentoo_build_publisher.common import Content
-from gentoo_build_publisher.memorydb import MemoryDB
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
+from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import utctime
 
@@ -37,7 +37,7 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
-        self.assertIsInstance(publisher.records, MemoryDB)
+        self.assertIsInstance(publisher.records, RecordDB)
 
 
 class BuildPublisherTestCase(TestCase):
@@ -473,4 +473,4 @@ class GetPublisherTestCase(unittest.TestCase):
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(publisher.storage.root, self.tmpdir / "test_get_publisher")
-        self.assertIsInstance(publisher.records, MemoryDB)
+        self.assertIsInstance(publisher.records, RecordDB)

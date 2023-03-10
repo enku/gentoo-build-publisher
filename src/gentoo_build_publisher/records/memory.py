@@ -12,7 +12,7 @@ BuildId = str
 Machine = str
 
 
-class MemoryDB:
+class RecordDB:
     """Memory-backed RecordDB
 
     Implements the RecordDB interface and stores BuildRecords in a dict of dicts with
