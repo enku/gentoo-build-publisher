@@ -82,7 +82,7 @@ class RecordDB(Protocol):
     def next(self, build: BuildRecord, completed: bool = True) -> BuildRecord | None:
         """Return the next build in the db or None"""
 
-    def latest(self, name: str, completed: bool = False) -> BuildRecord | None:
+    def latest(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
@@ -92,10 +92,10 @@ class RecordDB(Protocol):
     def search_notes(self, machine: str, key: str) -> Iterable[BuildRecord]:
         """search notes for given machine"""
 
-    def count(self, name: str | None = None) -> int:
+    def count(self, machine: str | None = None) -> int:
         """Return the total number of builds
 
-        If `name` is given, return the total number of builds for the given machine
+        If `machine` is given, return the total number of builds for the given machine
         """
 
 

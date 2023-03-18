@@ -138,13 +138,13 @@ class RecordDB:
 
         return records[0]
 
-    def latest(self, name: str, completed: bool = False) -> BuildRecord | None:
+    def latest(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest build for the given machine name.
 
         If `completed` is `True`, only consider completed builds.
         If no builds exist for the given machine name, return None.
         """
-        records = self.for_machine(name)
+        records = self.for_machine(machine)
 
         if completed:
             records = [record for record in records if record.completed is not None]
@@ -165,13 +165,13 @@ class RecordDB:
             if record.note and key in record.note:
                 yield record
 
-    def count(self, name: str | None = None) -> int:
+    def count(self, machine: str | None = None) -> int:
         """Return the total number of builds
 
-        If `name` is given, return the total number of builds for the given machine
+        If `machine` is given, return the total number of builds for the given machine
         """
-        if name:
-            return len(self.builds.get(name, {}))
+        if machine:
+            return len(self.builds.get(machine, {}))
 
         return sum(len(builds) for builds in self.builds.values())
 
