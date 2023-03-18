@@ -1,6 +1,7 @@
 """Tests for the gentoo_build_publisher.utils module"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
+import typing as t
 from unittest import TestCase, mock
 
 from gentoo_build_publisher import utils
@@ -117,3 +118,16 @@ class UtcTime(TestCase):
         result = utils.utctime()
 
         self.assertEqual(result, utcnow.replace(tzinfo=dt.timezone.utc))
+
+
+class GetNext(TestCase):
+    def test_with_next(self) -> None:
+        myiter: t.Iterator[int] = iter([1, 2, 3])
+        next(myiter)
+
+        self.assertEqual(utils.get_next(myiter), 2)
+
+    def test_with_exhausted_iterable(self) -> None:
+        myiter: t.Iterator[int] = iter([])
+
+        self.assertEqual(utils.get_next(myiter), None)

@@ -6,8 +6,9 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import NamedTuple, Type, TypeVar
+from typing import Iterator, NamedTuple, Type, TypeVar, overload
 
+IT = TypeVar("IT")
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
@@ -127,3 +128,26 @@ def utctime(time: dt.datetime | None = None) -> dt.datetime:
         time = dt.datetime.utcnow()
 
     return time.replace(tzinfo=dt.timezone.utc)
+
+
+@overload
+def get_next(iterator: Iterator[IT]) -> IT | None:
+    ...
+
+
+@overload
+def get_next(iterator: Iterator[IT], default: None) -> IT | None:
+    ...
+
+
+@overload
+def get_next(iterator: Iterator[IT], default: IT) -> IT:
+    ...
+
+
+def get_next(iterator: Iterator[IT], default: IT | None = None) -> IT | None:
+    """Return the next item in the iterator or default if exhausted"""
+    try:
+        return next(iterator)
+    except StopIteration:
+        return default
