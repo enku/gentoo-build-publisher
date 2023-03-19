@@ -21,7 +21,11 @@ SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
 
 
 def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
-    test_case.assertEqual(result, {"data": expected})
+    test_case.assertFalse(result.get("errors"))
+
+    data = result["data"]
+
+    test_case.assertEqual(data, expected)
 
 
 class BuildQueryTestCase(TestCase):
