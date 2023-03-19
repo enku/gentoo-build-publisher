@@ -12,10 +12,12 @@ from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
 
-from . import TestCase, graphql
+from . import TestCase, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
+
+SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
 
 
 def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
@@ -803,6 +805,96 @@ class TagsTestCase(TestCase):
         result = graphql(query, variables={"machine": build.machine, "tag": "prod"})
 
         assert_data(self, result, {"resolveBuildTag": None})
+
+
+class SearchQueryTestCase(TestCase):
+    """Tests for the search query"""
+
+    query = """
+    query ($machine: String!, $field: SearchField!, $key: String!) {
+     search(machine: $machine, field: $field, key: $key) {
+        logs
+        notes
+      }
+    }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.builds = []
+
+        for _, field in SEARCH_PARAMS:
+            build1 = BuildFactory()
+            record = self.publisher.record(build1)
+            self.publisher.records.save(record, **{field: f"test foo {field}"})
+            build2 = BuildFactory()
+            record = self.publisher.record(build2)
+            self.publisher.records.save(record, **{field: f"test bar {field}"})
+
+            self.builds.append(build1)
+            self.builds.append(build2)
+
+    @parametrized(SEARCH_PARAMS)
+    def test_single_match(self, enum: str, field: str) -> None:
+        result = graphql(
+            self.query, variables={"machine": "babette", "field": enum, "key": "foo"}
+        )
+
+        other = "logs" if enum == "NOTES" else "notes"
+        mine = "notes" if enum == "NOTES" else "logs"
+        assert_data(
+            self, result, {"search": [{mine: f"test foo {field}", other: None}]}
+        )
+
+    @parametrized(SEARCH_PARAMS)
+    def test_multiple_match(self, enum: str, field: str) -> None:
+        result = graphql(
+            self.query, variables={"machine": "babette", "field": enum, "key": "test"}
+        )
+
+        expected = [
+            {
+                "notes" if enum == "NOTES" else "logs": f"test bar {field}",
+                "logs" if enum == "NOTES" else "notes": None,
+            },
+            {
+                "notes" if enum == "NOTES" else "logs": f"test foo {field}",
+                "logs" if enum == "NOTES" else "notes": None,
+            },
+        ]
+        assert_data(self, result, {"search": expected})
+
+    @parametrized(SEARCH_PARAMS)
+    def test_only_matches_given_machine(self, enum: str, field: str) -> None:
+        build = BuildFactory(machine="lighthouse")
+        record = self.publisher.record(build)
+        self.publisher.records.save(record, **{field: "test foo"})
+
+        result = graphql(
+            self.query,
+            variables={"machine": "lighthouse", "field": enum, "key": "test"},
+        )
+
+        assert_data(
+            self,
+            result,
+            {
+                "search": [
+                    {
+                        "logs" if enum == "NOTES" else "notes": None,
+                        "notes" if enum == "NOTES" else "logs": "test foo",
+                    }
+                ]
+            },
+        )
+
+    def test_when_named_machine_does_not_exist(self) -> None:
+        result = graphql(
+            self.query, variables={"machine": "bogus", "field": "NOTES", "key": "test"}
+        )
+
+        assert_data(self, result, {"search": []})
 
 
 class SearchNotesQueryTestCase(TestCase):

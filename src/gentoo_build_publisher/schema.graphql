@@ -32,6 +32,14 @@ type MachineSummary {
   tags: [String!]!
 }
 
+"""
+Fields that may be searched using the search() query
+"""
+enum SearchField {
+  NOTES
+  LOGS
+}
+
 enum StatusEnum {
   REMOVED
   CHANGED
@@ -59,7 +67,8 @@ type Query {
   diff(left: ID!, right: ID!): DiffStat
   latest(machine: String!): Build
   machines: [MachineSummary!]!
-  searchNotes(machine: String!, key: String!): [Build!]!
+  search(machine: String!, field: SearchField!, key: String!): [Build!]!
+  searchNotes(machine: String!, key: String!): [Build!]! @deprecated(reason: "Use `search()` instead")
   version: String!
   working: [Build!]!
   resolveBuildTag(machine: String!, tag: String!): Build

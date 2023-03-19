@@ -251,6 +251,16 @@ def resolve_query_diff(
     }
 
 
+@query.field("search")
+def resolve_query_search(
+    _obj: Any, _info: GraphQLResolveInfo, machine: str, field: str, key: str
+) -> list[BuildProxy]:
+    search_field = {"NOTES": "note", "LOGS": "logs"}[field]
+    publisher = get_publisher()
+
+    return [BuildProxy(i) for i in publisher.search(machine, search_field, key)]
+
+
 @query.field("searchNotes")
 def resolve_query_searchnotes(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
