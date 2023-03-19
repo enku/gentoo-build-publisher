@@ -16,7 +16,7 @@ class RecordDB:
     """Implements the RecordDB Protocol using Django's ORM as a backing store"""
 
     # What fields we implement .search() for
-    searchable_fields = ["note"]
+    searchable_fields = ["logs", "note"]
 
     @staticmethod
     def save(build_record: BuildRecord, **fields: Any) -> BuildRecord:
@@ -187,9 +187,14 @@ class RecordDB:
         if field not in cls.searchable_fields:
             raise ValueError(f"{field} is not a searchable field")
 
+        field_filter = {
+            "logs": "buildlog__logs__icontains",
+            "note": "buildnote__note__icontains",
+        }.get(field, f"{field}__icontains")
+
         build_models = (
             BuildModel.objects.select_related(*RELATED)
-            .filter(machine=machine, buildnote__note__icontains=key)
+            .filter(**{"machine": machine, field_filter: key})
             .order_by("-submitted")
         )
 

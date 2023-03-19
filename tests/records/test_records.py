@@ -2,6 +2,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from datetime import timezone
+from itertools import product
 from pathlib import Path
 
 from django.test import TestCase
@@ -217,31 +218,35 @@ class RecordDBTestCase(TestCase):
         records.delete(build2)
         self.assertEqual(records.latest("lighthouse", completed=False).id, build1.id)
 
-    @parametrized(BACKENDS)
-    def test_search(self, backend: str) -> None:
+    @parametrized(product(BACKENDS[0], ["logs", "note"]))
+    def test_search(self, backend: str, field: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
-            note="foo",
+            **{
+                "built": dt.datetime.fromtimestamp(1662310204, UTC),
+                "completed": dt.datetime.fromtimestamp(1662311204, UTC),
+                "machine": "lighthouse",
+                field: "foo",
+            },
         )
         records.save(build1)
         build2 = BuildRecordFactory(
-            machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662315204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
-            note="foobar",
+            **{
+                "built": dt.datetime.fromtimestamp(1662310204, UTC),
+                "completed": dt.datetime.fromtimestamp(1662311204, UTC),
+                "machine": "lighthouse",
+                field: "foobar",
+            },
         )
         records.save(build2)
 
-        builds = records.search("lighthouse", "note", "foo")
+        builds = records.search("lighthouse", field, "foo")
         self.assertEqual([build.id for build in builds], [build2.id, build1.id])
 
-        builds = records.search("lighthouse", "note", "bar")
+        builds = records.search("lighthouse", field, "bar")
         self.assertEqual([build.id for build in builds], [build2.id])
 
-        builds = records.search("bogus", "note", "foo")
+        builds = records.search("bogus", field, "foo")
         self.assertEqual([build.id for build in builds], [])
 
     @parametrized(BACKENDS)
