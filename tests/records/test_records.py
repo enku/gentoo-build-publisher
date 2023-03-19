@@ -218,7 +218,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.latest("lighthouse", completed=False).id, build1.id)
 
     @parametrized(BACKENDS)
-    def test_search_notes(self, backend: str) -> None:
+    def test_search(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
@@ -235,14 +235,25 @@ class RecordDBTestCase(TestCase):
         )
         records.save(build2)
 
-        builds = records.search_notes("lighthouse", "foo")
+        builds = records.search("lighthouse", "note", "foo")
         self.assertEqual([build.id for build in builds], [build2.id, build1.id])
 
-        builds = records.search_notes("lighthouse", "bar")
+        builds = records.search("lighthouse", "note", "bar")
         self.assertEqual([build.id for build in builds], [build2.id])
 
-        builds = records.search_notes("bogus", "foo")
+        builds = records.search("bogus", "note", "foo")
         self.assertEqual([build.id for build in builds], [])
+
+    @parametrized(BACKENDS)
+    def test_search_unsearchable_field(self, backend: str) -> None:
+        # Assume "machine" is an unsearchable field
+        unsearchable = "machine"
+
+        records = self.backend(backend)
+
+        with self.assertRaises(ValueError):
+            # pylint: disable=expression-not-assigned
+            [*records.search("lighthouse", unsearchable, "foo")]
 
     @parametrized(BACKENDS)
     def test_count(self, backend: str) -> None:

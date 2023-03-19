@@ -189,9 +189,9 @@ class BuildPublisher:
             if not (record.keep or self.storage.get_tags(record)):
                 self.delete(record)
 
-    def search_notes(self, machine: str, key: str) -> list[BuildRecord]:
-        """search notes for given machine"""
-        return list(self.records.search_notes(machine, key))
+    def search(self, machine: str, field: str, key: str) -> list[BuildRecord]:
+        """search the given field on the given machine"""
+        return list(self.records.search(machine, field, key))
 
     def diff_binpkgs(self, left: Build, right: Build) -> Iterable[Change]:
         """Compare two package's binpkgs and generate the differences"""

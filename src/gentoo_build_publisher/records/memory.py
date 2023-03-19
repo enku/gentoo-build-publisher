@@ -33,6 +33,8 @@ class RecordDB:
     This backend can be used for testing.
     """
 
+    searchable_fields = ["logs", "note"]
+
     def __init__(self) -> None:
         self.builds: dict[Machine, dict[BuildId, BuildRecord]] = {}
 
@@ -155,14 +157,22 @@ class RecordDB:
 
         return records[-1]
 
-    def search_notes(self, machine: str, key: str) -> Iterable[BuildRecord]:
-        """search notes for given machine"""
+    def search(self, machine: str, field: str, key: str) -> Iterable[BuildRecord]:
+        """search the given field for given machine
+
+        field must be a BuildRecord field. Not all fields may be searchable, in which
+        case ValueError is raised.
+        """
+        if field not in self.searchable_fields:
+            raise ValueError(f"{field} field is not a searchable field")
+
         key = key.lower()
         records = self.for_machine(machine)
         records.sort(key=record_key, reverse=True)
 
         for record in records:
-            if record.note and key in record.note:
+            value = getattr(record, field)
+            if value and key in value:
                 yield record
 
     def count(self, machine: str | None = None) -> int:

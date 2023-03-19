@@ -257,7 +257,7 @@ def resolve_query_searchnotes(
 ) -> list[BuildProxy]:
     publisher = get_publisher()
 
-    return [BuildProxy(i) for i in publisher.search_notes(machine, key)]
+    return [BuildProxy(i) for i in publisher.search(machine, "note", key)]
 
 
 @query.field("version")

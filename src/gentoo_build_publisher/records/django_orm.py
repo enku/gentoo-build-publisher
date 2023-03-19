@@ -15,6 +15,9 @@ RELATED = ("buildlog", "buildnote", "keptbuild")
 class RecordDB:
     """Implements the RecordDB Protocol using Django's ORM as a backing store"""
 
+    # What fields we implement .search() for
+    searchable_fields = ["note"]
+
     @staticmethod
     def save(build_record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save changes back to the database"""
@@ -174,9 +177,16 @@ class RecordDB:
 
         return build_model.record()
 
-    @staticmethod
-    def search_notes(machine: str, key: str) -> Iterable[BuildRecord]:
-        """search notes for given machine"""
+    @classmethod
+    def search(cls, machine: str, field: str, key: str) -> Iterable[BuildRecord]:
+        """search the given field for given machine
+
+        field must be a BuildRecord field. Not all fields may be searchable, in which
+        case ValueError is raised.
+        """
+        if field not in cls.searchable_fields:
+            raise ValueError(f"{field} is not a searchable field")
+
         build_models = (
             BuildModel.objects.select_related(*RELATED)
             .filter(machine=machine, buildnote__note__icontains=key)

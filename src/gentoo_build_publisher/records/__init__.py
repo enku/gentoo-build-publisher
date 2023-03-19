@@ -89,8 +89,12 @@ class RecordDB(Protocol):
         If no builds exist for the given machine name, return None.
         """
 
-    def search_notes(self, machine: str, key: str) -> Iterable[BuildRecord]:
-        """search notes for given machine"""
+    def search(self, machine: str, field: str, key: str) -> Iterable[BuildRecord]:
+        """search the given field for given machine
+
+        field must be a BuildRecord field. Not all fields may be searchable, in which
+        case ValueError is raised.
+        """
 
     def count(self, machine: str | None = None) -> int:
         """Return the total number of builds
