@@ -202,7 +202,7 @@ class Storage:
             if len(target_builds) != 1:
                 break
         else:
-            return Build(machine, next(iter(target_builds)))
+            return Build(machine, target_builds.pop())
 
         raise FileNotFoundError(f"Tag is broken or does not exist: {tag}")
 
