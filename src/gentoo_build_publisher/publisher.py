@@ -182,8 +182,7 @@ class BuildPublisher:
     def purge(self, machine: str) -> None:
         """Purge old builds for machine"""
         logging.info("Purging builds for %s", machine)
-        records = self.records.for_machine(machine)
-        purger = Purger(records, key=BuildRecord.purge_key)
+        purger = Purger(self.records.for_machine(machine), key=BuildRecord.purge_key)
 
         for record in purger.purge():
             if not (record.keep or self.storage.get_tags(record)):
