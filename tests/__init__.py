@@ -116,7 +116,7 @@ def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:
     return dec
 
 
-def test_data(filename):
+def test_data(filename: str) -> bytes:
     """Return all the data in filename"""
     with open(BASE_DIR / filename, "rb") as file_obj:
         return file_obj.read()
