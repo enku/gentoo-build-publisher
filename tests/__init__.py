@@ -122,6 +122,9 @@ def test_data(filename: str) -> bytes:
         return file_obj.read()
 
 
+BUILD_LOGS = test_data("logs.txt").decode("UTF-8")
+
+
 class Tree:
     """Simple tree structure"""
 
@@ -248,7 +251,7 @@ class MockJenkins(Jenkins):
 
     def get_logs(self, build: Build) -> str:
         with mock.patch.object(self.session, "get") as mock_get:
-            mock_get.return_value.text = "foo\n"
+            mock_get.return_value.text = BUILD_LOGS
             self.get_build_logs_mock_get = mock_get
 
             return super().get_logs(build)

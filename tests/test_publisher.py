@@ -13,7 +13,7 @@ from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import utctime
 
-from . import TestCase, set_up_tmpdir_for_test
+from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test
 from .factories import BuildFactory
 
 utc = datetime.timezone.utc
@@ -70,7 +70,7 @@ class BuildPublisherTestCase(TestCase):
         )
 
         record = self.publisher.record(build)
-        self.assertEqual(record.logs, "foo\n")
+        self.assertEqual(record.logs, BUILD_LOGS)
 
     def test_pull_updates_build_models_completed_field(self) -> None:
         """Should update the completed field with the current timestamp"""
@@ -194,7 +194,7 @@ class BuildPublisherTestCase(TestCase):
         self.publisher._update_build_metadata(record)
 
         record = self.publisher.record(build)
-        self.assertEqual(record.logs, "foo\n")
+        self.assertEqual(record.logs, BUILD_LOGS)
         self.assertIsNot(record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self) -> None:

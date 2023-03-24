@@ -12,7 +12,7 @@ from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
 
-from . import TestCase, graphql, parametrized
+from . import BUILD_LOGS, TestCase, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
@@ -72,7 +72,7 @@ class BuildQueryTestCase(TestCase):
                 "pulled": True,
                 "published": False,
                 "tags": ["prod"],
-                "logs": "foo\n",
+                "logs": BUILD_LOGS,
                 "built": "2022-03-01T06:28:44+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
