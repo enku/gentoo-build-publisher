@@ -129,11 +129,11 @@ Configure PostgreSQL and start the service.
 
 ```sh
 emerge --config postgresql
-systemctl enable --now postgresql-14.service
+systemctl enable --now postgresql-15.service
 ```
 
-> **_NOTE:_**  If a version of PostgreSQL other than 14 was installed,
-> replace the `14` the major version number that was installed.
+> **_NOTE:_**  If a version of PostgreSQL other than 15 was installed,
+> replace the `15` the major version number that was installed.
 
 Create the role for gbp.
 
