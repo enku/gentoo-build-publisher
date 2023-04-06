@@ -164,7 +164,7 @@ Install the Python packages in the `gbp` user's home directory.
 cd /home/gbp
 sudo -u gbp -H git clone https://github.com/enku/gentoo-build-publisher.git
 sudo -u gbp -H python3.10 -m venv .
-sudo -u gbp -H ./bin/pip install -e ./gentoo-build-publisher gunicorn psycopg2
+sudo -u gbp -H ./bin/pip install -e ./gentoo-build-publisher gunicorn psycopg
 mkdir -p /usr/local/bin
 ln -s /home/gbp/bin/gbp /usr/local/bin/gbp
 ```
@@ -217,7 +217,7 @@ Change the `DATABASES` setting to the following:
 ```python
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gbp',
         'HOST': 'localhost',
         'USER': 'gbp',
