@@ -1,6 +1,7 @@
 *.swp
 .coverage
 /.envrc
+/.pdm-python
 /.pdm.toml
 /.python-version
 /.venv/
