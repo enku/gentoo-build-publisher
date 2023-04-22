@@ -33,7 +33,7 @@ FOLDER_XML = importlib.resources.read_text(
 _T = TypeVar("_T", bound="JenkinsConfig")
 
 
-@dataclass
+@dataclass(frozen=True)
 class JenkinsConfig:
     """Configuration for JenkinsBuild"""
 
@@ -67,7 +67,7 @@ class JenkinsConfig:
 
 
 @dataclass_json
-@dataclass
+@dataclass(frozen=True)
 class JenkinsMetadata:
     """data structure for Jenkins build
 

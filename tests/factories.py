@@ -26,7 +26,7 @@ class PackageStatus(Enum):
     REMOVED = auto()
 
 
-@dataclass
+@dataclass(frozen=True)
 class BuildInfo:
     build_time: int
     package_info: list[tuple[Package, PackageStatus]] = field(default_factory=list)

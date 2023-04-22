@@ -103,7 +103,7 @@ class Change:
 
 
 @dataclass_json
-@dataclass
+@dataclass(frozen=True)
 class PackageMetadata:
     """data structure for a build's package metadata"""
 
@@ -113,7 +113,7 @@ class PackageMetadata:
 
 
 @dataclass_json
-@dataclass
+@dataclass(frozen=True)
 class GBPMetadata:
     """data structure combining Jenkins and package metadata
 

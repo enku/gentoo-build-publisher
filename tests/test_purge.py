@@ -53,7 +53,7 @@ START = datetime.datetime(2016, 1, 1, 0, 0, 0)
 END = datetime.datetime(2021, 4, 21)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Item:
     """Arbitrary item for testing"""
 
