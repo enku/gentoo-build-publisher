@@ -10,7 +10,6 @@ import tarfile
 import tempfile
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
 from enum import Enum, auto
 from functools import wraps
 from pathlib import Path
