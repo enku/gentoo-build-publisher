@@ -603,8 +603,9 @@ dependencies = [
 ]
 
 [metadata]
-lock_version = "4.1"
-content_hash = "sha256:f838057e8284877ba5e51fc915502a442aa2f6235a70e420bb22785c6b6cc803"
+lock_version = "4.2"
+groups = ["default", "dev"]
+content_hash = "sha256:d5c062f32ec037dc817720e05915d72ebfdd9882b46869be628712aa2ae82b78"
 
 [metadata.files]
 "amqp 5.1.1" = [
