@@ -13,7 +13,7 @@ T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_TAG_START = (".", "-")
-VALID_TAG_CHARS = (*string.ascii_letters, *string.digits, "_", ".", "-")
+VALID_TAG_CHARS = set([*string.ascii_letters, *string.digits, "_", ".", "-"])
 MAXIUM_TAG_LENGTH = 128
 
 
@@ -117,9 +117,8 @@ def check_tag_name(tag_name: str) -> None:
     if first_char in INVALID_TAG_START:
         raise InvalidTagName(tag_name)
 
-    for char in tag_name[1:]:
-        if char not in VALID_TAG_CHARS:
-            raise InvalidTagName(tag_name)
+    if not set(tag_name[1:]) <= VALID_TAG_CHARS:
+        raise InvalidTagName(tag_name)
 
 
 def utctime(time: dt.datetime | None = None) -> dt.datetime:
