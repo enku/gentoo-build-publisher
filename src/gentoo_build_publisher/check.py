@@ -96,8 +96,7 @@ def check_inconsistent_tags(publisher: BuildPublisher, errorf: TextIO) -> int:
 
     tags: dict[str, set[str]] = {}
 
-    for content in Content:
-        path = publisher.storage.root / content.value
+    for path in [publisher.storage.root / content.value for content in Content]:
         for item in path.iterdir():
             if not item.is_symlink():
                 continue
