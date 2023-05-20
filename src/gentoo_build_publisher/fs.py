@@ -4,7 +4,9 @@ import os
 import shutil
 import tarfile
 from pathlib import Path
-from typing import IO, Callable, Iterable
+from typing import IO, Callable, Iterable, TypeVar
+
+_T = TypeVar("_T", bytes, str)
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +33,12 @@ def extract(infile: Path, outdir: Path) -> None:
     logger.info("Extracted %s to %s", infile, outdir)
 
 
-def save_stream(byte_stream: Iterable[bytes], outfile: IO[bytes]) -> None:
+def save_stream(stream: Iterable[_T], outfile: IO[_T]) -> None:
     """Given the byte stream, save and buffer it to given outfile
 
     These are buffered writes if the given file is opened with buffering.
     """
-    outfile.writelines(byte_stream)
+    outfile.writelines(stream)
     outfile.flush()
 
 
