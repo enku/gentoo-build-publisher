@@ -44,8 +44,8 @@ addrepo = "gentoo_build_publisher.addrepo"
 check = "gentoo_build_publisher.check"
 
 [build-system]
-requires = ["pdm-pep517>=1.0.0"]
-build-backend = "pdm.pep517.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [tool.coverage.run]
 source = ["gentoo_build_publisher"]
