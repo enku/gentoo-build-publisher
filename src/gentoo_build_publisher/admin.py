@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from gentoo_build_publisher.models import BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.publisher import get_publisher
@@ -13,13 +15,13 @@ class KeepListFilter(admin.SimpleListFilter):
     title = "keep"
     parameter_name = "keep"
 
-    def lookups(self, request, model_admin):
+    def lookups(self, request: HttpRequest, model_admin):
         return (
             ("true", "Yes"),
             ("false", "No"),
         )
 
-    def queryset(self, request, queryset):
+    def queryset(self, request: HttpRequest, queryset: QuerySet):
         """Return the filtered queryset."""
         if self.value() == "true":
             return queryset.filter(keptbuild__isnull=False)
@@ -87,7 +89,7 @@ class BuildModelAdmin(admin.ModelAdmin):
     keep.boolean = True
 
     @admin.display(ordering="buildnote")
-    def note(self, obj):
+    def note(self, obj: BuildModel):
         """Return whether this build has a note"""
         try:
             BuildNote.objects.get(build_model=obj)
@@ -97,7 +99,7 @@ class BuildModelAdmin(admin.ModelAdmin):
 
     note.boolean = True
 
-    def response_change(self, request, obj):
+    def response_change(self, request: HttpRequest, obj: BuildModel):
         publisher = get_publisher()
 
         if "_publish" in request.POST:
@@ -112,10 +114,12 @@ class BuildModelAdmin(admin.ModelAdmin):
 
         return super().response_change(request, obj)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest):
         return False
 
-    def has_delete_permission(self, request, obj=None):
+    def has_delete_permission(
+        self, request: HttpRequest, obj: BuildModel | None = None
+    ):
         publisher = get_publisher()
 
         if obj is None:
@@ -123,7 +127,13 @@ class BuildModelAdmin(admin.ModelAdmin):
 
         return not (KeptBuild.keep(obj) or publisher.published(obj.record()))
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
+    def change_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        form_url: str = "",
+        extra_context: dict | None = None,
+    ):
         extra_context = extra_context or {}
         extra_context["keep"] = KeptBuild.objects.filter(
             build_model__id=object_id
