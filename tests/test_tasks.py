@@ -6,7 +6,7 @@ from unittest import mock
 from requests import HTTPError
 
 from gentoo_build_publisher.common import Build
-from gentoo_build_publisher.records import RecordNotFound, Records
+from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import (
     delete_build,
@@ -24,19 +24,21 @@ class PublishBuildTestCase(TestCase):
     def test_publishes_build(self) -> None:
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
-            result = publish_build.s("babette.193").apply()
+            result = publish_build("babette.193")
 
         build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
-        self.assertIs(result.result, True)
+        self.assertIs(result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
-    def test_should_give_up_when_publish_raises_httperror(self, log_error_mock) -> None:
+    def test_should_give_up_when_pull_raises_httperror(
+        self, log_error_mock: mock.Mock
+    ) -> None:
         with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
             apply_mock.side_effect = HTTPError
-            result = publish_build.s("babette.193").apply()
+            result = publish_build("babette.193")
 
-        self.assertIs(result.result, False)
+        self.assertIs(result, False)
 
         log_error_mock.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
@@ -47,8 +49,10 @@ class PurgeBuildTestCase(TestCase):
     """Tests for the purge_machine task"""
 
     def test(self) -> None:
-        with mock.patch.object(self.publisher, "purge") as purge_mock:
-            purge_machine.s("foo").apply()
+        with mock.patch.object(
+            self.publisher, "purge", wraps=self.publisher.purge
+        ) as purge_mock:
+            purge_machine("foo")
 
         purge_mock.assert_called_once_with("foo")
 
@@ -58,8 +62,7 @@ class PullBuildTestCase(TestCase):
 
     def test_pulls_build(self) -> None:
         """Should actually pull the build"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
-            pull_build.s("lima.1012").apply()
+        pull_build("lima.1012")
 
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
@@ -70,7 +73,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                pull_build.s("charlie.197").apply()
+                pull_build("charlie.197")
 
         mock_purge_machine.delay.assert_called_with("charlie")
 
@@ -80,7 +83,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                pull_build.s("delta.424").apply()
+                pull_build("delta.424")
 
         mock_purge_machine.delay.assert_not_called()
 
@@ -92,11 +95,13 @@ class PullBuildTestCase(TestCase):
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
-            download_artifact_mock.side_effect = Exception
-            pull_build.s("oscar.197").apply()
+            download_artifact_mock.side_effect = RuntimeError("blah")
+            try:
+                pull_build("oscar.197")
+            except RuntimeError as error:
+                self.assertIs(error, download_artifact_mock.side_effect)
 
-        with self.assertRaises(RecordNotFound):
-            records.get(Build("oscar", "197"))
+        self.assertFalse(records.exists(Build("oscar", "197")))
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
     def test_should_retry_on_retryable_exceptions(self) -> None:
@@ -107,7 +112,7 @@ class PullBuildTestCase(TestCase):
             download_artifact_mock.side_effect = eof_error
 
             with mock.patch.object(pull_build, "retry") as retry_mock:
-                pull_build.s("tango.197").apply()
+                pull_build("tango.197")
 
         retry_mock.assert_called_once_with(exc=eof_error)
 
@@ -122,7 +127,8 @@ class PullBuildTestCase(TestCase):
             download_artifact_mock.side_effect = error
 
             with mock.patch.object(pull_build, "retry") as retry_mock:
-                pull_build.s("tango.197").apply()
+                with self.assertRaises(HTTPError):
+                    pull_build("tango.197")
 
         retry_mock.assert_not_called()
 
@@ -132,6 +138,6 @@ class DeleteBuildTestCase(TestCase):
 
     def test_should_delete_the_build(self) -> None:
         with mock.patch.object(self.publisher, "delete") as mock_delete:
-            delete_build.s("zulu.56").apply()
+            delete_build("zulu.56")
 
         mock_delete.assert_called_once_with(Build("zulu", "56"))
