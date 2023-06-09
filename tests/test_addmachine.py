@@ -1,16 +1,14 @@
 """Tests for the gbpcli "addmachine" subcommand"""
 # pylint: disable=missing-docstring
-import io
 from argparse import ArgumentParser, Namespace
 from typing import Any
-from unittest import mock
 
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from gbpcli import GBP
-from rich.console import Console
 
 from gentoo_build_publisher import addmachine
 
-from . import TestCase, graphql
+from . import TestCase, graphql, string_console
 
 
 def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
@@ -19,12 +17,11 @@ def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
     return response.get("data"), response.get("errors")
 
 
-class AddMachineTestCase(TestCase):
+class AddMachineTestCase(TestCase, StaticLiveServerTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.console = mock.MagicMock(spec=Console)
-        self.gbp = GBP("http://gbp.invalid/")
+        self.gbp = GBP(self.live_server_url, distribution="gentoo_build_publisher")
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
@@ -33,37 +30,27 @@ class AddMachineTestCase(TestCase):
             branch="master",
             deps=["gentoo"],
         )
-        with mock.patch.object(self.gbp, "query", side_effect=query) as mock_query:
-            exit_status = addmachine.handler(args, self.gbp, self.console)
+        console = string_console()[0]
+        exit_status = addmachine.handler(args, self.gbp, console)
 
         self.assertEqual(exit_status, 0)
-        mock_query.assert_called_once_with(
-            addmachine.GRAPHQL_QUERY,
-            {
-                "name": "base",
-                "repo": "https://github.com/enku/gbp-machines.git",
-                "branch": "master",
-                "ebuildRepos": ["gentoo"],
-            },
-        )
 
     def test_when_item_already_exists(self) -> None:
         self.publisher.jenkins.create_machine_job(
             "base", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
         )
 
-        errorf = io.StringIO()
         args = Namespace(
             name="base",
             repo="https://github.com/enku/gbp-machines.git",
             branch="master",
             deps=["gentoo"],
         )
-        with mock.patch.object(self.gbp, "query", side_effect=query):
-            exit_status = addmachine.handler(args, self.gbp, self.console, errorf)
+        console, _, err = string_console()
+        exit_status = addmachine.handler(args, self.gbp, console)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(errorf.getvalue(), "error: FileExistsError: base\n")
+        self.assertEqual(err.getvalue(), "error: FileExistsError: base\n")
 
 
 class CheckParseArgs(TestCase):

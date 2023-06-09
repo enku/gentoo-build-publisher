@@ -1,0 +1,5 @@
+mutation ($name: String!, $repo: String!, $branch: String!) {
+ createRepo(name: $name, repo: $repo, branch: $branch) {
+    message
+  }
+}

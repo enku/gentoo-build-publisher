@@ -3,31 +3,19 @@
 This adds an ebuild repo to Jenkins that can be used by machine builds.
 """
 import argparse
-import sys
-from typing import TextIO
 
-from gbpcli import GBP
-from rich.console import Console
-
-GRAPHQL_QUERY = """\
-mutation ($name: String!, $repo: String!, $branch: String!) {
- createRepo(name: $name, repo: $repo, branch: $branch) {
-    message
-  }
-}
-"""
+from gbpcli import GBP, Console
+from gbpcli.graphql import check
 
 
-def handler(
-    args: argparse.Namespace, gbp: GBP, _console: Console, errorf: TextIO = sys.stderr
-) -> int:
+def handler(args: argparse.Namespace, gbp: GBP, console: Console) -> int:
     """Add a an ebuild repo to Jenkins"""
-    query_vars = {"name": args.name, "repo": args.repo, "branch": args.branch}
-    response = gbp.check(GRAPHQL_QUERY, query_vars)
+    response = check(
+        gbp.query.create_repo(name=args.name, repo=args.repo, branch=args.branch)
+    )
 
     if error := response["createRepo"]:
-        print(f"error: {error['message']}", file=errorf)
-
+        console.err.print(f"error: {error['message']}")
         return 1
 
     return 0

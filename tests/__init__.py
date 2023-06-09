@@ -18,7 +18,9 @@ from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
 import django.test
+import rich.console
 from django.test.client import Client
+from gbpcli import Console
 from requests import Response, Session
 from yarl import URL
 
@@ -285,3 +287,18 @@ def set_up_tmpdir_for_test(test_case: UnitTestTestCase) -> Path:
     test_case.addCleanup(tmpdir.cleanup)
 
     return Path(tmpdir.name)
+
+
+def string_console() -> tuple[Console, io.StringIO, io.StringIO]:
+    """StringIO Console"""
+    out = io.StringIO()
+    err = io.StringIO()
+
+    return (
+        Console(
+            out=rich.console.Console(file=out),
+            err=rich.console.Console(file=err),
+        ),
+        out,
+        err,
+    )

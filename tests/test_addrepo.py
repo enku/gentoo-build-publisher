@@ -1,31 +1,21 @@
 """Tests for the gbpcli "addrepo" subcommand"""
 # pylint: disable=missing-docstring
-import io
 from argparse import ArgumentParser, Namespace
-from typing import Any
-from unittest import mock
 
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from gbpcli import GBP
-from rich.console import Console
 
 from gentoo_build_publisher import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
 
-from . import TestCase, graphql
+from . import TestCase, string_console
 
 
-def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
-    response = graphql(query_, variables)
-
-    return response.get("data"), response.get("errors")
-
-
-class AddRepoTestCase(TestCase):
+class AddRepoTestCase(TestCase, StaticLiveServerTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.console = mock.MagicMock(spec=Console)
-        self.gbp = GBP("http://gbp.invalid/")
+        self.gbp = GBP(self.live_server_url, distribution="gentoo_build_publisher")
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
@@ -33,18 +23,10 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        with mock.patch.object(self.gbp, "query", side_effect=query) as mock_query:
-            exit_status = addrepo.handler(args, self.gbp, self.console)
+        console = string_console()[0]
+        exit_status = addrepo.handler(args, self.gbp, console)
 
         self.assertEqual(exit_status, 0)
-        mock_query.assert_called_once_with(
-            addrepo.GRAPHQL_QUERY,
-            {
-                "name": "gentoo",
-                "repo": "https://anongit.gentoo.org/git/repo/gentoo.git",
-                "branch": "master",
-            },
-        )
 
     def test_when_item_already_exists(self) -> None:
         self.publisher.jenkins.make_folder(ProjectPath("repos"))
@@ -55,12 +37,11 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        errorf = io.StringIO()
-        with mock.patch.object(self.gbp, "query", side_effect=query):
-            exit_status = addrepo.handler(args, self.gbp, self.console, errorf)
+        console, _, err = string_console()
+        exit_status = addrepo.handler(args, self.gbp, console)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(errorf.getvalue(), "error: FileExistsError: repos/gentoo\n")
+        self.assertEqual(err.getvalue(), "error: FileExistsError: repos/gentoo\n")
 
 
 class CheckParseArgs(TestCase):
