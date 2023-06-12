@@ -11,7 +11,6 @@ from pathlib import PurePosixPath
 from typing import Any, Type, TypeVar
 
 import requests
-from dataclasses_json import dataclass_json
 from yarl import URL
 
 from gentoo_build_publisher.common import Build
@@ -66,7 +65,6 @@ class JenkinsConfig:
         return (self.user, self.api_key)
 
 
-@dataclass_json
 @dataclass(frozen=True)
 class JenkinsMetadata:
     """data structure for Jenkins build
@@ -192,9 +190,9 @@ class Jenkins:
         response = self.session.get(str(url), timeout=self.timeout)
         response.raise_for_status()
 
-        return JenkinsMetadata.from_dict(  # type: ignore  # pylint: disable=no-member
-            response.json()
-        )
+        json = response.json()
+
+        return JenkinsMetadata(duration=json["duration"], timestamp=json["timestamp"])
 
     @classmethod
     def from_settings(cls: type[Jenkins], settings: Settings) -> Jenkins:

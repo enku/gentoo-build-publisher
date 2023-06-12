@@ -9,7 +9,6 @@ dependencies = [
     "ariadne>=0.14.0",
     "ariadne_django",
     "celery[msgpack]",
-    "dataclasses-json",
     "django",
     "pydantic",
     "python-dateutil",
@@ -18,6 +17,7 @@ dependencies = [
     "simplejson",
     "yarl!=1.9.1",
     "gbpcli>=1.5.1",
+    "orjson>=3.9.1",
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -35,8 +35,6 @@ repository = "https://github.com/enku/gentoo-build-publisher"
 [project.entry-points."gentoo_build_publisher.records"]
 django = "gentoo_build_publisher.records.django_orm:RecordDB"
 memory = "gentoo_build_publisher.records.memory:RecordDB"
-
-[project.optional-dependencies]
 
 [project.entry-points."gbpcli.subcommands"]
 addmachine = "gentoo_build_publisher.addmachine"

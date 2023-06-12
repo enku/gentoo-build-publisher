@@ -9,8 +9,17 @@ from functools import lru_cache
 from pathlib import Path
 from typing import IO
 
+import orjson
+
 from gentoo_build_publisher import fs, string, utils
-from gentoo_build_publisher.common import TAG_SYM, Build, Content, GBPMetadata, Package
+from gentoo_build_publisher.common import (
+    TAG_SYM,
+    Build,
+    Content,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+)
 from gentoo_build_publisher.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -271,14 +280,33 @@ class Storage:
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
 
         try:
-            return GBPMetadata.from_json(path.read_text("UTF-8"))  # type: ignore # pylint: disable=no-member
+            json = orjson.loads(path.read_bytes())  # pylint: disable=no-member
+
+            return GBPMetadata(
+                build_duration=json["build_duration"],
+                packages=PackageMetadata(
+                    total=json["packages"]["total"],
+                    size=json["packages"]["size"],
+                    built=[
+                        Package(
+                            build_id=built["build_id"],
+                            build_time=built["build_time"],
+                            cpv=built["cpv"],
+                            path=built["path"],
+                            repo=built["repo"],
+                            size=built["size"],
+                        )
+                        for built in json["packages"]["built"]
+                    ],
+                ),
+            )
         except FileNotFoundError:
             raise LookupError(f"gbp.json does not exist for {build}") from None
 
     def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
         path = self.get_path(build, Content.BINPKGS) / "gbp.json"
-        path.write_text(metadata.to_json(), "UTF-8")  # type: ignore # pylint: disable=no-member
+        path.write_bytes(orjson.dumps(metadata))  # pylint: disable=no-member
 
 
 def make_package_from_lines(lines: Iterable[str]) -> Package:

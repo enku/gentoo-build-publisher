@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from enum import Enum, unique
 from typing import Any, Protocol
 
-from dataclasses_json import dataclass_json
-
 from gentoo_build_publisher import utils
 
 # Symbol used to designate a build tag
@@ -102,7 +100,6 @@ class Change:
     status: Status
 
 
-@dataclass_json
 @dataclass(frozen=True)
 class PackageMetadata:
     """data structure for a build's package metadata"""
@@ -112,7 +109,6 @@ class PackageMetadata:
     built: list[Package]
 
 
-@dataclass_json
 @dataclass(frozen=True)
 class GBPMetadata:
     """data structure combining Jenkins and package metadata
