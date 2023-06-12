@@ -3,6 +3,8 @@
 import json
 import os
 import tarfile
+from dataclasses import replace
+from pathlib import Path
 from unittest import mock
 
 from gentoo_build_publisher import utils
@@ -24,7 +26,7 @@ from . import MockJenkins, TestCase, data
 from .factories import PACKAGE_INDEX, BuildFactory
 
 TEST_SETTINGS = Settings(
-    STORAGE_PATH="/dev/null", JENKINS_BASE_URL="https://jenkins.invalid/"
+    STORAGE_PATH=Path("/dev/null"), JENKINS_BASE_URL="https://jenkins.invalid/"
 )
 
 
@@ -33,8 +35,7 @@ class StorageFromSettings(TestCase):
     def test(self) -> None:
         """Should intantiate Storage from settings"""
         # Given the settings
-        settings = TEST_SETTINGS.copy()
-        settings.STORAGE_PATH = self.tmpdir
+        settings = replace(TEST_SETTINGS, STORAGE_PATH=self.tmpdir)
 
         # When we instantiate Storage.from_settings
         storage = Storage.from_settings(settings)

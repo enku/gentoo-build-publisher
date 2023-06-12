@@ -19,14 +19,7 @@ class SettingsTestCase(TestCase):
         settings = Settings.from_dict(prefix, data_dict)
 
         self.assertEqual(settings.STORAGE_PATH, Path("/home/today"))
-        self.assertEqual(
-            settings.JENKINS_USER, Settings.__fields__["JENKINS_USER"].default
-        )
+        self.assertEqual(settings.JENKINS_USER, None)
 
         with self.assertRaises(AttributeError):
             settings.IS  # pylint: disable=no-member,pointless-statement
-
-    def test_init_with_invalid_value(self) -> None:
-        """Should raise ValueError when given setting not defined in DEFAULTS"""
-        with self.assertRaises(ValueError):
-            Settings(foo="bar")
