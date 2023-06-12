@@ -10,7 +10,6 @@ dependencies = [
     "ariadne_django",
     "celery[msgpack]",
     "django",
-    "python-dateutil",
     "python-dispatch>=0.2.1",
     "requests",
     "simplejson",
