@@ -94,14 +94,18 @@ Other
 class GetBoolTestCase(unittest.TestCase):
     """Tests for get_bool()"""
 
-    @parametrized([["0"], ["f"], ["false"], ["n"], ["no"], ["off"]])
-    def test_false(self, value: str) -> None:
+    @parametrized([["0"], ["f"], ["false"], ["n"], ["no"], ["off"], [b"false"]])
+    def test_false(self, value: str | bytes) -> None:
         self.assertIs(string.get_bool(value), False)
 
-    @parametrized([["1"], ["t"], ["true"], ["y"], ["yes"], ["on"]])
-    def test_true(self, value: str) -> None:
+    @parametrized([["1"], ["t"], ["true"], ["y"], ["yes"], ["on"], [b"true"]])
+    def test_true(self, value: str | bytes) -> None:
         self.assertIs(string.get_bool(value), True)
 
     def test_invalid(self) -> None:
         with self.assertRaises(ValueError):
             string.get_bool("bogus")
+
+    def test_bool(self) -> None:
+        self.assertIs(string.get_bool(True), True)
+        self.assertIs(string.get_bool(False), False)

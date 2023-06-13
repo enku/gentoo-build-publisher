@@ -40,7 +40,7 @@ def get_sections(fobject: IO[str]) -> Iterator[list[str]]:
         yield section
 
 
-def get_bool(value: str | bool) -> bool:
+def get_bool(value: str | bytes | bool) -> bool:
     """Return the boolean value of the truthy/falsey string"""
     if isinstance(value, bool):
         return value
