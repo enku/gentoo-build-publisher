@@ -92,15 +92,6 @@ class KeptBuild(models.Model):
     )
 
     @classmethod
-    def keep(cls, build_model: BuildModel) -> bool:
-        """Return True if KeptBuild record exists for the given build_model"""
-        try:
-            cls.objects.get(build_model=build_model)
-            return True
-        except cls.DoesNotExist:
-            return False
-
-    @classmethod
     def update(cls, build_model: BuildModel, keep: bool) -> None:
         """Get or create a KeptBuild for the given build_model"""
         if keep:

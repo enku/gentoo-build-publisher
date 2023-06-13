@@ -8,7 +8,6 @@ SECRET_KEY = "test"
 USE_TZ = True
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
