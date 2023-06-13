@@ -1,19 +1,16 @@
 """Tests for the gbpck management command"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-import io
 import itertools
 import re
 import shutil
 from argparse import ArgumentParser, Namespace
-from unittest import mock
 
 from gbpcli import GBP
-from rich.console import Console
 
 from gentoo_build_publisher import check
 from gentoo_build_publisher.common import Build, Content
 
-from . import TestCase
+from . import TestCase, string_console
 from .factories import BuildFactory
 
 
@@ -21,7 +18,6 @@ class GBPChkTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.console = mock.MagicMock(spec=Console)
         self.gbp = GBP("http://gbp.invalid/")
 
     def build_with_missing_content(self, content: Content) -> Build:
@@ -41,14 +37,16 @@ class GBPChkTestCase(TestCase):
         return build
 
     def test_empty_system(self) -> None:
-        check.handler(Namespace(), self.gbp, self.console)
+        console = string_console()[0]
+        check.handler(Namespace(), self.gbp, console)
 
     def test_uncompleted_builds_are_skipped(self) -> None:
         build = BuildFactory()
         record = self.publisher.record(build)
         self.publisher.records.save(record, completed=None)
 
-        exit_status = check.handler(Namespace(), self.gbp, self.console)
+        console = string_console()[0]
+        exit_status = check.handler(Namespace(), self.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
@@ -57,13 +55,13 @@ class GBPChkTestCase(TestCase):
         self.publisher.pull(good_build)
 
         bad_build = self.build_with_missing_content(Content.BINPKGS)
-        errorf = io.StringIO()
 
-        errors = check.check_build_content(self.publisher, errorf)
+        console, _, err = string_console()
+        errors = check.check_build_content(self.publisher, console)
 
         self.assertEqual(errors, 1)
         self.assertRegex(
-            errorf.getvalue(), f"^Path missing for {re.escape(str(bad_build))}:"
+            err.getvalue(), f"^Path missing for {re.escape(str(bad_build))}:"
         )
 
     def test_check_orphans(self) -> None:
@@ -73,12 +71,12 @@ class GBPChkTestCase(TestCase):
         bad_build = self.orphan_build()
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
-        errorf = io.StringIO()
-        errors = check.check_orphans(self.publisher, errorf)
+        console, _, err = string_console()
+        errors = check.check_orphans(self.publisher, console)
 
         self.assertEqual(errors, len(Content))
         self.assertRegex(
-            errorf.getvalue(), f"Record missing for {re.escape(str(binpkg_path))}"
+            err.getvalue(), f"Record missing for {re.escape(str(binpkg_path))}"
         )
 
     def test_check_orphans_dangling_symlinks(self) -> None:
@@ -93,12 +91,12 @@ class GBPChkTestCase(TestCase):
         # Delete the build. Symlinks are now broken
         self.publisher.delete(build)
 
-        errorf = io.StringIO()
-        errors = check.check_orphans(self.publisher, errorf)
+        console, _, err = string_console()
+        errors = check.check_orphans(self.publisher, console)
 
         self.assertEqual(errors, link_count)
 
-        lines = errorf.getvalue().split("\n")
+        lines = err.getvalue().split("\n")
         for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
@@ -120,11 +118,11 @@ class GBPChkTestCase(TestCase):
             link = item_path.parent / "larry"
             link.symlink_to(item_path.name)
 
-        errorf = io.StringIO()
-        errors = check.check_inconsistent_tags(self.publisher, errorf)
+        console, _, err = string_console()
+        errors = check.check_inconsistent_tags(self.publisher, console)
 
         self.assertEqual(errors, 1)
-        self.assertRegex(errorf.getvalue(), '^Tag "larry" has multiple targets: ')
+        self.assertRegex(err.getvalue(), '^Tag "larry" has multiple targets: ')
 
     def test_error_count_in_exit_status(self) -> None:
         for _ in range(2):
@@ -137,11 +135,11 @@ class GBPChkTestCase(TestCase):
         for _ in range(2):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
-        errorf = io.StringIO()
-        exit_status = check.handler(Namespace(), self.gbp, self.console, errorf)
+        console, _, err = string_console()
+        exit_status = check.handler(Namespace(), self.gbp, console)
         self.assertEqual(exit_status, len(Content) * 3 + 2)
 
-        stderr_lines = errorf.getvalue().split("\n")
+        stderr_lines = err.getvalue().split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
 
