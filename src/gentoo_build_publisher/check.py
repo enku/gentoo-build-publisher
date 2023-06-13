@@ -49,9 +49,9 @@ def check_build_content(publisher: BuildPublisher, console: Console) -> int:
             continue
 
         missing: list[Path] = []
-        for content in Content:
-            path = publisher.storage.get_path(record, content)
-
+        for path in [
+            publisher.storage.get_path(record, content) for content in Content
+        ]:
             if not path.exists():
                 missing.append(path)
 
