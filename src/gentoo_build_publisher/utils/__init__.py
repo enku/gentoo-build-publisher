@@ -131,17 +131,17 @@ def utctime(time: dt.datetime | None = None) -> dt.datetime:
 
 @overload
 def get_next(iterator: Iterator[IT]) -> IT | None:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
 def get_next(iterator: Iterator[IT], default: None) -> IT | None:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
 def get_next(iterator: Iterator[IT], default: IT) -> IT:
-    ...
+    ...  # pragma: no cover
 
 
 def get_next(iterator: Iterator[IT], default: IT | None = None) -> IT | None:
