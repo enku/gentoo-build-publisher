@@ -52,9 +52,10 @@ profile = "black"
 multi_line_output = 3
 
 [tool.pylint.master]
-load-plugins = "pylint_django"
+load-plugins = "pylint_django,pylint.extensions.bad_builtin"
 django-settings-module = "settings"
 init-hook = "import sys; sys.path.insert(0, 'tests')"
+bad-functions = "print"
 ignore = ["/migrations/"]
 
 [tool.flake8]
