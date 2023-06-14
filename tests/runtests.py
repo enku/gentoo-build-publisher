@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Run tests for Gentoo Build Publisher"""
+import multiprocessing
 import os
 import sys
 
@@ -16,7 +17,9 @@ def main() -> None:
     tests = sys.argv[1:] or ["."]
 
     TestRunner = get_runner(settings)  # pylint: disable=invalid-name
-    test_runner = TestRunner(failfast=True, verbosity=2)
+    test_runner = TestRunner(
+        failfast=True, verbosity=2, parallel=multiprocessing.cpu_count()
+    )
     failures = test_runner.run_tests(tests)
 
     sys.exit(bool(failures))
