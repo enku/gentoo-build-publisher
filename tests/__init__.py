@@ -20,8 +20,10 @@ from unittest import mock
 import django.test
 import rich.console
 from django.test.client import Client
-from gbpcli import Console
+from gbpcli import GBP, Console
 from requests import Response, Session
+from requests.adapters import BaseAdapter
+from requests.structures import CaseInsensitiveDict
 from yarl import URL
 
 from gentoo_build_publisher import publisher
@@ -265,6 +267,45 @@ class MockJenkins(Jenkins):
         self.scheduled_builds.append(machine)
 
         return str(self.config.base_url / "job" / machine / "build")
+
+
+class DjangoToRequestsAdapter(BaseAdapter):
+    """Requests Adapter to call Django views"""
+
+    def send(  # pylint: disable=too-many-arguments
+        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+    ) -> Response:
+        django_response = Client().generic(
+            request.method,
+            request.path_url,
+            data=request.body,
+            content_type=request.headers["Content-Type"],
+            **request.headers
+        )
+
+        requests_response = Response()
+        requests_response.raw = io.BytesIO(django_response.content)
+        requests_response.raw.seek(0)
+        requests_response.status_code = django_response.status_code
+        requests_response.headers = CaseInsensitiveDict(django_response.headers)
+        requests_response.encoding = django_response.get("Conent-Type", None)
+        requests_response.url = str(request.url)
+        requests_response.request = request
+
+        return requests_response
+
+    def close(self) -> None:
+        return
+
+
+def test_gbp(url: str) -> GBP:
+    """Return a gbp instance capable of calling the /graphql view"""
+    gbp = GBP(url, distribution="gentoo_build_publisher")
+    gbp.query._session.mount(  # pylint: disable=protected-access
+        url, DjangoToRequestsAdapter()
+    )
+
+    return gbp
 
 
 def graphql(query: str, variables: dict[str, Any] | None = None) -> Any:

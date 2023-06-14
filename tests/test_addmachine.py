@@ -1,27 +1,17 @@
 """Tests for the gbpcli "addmachine" subcommand"""
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
-from typing import Any
-
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from gbpcli import GBP
 
 from gentoo_build_publisher import addmachine
 
-from . import TestCase, graphql, string_console
+from . import TestCase, string_console, test_gbp
 
 
-def query(query_: str, variables: dict[str, Any] | None = None) -> Any:
-    response = graphql(query_, variables)
-
-    return response.get("data"), response.get("errors")
-
-
-class AddMachineTestCase(TestCase, StaticLiveServerTestCase):
+class AddMachineTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.gbp = GBP(self.live_server_url, distribution="gentoo_build_publisher")
+        self.gbp = test_gbp("http://gbp.invalid/")
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(

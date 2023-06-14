@@ -2,20 +2,17 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from gbpcli import GBP
-
 from gentoo_build_publisher import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
 
-from . import TestCase, string_console
+from . import TestCase, string_console, test_gbp
 
 
-class AddRepoTestCase(TestCase, StaticLiveServerTestCase):
+class AddRepoTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.gbp = GBP(self.live_server_url, distribution="gentoo_build_publisher")
+        self.gbp = test_gbp("http://gbp.invalid/")
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(

@@ -51,6 +51,4 @@ TEMPLATES = [
     },
 ]
 
-STATIC_URL = "/static/"
-
 CELERY_TASK_ALWAYS_EAGER = True
