@@ -44,7 +44,7 @@ from gentoo_build_publisher.records import (
 )
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
-from gentoo_build_publisher.utils import get_next, utctime
+from gentoo_build_publisher.utils import utctime
 
 logger = logging.getLogger(__name__)
 
@@ -272,17 +272,20 @@ class MachineInfo:
     @cached_property
     def latest_build(self) -> BuildRecord | None:
         """The latest completed build, or None"""
-        return get_next(build for build in self.builds if build.completed)
+        return next((build for build in self.builds if build.completed), None)
 
     @cached_property
     def published_build(self) -> Build | None:
         """The latest published build, or None"""
         publisher = get_publisher()
 
-        return get_next(
-            Build.from_id(build.id)
-            for build in self.builds
-            if publisher.published(build)
+        return next(
+            (
+                Build.from_id(build.id)
+                for build in self.builds
+                if publisher.published(build)
+            ),
+            None,
         )
 
     @cached_property

@@ -127,26 +127,3 @@ def utctime(time: dt.datetime | None = None) -> dt.datetime:
         time = dt.datetime.utcnow()
 
     return time.replace(tzinfo=dt.timezone.utc)
-
-
-@overload
-def get_next(iterator: Iterator[IT]) -> IT | None:
-    ...  # pragma: no cover
-
-
-@overload
-def get_next(iterator: Iterator[IT], default: None) -> IT | None:
-    ...  # pragma: no cover
-
-
-@overload
-def get_next(iterator: Iterator[IT], default: IT) -> IT:
-    ...  # pragma: no cover
-
-
-def get_next(iterator: Iterator[IT], default: IT | None = None) -> IT | None:
-    """Return the next item in the iterator or default if exhausted"""
-    try:
-        return next(iterator)
-    except StopIteration:
-        return default
