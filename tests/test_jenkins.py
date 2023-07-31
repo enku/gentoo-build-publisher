@@ -4,6 +4,7 @@ import dataclasses as dc
 import io
 import json
 import os
+from pathlib import Path
 from unittest import TestCase, mock
 
 import requests
@@ -81,7 +82,7 @@ class JenkinsTestCase(TestCase):
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",
             JENKINS_ARTIFACT_NAME="stuff.tar",
-            STORAGE_PATH="/dev/null",
+            STORAGE_PATH=Path("/dev/null"),
         )
 
         # When we instantiate Jenkins.from_settings
@@ -576,7 +577,7 @@ class ScheduleBuildTestCase(TestCase):
             JENKINS_BASE_URL="https://jenkins.invalid",
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",
-            STORAGE_PATH="/dev/null",
+            STORAGE_PATH=Path("/dev/null"),
         )
         jenkins = Jenkins.from_settings(settings)
 
@@ -600,7 +601,7 @@ class ScheduleBuildTestCase(TestCase):
             JENKINS_BASE_URL="https://jenkins.invalid",
             JENKINS_API_KEY="super secret key",
             JENKINS_USER="admin",
-            STORAGE_PATH="/dev/null",
+            STORAGE_PATH=Path("/dev/null"),
         )
         jenkins = Jenkins.from_settings(settings)
 
