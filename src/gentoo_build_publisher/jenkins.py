@@ -86,7 +86,7 @@ class ProjectPath(PurePosixPath):
     """
 
     def __new__(cls, *args: Any) -> ProjectPath:
-        if not (args and args[0].startswith("/")):
+        if not (args and str(args[0]).startswith("/")):
             args = ("/", *args)
 
         return super().__new__(cls, *args)
@@ -105,7 +105,7 @@ class ProjectPath(PurePosixPath):
         return "/".join(parts)
 
     def __str__(self) -> str:
-        return super().__str__().strip("/")
+        return super().__str__().strip("/").lstrip(".")
 
 
 class URLBuilder:
