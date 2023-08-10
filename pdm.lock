@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:98ba8a061f461876821d1ade7f1157a3751cfe99769a6376ec5df9105218517b"
+content_hash = "sha256:3d67c274dfab0ab7aba87c31a9317385afe874031e2c3df5eabc41f76d56a14f"
 
 [[package]]
 name = "amqp"
@@ -140,16 +140,16 @@ files = [
 ]
 
 [[package]]
-name = "celery-stubs"
-version = "0.1.2"
-summary = "celery stubs"
+name = "celery-types"
+version = "0.19.0"
+requires_python = ">=3.10,<4.0"
+summary = "Type stubs for Celery and its related packages"
 dependencies = [
-    "mypy>=0.720",
-    "typing-extensions>=3.7.4",
+    "typing-extensions<5.0.0,>=3.10.0",
 ]
 files = [
-    {file = "celery-stubs-0.1.2.tar.gz", hash = "sha256:f85fb1aa11427e5f8e93e104bb4af46a3fac8e6939ea7eecfb6b84a4e5913644"},
-    {file = "celery_stubs-0.1.2-py3-none-any.whl", hash = "sha256:20b0523a99a5ac31d7e8cfcb68afe0b673c750c3eba081bc79aa516144191211"},
+    {file = "celery-types-0.19.0.tar.gz", hash = "sha256:d4e2d4271b2ec46fec08a0f12a25388bba391f26897485bcacfa3c5287cc236f"},
+    {file = "celery_types-0.19.0-py3-none-any.whl", hash = "sha256:3d3b54fa115aba1798c341d01cb156d5ccbfbebdae0a57dfa9b4b6a726271d80"},
 ]
 
 [[package]]
