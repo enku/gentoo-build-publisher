@@ -280,7 +280,7 @@ class DjangoToRequestsAdapter(BaseAdapter):
             request.path_url,
             data=request.body,
             content_type=request.headers["Content-Type"],
-            **request.headers
+            **request.headers,
         )
 
         requests_response = Response()
