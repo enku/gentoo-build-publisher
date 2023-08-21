@@ -63,7 +63,7 @@ def require_localhost(fn: Resolver) -> Resolver:
             .strip()
         )
 
-        if not client_ip in LOCALHOST:
+        if client_ip not in LOCALHOST:
             raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
         return fn(args[0], info, *args[2:], **kwargs)
 
