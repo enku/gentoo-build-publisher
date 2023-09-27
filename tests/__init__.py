@@ -121,8 +121,7 @@ def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:
 
 def test_data(filename: str) -> bytes:
     """Return all the data in filename"""
-    with open(BASE_DIR / filename, "rb") as file_obj:
-        return file_obj.read()
+    return (BASE_DIR / filename).read_bytes()
 
 
 BUILD_LOGS = test_data("logs.txt").decode("UTF-8")
