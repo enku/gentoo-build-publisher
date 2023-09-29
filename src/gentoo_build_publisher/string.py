@@ -1,6 +1,9 @@
 """Misc string operations"""
 from typing import IO, Iterator
 
+FALSE_VALUES = {"0", "f", "false", "n", "no", "off"}
+TRUE_VALUES = {"1", "on", "t", "true", "y", "yes"}
+
 
 def namevalue(string: str, delim: str) -> tuple[str, str]:
     """Split string into a name/value pair
@@ -49,24 +52,10 @@ def get_bool(value: str | bytes | bool) -> bool:
     if isinstance(value, bytes):
         value = value.decode("UTF-8")
 
-    if value.lower() in [
-        "0",
-        "f",
-        "false",
-        "n",
-        "no",
-        "off",
-    ]:
+    if value.lower() in FALSE_VALUES:
         return False
 
-    if value.lower() in [
-        "1",
-        "on",
-        "t",
-        "true",
-        "y",
-        "yes",
-    ]:
+    if value.lower() in TRUE_VALUES:
         return True
 
     raise ValueError(value)
