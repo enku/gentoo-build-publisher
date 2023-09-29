@@ -5,8 +5,9 @@ import datetime as dt
 import platform
 import re
 import string
+from collections.abc import Iterator
 from importlib.metadata import version
-from typing import Iterator, NamedTuple, Type, TypeVar, overload
+from typing import NamedTuple, Type, TypeVar, overload
 
 IT = TypeVar("IT")
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
