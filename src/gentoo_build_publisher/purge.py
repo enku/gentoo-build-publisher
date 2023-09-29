@@ -161,8 +161,7 @@ class Purger(Generic[T]):
         revsort = sorted(self.items, key=self.key, reverse=True)
 
         for item in revsort:
-            year = self.key(item).year
-            if year not in years:
+            if (year := self.key(item).year) not in years:
                 lst.append(item)
                 years.append(year)
 
