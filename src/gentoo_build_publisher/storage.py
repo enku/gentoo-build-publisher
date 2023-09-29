@@ -281,27 +281,27 @@ class Storage:
 
         try:
             json = orjson.loads(path.read_bytes())  # pylint: disable=no-member
-
-            return GBPMetadata(
-                build_duration=json["build_duration"],
-                packages=PackageMetadata(
-                    total=json["packages"]["total"],
-                    size=json["packages"]["size"],
-                    built=[
-                        Package(
-                            build_id=built["build_id"],
-                            build_time=built["build_time"],
-                            cpv=built["cpv"],
-                            path=built["path"],
-                            repo=built["repo"],
-                            size=built["size"],
-                        )
-                        for built in json["packages"]["built"]
-                    ],
-                ),
-            )
         except FileNotFoundError:
             raise LookupError(f"gbp.json does not exist for {build}") from None
+
+        return GBPMetadata(
+            build_duration=json["build_duration"],
+            packages=PackageMetadata(
+                total=json["packages"]["total"],
+                size=json["packages"]["size"],
+                built=[
+                    Package(
+                        build_id=built["build_id"],
+                        build_time=built["build_time"],
+                        cpv=built["cpv"],
+                        path=built["path"],
+                        repo=built["repo"],
+                        size=built["size"],
+                    )
+                    for built in json["packages"]["built"]
+                ],
+            ),
+        )
 
     def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
