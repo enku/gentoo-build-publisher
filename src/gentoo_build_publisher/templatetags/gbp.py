@@ -31,11 +31,7 @@ def numberize(val: int, precision: int = 2) -> str:
         return str_val
 
     dec, frac = str_val[:split], str_val[split:]
-
-    if precision:
-        rest = f".{frac[:precision]}"
-    else:
-        rest = ""
+    rest = f".{frac[:precision]}" if precision else ""
 
     return f"{dec}{rest}{suffix}"
 

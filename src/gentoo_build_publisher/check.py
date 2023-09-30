@@ -1,4 +1,4 @@
-"Check GBP storage and records"
+"""Check GBP storage and records"""
 import argparse
 import itertools
 from pathlib import Path
@@ -96,9 +96,7 @@ def check_inconsistent_tags(publisher: BuildPublisher, console: Console) -> int:
             if not item.is_symlink():
                 continue
 
-            tag = item.name
-
-            if tag not in tags:
+            if (tag := item.name) not in tags:
                 tags[tag] = set()
 
             build = item.resolve().name

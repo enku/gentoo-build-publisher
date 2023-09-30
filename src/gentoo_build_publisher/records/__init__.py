@@ -5,7 +5,7 @@ import datetime as dt
 import importlib.metadata
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Protocol, Type
+from typing import Any, Protocol
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import Settings
@@ -119,6 +119,6 @@ class Records:  # pylint: disable=too-few-public-methods
                 f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
             ) from None
 
-        record_db: Type[RecordDB] = backend.load()
+        record_db: type[RecordDB] = backend.load()
 
         return record_db()

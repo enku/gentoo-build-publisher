@@ -11,6 +11,7 @@ from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.publisher import get_publisher
 from gentoo_build_publisher.settings import Settings
 
+HTTP_NOT_FOUND = 404
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
 PULL_RETRYABLE_EXCEPTIONS = (
     EOFError,
@@ -51,7 +52,7 @@ def pull_build(build_id: str) -> None:
         # If this is an error due to 404 response don't retry
         if isinstance(error, requests.exceptions.HTTPError):
             response = getattr(error, "response", None)
-            if response is not None and response.status_code == 404:
+            if response is not None and response.status_code == HTTP_NOT_FOUND:
                 publisher.delete(build)
                 raise
 

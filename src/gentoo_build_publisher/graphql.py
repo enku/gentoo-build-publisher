@@ -175,7 +175,7 @@ class MachineInfoProxy:  # pylint: disable=too-few-public-methods
         self.machine_info = machine_info
 
     def __getattr__(self, name: str) -> Any:
-        if name in ["latest_build", "published_build"]:
+        if name in {"latest_build", "published_build"}:
             value = getattr(self.machine_info, name)
             return BuildProxy(value) if value else None
 

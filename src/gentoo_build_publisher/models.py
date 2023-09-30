@@ -1,6 +1,4 @@
-"""
-Django models for Gentoo Build Publisher
-"""
+"""Django models for Gentoo Build Publisher"""
 from __future__ import annotations
 
 from dataclasses import replace

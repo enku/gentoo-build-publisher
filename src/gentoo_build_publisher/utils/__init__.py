@@ -7,13 +7,13 @@ import re
 import string
 from collections.abc import Iterator
 from importlib.metadata import version
-from typing import NamedTuple, Type, TypeVar, overload
+from typing import NamedTuple, TypeVar, overload
 
 IT = TypeVar("IT")
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
-INVALID_TAG_START = (".", "-")
+INVALID_TAG_START = {".", "-"}
 VALID_TAG_CHARS = set([*string.ascii_letters, *string.digits, "_", ".", "-"])
 MAXIUM_TAG_LENGTH = 128
 
@@ -29,7 +29,7 @@ class Color(NamedTuple):
         return f"#{self.red:02x}{self.green:02x}{self.blue:02x}"
 
     @classmethod
-    def gradient(cls: Type[T], start: T, end: T, num_colors: int) -> list[T]:
+    def gradient(cls: type[T], start: T, end: T, num_colors: int) -> list[T]:
         """Return a list of colors representing a gradient from `start` to `end`"""
         if num_colors < 1:
             return []
@@ -107,15 +107,13 @@ def check_tag_name(tag_name: str) -> None:
     """
     # This is based off of Docker's image tagging rules
     # https://docs.docker.com/engine/reference/commandline/tag/
-    if tag_name == "":
+    if not tag_name:
         return
 
     if len(tag_name) > MAXIUM_TAG_LENGTH:
         raise InvalidTagName(tag_name)
 
-    first_char = tag_name[0]
-
-    if first_char in INVALID_TAG_START:
+    if tag_name[0] in INVALID_TAG_START:
         raise InvalidTagName(tag_name)
 
     if not set(tag_name[1:]) <= VALID_TAG_CHARS:

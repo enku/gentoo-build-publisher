@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from pathlib import PurePosixPath
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 
 import requests
 from yarl import URL
@@ -30,6 +30,10 @@ FOLDER_XML = importlib.resources.read_text(
 )
 PATH_SEPERATOR = "/"
 HTTP_NOT_FOUND = 404
+XML_PATHS = {
+    "BRANCH_NAME": "scm/branches/hudson.plugins.git.BranchSpec/name",
+    "SCM_URL": "scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url",
+}
 
 _T = TypeVar("_T", bound="JenkinsConfig")
 
@@ -46,7 +50,7 @@ class JenkinsConfig:
     requests_timeout: int = 10  # seconds
 
     @classmethod
-    def from_settings(cls: Type[_T], settings: Settings) -> _T:
+    def from_settings(cls: type[_T], settings: Settings) -> _T:
         """Return config given settings"""
         return cls(
             base_url=URL(settings.JENKINS_BASE_URL),
@@ -281,11 +285,8 @@ class Jenkins:
 
             return
 
-        if parents:
-            parent = project_path.parent
-
-            if parent != ProjectPath():
-                self.make_folder(parent, parents=True, exist_ok=True)
+        if parents and (parent := project_path.parent) != ProjectPath():
+            self.make_folder(parent, parents=True, exist_ok=True)
 
         try:
             self.create_item(project_path, FOLDER_XML)
@@ -317,11 +318,11 @@ class Jenkins:
         """Return XML config for the given repo"""
         xml = ET.fromstring(CREATE_REPO_XML)
 
-        branch = xml.find("scm/branches/hudson.plugins.git.BranchSpec/name")
+        branch = xml.find(XML_PATHS["BRANCH_NAME"])
         assert branch is not None
         branch.text = f"*/{repo_branch}"
 
-        url = xml.find("scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url")
+        url = xml.find(XML_PATHS["SCM_URL"])
         assert url is not None
         url.text = repo_url
 

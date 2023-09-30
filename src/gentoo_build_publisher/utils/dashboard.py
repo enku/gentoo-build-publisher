@@ -1,7 +1,8 @@
 """Functions/data to support the dashboard view"""
 import datetime as dt
 import itertools
-from typing import Mapping, NamedTuple, TypedDict
+from collections.abc import Mapping
+from typing import NamedTuple, TypedDict
 
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
@@ -12,6 +13,8 @@ BuildID = str
 CPV = str
 MachineName = str
 
+MAX_DISPLAYED_PKGS = 12
+SECONDS_PER_DAY = 86400
 _NOT_FOUND = object()
 
 
@@ -119,8 +122,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
 
         assert record.submitted is not None
 
-        day_submitted = record.submitted.astimezone(tzinfo).date()
-        if day_submitted >= bot_days[0]:
+        if (day_submitted := record.submitted.astimezone(tzinfo).date()) >= bot_days[0]:
             builds_over_time[day_submitted][record.machine] += 1
 
     (
@@ -151,11 +153,14 @@ def add_package_metadata(
         context["package_count"] += metadata.packages.total
         context["total_package_size"][record.machine] += metadata.packages.size
 
-        if record.submitted and lapsed(record.submitted, context["now"]) < 86400:
+        if (
+            record.submitted
+            and lapsed(record.submitted, context["now"]) < SECONDS_PER_DAY
+        ):
             for package in metadata.packages.built:
                 if package.cpv in context["recent_packages"]:
                     context["recent_packages"][package.cpv].add(record.machine)
-                elif len(context["recent_packages"]) < 12:
+                elif len(context["recent_packages"]) < MAX_DISPLAYED_PKGS:
                     context["recent_packages"][package.cpv] = {record.machine}
     else:
         packages = get_packages(record, publisher, cache)
@@ -195,7 +200,7 @@ def get_build_summary(
 
         assert record.completed, record
 
-        if lapsed(record.completed, now) < 86400:
+        if lapsed(record.completed, now) < SECONDS_PER_DAY:
             built_recently.append(latest_build)
 
     return BuildSummary(latest_builds, built_recently, build_packages, latest_published)
@@ -235,18 +240,17 @@ def get_metadata(
     This call may be cashed for performance.
     """
     cache_key = f"metadata-{build}"
-    cached = cache.get(cache_key, _NOT_FOUND)
 
-    if cached is _NOT_FOUND:
+    if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
         try:
             metadata = publisher.storage.get_metadata(build)
-
-            if metadata:
-                cache.set(cache_key, metadata)
-
-            return metadata
         except LookupError:
             return None
+
+        if metadata:
+            cache.set(cache_key, metadata)
+
+        return metadata
 
     metadata = cached
     return metadata
@@ -260,9 +264,8 @@ def get_packages(
     This call may be cached for performance.
     """
     cache_key = f"packages-{build}"
-    cached = cache.get(cache_key, _NOT_FOUND)
 
-    if cached is _NOT_FOUND:
+    if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
         try:
             packages = publisher.get_packages(build)
         except LookupError:

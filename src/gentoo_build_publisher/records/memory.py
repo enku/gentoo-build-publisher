@@ -45,9 +45,7 @@ class RecordDB:
         if record.submitted is None:
             record = replace(record, submitted=dt.datetime.now(tz=timezone.utc))
 
-        machine = record.machine
-
-        if machine not in self.builds:
+        if (machine := record.machine) not in self.builds:
             self.builds[machine] = {record.build_id: record}
         else:
             self.builds[machine][record.build_id] = record
@@ -56,13 +54,9 @@ class RecordDB:
 
     def get(self, build: Build) -> BuildRecord:
         """Retrieve db record"""
-        machine = build.machine
+        builds = self.builds.get(build.machine, {})
 
-        builds = self.builds.get(machine, {})
-
-        record_build = builds.get(build.build_id)
-
-        if not record_build:
+        if not (record_build := builds.get(build.build_id)):
             raise RecordNotFound()
 
         return record_build
@@ -80,9 +74,7 @@ class RecordDB:
 
     def exists(self, build: Build) -> bool:
         """Return true if `build` exists in the db"""
-        machine_builds = self.builds.get(build.machine)
-
-        if not machine_builds:
+        if not (machine_builds := self.builds.get(build.machine)):
             return False
 
         return build.build_id in machine_builds
