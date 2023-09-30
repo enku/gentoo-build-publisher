@@ -7,8 +7,8 @@ able to use it for purging builds or anything else for that matter.
 from __future__ import annotations
 
 import datetime
-from collections.abc import Iterable
-from typing import Callable, Generic, TypeVar
+from collections.abc import Callable, Iterable
+from typing import Generic, TypeVar
 
 T = TypeVar("T")  # pylint: disable=invalid-name
 

@@ -7,10 +7,11 @@
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property, wraps
 from importlib import resources
-from typing import Any, Callable
+from typing import Any
 
 from ariadne import (
     EnumType,
