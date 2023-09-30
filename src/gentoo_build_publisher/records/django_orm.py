@@ -1,6 +1,7 @@
 """Django ORM records implementation"""
+from collections.abc import Iterable
 from dataclasses import replace
-from typing import Any, Iterable
+from typing import Any
 
 from django.db import models
 from django.utils import timezone

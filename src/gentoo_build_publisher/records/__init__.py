@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.metadata
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable, Protocol, Type
+from typing import Any, Protocol, Type
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import Settings

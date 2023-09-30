@@ -3,8 +3,9 @@ import logging
 import os
 import shutil
 import tarfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import IO, Callable, Iterable, TypeVar
+from typing import IO, Callable, TypeVar
 
 _T = TypeVar("_T", bytes, str)
 
