@@ -28,6 +28,8 @@ CREATE_REPO_XML = importlib.resources.read_text(
 FOLDER_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "folder.xml", encoding="UTF-8"
 )
+PATH_SEPERATOR = "/"
+HTTP_NOT_FOUND = 404
 
 _T = TypeVar("_T", bound="JenkinsConfig")
 
@@ -86,8 +88,8 @@ class ProjectPath(PurePosixPath):
     """
 
     def __new__(cls, *args: Any) -> ProjectPath:
-        if not (args and str(args[0]).startswith("/")):
-            args = ("/", *args)
+        if not (args and str(args[0]).startswith(PATH_SEPERATOR)):
+            args = (PATH_SEPERATOR, *args)
 
         return super().__new__(cls, *args)
 
@@ -97,15 +99,15 @@ class ProjectPath(PurePosixPath):
         parts = []
 
         for part in self.parts:
-            if part == "/":
+            if part == PATH_SEPERATOR:
                 continue
 
             parts.extend(["job", part])
 
-        return "/".join(parts)
+        return PATH_SEPERATOR.join(parts)
 
     def __str__(self) -> str:
-        return super().__str__().strip("/").lstrip(".")
+        return super().__str__().strip(PATH_SEPERATOR).lstrip(".")
 
 
 class URLBuilder:
@@ -164,7 +166,9 @@ class Jenkins:
         """Return the ProjectPath of the base_url"""
         url_path = self.config.base_url.path
 
-        return ProjectPath("/".join(url_path.split("/job/")))
+        return ProjectPath(
+            PATH_SEPERATOR.join(url_path.split(f"{PATH_SEPERATOR}job{PATH_SEPERATOR}"))
+        )
 
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
@@ -223,7 +227,7 @@ class Jenkins:
             str(url), timeout=self.timeout, allow_redirects=True
         )
 
-        if response.status_code == 404:
+        if response.status_code == HTTP_NOT_FOUND:
             return False
 
         response.raise_for_status()
@@ -248,7 +252,7 @@ class Jenkins:
             timeout=self.config.requests_timeout,
         )
 
-        if response.status_code == 404:
+        if response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
 
         response.raise_for_status()
@@ -259,7 +263,7 @@ class Jenkins:
 
         response = self.session.get(str(url), timeout=self.config.requests_timeout)
 
-        if response.status_code == 404:
+        if response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
 
         response.raise_for_status()
@@ -343,13 +347,13 @@ class Jenkins:
     ) -> str:
         """Return XML config for the given machine"""
         xml = ET.fromstring(CREATE_BUILD_XML)
-
-        repos_path = (
-            "properties"
-            "/org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty"
-            "/triggers"
-            "/jenkins.triggers.ReverseBuildTrigger/upstreamProjects"
-        )
+        parts = [
+            "properties",
+            "org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty",
+            "triggers",
+            "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
+        ]
+        repos_path = PATH_SEPERATOR.join(parts)
         upstream_repos = xml.find(repos_path)
         assert upstream_repos is not None
         upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)
