@@ -25,17 +25,20 @@ def until_blank(fobject: IO[str]) -> Iterator[str]:
     Skip initial blank lines in the file.
     Do not return the blank line(s).
     """
-    eof = "\0\0\0"
-    # Skip to the first non-blank line
-    while not (line := next(fobject, eof).rstrip()):
-        pass
+    stripped_lines = (line.strip() for line in fobject)
 
-    if line == eof:
+    # Skip to the first non-blank line
+    for line in stripped_lines:
+        if line:
+            break
+    else:
         return
 
     yield line
 
-    while line := fobject.readline().rstrip():
+    for line in stripped_lines:
+        if not line:
+            return
         yield line
 
 
