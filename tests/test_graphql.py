@@ -1044,8 +1044,12 @@ class CreateMachineTestCase(TestCase):
     """Tests for the createMachine mutation"""
 
     query = """
-    mutation ($name: String!, $repo: String!, $branch: String!, $ebuildRepos: [String!]!) {
-     createMachine(name: $name, repo: $repo, branch: $branch, ebuildRepos: $ebuildRepos) {
+    mutation (
+        $name: String!, $repo: String!, $branch: String!, $ebuildRepos: [String!]!
+    ) {
+     createMachine(
+         name: $name, repo: $repo, branch: $branch, ebuildRepos: $ebuildRepos
+     ) {
         message
       }
     }

@@ -155,7 +155,7 @@ class MockJenkinsSession(Session):
 
     @staticmethod
     def response(status_code: int, content: bytes = b"") -> Response:
-        response = mock.MagicMock(wraps=Response)()
+        response: Response = mock.MagicMock(wraps=Response)()
         response.status_code = status_code
         response.raw = io.BytesIO(content)
 
