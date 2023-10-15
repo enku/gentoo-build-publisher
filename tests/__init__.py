@@ -2,18 +2,14 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
 import datetime as dt
 import io
-import json
 import logging
-import math
 import os
-import tarfile
 import tempfile
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Sequence
-from enum import Enum, auto
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Union
+from typing import Any, Callable
 from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
@@ -27,7 +23,7 @@ from requests.structures import CaseInsensitiveDict
 from yarl import URL
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, Content, Package
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
