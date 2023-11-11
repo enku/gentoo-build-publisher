@@ -87,7 +87,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     ]
     color_start, color_end = color_range
     machines = publisher.machines()
-    machines.sort(key=lambda m: m.build_count, reverse=True)
+    machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
         "bot_days": [datetime.strftime("%A") for datetime in bot_days],
         "build_count": 0,
