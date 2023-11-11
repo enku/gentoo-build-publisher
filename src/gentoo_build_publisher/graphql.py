@@ -48,17 +48,22 @@ resolvers = [
 Resolver = Callable[..., Any]
 
 
-def load_type_defs() -> list[str]:
+def load_schema() -> tuple[list[str], list[ObjectType]]:
     """Load all GraphQL schema for Gentoo Build Publisher
 
     This function loads all entry points for the group
     "gentoo_build_publisher.graphql-schema" and returns them all into a single list.
     This list can be used to make_executable_schema()
     """
-    return [
-        entry_point.load()
-        for entry_point in importlib.metadata.entry_points()[SCHEMA_GROUP]
-    ]
+    all_type_defs: list[str] = []
+    all_resolvers = []
+
+    for entry_point in importlib.metadata.entry_points()[SCHEMA_GROUP]:
+        module = entry_point.load()
+        all_type_defs.append(module.type_defs)
+        all_resolvers.extend(module.resolvers)
+
+    return (all_type_defs, all_resolvers)
 
 
 def require_localhost(fn: Resolver) -> Resolver:
@@ -459,6 +464,7 @@ def resolve_mutation_create_machine(
     return None
 
 
+MERGED_TYPE_DEFS, MERGED_RESOLVERS = load_schema()
 schema = make_executable_schema(
-    load_type_defs(), resolvers, snake_case_fallback_resolvers
+    MERGED_TYPE_DEFS, *MERGED_RESOLVERS, snake_case_fallback_resolvers
 )

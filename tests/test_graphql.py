@@ -7,7 +7,12 @@ from unittest import mock
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.common import Content
-from gentoo_build_publisher.graphql import load_type_defs, require_localhost, type_defs
+from gentoo_build_publisher.graphql import (
+    load_schema,
+    require_localhost,
+    resolvers,
+    type_defs,
+)
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
@@ -1152,8 +1157,8 @@ class RequireLocalhostTestCase(TestCase):
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
 
 
-class LoadTypeDefsTest(TestCase):
+class LoadSchemaTests(TestCase):
     def test(self) -> None:
-        defs = load_type_defs()
+        schema = load_schema()
 
-        self.assertEqual(defs, [type_defs])
+        self.assertEqual(schema, ([type_defs], resolvers))
