@@ -39,6 +39,9 @@ addmachine = "gentoo_build_publisher.addmachine"
 addrepo = "gentoo_build_publisher.addrepo"
 check = "gentoo_build_publisher.check"
 
+[project.entry-points."gentoo_build_publisher.graphql-schema"]
+gbp = "gentoo_build_publisher.graphql:type_defs"
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"

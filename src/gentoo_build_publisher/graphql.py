@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import importlib.metadata
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property, wraps
@@ -30,6 +31,7 @@ from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"
+SCHEMA_GROUP = "gentoo_build_publisher.graphql-schema"
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
@@ -44,6 +46,19 @@ resolvers = [
 
 
 Resolver = Callable[..., Any]
+
+
+def load_type_defs() -> list[str]:
+    """Load all GraphQL schema for Gentoo Build Publisher
+
+    This function loads all entry points for the group
+    "gentoo_build_publisher.graphql-schema" and returns them all into a single list.
+    This list can be used to make_executable_schema()
+    """
+    return [
+        entry_point.load()
+        for entry_point in importlib.metadata.entry_points()[SCHEMA_GROUP]
+    ]
 
 
 def require_localhost(fn: Resolver) -> Resolver:
@@ -444,4 +459,6 @@ def resolve_mutation_create_machine(
     return None
 
 
-schema = make_executable_schema(type_defs, resolvers, snake_case_fallback_resolvers)
+schema = make_executable_schema(
+    load_type_defs(), resolvers, snake_case_fallback_resolvers
+)
