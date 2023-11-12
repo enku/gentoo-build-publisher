@@ -58,7 +58,7 @@ def load_schema() -> tuple[list[str], list[ObjectType]]:
     all_type_defs: list[str] = []
     all_resolvers = []
 
-    for entry_point in importlib.metadata.entry_points()[SCHEMA_GROUP]:
+    for entry_point in importlib.metadata.entry_points(group=SCHEMA_GROUP):
         module = entry_point.load()
         all_type_defs.append(module.type_defs)
         all_resolvers.extend(module.resolvers)
