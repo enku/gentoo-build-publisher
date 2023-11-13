@@ -63,6 +63,10 @@ machines sync from.
 The [command-line interface](https://github.com/enku/gbpcli#readme) can
 inspect, publish, pull, schedule builds and more.
 
+<p align="center">
+<img src="https://raw.githubusercontent.com/enku/gbp-ps/master/docs/screenshot.png" alt="gbpcli screenshot" width="100%">
+</p>
+
 # Articles
 
 Below are some articles that explain some aspects of Build Publisher in
