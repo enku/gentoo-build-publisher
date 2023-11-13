@@ -31,7 +31,7 @@ from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"
-SCHEMA_GROUP = "gentoo_build_publisher.graphql-schema"
+SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 Object = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
@@ -52,7 +52,7 @@ def load_schema() -> tuple[list[str], list[ObjectType]]:
     """Load all GraphQL schema for Gentoo Build Publisher
 
     This function loads all entry points for the group
-    "gentoo_build_publisher.graphql-schema" and returns them all into a single list.
+    "gentoo_build_publisher.graphql_schema" and returns them all into a single list.
     This list can be used to make_executable_schema()
     """
     all_type_defs: list[str] = []

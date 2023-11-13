@@ -39,7 +39,7 @@ addmachine = "gentoo_build_publisher.addmachine"
 addrepo = "gentoo_build_publisher.addrepo"
 check = "gentoo_build_publisher.check"
 
-[project.entry-points."gentoo_build_publisher.graphql-schema"]
+[project.entry-points."gentoo_build_publisher.graphql_schema"]
 gbp = "gentoo_build_publisher.graphql"
 
 [build-system]
