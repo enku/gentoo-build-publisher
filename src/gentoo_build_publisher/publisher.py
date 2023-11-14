@@ -121,13 +121,20 @@ class BuildPublisher:
         """Return True if this Build is published"""
         return self.storage.published(build)
 
-    def pull(self, build: Build) -> bool:
-        """pull the Build to storage"""
+    def pull(self, build: Build, *, note: str | None = None) -> bool:
+        """pull the Build to storage
+
+        If the given build has already been pulled, nothing is pulled.
+        Otherwise if `note` is given, then the build record will be saved with the given
+        note.
+        """
         if self.pulled(build):
             return False
 
         record = self.record(build)
-        record = record.save(self.records, submitted=record.submitted or utctime())
+        record = record.save(
+            self.records, submitted=record.submitted or utctime(), note=note
+        )
         previous = self.records.previous(record)
 
         logger.info("Pulling build: %s", build)

@@ -584,7 +584,24 @@ class PullMutationTestCase(TestCase):
             result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_pull.delay.assert_called_once_with(build.id)
+        mock_pull.delay.assert_called_once_with(build.id, note=None)
+
+    def test_pull_with_note(self) -> None:
+        build = BuildFactory()
+
+        query = """
+        mutation ($id: ID!, $note: String) {
+          pull(id: $id, note: $note) {
+            publishedBuild {
+              id
+            }
+          }
+        }"""
+        result = graphql(query, variables={"id": build.id, "note": "This is a test"})
+
+        assert_data(self, result, {"pull": {"publishedBuild": None}})
+        build_record = self.publisher.record(build)
+        self.assertEqual(build_record.note, "This is a test")
 
 
 class ScheduleBuildMutationTestCase(TestCase):

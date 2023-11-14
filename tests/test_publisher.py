@@ -117,6 +117,15 @@ class BuildPublisherTestCase(TestCase):
 
         self.assertFalse(self.publisher.pulled(build))
 
+    def test_pull_with_note(self) -> None:
+        build = BuildFactory()
+
+        self.publisher.pull(build, note="This is a test")
+
+        self.assertIs(self.publisher.storage.pulled(build), True)
+        build_record = self.publisher.record(build)
+        self.assertEqual(build_record.note, "This is a test")
+
     def test_purge_deletes_old_build(self) -> None:
         """Should remove purgable builds"""
 

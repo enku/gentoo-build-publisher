@@ -39,13 +39,16 @@ def publish_build(build_id: str) -> bool:
 
 
 @shared_task
-def pull_build(build_id: str) -> None:
-    """Pull the build into storage"""
+def pull_build(build_id: str, *, note: str | None = None) -> None:
+    """Pull the build into storage
+
+    If `note` is given, then the build record will be saved with the given note.
+    """
     publisher = get_publisher()
     build = Build.from_id(build_id)
 
     try:
-        publisher.pull(build)
+        publisher.pull(build, note=note)
     except Exception as error:
         logger.exception("Failed to pull build %s", build)
 

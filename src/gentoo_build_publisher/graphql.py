@@ -340,10 +340,12 @@ def resolve_mutation_publish(
 
 
 @mutation.field("pull")
-def resolve_mutation_pull(_obj: Any, _info: GraphQLResolveInfo, id: str) -> MachineInfo:
+def resolve_mutation_pull(
+    _obj: Any, _info: GraphQLResolveInfo, *, id: str, note: str | None = None
+) -> MachineInfo:
     build = Build.from_id(id)
 
-    pull_build.delay(id)
+    pull_build.delay(id, note=note)
 
     return MachineInfo(build.machine)
 
