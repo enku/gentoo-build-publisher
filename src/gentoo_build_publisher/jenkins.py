@@ -126,8 +126,7 @@ class URLBuilder:
     """
 
     formatters: dict[str, str] = {
-        "artifact":
-            "job/{build.machine}/{build.build_id}/artifact/{config.artifact_name}",
+        "artifact": "job/{build.machine}/{build.build_id}/artifact/{config.artifact_name}",
         "build": "job/{build.machine}/{build.build_id}",
         "build_scheduler": "job/{build.machine}/build",
         "logs": "job/{build.machine}/{build.build_id}/consoleText",
