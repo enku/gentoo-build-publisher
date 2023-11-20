@@ -91,7 +91,7 @@ def require_localhost(fn: Resolver) -> Resolver:
     return wrapper
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Error:
     """Return Type for errors"""
 

@@ -11,7 +11,7 @@ from gentoo_build_publisher.string import get_bool
 JENKINS_DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Settings:
     """GBP Settings"""
 

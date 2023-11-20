@@ -15,7 +15,7 @@ class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Build:
     """A build ID (machine.build_id)"""
 
@@ -57,7 +57,7 @@ class Content(Enum):
     VAR_LIB_PORTAGE = "var-lib-portage"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Package:
     """A Gentoo binary package"""
 
@@ -92,7 +92,7 @@ class Status(Enum):
     ADDED = 1
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Change:
     """A changed item (file or directory)"""
 
@@ -100,7 +100,7 @@ class Change:
     status: Status
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PackageMetadata:
     """data structure for a build's package metadata"""
 
@@ -109,7 +109,7 @@ class PackageMetadata:
     built: list[Package]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GBPMetadata:
     """data structure combining Jenkins and package metadata
 

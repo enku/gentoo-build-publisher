@@ -38,7 +38,7 @@ XML_PATHS = {
 _T = TypeVar("_T", bound="JenkinsConfig")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class JenkinsConfig:
     """Configuration for JenkinsBuild"""
 
@@ -71,7 +71,7 @@ class JenkinsConfig:
         return (self.user, self.api_key)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class JenkinsMetadata:
     """data structure for Jenkins build
 
