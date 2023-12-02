@@ -92,7 +92,12 @@ csslint:
 .PHONY: csslint
 
 
-lint: pylint mypy csslint eslint
+.PHONY: typos
+typos:
+	typos --format=brief
+
+
+lint: pylint mypy csslint eslint typos
 .PHONY: lint
 
 

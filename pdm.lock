@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:44293d52b2e315aaa5da064c8ecedd810c0538d75321d7059289e2bb80049fc4"
+content_hash = "sha256:54e215c4e87ce667401f4acb474234e8da4e49745cfd90595bfd915fd6953a84"
 
 [[package]]
 name = "amqp"
@@ -931,6 +931,24 @@ summary = "Backported and Experimental Type Hints for Python 3.7+"
 files = [
     {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
     {file = "typing_extensions-4.3.0.tar.gz", hash = "sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6"},
+]
+
+[[package]]
+name = "typos"
+version = "1.16.23"
+requires_python = ">=3.7"
+summary = "Source Code Spelling Correction"
+files = [
+    {file = "typos-1.16.23-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:aabfca30e49dde82cd8249f2770f9ff461a4ae9510dae0eccd3d1d61c9939e7b"},
+    {file = "typos-1.16.23-py3-none-macosx_11_0_arm64.whl", hash = "sha256:8f498453bf582246b8c7d13af1a2f24ba1dffd0dba3674d0e29edcd7b73d3077"},
+    {file = "typos-1.16.23-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:51b771b990af209c38e1d83dc7715cc60b5234186a7ac050d657b78716a0232b"},
+    {file = "typos-1.16.23-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:12b70bd3a6a2600edd53c40f002b54a290cc12623ac23978dfd0f1496ceb7419"},
+    {file = "typos-1.16.23-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bb4753028a8f6e08f762afd861797de0146e6a0f960d37e53f4165c46c8397a4"},
+    {file = "typos-1.16.23-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:34aa9ccfd5cc881324b26584f253b08d418fc87057dc04fd409720d0b401e929"},
+    {file = "typos-1.16.23-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:83a8ec4d48ef4fd1a783805a4832f79cf9d4d3bdf0f5a4ccb821323ef189bd62"},
+    {file = "typos-1.16.23-py3-none-win32.whl", hash = "sha256:8647c6272a2e9f6b372f3195ca7a9387689576c7700215ec8dcfe572e5a6df5c"},
+    {file = "typos-1.16.23-py3-none-win_amd64.whl", hash = "sha256:c0905627eaf4fc0f66577ec57ef6829d3b1a531b389837c7e86d2bbc5dc2eeac"},
+    {file = "typos-1.16.23.tar.gz", hash = "sha256:e6ea2f7f8aba7c82db911226f8c077dad5defdd917e147ed82f0bfca39317e8c"},
 ]
 
 [[package]]

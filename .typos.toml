@@ -1,0 +1,2 @@
+[files]
+extend-exclude = ["src/gentoo_build_publisher/migrations/"]
