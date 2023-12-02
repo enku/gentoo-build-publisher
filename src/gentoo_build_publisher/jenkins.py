@@ -19,6 +19,7 @@ from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
+COPY_ARTIFACT_PLUGIN = "copyartifact@1.47"
 CREATE_BUILD_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "create_machine_job.xml", encoding="UTF-8"
 )
@@ -305,6 +306,20 @@ class Jenkins:
 
         return tree.tag == "com.cloudbees.hudson.plugins.folder.Folder"
 
+    def install_plugin(self, plugin: str) -> None:
+        """Ensure the given plugin is installed.
+
+        Jenkins uses name@version syntax for `plugin`, for example "copyartifact@1.47"
+        """
+        url = self.config.base_url.with_path("/pluginManager/installNecessaryPlugins")
+        response = self.session.post(
+            str(url),
+            headers={"Content-Type": "text/xml"},
+            data=f'<jenkins><install plugin="{plugin}" /></jenkins>',
+        )
+
+        response.raise_for_status()
+
     def create_repo_job(self, repo_name: str, repo_url: str, repo_branch: str) -> None:
         """Create a repo job in the "repos" folder
 
@@ -338,6 +353,7 @@ class Jenkins:
         """Create a machine job to build the given machine"""
         machine_path = self.project_root / machine_name
 
+        self.install_plugin(COPY_ARTIFACT_PLUGIN)
         self.create_item(
             machine_path,
             self.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
