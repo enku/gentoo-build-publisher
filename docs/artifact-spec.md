@@ -28,7 +28,7 @@ content type **must** exist in the artifact.  They are:
 
 ## Reference
 
-See the reference GBP build machanism,
+See the reference GBP build mechanism,
 [gbp-machines](https://github.com/enku/gbp-machines), specifically the
 [Makefile](https://github.com/enku/gbp-machines/blob/master/Makefile), which
 does something similar to:
