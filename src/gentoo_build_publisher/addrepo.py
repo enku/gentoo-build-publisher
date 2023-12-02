@@ -10,6 +10,13 @@ from gbpcli.graphql import check
 
 def handler(args: argparse.Namespace, gbp: GBP, console: Console) -> int:
     """Add a an ebuild repo to Jenkins"""
+    # NOTE: This was unintentional, but ^ GBP can only see the queries for the "gbpcli"
+    # distribution.  It needs a collector like gentoo-build-publisher has a collector
+    # for schemas
+    gbp.query._distribution = (  # pylint: disable=protected-access
+        "gentoo_build_publisher"
+    )
+
     response = check(
         gbp.query.create_repo(name=args.name, repo=args.repo, branch=args.branch)
     )
