@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from gentoo_build_publisher.common import Build, Content, Package
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.publisher import BuildPublisher, get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import BuildRecord, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -61,7 +61,7 @@ class BuildFactory(factory.Factory):
         num_days: int,
         per_day: int,
     ) -> defaultdict[str, list[Build]]:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
         buildmap = defaultdict(list)
 
         for i in reversed(range(num_days)):

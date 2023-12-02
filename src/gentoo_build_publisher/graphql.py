@@ -25,7 +25,7 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.common import TAG_SYM, Build, Package, Status
-from gentoo_build_publisher.publisher import MachineInfo, get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.tasks import publish_build, pull_build
 from gentoo_build_publisher.utils import get_version
@@ -135,25 +135,25 @@ class BuildProxy:
 
     @cached_property
     def published(self) -> bool:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         return publisher.published(self.build)
 
     @cached_property
     def tags(self) -> list[str]:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         return publisher.tags(self.build)
 
     @cached_property
     def pulled(self) -> bool:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         return publisher.pulled(self.build)
 
     @cached_property
     def packages(self) -> list[str] | None:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         if not publisher.pulled(self.build):
             return None
@@ -165,7 +165,7 @@ class BuildProxy:
 
     @cached_property
     def packages_built(self) -> list[Package] | None:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         try:
             gbp_metadata = publisher.storage.get_metadata(self.build)
@@ -176,7 +176,7 @@ class BuildProxy:
 
     @cached_property
     def record(self) -> BuildRecord:
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         if self._record is None:
             self._record = publisher.record(self.build)
@@ -210,7 +210,7 @@ class MachineInfoProxy:  # pylint: disable=too-few-public-methods
 def resolve_query_machines(
     _obj: Any, _info: GraphQLResolveInfo
 ) -> list[MachineInfoProxy]:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     return [MachineInfoProxy(machine_info) for machine_info in publisher.machines()]
 
@@ -219,7 +219,7 @@ def resolve_query_machines(
 def resolve_query_build(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     return None if not publisher.records.exists(build) else BuildProxy(build)
@@ -229,7 +229,7 @@ def resolve_query_build(
 def resolve_query_latest(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
     return None if record is None else BuildProxy(record)
@@ -239,7 +239,7 @@ def resolve_query_latest(
 def resolve_query_builds(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
 ) -> list[BuildProxy]:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     return [
         BuildProxy(record)
@@ -252,7 +252,7 @@ def resolve_query_builds(
 def resolve_query_diff(
     _obj: Any, _info: GraphQLResolveInfo, left: str, right: str
 ) -> Object | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     left_build = Build.from_id(left)
 
     if not publisher.records.exists(left_build):
@@ -277,7 +277,7 @@ def resolve_query_search(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, field: str, key: str
 ) -> list[BuildProxy]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     return [BuildProxy(i) for i in publisher.search(machine, search_field, key)]
 
@@ -286,7 +286,7 @@ def resolve_query_search(
 def resolve_query_searchnotes(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
 ) -> list[BuildProxy]:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     return [BuildProxy(i) for i in publisher.search(machine, "note", key)]
 
@@ -298,7 +298,7 @@ def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
 
 @query.field("working")
 def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildProxy]:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build_types = []
     machines = publisher.records.list_machines()
 
@@ -314,7 +314,7 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildPro
 def resolve_query_resolvebuildtag(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     try:
         result = publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
@@ -328,7 +328,7 @@ def resolve_query_resolvebuildtag(
 def resolve_mutation_publish(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> MachineInfo:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if publisher.pulled(build):
@@ -354,7 +354,7 @@ def resolve_mutation_pull(
 def resolve_mutation_schedule_build(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
 ) -> str:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     return publisher.schedule_build(machine)
 
@@ -363,7 +363,7 @@ def resolve_mutation_schedule_build(
 def resolve_mutation_keepbuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -378,7 +378,7 @@ def resolve_mutation_keepbuild(
 def resolve_mutation_releasebuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -393,7 +393,7 @@ def resolve_mutation_releasebuild(
 def resolve_mutation_createnote(
     _obj: Any, _info: GraphQLResolveInfo, id: str, note: str | None = None
 ) -> BuildProxy | None:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -408,7 +408,7 @@ def resolve_mutation_createnote(
 def resolve_mutation_createbuildtag(
     _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
 ) -> BuildProxy:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     publisher.tag(build, tag)
@@ -420,7 +420,7 @@ def resolve_mutation_createbuildtag(
 def resolve_mutation_removebuildtag(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
 ) -> MachineInfo:
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     publisher.untag(machine, tag)
 
@@ -432,7 +432,7 @@ def resolve_mutation_removebuildtag(
 def resolve_mutation_createrepo(
     _obj: Any, _info: GraphQLResolveInfo, name: str, repo: str, branch: str
 ) -> Error | None:
-    jenkins = get_publisher().jenkins
+    jenkins = BuildPublisher.get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root / "repos", parents=True, exist_ok=True)
 
@@ -454,7 +454,7 @@ def resolve_mutation_create_machine(
     branch: str,
     ebuildRepos: list[str],
 ) -> Error | None:
-    jenkins = get_publisher().jenkins
+    jenkins = BuildPublisher.get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)
 

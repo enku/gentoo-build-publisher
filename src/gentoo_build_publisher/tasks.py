@@ -8,7 +8,7 @@ import requests.exceptions
 from celery import shared_task
 
 from gentoo_build_publisher.common import Build
-from gentoo_build_publisher.publisher import get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 
 HTTP_NOT_FOUND = 404
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 @shared_task
 def publish_build(build_id: str) -> bool:
     """Publish the build"""
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     try:
         pull_build.apply((build_id,), throw=True)
@@ -44,7 +44,7 @@ def pull_build(build_id: str, *, note: str | None = None) -> None:
 
     If `note` is given, then the build record will be saved with the given note.
     """
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(build_id)
 
     try:
@@ -73,7 +73,7 @@ def pull_build(build_id: str, *, note: str | None = None) -> None:
 @shared_task
 def purge_machine(machine: str) -> None:
     """Purge old builds for machine"""
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     publisher.purge(machine)
 
@@ -81,7 +81,7 @@ def purge_machine(machine: str) -> None:
 @shared_task
 def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(build_id)
 
     logger.info("Deleting build: %s", build)

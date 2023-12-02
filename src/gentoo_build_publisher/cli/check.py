@@ -7,7 +7,7 @@ import django
 from gbpcli import GBP, Console
 
 from gentoo_build_publisher.common import Build, Content
-from gentoo_build_publisher.publisher import BuildPublisher, get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import RecordNotFound
 
 
@@ -19,7 +19,7 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Check GBP storage and records"""
     django.setup()
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     errors = sum(
         (

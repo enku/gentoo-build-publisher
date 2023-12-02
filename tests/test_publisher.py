@@ -8,7 +8,7 @@ from unittest import mock
 from yarl import URL
 
 from gentoo_build_publisher.common import Content
-from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo, get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import utctime
@@ -466,7 +466,7 @@ class GetPublisherTestCase(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        get_publisher.cache_clear()
+        BuildPublisher.get_publisher.cache_clear()
         self.tmpdir = set_up_tmpdir_for_test(self)
 
     def test_creates_publisher_from_env_variables_when_global_is_none(self) -> None:
@@ -476,7 +476,7 @@ class GetPublisherTestCase(unittest.TestCase):
             "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "test_get_publisher"),
         }
         with mock.patch.dict(os.environ, env, clear=True):
-            publisher = get_publisher()
+            publisher = BuildPublisher.get_publisher()
 
         self.assertEqual(
             publisher.jenkins.config.base_url, URL("https://testserver.invalid/")

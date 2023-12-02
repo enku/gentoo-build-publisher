@@ -59,7 +59,7 @@ class TestCase(UnitTestTestCase):
         patch.start()
 
         self.publisher: publisher.BuildPublisher = BuildPublisherFactory()
-        publisher.get_publisher.cache_clear()
+        publisher.BuildPublisher.get_publisher.cache_clear()
         patch = mock.patch.object(
             publisher.BuildPublisher, "from_settings", return_value=self.publisher
         )

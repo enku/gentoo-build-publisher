@@ -247,6 +247,12 @@ class BuildPublisher:
             packages=PackageMetadata(total=total, size=size, built=built),
         )
 
+    @staticmethod
+    @cache
+    def get_publisher() -> BuildPublisher:
+        """Return the "system" publisher"""
+        return BuildPublisher.from_settings(Settings.from_environ())
+
 
 class MachineInfo:
     """Data type for machine metadata
@@ -272,7 +278,7 @@ class MachineInfo:
     @cached_property
     def builds(self) -> list[BuildRecord]:
         """List of builds held for the machine"""
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         return [*publisher.records.for_machine(self.machine)]
 
@@ -284,7 +290,7 @@ class MachineInfo:
     @cached_property
     def published_build(self) -> Build | None:
         """The latest published build, or None"""
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         return next(
             (
@@ -299,7 +305,7 @@ class MachineInfo:
     def tags(self) -> list[str]:
         """All the machines build tags"""
         machine_tags = []
-        publisher = get_publisher()
+        publisher = BuildPublisher.get_publisher()
 
         for build in self.builds:
             machine_tags.extend(publisher.tags(build))
@@ -307,9 +313,3 @@ class MachineInfo:
         machine_tags.sort()
 
         return machine_tags
-
-
-@cache
-def get_publisher() -> BuildPublisher:
-    """Return the "system" publisher"""
-    return BuildPublisher.from_settings(Settings.from_environ())

@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from gentoo_build_publisher.common import TAG_SYM, Build
-from gentoo_build_publisher.publisher import MachineInfo, get_publisher
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.dashboard import create_dashboard_context
 
@@ -24,7 +24,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         7,
         timezone.get_current_timezone(),
         (color_start, color_end),
-        get_publisher(),
+        BuildPublisher.get_publisher(),
         cache,
     )
 
@@ -34,7 +34,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = parse_tag_or_raise_404(machine)
-    publisher = get_publisher()
+    publisher = BuildPublisher.get_publisher()
 
     context = {
         "dirname": dirname,
@@ -71,7 +71,7 @@ def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
 
     if tag_name:
         try:
-            build = get_publisher().storage.resolve_tag(machine_tag)
+            build = BuildPublisher.get_publisher().storage.resolve_tag(machine_tag)
         except (ValueError, FileNotFoundError):
             build = None
     else:
