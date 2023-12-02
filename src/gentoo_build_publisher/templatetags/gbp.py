@@ -10,7 +10,7 @@ register = template.Library()
 def numberize(val: int, precision: int = 2) -> str:
     """Format number, `val` as a string.
 
-    E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precison
+    E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precision
     2) etc.
     """
     if not isinstance(val, int):
@@ -44,5 +44,5 @@ def key(value: dict[Any, Any], arg: Any, default: Any = None) -> Any:
 
 @register.filter
 def addstr(arg1: Any, arg2: Any) -> str:
-    """Perform string concatination"""
+    """Perform string concatenation"""
     return str(arg1) + str(arg2)

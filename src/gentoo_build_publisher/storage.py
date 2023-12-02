@@ -67,7 +67,7 @@ class Storage:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Storage:
-        """Instatiate from settings"""
+        """Instantiate from settings"""
         return cls(settings.STORAGE_PATH)
 
     @lru_cache(maxsize=256 * len(Content))
@@ -88,7 +88,7 @@ class Storage:
 
         If `previous_build` is given, then if a file exists in that location it will be
         hard linked to the extracted tree instead of being copied from the artifact.
-        This is similiar to the "--link-dest" argument in rsync and is used to save disk
+        This is similar to the "--link-dest" argument in rsync and is used to save disk
         space.
         """
         if self.pulled(build):
@@ -152,7 +152,7 @@ class Storage:
         Fail silently if the given tag does not exist.
         """
         utils.check_tag_name(tag_name)
-        # We don't need to check for the existance of the target here.  In fact we don't
+        # We don't need to check for the existence of the target here.  In fact we don't
         # want to as this will allow us to remove dangling symlinks
         name = f"{machine}{TAG_SYM}{tag_name}" if tag_name else machine
 

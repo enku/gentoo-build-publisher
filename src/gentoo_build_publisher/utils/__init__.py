@@ -1,4 +1,4 @@
-"""Misc utilties"""
+"""Misc utilities"""
 from __future__ import annotations
 
 import datetime as dt
@@ -14,7 +14,7 @@ T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_TAG_START = {".", "-"}
 VALID_TAG_CHARS = set([*string.ascii_letters, *string.digits, "_", ".", "-"])
-MAXIUM_TAG_LENGTH = 128
+MAXIMUM_TAG_LENGTH = 128
 
 
 class Color(NamedTuple):
@@ -101,7 +101,7 @@ def check_tag_name(tag_name: str) -> None:
         * contain lowercase and uppercase letters, digits, underscores, periods and
           dashes
         * must not start with a period, or dash
-        * Must be a maxium of 128 characters
+        * Must be a maximum of 128 characters
         * In addition the empty string is a valid tag
     """
     # This is based off of Docker's image tagging rules
@@ -109,7 +109,7 @@ def check_tag_name(tag_name: str) -> None:
     if not tag_name:
         return
 
-    if len(tag_name) > MAXIUM_TAG_LENGTH:
+    if len(tag_name) > MAXIMUM_TAG_LENGTH:
         raise InvalidTagName(tag_name)
 
     if tag_name[0] in INVALID_TAG_START:

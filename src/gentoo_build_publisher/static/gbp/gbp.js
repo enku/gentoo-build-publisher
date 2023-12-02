@@ -89,7 +89,7 @@ function packageSizesChart() {
   return new Chart(pkgSizesCtx, pkgSizesConfig);
 }
 
-/* Intialize the dashboard */
+/* Initialize the dashboard */
 function initialize() {
   const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
   popoverTriggerList.map(

@@ -28,7 +28,7 @@ CREATE_REPO_XML = importlib.resources.read_text(
 FOLDER_XML = importlib.resources.read_text(
     "gentoo_build_publisher", "folder.xml", encoding="UTF-8"
 )
-PATH_SEPERATOR = "/"
+PATH_SEPARATOR = "/"
 HTTP_NOT_FOUND = 404
 XML_PATHS = {
     "BRANCH_NAME": "scm/branches/hudson.plugins.git.BranchSpec/name",
@@ -92,8 +92,8 @@ class ProjectPath(PurePosixPath):
     """
 
     def __new__(cls, *args: Any) -> ProjectPath:
-        if not (args and str(args[0]).startswith(PATH_SEPERATOR)):
-            args = (PATH_SEPERATOR, *args)
+        if not (args and str(args[0]).startswith(PATH_SEPARATOR)):
+            args = (PATH_SEPARATOR, *args)
 
         return super().__new__(cls, *args)
 
@@ -103,15 +103,15 @@ class ProjectPath(PurePosixPath):
         parts = []
 
         for part in self.parts:
-            if part == PATH_SEPERATOR:
+            if part == PATH_SEPARATOR:
                 continue
 
             parts.extend(["job", part])
 
-        return PATH_SEPERATOR.join(parts)
+        return PATH_SEPARATOR.join(parts)
 
     def __str__(self) -> str:
-        return super().__str__().strip(PATH_SEPERATOR).lstrip(".")
+        return super().__str__().strip(PATH_SEPARATOR).lstrip(".")
 
 
 class URLBuilder:
@@ -171,7 +171,7 @@ class Jenkins:
         url_path = self.config.base_url.path
 
         return ProjectPath(
-            PATH_SEPERATOR.join(url_path.split(f"{PATH_SEPERATOR}job{PATH_SEPERATOR}"))
+            PATH_SEPARATOR.join(url_path.split(f"{PATH_SEPARATOR}job{PATH_SEPARATOR}"))
         )
 
     def download_artifact(self, build: Build) -> Iterable[bytes]:
@@ -354,7 +354,7 @@ class Jenkins:
             "triggers",
             "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
         ]
-        repos_path = PATH_SEPERATOR.join(parts)
+        repos_path = PATH_SEPARATOR.join(parts)
         upstream_repos = xml.find(repos_path)
         assert upstream_repos is not None
         upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)

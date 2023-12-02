@@ -77,7 +77,7 @@ class ReposDotConfTestCase(TestCase):
         self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
         self.assertTrue(b"/repos/lighthouse@prod/" in response.content)
 
-    def test_nonexistant_tags_should_return_404(self) -> None:
+    def test_nonexistent_tags_should_return_404(self) -> None:
         response = self.client.get("/machines/lighthouse@prod/repos.conf")
 
         self.assertEqual(response.status_code, 404)

@@ -9,7 +9,7 @@ from gentoo_build_publisher.records import BuildRecord
 
 
 class BuildModel(models.Model):
-    """Django persistance for Build objects"""
+    """Django persistence for Build objects"""
 
     # The build's machine name
     machine = models.CharField(max_length=255, db_index=True)

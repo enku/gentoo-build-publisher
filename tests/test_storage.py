@@ -33,7 +33,7 @@ TEST_SETTINGS = Settings(
 class StorageFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self) -> None:
-        """Should intantiate Storage from settings"""
+        """Should instantiate Storage from settings"""
         # Given the settings
         settings = replace(TEST_SETTINGS, STORAGE_PATH=self.tmpdir)
 
@@ -91,7 +91,7 @@ class StorageDownloadArtifactTestCase(TestCase):
             build, self.publisher.jenkins.download_artifact(build)
         )
 
-        # Then the orpaned path is removed
+        # Then the orphaned path is removed
         self.assertIs(path.exists(), True)
         self.assertIs(orphan.exists(), False)
 
@@ -117,7 +117,7 @@ class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
 
     def test_published_true(self) -> None:
-        """.publshed should return True when published"""
+        """.published should return True when published"""
         # Given the build
         build = Build("babette", "193")
 
@@ -138,14 +138,14 @@ class StoragePublishedTestCase(TestCase):
         self.assertTrue(published)
 
     def test_published_false(self) -> None:
-        """.publshed should return False when not published"""
+        """.published should return False when not published"""
         # Given the unpublished build
         build = Build("babette", "193")
 
         # Given the storage
         storage = Storage(self.tmpdir)
 
-        # When we acess the `published` attribute
+        # When we access the `published` attribute
         published = storage.published(build)
 
         # Then it returns False
@@ -472,7 +472,7 @@ class StorageTaggingTestCase(TestCase):
             self.assertTrue(target_path.exists())
 
     def test_can_untag_if_no_such_tag_exists(self) -> None:
-        """Removing a non-existant tag should fail silently"""
+        """Removing a non-existent tag should fail silently"""
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.untag(build, "prod")
@@ -587,7 +587,7 @@ class StorageResolveTagTestCase(TestCase):
         with self.assertRaises(FileNotFoundError):
             self.publisher.storage.resolve_tag(f"{build1.machine}@prod")
 
-    def test_resovle_tag_when_symlink_points_to_nonbuild(self) -> None:
+    def test_resolve_tag_when_symlink_points_to_nonbuild(self) -> None:
         build = BuildFactory()
         self.publisher.pull(build)
         self.publisher.storage.tag(build, "prod")

@@ -206,7 +206,7 @@ class ArtifactFactory:
         return tar_file
 
     def get_packages_for_build(self, build: Build) -> list[Package]:
-        # First constuct the list from the initially installed packages and give them a
+        # First construct the list from the initially installed packages and give them a
         # build time of 0
         packages = [
             Package(i, "gentoo", cpv_to_path(i), 1, len(i) ** 2, 0)

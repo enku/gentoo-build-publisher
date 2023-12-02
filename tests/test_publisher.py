@@ -127,7 +127,7 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(build_record.note, "This is a test")
 
     def test_purge_deletes_old_build(self) -> None:
-        """Should remove purgable builds"""
+        """Should remove purgeable builds"""
 
         old_build = BuildFactory()
         self.publisher.pull(old_build)
@@ -152,7 +152,7 @@ class BuildPublisherTestCase(TestCase):
             self.assertIs(path.exists(), False, path)
 
     def test_purge_does_not_delete_old_tagged_builds(self) -> None:
-        """Should remove purgable builds"""
+        """Should remove purgeable builds"""
 
         kept_build = BuildFactory(machine="lighthouse")
         self.publisher.records.save(

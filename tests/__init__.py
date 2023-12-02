@@ -283,7 +283,7 @@ class DjangoToRequestsAdapter(BaseAdapter):
         requests_response.raw.seek(0)
         requests_response.status_code = django_response.status_code
         requests_response.headers = CaseInsensitiveDict(django_response.headers)
-        requests_response.encoding = django_response.get("Conent-Type", None)
+        requests_response.encoding = django_response.get("Content-Type", None)
         requests_response.url = str(request.url)
         requests_response.request = request
 

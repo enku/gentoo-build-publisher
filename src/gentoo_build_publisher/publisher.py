@@ -66,7 +66,7 @@ class BuildPublisher:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> BuildPublisher:
-        """Instatiate from settings"""
+        """Instantiate from settings"""
         jenkins = Jenkins.from_settings(settings)
         storage = Storage.from_settings(settings)
         records = Records.from_settings(settings)

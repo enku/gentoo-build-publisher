@@ -85,7 +85,7 @@ class GBPChkTestCase(TestCase):
 
         self.publisher.tag(build, "broken_tag")
         self.publisher.publish(build)
-        # .tag and .publish produce a symlink for each conent type
+        # .tag and .publish produce a symlink for each content type
         link_count = len(Content) * 2
 
         # Delete the build. Symlinks are now broken
