@@ -14,7 +14,7 @@ dependencies = [
     "requests",
     "simplejson",
     "yarl!=1.9.1",
-    "gbpcli>=1.5.1",
+    "gbpcli>=1.7.0",
     "orjson>=3.9.1",
 ]
 requires-python = ">=3.10"

@@ -3,10 +3,9 @@
 
 [metadata]
 groups = ["default", "dev"]
-cross_platform = true
-static_urls = false
-lock_version = "4.3"
-content_hash = "sha256:3d67c274dfab0ab7aba87c31a9317385afe874031e2c3df5eabc41f76d56a14f"
+strategy = ["cross_platform"]
+lock_version = "4.4"
+content_hash = "sha256:d182df27fda031940d636f5e6ffdba877204522015f49d8f500a77d42d0c122b"
 
 [[package]]
 name = "amqp"
@@ -438,7 +437,7 @@ files = [
 
 [[package]]
 name = "gbpcli"
-version = "1.5.1"
+version = "1.7.0"
 requires_python = ">=3.10"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
@@ -447,8 +446,8 @@ dependencies = [
     "yarl",
 ]
 files = [
-    {file = "gbpcli-1.5.1-py3-none-any.whl", hash = "sha256:b1b3309e667d495d01cf27c50506a21d89ac541c9f3eb99f0799672e46447352"},
-    {file = "gbpcli-1.5.1.tar.gz", hash = "sha256:40b2b64678660d947bdee2fe3ce7f769090343c35ddddb8f7941c2146222f70d"},
+    {file = "gbpcli-1.7.0-py3-none-any.whl", hash = "sha256:a9051c1ae5d5cdf6bbe9c03b97a2bf77bffa700ee5e4aee93d0c7bc53d5963f0"},
+    {file = "gbpcli-1.7.0.tar.gz", hash = "sha256:c665617cfb550b335f387091f64efd0cc58f46183494defaa00770d479cd3e3b"},
 ]
 
 [[package]]
