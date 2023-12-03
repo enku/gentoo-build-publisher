@@ -5,20 +5,26 @@ This adds an ebuild repo to Jenkins that can be used by machine builds.
 import argparse
 
 from gbpcli import GBP, Console
-from gbpcli.graphql import check
+from gbpcli.graphql import Query, check
 
 
 def handler(args: argparse.Namespace, gbp: GBP, console: Console) -> int:
     """Add a an ebuild repo to Jenkins"""
-    # NOTE: This was unintentional, but ^ GBP can only see the queries for the "gbpcli"
-    # distribution.  It needs a collector like gentoo-build-publisher has a collector
-    # for schemas
-    gbp.query._distribution = (  # pylint: disable=protected-access
-        "gentoo_build_publisher"
-    )
+    create_machine: Query
+    if hasattr(gbp.query, "_distribution"):
+        # Older GBP can only see the queries for the "gbpcli" distribution and need to
+        # be overridden to see queries from other distributions
+        gbp.query._distribution = (  # pylint: disable=protected-access
+            "gentoo_build_publisher"
+        )
+        create_machine = gbp.query.create_machine
+    else:
+        create_machine = (
+            gbp.query.gentoo_build_publisher.create_machine  # type: ignore[attr-defined]
+        )
 
     response = check(
-        gbp.query.create_machine(
+        create_machine(
             branch=args.branch, ebuildRepos=args.deps, name=args.name, repo=args.repo
         )
     )
