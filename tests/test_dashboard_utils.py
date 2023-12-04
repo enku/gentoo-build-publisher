@@ -3,8 +3,6 @@
 import datetime as dt
 from typing import cast
 
-from django.utils import timezone
-
 from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.utils import Color
@@ -47,7 +45,7 @@ class GetPackagesTestCase(TestCase):
 
 class AddPackageMetadataTestCase(TestCase):
     def test(self) -> None:
-        now = timezone.now()
+        now = dt.datetime.now(tz=dt.UTC)
         build = BuildFactory(machine="babette")
         cache = QuickCache()
 
@@ -80,7 +78,7 @@ class AddPackageMetadataTestCase(TestCase):
         self.assertEqual(new_context, expected)
 
     def test_when_record_not_completed(self) -> None:
-        now = timezone.now()
+        now = dt.datetime.now(tz=dt.UTC)
         build = BuildFactory(machine="babette")
         cache = QuickCache()
 
@@ -108,7 +106,7 @@ class AddPackageMetadataTestCase(TestCase):
 
 class GetBuildSummaryTestCase(TestCase):
     def test(self) -> None:
-        now = timezone.now()
+        now = dt.datetime.now(tz=dt.UTC)
         machines = ["babette", "lighthouse", "web"]
         cache = QuickCache()
         builds = BuildFactory.buncha_builds(machines, now, 3, 2)
@@ -204,9 +202,9 @@ class CreateDashboardContext(TestCase):
     maxDiff = None
 
     def test(self) -> None:
-        start = timezone.now()
+        start = dt.datetime.now(tz=dt.UTC)
         days = 2
-        tzinfo = timezone.utc
+        tzinfo = dt.UTC
         color_range = (Color(255, 0, 0), Color(0, 0, 255))
         publisher = self.publisher
         cache = QuickCache()
