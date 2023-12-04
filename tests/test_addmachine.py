@@ -2,7 +2,7 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
-from gentoo_build_publisher import addmachine
+from gentoo_build_publisher.cli import addmachine
 
 from . import TestCase, string_console, test_gbp
 

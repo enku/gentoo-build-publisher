@@ -7,7 +7,7 @@ from argparse import ArgumentParser, Namespace
 
 from gbpcli import GBP
 
-from gentoo_build_publisher import check
+from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.common import Build, Content
 
 from . import TestCase, string_console

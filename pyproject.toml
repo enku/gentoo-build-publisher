@@ -35,9 +35,9 @@ django = "gentoo_build_publisher.records.django_orm:RecordDB"
 memory = "gentoo_build_publisher.records.memory:RecordDB"
 
 [project.entry-points."gbpcli.subcommands"]
-addmachine = "gentoo_build_publisher.addmachine"
-addrepo = "gentoo_build_publisher.addrepo"
-check = "gentoo_build_publisher.check"
+addmachine = "gentoo_build_publisher.cli.addmachine"
+addrepo = "gentoo_build_publisher.cli.addrepo"
+check = "gentoo_build_publisher.cli.check"
 
 [project.entry-points."gentoo_build_publisher.graphql_schema"]
 gbp = "gentoo_build_publisher.graphql"
