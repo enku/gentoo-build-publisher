@@ -304,12 +304,6 @@ class MachineInfo:
     @cached_property
     def tags(self) -> list[str]:
         """All the machines build tags"""
-        machine_tags = []
         publisher = BuildPublisher.get_publisher()
 
-        for build in self.builds:
-            machine_tags.extend(publisher.tags(build))
-
-        machine_tags.sort()
-
-        return machine_tags
+        return sorted([tag for build in self.builds for tag in publisher.tags(build)])
