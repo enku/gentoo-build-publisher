@@ -101,15 +101,9 @@ class ProjectPath(PurePosixPath):
     @property
     def url_path(self) -> str:
         """Convert project path to an absolute URL path"""
-        parts = []
-
-        for part in self.parts:
-            if part == PATH_SEPARATOR:
-                continue
-
-            parts.extend(["job", part])
-
-        return PATH_SEPARATOR.join(parts)
+        return PATH_SEPARATOR.join(
+            i for part in self.parts for i in ["job", part] if part != PATH_SEPARATOR
+        )
 
     def __str__(self) -> str:
         return super().__str__().strip(PATH_SEPARATOR).lstrip(".")
