@@ -306,4 +306,4 @@ class MachineInfo:
         """All the machines build tags"""
         publisher = BuildPublisher.get_publisher()
 
-        return sorted([tag for build in self.builds for tag in publisher.tags(build)])
+        return sorted(tag for build in self.builds for tag in publisher.tags(build))
