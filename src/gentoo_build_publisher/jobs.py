@@ -5,8 +5,6 @@ from typing import Protocol
 
 from gentoo_build_publisher import tasks as celery
 
-HTTP_NOT_FOUND = 404
-
 jobs: JobsInterface
 
 
