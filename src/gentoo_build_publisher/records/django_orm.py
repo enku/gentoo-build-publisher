@@ -1,10 +1,10 @@
 """Django ORM records implementation"""
+import datetime as dt
 from collections.abc import Iterable
 from dataclasses import replace
 from typing import Any
 
 from django.db import models
-from django.utils import timezone
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
@@ -33,7 +33,7 @@ class RecordDB:
                 machine=build_record.machine, build_id=build_record.build_id
             )
 
-        submitted = build_record.submitted or timezone.now()
+        submitted = build_record.submitted or dt.datetime.now(tz=dt.UTC)
         build_record = replace(build_record, submitted=submitted)
         model.submitted = submitted
         model.completed = build_record.completed

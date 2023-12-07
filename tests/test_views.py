@@ -1,9 +1,12 @@
 """Unit tests for gbp views"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
-from django.utils import timezone
+import datetime as dt
+from functools import partial
 
 from . import DjangoTestCase as BaseTestCase
 from .factories import BuildFactory
+
+now = partial(dt.datetime.now, tz=dt.UTC)
 
 
 class TestCase(BaseTestCase):
@@ -16,7 +19,7 @@ class DashboardTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.now = timezone.now()
+        self.now = now()
         self.machines = ["babette", "lighthouse", "web"]
         self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
@@ -40,7 +43,7 @@ class ReposDotConfTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.now = timezone.now()
+        self.now = now()
         self.machines = ["babette", "lighthouse", "web"]
         self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
@@ -89,7 +92,7 @@ class BinReposDotConfTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.now = timezone.now()
+        self.now = now()
         self.machines = ["babette", "lighthouse", "web"]
         self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 

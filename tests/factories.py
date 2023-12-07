@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 
 import factory
-from django.utils import timezone
 
 from gentoo_build_publisher.common import Build, Content, Package
 from gentoo_build_publisher.models import BuildModel
@@ -40,7 +39,7 @@ class BuildModelFactory(factory.django.DjangoModelFactory):
 
     machine = "babette"
     build_id = factory.Sequence(str)
-    submitted = factory.LazyFunction(timezone.now)
+    submitted = factory.LazyFunction(lambda: dt.datetime.now(tz=dt.UTC))
     completed = None
 
 
