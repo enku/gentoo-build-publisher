@@ -24,6 +24,7 @@ class Settings:
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: str | None = None
     RECORDS_BACKEND: str = "django"
+    JOBS_BACKEND: str = "celery"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:

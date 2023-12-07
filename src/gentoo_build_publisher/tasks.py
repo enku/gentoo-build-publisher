@@ -1,9 +1,8 @@
-"""Celery tasks for Gentoo Build Publisher"""
+"""Celery task definitions"""
 from __future__ import annotations
 
 import logging
 
-import requests
 import requests.exceptions
 from celery import shared_task
 

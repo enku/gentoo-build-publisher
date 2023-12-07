@@ -1,19 +1,15 @@
-"""Unit tests for the tasks module"""
+"""Unit tests for the jobs module"""
 # pylint: disable=missing-docstring,no-value-for-parameter
 import os
 from unittest import mock
 
 from requests import HTTPError
 
+from gentoo_build_publisher import jobs
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.tasks import (
-    delete_build,
-    publish_build,
-    pull_build,
-    purge_machine,
-)
+from gentoo_build_publisher.tasks import pull_build as celery_pull_build
 
 from . import TestCase
 
@@ -24,11 +20,10 @@ class PublishBuildTestCase(TestCase):
     def test_publishes_build(self) -> None:
         """Should actually publish the build"""
         with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
-            result = publish_build("babette.193")
+            jobs.publish_build("babette.193")
 
         build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
-        self.assertIs(result, True)
 
     @mock.patch("gentoo_build_publisher.tasks.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
@@ -36,9 +31,7 @@ class PublishBuildTestCase(TestCase):
     ) -> None:
         with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
             apply_mock.side_effect = HTTPError
-            result = publish_build("babette.193")
-
-        self.assertIs(result, False)
+            jobs.publish_build("babette.193")
 
         log_error_mock.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
@@ -52,7 +45,7 @@ class PurgeBuildTestCase(TestCase):
         with mock.patch.object(
             self.publisher, "purge", wraps=self.publisher.purge
         ) as purge_mock:
-            purge_machine("foo")
+            jobs.purge_machine("foo")
 
         purge_mock.assert_called_once_with("foo")
 
@@ -62,7 +55,7 @@ class PullBuildTestCase(TestCase):
 
     def test_pulls_build(self) -> None:
         """Should actually pull the build"""
-        pull_build("lima.1012")
+        jobs.pull_build("lima.1012")
 
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
@@ -73,7 +66,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                pull_build("charlie.197")
+                jobs.pull_build("charlie.197")
 
         mock_purge_machine.delay.assert_called_with("charlie")
 
@@ -83,7 +76,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                pull_build("delta.424")
+                jobs.pull_build("delta.424")
 
         mock_purge_machine.delay.assert_not_called()
 
@@ -97,7 +90,7 @@ class PullBuildTestCase(TestCase):
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
             try:
-                pull_build("oscar.197")
+                jobs.pull_build("oscar.197")
             except RuntimeError as error:
                 self.assertIs(error, download_artifact_mock.side_effect)
 
@@ -111,8 +104,8 @@ class PullBuildTestCase(TestCase):
             eof_error = EOFError()
             download_artifact_mock.side_effect = eof_error
 
-            with mock.patch.object(pull_build, "retry") as retry_mock:
-                pull_build("tango.197")
+            with mock.patch.object(celery_pull_build, "retry") as retry_mock:
+                jobs.pull_build("tango.197")
 
         retry_mock.assert_called_once_with(exc=eof_error)
 
@@ -126,9 +119,8 @@ class PullBuildTestCase(TestCase):
             error.response.status_code = 404
             download_artifact_mock.side_effect = error
 
-            with mock.patch.object(pull_build, "retry") as retry_mock:
-                with self.assertRaises(HTTPError):
-                    pull_build("tango.197")
+            with mock.patch.object(celery_pull_build, "retry") as retry_mock:
+                jobs.pull_build("tango.197")
 
         retry_mock.assert_not_called()
 
@@ -138,6 +130,6 @@ class DeleteBuildTestCase(TestCase):
 
     def test_should_delete_the_build(self) -> None:
         with mock.patch.object(self.publisher, "delete") as mock_delete:
-            delete_build("zulu.56")
+            jobs.delete_build("zulu.56")
 
         mock_delete.assert_called_once_with(Build("zulu", "56"))
