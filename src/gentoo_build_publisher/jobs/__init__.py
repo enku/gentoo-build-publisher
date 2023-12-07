@@ -1,11 +1,7 @@
 """Async Jobs for Gentoo Build Publisher"""
-from __future__ import annotations
-
 from typing import Protocol
 
 from gentoo_build_publisher.jobs.celery import CeleryJobs
-
-jobs: JobsInterface
 
 
 class JobsInterface(Protocol):
