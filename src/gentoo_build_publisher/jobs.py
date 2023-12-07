@@ -1,14 +1,12 @@
 """Async Jobs for Gentoo Build Publisher"""
 from __future__ import annotations
 
-import logging
 from typing import Protocol
 
 from gentoo_build_publisher import tasks as celery
 
 HTTP_NOT_FOUND = 404
 
-logger = logging.getLogger(__name__)
 jobs: JobsInterface
 
 
