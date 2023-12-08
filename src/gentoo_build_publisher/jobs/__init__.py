@@ -2,7 +2,7 @@
 import importlib.metadata
 import logging
 from functools import cache
-from typing import Protocol
+from typing import Any, Protocol
 
 import requests.exceptions
 
@@ -50,10 +50,13 @@ class JobsInterface(Protocol):
     def delete_build(self, build_id: str) -> None:
         """Delete the given build from the db"""
 
+    @classmethod
+    def work(cls, settings: Settings) -> Any:
+        """Run the task worker for this interface"""
 
-@cache
-def from_settings(settings: Settings) -> JobsInterface:
-    """Return the appropriate JobsInterface based on the environment
+
+def get_interface_from_settings(settings: Settings) -> type[JobsInterface]:
+    """Return the appropriate JobsInterface class based on the given settings
 
     Looks at Settings.JOBS_BACKEND and return a JobsInterface based on that setting.
 
@@ -68,6 +71,19 @@ def from_settings(settings: Settings) -> JobsInterface:
         raise JobInterfaceNotFoundError(settings.JOBS_BACKEND) from None
 
     iface: type[JobsInterface] = backend.load()
+
+    return iface
+
+
+@cache
+def from_settings(settings: Settings) -> JobsInterface:
+    """Return the appropriate JobsInterface based on the given Settings
+
+    Looks at Settings.JOBS_BACKEND and return a JobsInterface based on that setting.
+
+    Raise JobInterfaceNotFoundError if the setting is invalid.
+    """
+    iface = get_interface_from_settings(settings)
 
     return iface(settings)
 

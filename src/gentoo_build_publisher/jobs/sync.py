@@ -3,6 +3,8 @@
 The "sync" JobsInterface is a simple (testing) JobsInterface that runs the jobs
 synchronously (in process).
 """
+import sys
+
 from gentoo_build_publisher import jobs
 from gentoo_build_publisher.settings import Settings
 
@@ -34,3 +36,9 @@ class SyncJobs:
     def delete_build(self, build_id: str) -> None:
         """Delete the given build from the db"""
         jobs.delete_build(build_id)
+
+    @classmethod
+    def work(cls, _settings: Settings) -> None:
+        """Do nothing"""
+        sys.stderr.write(f"{cls.__name__} has no worker\n")
+        raise SystemExit(1)

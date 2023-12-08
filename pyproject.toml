@@ -38,6 +38,7 @@ memory = "gentoo_build_publisher.records.memory:RecordDB"
 addmachine = "gentoo_build_publisher.cli.addmachine"
 addrepo = "gentoo_build_publisher.cli.addrepo"
 check = "gentoo_build_publisher.cli.check"
+worker = "gentoo_build_publisher.cli.worker"
 
 [project.entry-points."gentoo_build_publisher.graphql_schema"]
 gbp = "gentoo_build_publisher.graphql"

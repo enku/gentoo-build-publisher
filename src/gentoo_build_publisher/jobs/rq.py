@@ -1,6 +1,6 @@
 """RQ JobsInterface"""
 from redis import Redis
-from rq import Queue
+from rq import Queue, Worker
 
 from gentoo_build_publisher import jobs
 from gentoo_build_publisher.settings import Settings
@@ -10,8 +10,8 @@ class RQJobs:
     """RQ JobsInterface"""
 
     def __init__(self, settings: Settings) -> None:
-        connection = Redis.from_url(settings.REDIS_JOBS_URL)
-        self.queue = Queue(connection=connection, is_async=settings.REDIS_JOBS_ASYNC)
+        connection = Redis.from_url(settings.RQ_JOBS_URL)
+        self.queue = Queue(connection=connection, is_async=settings.RQ_JOBS_ASYNC)
 
     def __repr__(self) -> str:
         return type(self).__name__
@@ -34,3 +34,13 @@ class RQJobs:
     def delete_build(self, build_id: str) -> None:
         """Delete the given build from the db"""
         self.queue.enqueue(jobs.delete_build, build_id)
+
+    @classmethod
+    def work(cls, settings: Settings) -> None:
+        """Run the RQ worker"""
+        worker = Worker(
+            ["default"],
+            connection=Redis.from_url(settings.RQ_JOBS_URL),
+            name=settings.RQ_JOBS_NAME or None,
+        )
+        worker.work()

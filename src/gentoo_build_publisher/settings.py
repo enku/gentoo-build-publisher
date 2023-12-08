@@ -25,8 +25,17 @@ class Settings:
     JENKINS_USER: str | None = None
     JOBS_BACKEND: str = "celery"
     RECORDS_BACKEND: str = "django"
-    REDIS_JOBS_ASYNC: bool = True
-    REDIS_JOBS_URL: str = "redis://localhost.invalid:6379"
+
+    # Celery jobs backend config
+    CELERY_JOBS_CONCURRENCY: int = 1
+    CELERY_JOBS_EVENTS: bool = False
+    CELERY_JOBS_HOSTNAME: str = ""
+    CELERY_JOBS_LOGLEVEL: str = "INFO"
+
+    # RQ jobs backend config
+    RQ_JOBS_ASYNC: bool = True
+    RQ_JOBS_URL: str = "redis://localhost.invalid:6379"
+    RQ_JOBS_NAME: str = ""
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:

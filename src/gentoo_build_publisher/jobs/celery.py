@@ -1,5 +1,8 @@
 """Celery JobsInterface"""
 
+from celery.apps.worker import Worker
+
+from gentoo_build_publisher import celery as app
 from gentoo_build_publisher import tasks
 from gentoo_build_publisher.settings import Settings
 
@@ -31,3 +34,15 @@ class CeleryJobs:
     def delete_build(self, build_id: str) -> None:
         """Delete the given build from the db"""
         tasks.delete_build.delay(build_id)
+
+    @classmethod
+    def work(cls, settings: Settings) -> None:
+        """Run the Celery worker"""
+        worker = Worker(  # type: ignore[call-arg]
+            app=app,
+            concurrency=settings.CELERY_JOBS_CONCURRENCY,
+            events=settings.CELERY_JOBS_EVENTS,
+            hostname=settings.CELERY_JOBS_HOSTNAME or None,
+            loglevel=settings.CELERY_JOBS_LOGLEVEL,
+        )
+        worker.start()  # type: ignore[attr-defined]

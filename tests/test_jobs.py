@@ -8,10 +8,12 @@ from unittest import mock
 import fakeredis
 from requests import HTTPError
 
+from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import jobs
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.jobs.celery import CeleryJobs
 from gentoo_build_publisher.jobs.rq import RQJobs
+from gentoo_build_publisher.jobs.sync import SyncJobs
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import pull_build as celery_pull_build
@@ -24,8 +26,8 @@ def set_job(name: str) -> jobs.JobsInterface:
     settings = Settings(
         JENKINS_BASE_URL="http://jenkins.invalid/",
         JOBS_BACKEND=name,
-        REDIS_JOBS_ASYNC=False,
-        REDIS_JOBS_URL="redis://localhost.invalid:6379",
+        RQ_JOBS_ASYNC=False,
+        RQ_JOBS_URL="redis://localhost.invalid:6379",
         STORAGE_PATH=Path("/dev/null"),
     )
     redis_path = "gentoo_build_publisher.jobs.rq.Redis.from_url"
@@ -185,7 +187,7 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="celery",
-            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            RQ_JOBS_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         self.assertIsInstance(jobs.from_settings(settings), CeleryJobs)
@@ -194,7 +196,7 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="rq",
-            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            RQ_JOBS_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         jobsif = jobs.from_settings(settings)
@@ -208,8 +210,67 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="bogus",
-            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            RQ_JOBS_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         with self.assertRaises(jobs.JobInterfaceNotFoundError):
             jobs.from_settings(settings)
+
+
+class WorkMethodTests(TestCase):
+    """Tests for the JobsInterface.work methods"""
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            JOBS_BACKEND="rq",
+            RQ_JOBS_NAME="test-worker",
+            RQ_JOBS_URL="redis://localhost.invalid:6379",
+            STORAGE_PATH=Path("/dev/null"),
+            CELERY_JOBS_CONCURRENCY=55,
+            CELERY_JOBS_EVENTS=True,
+            CELERY_JOBS_HOSTNAME="gbp.invalid",
+            CELERY_JOBS_LOGLEVEL="DEBUG",
+        )
+
+    def test_celery(self) -> None:
+        path = "gentoo_build_publisher.jobs.celery.Worker"
+        with mock.patch(path) as mock_worker:
+            CeleryJobs.work(self.settings)
+
+        mock_worker.assert_called_with(
+            app=celery_app,
+            concurrency=55,
+            events=True,
+            hostname="gbp.invalid",
+            loglevel="DEBUG",
+        )
+        mock_worker.return_value.start.assert_called_once_with()
+
+    def test_sync(self) -> None:
+        stderr_path = "gentoo_build_publisher.jobs.sync.sys.stderr"
+        with self.assertRaises(SystemExit) as context, mock.patch(
+            stderr_path
+        ) as mock_stderr:
+            SyncJobs.work(self.settings)
+
+        self.assertEqual(context.exception.args, (1,))
+        mock_stderr.write.assert_called_once_with("SyncJobs has no worker\n")
+
+    def test_rq(self) -> None:
+        worker_path = "gentoo_build_publisher.jobs.rq.Worker"
+        redis_path = "gentoo_build_publisher.jobs.rq.Redis"
+
+        with mock.patch(worker_path) as mock_worker, mock.patch(
+            redis_path
+        ) as mock_redis:
+            RQJobs.work(self.settings)
+
+        mock_redis.from_url.assert_called_once_with("redis://localhost.invalid:6379")
+        connection = mock_redis.from_url.return_value
+        mock_worker.assert_called_with(
+            ["default"], connection=connection, name="test-worker"
+        )
+        mock_worker.return_value.work.assert_called_once_with()
