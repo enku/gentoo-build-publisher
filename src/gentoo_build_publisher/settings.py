@@ -25,6 +25,7 @@ class Settings:
     JENKINS_USER: str | None = None
     RECORDS_BACKEND: str = "django"
     JOBS_BACKEND: str = "celery"
+    REDIS_JOBS_URL: str = "redis://localhost.invalid:6379"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:

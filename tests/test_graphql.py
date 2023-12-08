@@ -557,10 +557,10 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        with mock.patch("gentoo_build_publisher.graphql.jobs.publish_build") as publish:
+        with mock.patch("gentoo_build_publisher.graphql.get_jobs") as get_jobs:
             graphql(query)
 
-        publish.assert_called_once_with("babette.193")
+        get_jobs.return_value.publish_build.assert_called_once_with("babette.193")
 
 
 class PullMutationTestCase(TestCase):
@@ -578,11 +578,11 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch("gentoo_build_publisher.graphql.jobs.pull_build") as mock_pull:
+        with mock.patch("gentoo_build_publisher.graphql.get_jobs") as get_jobs:
             result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_pull.assert_called_once_with(build.id, note=None)
+        get_jobs.return_value.pull_build.assert_called_once_with(build.id, note=None)
 
     def test_pull_with_note(self) -> None:
         build = BuildFactory()

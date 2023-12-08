@@ -1,7 +1,21 @@
 """Async Jobs for Gentoo Build Publisher"""
+from functools import cache
 from typing import Protocol
 
+from redis import Redis
+from rq import Queue
+
 from gentoo_build_publisher.jobs.celery import CeleryJobs
+from gentoo_build_publisher.jobs.rq import RQJobs
+from gentoo_build_publisher.settings import Settings
+
+
+class Error(Exception):
+    """Errors for jobs"""
+
+
+class JobInterfaceNotFoundError(LookupError, Error):
+    """Couldn't find you a job"""
 
 
 class JobsInterface(Protocol):
@@ -23,24 +37,23 @@ class JobsInterface(Protocol):
         """Delete the given build from the db"""
 
 
-def publish_build(build_id: str) -> None:
-    """Publish the build"""
-    CeleryJobs().publish_build(build_id)
+@cache
+def get_jobs(backend_type: str | None = None) -> JobsInterface:
+    """Return the appropriate JobsInterface based on the environment
 
+    Looks at Settings.JOBS_BACKEND and return a JobsInterface based on that setting.
 
-def pull_build(build_id: str, *, note: str | None = None) -> None:
-    """Pull the build into storage
-
-    If `note` is given, then the build record will be saved with the given note.
+    Raise JobInterfaceNotFoundError if the setting is invalid.
     """
-    CeleryJobs().pull_build(build_id, note=note)
+    settings = Settings.from_environ()
+    if backend_type is None:
+        backend_type = settings.JOBS_BACKEND
 
-
-def purge_machine(machine: str) -> None:
-    """Purge old builds for machine"""
-    CeleryJobs().purge_machine(machine)
-
-
-def delete_build(build_id: str) -> None:
-    """Delete the given build from the db"""
-    CeleryJobs().delete_build(build_id)
+    match backend_type:
+        case "celery":
+            return CeleryJobs()
+        case "rq":
+            queue = Queue(connection=Redis.from_url(settings.REDIS_JOBS_URL))
+            return RQJobs(queue)
+        case _:
+            raise JobInterfaceNotFoundError(settings.JOBS_BACKEND)

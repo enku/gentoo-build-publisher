@@ -42,6 +42,11 @@ check = "gentoo_build_publisher.cli.check"
 [project.entry-points."gentoo_build_publisher.graphql_schema"]
 gbp = "gentoo_build_publisher.graphql"
 
+
+[project.optional-dependencies]
+redis = [
+    "rq>=1.15.1",
+]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -100,4 +105,5 @@ dev = [
     "tblib>=1.7.0",
     "celery-types>=0.19.0",
     "typos>=1.16.23",
+    "fakeredis>=2.20.0",
 ]

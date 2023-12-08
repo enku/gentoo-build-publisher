@@ -1,37 +1,72 @@
 """Unit tests for the jobs module"""
 # pylint: disable=missing-docstring,no-value-for-parameter
 import os
+from typing import Callable
 from unittest import mock
 
+import fakeredis
 from requests import HTTPError
+from rq import Queue
 
 from gentoo_build_publisher import jobs
 from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.jobs.celery import CeleryJobs
+from gentoo_build_publisher.jobs.rq import RQJobs
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.tasks import pull_build as celery_pull_build
 
-from . import TestCase
+from . import TestCase, parametrized
+
+
+def set_job(name: str) -> jobs.JobsInterface:
+    jobs.get_jobs.cache_clear()
+    with mock.patch.dict(
+        os.environ,
+        {
+            "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
+            "BUILD_PUBLISHER_JOBS_BACKEND": name,
+            "BUILD_PUBLISHER_REDIS_JOBS_URL": "redis://localhost:6379",
+            "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
+        },
+    ):
+        if name == "rq":
+            with mock.patch(
+                "gentoo_build_publisher.jobs.Queue",
+                return_value=Queue(connection=fakeredis.FakeRedis(), is_async=False),
+            ):
+                return jobs.get_jobs(name)
+
+        return jobs.get_jobs(name)
+
+
+def ifparams(*names: str) -> list[list[jobs.JobsInterface]]:
+    return [[set_job(name)] for name in names]
+
+
+def params(*names) -> Callable:
+    return parametrized(ifparams(*names))
 
 
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    def test_publishes_build(self) -> None:
+    @params("celery", "rq")
+    def test_publishes_build(self, jobif: jobs.JobsInterface) -> None:
         """Should actually publish the build"""
-        with mock.patch("gentoo_build_publisher.tasks.purge_machine"):
-            jobs.publish_build("babette.193")
+        jobif.publish_build("babette.193")
 
         build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
 
-    @mock.patch("gentoo_build_publisher.tasks.logger.error")
+    @params("celery", "rq")
+    @mock.patch("gentoo_build_publisher.jobs.common.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
-        self, log_error_mock: mock.Mock
+        self, jobif: jobs.JobsInterface, log_error_mock: mock.Mock
     ) -> None:
-        with mock.patch("gentoo_build_publisher.tasks.pull_build.apply") as apply_mock:
+        with mock.patch("gentoo_build_publisher.jobs.common.pull_build") as apply_mock:
             apply_mock.side_effect = HTTPError
-            jobs.publish_build("babette.193")
+            jobif.publish_build("babette.193")
 
         log_error_mock.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
@@ -41,11 +76,12 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_machine task"""
 
-    def test(self) -> None:
+    @params("celery", "rq")
+    def test(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch.object(
             self.publisher, "purge", wraps=self.publisher.purge
         ) as purge_mock:
-            jobs.purge_machine("foo")
+            jobif.purge_machine("foo")
 
         purge_mock.assert_called_once_with("foo")
 
@@ -53,35 +89,41 @@ class PurgeBuildTestCase(TestCase):
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    def test_pulls_build(self) -> None:
+    @params("celery", "rq")
+    def test_pulls_build(self, jobif: jobs.JobsInterface) -> None:
         """Should actually pull the build"""
-        jobs.pull_build("lima.1012")
+        jobif.pull_build("lima.1012")
 
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
 
-    def test_calls_purge_machine(self) -> None:
+    @params("celery", "rq")
+    def test_calls_purge_machine(self, jobif: jobs.JobsInterface) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
-            "gentoo_build_publisher.tasks.purge_machine"
+            "gentoo_build_publisher.jobs.common.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                jobs.pull_build("charlie.197")
+                jobif.pull_build("charlie.197")
 
-        mock_purge_machine.delay.assert_called_with("charlie")
+        mock_purge_machine.assert_called_with("charlie")
 
-    def test_does_not_call_purge_machine(self) -> None:
+    @params("celery", "rq")
+    def test_does_not_call_purge_machine(self, jobif: jobs.JobsInterface) -> None:
         """Should not issue the purge_machine task when setting is false"""
         with mock.patch(
             "gentoo_build_publisher.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                jobs.pull_build("delta.424")
+                jobif.pull_build("delta.424")
 
         mock_purge_machine.delay.assert_not_called()
 
-    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_delete_db_model_when_download_fails(self) -> None:
+    @params("celery", "rq")
+    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    def test_should_delete_db_model_when_download_fails(
+        self, jobif: jobs.JobsInterface
+    ) -> None:
         settings = Settings.from_environ()
         records = Records.from_settings(settings)
 
@@ -90,14 +132,17 @@ class PullBuildTestCase(TestCase):
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
             try:
-                jobs.pull_build("oscar.197")
+                jobif.pull_build("oscar.197")
             except RuntimeError as error:
                 self.assertIs(error, download_artifact_mock.side_effect)
 
         self.assertFalse(records.exists(Build("oscar", "197")))
 
-    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_retry_on_retryable_exceptions(self) -> None:
+    @params("celery")
+    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    def test_should_retry_on_retryable_exceptions(
+        self, jobif: jobs.JobsInterface
+    ) -> None:
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
@@ -105,12 +150,13 @@ class PullBuildTestCase(TestCase):
             download_artifact_mock.side_effect = eof_error
 
             with mock.patch.object(celery_pull_build, "retry") as retry_mock:
-                jobs.pull_build("tango.197")
+                jobif.pull_build("tango.197")
 
         retry_mock.assert_called_once_with(exc=eof_error)
 
-    @mock.patch("gentoo_build_publisher.tasks.logger.error", new=mock.Mock())
-    def test_should_not_retry_on_404_response(self) -> None:
+    @params("celery")
+    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    def test_should_not_retry_on_404_response(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
@@ -120,7 +166,7 @@ class PullBuildTestCase(TestCase):
             download_artifact_mock.side_effect = error
 
             with mock.patch.object(celery_pull_build, "retry") as retry_mock:
-                jobs.pull_build("tango.197")
+                jobif.pull_build("tango.197")
 
         retry_mock.assert_not_called()
 
@@ -128,8 +174,30 @@ class PullBuildTestCase(TestCase):
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
-    def test_should_delete_the_build(self) -> None:
+    @params("celery", "rq")
+    def test_should_delete_the_build(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch.object(self.publisher, "delete") as mock_delete:
-            jobs.delete_build("zulu.56")
+            jobif.delete_build("zulu.56")
 
         mock_delete.assert_called_once_with(Build("zulu", "56"))
+
+
+class GetJobsTests(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        jobs.get_jobs.cache_clear()
+
+    def test_celery(self) -> None:
+        self.assertIsInstance(jobs.get_jobs("celery"), CeleryJobs)
+
+    def test_rq(self) -> None:
+        jobsif = jobs.get_jobs("rq")
+        self.assertIsInstance(jobsif, RQJobs)
+        self.assertEqual(
+            jobsif.queue.connection.connection_pool.connection_kwargs,
+            {"host": "localhost.invalid", "port": 6379},
+        )
+
+    def test_invalid(self) -> None:
+        with self.assertRaises(jobs.JobInterfaceNotFoundError):
+            jobs.get_jobs("bogus")
