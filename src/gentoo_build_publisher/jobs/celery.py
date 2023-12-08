@@ -1,10 +1,14 @@
 """Celery JobsInterface"""
 
 from gentoo_build_publisher import tasks
+from gentoo_build_publisher.settings import Settings
 
 
 class CeleryJobs:
     """Celery JobsInterface"""
+
+    def __init__(self, _settings: Settings) -> None:
+        return
 
     def __repr__(self) -> str:
         return type(self).__name__

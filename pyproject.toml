@@ -42,6 +42,9 @@ check = "gentoo_build_publisher.cli.check"
 [project.entry-points."gentoo_build_publisher.graphql_schema"]
 gbp = "gentoo_build_publisher.graphql"
 
+[project.entry-points."gentoo_build_publisher.jobs_interface"]
+celery = "gentoo_build_publisher.jobs.celery:CeleryJobs"
+rq = "gentoo_build_publisher.jobs.rq:RQJobs"
 
 [project.optional-dependencies]
 redis = [

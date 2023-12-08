@@ -26,6 +26,7 @@ class Settings:
     RECORDS_BACKEND: str = "django"
     JOBS_BACKEND: str = "celery"
     REDIS_JOBS_URL: str = "redis://localhost.invalid:6379"
+    REDIS_JOBS_ASYNC: bool = True
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
@@ -38,7 +39,7 @@ class Settings:
                 continue
 
             match name := key.removeprefix(prefix):
-                case "ENABLE_PURGE":
+                case "ENABLE_PURGE" | "REDIS_JOB_ASYNC":
                     params[name] = get_bool(value)
                 case "JENKINS_DOWNLOAD_CHUNK_SIZE":
                     params[name] = int(value)

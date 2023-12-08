@@ -1,12 +1,12 @@
 """Unit tests for the jobs module"""
 # pylint: disable=missing-docstring,no-value-for-parameter
 import os
+from pathlib import Path
 from typing import Callable
 from unittest import mock
 
 import fakeredis
 from requests import HTTPError
-from rq import Queue
 
 from gentoo_build_publisher import jobs
 from gentoo_build_publisher.common import Build
@@ -20,24 +20,18 @@ from . import TestCase, parametrized
 
 
 def set_job(name: str) -> jobs.JobsInterface:
-    jobs.get_jobs.cache_clear()
-    with mock.patch.dict(
-        os.environ,
-        {
-            "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
-            "BUILD_PUBLISHER_JOBS_BACKEND": name,
-            "BUILD_PUBLISHER_REDIS_JOBS_URL": "redis://localhost:6379",
-            "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
-        },
-    ):
-        if name == "rq":
-            with mock.patch(
-                "gentoo_build_publisher.jobs.Queue",
-                return_value=Queue(connection=fakeredis.FakeRedis(), is_async=False),
-            ):
-                return jobs.get_jobs(name)
-
-        return jobs.get_jobs(name)
+    jobs.from_settings.cache_clear()
+    settings = Settings(
+        JENKINS_BASE_URL="http://jenkins.invalid/",
+        JOBS_BACKEND=name,
+        REDIS_JOBS_ASYNC=False,
+        REDIS_JOBS_URL="redis://localhost.invalid:6379",
+        STORAGE_PATH=Path("/dev/null"),
+    )
+    redis_path = "gentoo_build_publisher.jobs.rq.Redis.from_url"
+    mock_redis = fakeredis.FakeRedis()  # type: ignore[no-untyped-call]
+    with mock.patch(redis_path, return_value=mock_redis):
+        return jobs.from_settings(settings)
 
 
 def ifparams(*names: str) -> list[list[jobs.JobsInterface]]:
@@ -60,11 +54,11 @@ class PublishBuildTestCase(TestCase):
         self.assertIs(self.publisher.published(build), True)
 
     @params("celery", "rq")
-    @mock.patch("gentoo_build_publisher.jobs.common.logger.error")
+    @mock.patch("gentoo_build_publisher.jobs.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
         self, jobif: jobs.JobsInterface, log_error_mock: mock.Mock
     ) -> None:
-        with mock.patch("gentoo_build_publisher.jobs.common.pull_build") as apply_mock:
+        with mock.patch("gentoo_build_publisher.jobs.pull_build") as apply_mock:
             apply_mock.side_effect = HTTPError
             jobif.publish_build("babette.193")
 
@@ -101,7 +95,7 @@ class PullBuildTestCase(TestCase):
     def test_calls_purge_machine(self, jobif: jobs.JobsInterface) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
-            "gentoo_build_publisher.jobs.common.purge_machine"
+            "gentoo_build_publisher.jobs.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
                 jobif.pull_build("charlie.197")
@@ -120,7 +114,7 @@ class PullBuildTestCase(TestCase):
         mock_purge_machine.delay.assert_not_called()
 
     @params("celery", "rq")
-    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    @mock.patch("gentoo_build_publisher.jobs.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(
         self, jobif: jobs.JobsInterface
     ) -> None:
@@ -139,7 +133,7 @@ class PullBuildTestCase(TestCase):
         self.assertFalse(records.exists(Build("oscar", "197")))
 
     @params("celery")
-    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    @mock.patch("gentoo_build_publisher.jobs.logger.error", new=mock.Mock())
     def test_should_retry_on_retryable_exceptions(
         self, jobif: jobs.JobsInterface
     ) -> None:
@@ -155,7 +149,7 @@ class PullBuildTestCase(TestCase):
         retry_mock.assert_called_once_with(exc=eof_error)
 
     @params("celery")
-    @mock.patch("gentoo_build_publisher.jobs.common.logger.error", new=mock.Mock())
+    @mock.patch("gentoo_build_publisher.jobs.logger.error", new=mock.Mock())
     def test_should_not_retry_on_404_response(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
@@ -182,16 +176,28 @@ class DeleteBuildTestCase(TestCase):
         mock_delete.assert_called_once_with(Build("zulu", "56"))
 
 
-class GetJobsTests(TestCase):
+class JobsTests(TestCase):
     def setUp(self) -> None:
         super().setUp()
-        jobs.get_jobs.cache_clear()
+        jobs.from_settings.cache_clear()
 
     def test_celery(self) -> None:
-        self.assertIsInstance(jobs.get_jobs("celery"), CeleryJobs)
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            JOBS_BACKEND="celery",
+            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            STORAGE_PATH=Path("/dev/null"),
+        )
+        self.assertIsInstance(jobs.from_settings(settings), CeleryJobs)
 
     def test_rq(self) -> None:
-        jobsif = jobs.get_jobs("rq")
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            JOBS_BACKEND="rq",
+            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            STORAGE_PATH=Path("/dev/null"),
+        )
+        jobsif = jobs.from_settings(settings)
         self.assertIsInstance(jobsif, RQJobs)
         self.assertEqual(
             jobsif.queue.connection.connection_pool.connection_kwargs,
@@ -199,5 +205,11 @@ class GetJobsTests(TestCase):
         )
 
     def test_invalid(self) -> None:
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            JOBS_BACKEND="bogus",
+            REDIS_JOBS_URL="redis://localhost.invalid:6379",
+            STORAGE_PATH=Path("/dev/null"),
+        )
         with self.assertRaises(jobs.JobInterfaceNotFoundError):
-            jobs.get_jobs("bogus")
+            jobs.from_settings(settings)
