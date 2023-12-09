@@ -45,7 +45,7 @@ def params(*names) -> Callable:
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test_publishes_build(self, jobif: jobs.JobsInterface) -> None:
         """Should actually publish the build"""
         jobif.publish_build("babette.193")
@@ -53,7 +53,7 @@ class PublishBuildTestCase(TestCase):
         build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     @mock.patch("gentoo_build_publisher.jobs.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
         self, jobif: jobs.JobsInterface, log_error_mock: mock.Mock
@@ -70,7 +70,7 @@ class PublishBuildTestCase(TestCase):
 class PurgeBuildTestCase(TestCase):
     """Tests for the purge_machine task"""
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch.object(
             self.publisher, "purge", wraps=self.publisher.purge
@@ -83,7 +83,7 @@ class PurgeBuildTestCase(TestCase):
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test_pulls_build(self, jobif: jobs.JobsInterface) -> None:
         """Should actually pull the build"""
         jobif.pull_build("lima.1012")
@@ -91,7 +91,7 @@ class PullBuildTestCase(TestCase):
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test_calls_purge_machine(self, jobif: jobs.JobsInterface) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
@@ -102,7 +102,7 @@ class PullBuildTestCase(TestCase):
 
         mock_purge_machine.assert_called_with("charlie")
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test_does_not_call_purge_machine(self, jobif: jobs.JobsInterface) -> None:
         """Should not issue the purge_machine task when setting is false"""
         with mock.patch(
@@ -113,7 +113,7 @@ class PullBuildTestCase(TestCase):
 
         mock_purge_machine.delay.assert_not_called()
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     @mock.patch("gentoo_build_publisher.jobs.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(
         self, jobif: jobs.JobsInterface
@@ -168,7 +168,7 @@ class PullBuildTestCase(TestCase):
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
-    @params("celery", "rq")
+    @params("celery", "rq", "sync")
     def test_should_delete_the_build(self, jobif: jobs.JobsInterface) -> None:
         with mock.patch.object(self.publisher, "delete") as mock_delete:
             jobif.delete_build("zulu.56")
