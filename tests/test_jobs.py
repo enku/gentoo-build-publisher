@@ -26,8 +26,8 @@ def set_job(name: str) -> jobs.JobsInterface:
     settings = Settings(
         JENKINS_BASE_URL="http://jenkins.invalid/",
         JOBS_BACKEND=name,
-        RQ_JOBS_ASYNC=False,
-        RQ_JOBS_URL="redis://localhost.invalid:6379",
+        JOBS_RQ_ASYNC=False,
+        JOBS_RQ_URL="redis://localhost.invalid:6379",
         STORAGE_PATH=Path("/dev/null"),
     )
     redis_path = "gentoo_build_publisher.jobs.rq.Redis.from_url"
@@ -187,7 +187,7 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="celery",
-            RQ_JOBS_URL="redis://localhost.invalid:6379",
+            JOBS_RQ_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         self.assertIsInstance(jobs.from_settings(settings), CeleryJobs)
@@ -196,7 +196,7 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="rq",
-            RQ_JOBS_URL="redis://localhost.invalid:6379",
+            JOBS_RQ_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         jobsif = jobs.from_settings(settings)
@@ -210,7 +210,7 @@ class JobsTests(TestCase):
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="bogus",
-            RQ_JOBS_URL="redis://localhost.invalid:6379",
+            JOBS_RQ_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
         )
         with self.assertRaises(jobs.JobInterfaceNotFoundError):
@@ -226,14 +226,14 @@ class WorkMethodTests(TestCase):
         self.settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="rq",
-            RQ_JOBS_NAME="test-worker",
-            RQ_JOBS_QUEUE_NAME="test-queue",
-            RQ_JOBS_URL="redis://localhost.invalid:6379",
+            JOBS_CELERY_CONCURRENCY=55,
+            JOBS_CELERY_EVENTS=True,
+            JOBS_CELERY_HOSTNAME="gbp.invalid",
+            JOBS_CELERY_LOGLEVEL="DEBUG",
+            JOBS_RQ_NAME="test-worker",
+            JOBS_RQ_QUEUE_NAME="test-queue",
+            JOBS_RQ_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
-            CELERY_JOBS_CONCURRENCY=55,
-            CELERY_JOBS_EVENTS=True,
-            CELERY_JOBS_HOSTNAME="gbp.invalid",
-            CELERY_JOBS_LOGLEVEL="DEBUG",
         )
 
     def test_celery(self) -> None:

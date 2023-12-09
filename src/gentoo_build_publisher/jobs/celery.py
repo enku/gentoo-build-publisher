@@ -40,9 +40,9 @@ class CeleryJobs:
         """Run the Celery worker"""
         worker = Worker(  # type: ignore[call-arg]
             app=app,
-            concurrency=settings.CELERY_JOBS_CONCURRENCY,
-            events=settings.CELERY_JOBS_EVENTS,
-            hostname=settings.CELERY_JOBS_HOSTNAME or None,
-            loglevel=settings.CELERY_JOBS_LOGLEVEL,
+            concurrency=settings.JOBS_CELERY_CONCURRENCY,
+            events=settings.JOBS_CELERY_EVENTS,
+            hostname=settings.JOBS_CELERY_HOSTNAME or None,
+            loglevel=settings.JOBS_CELERY_LOGLEVEL,
         )
         worker.start()  # type: ignore[attr-defined]

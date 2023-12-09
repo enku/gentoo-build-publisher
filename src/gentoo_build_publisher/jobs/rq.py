@@ -11,9 +11,9 @@ class RQJobs:
 
     def __init__(self, settings: Settings) -> None:
         self.queue = Queue(
-            name=settings.RQ_JOBS_QUEUE_NAME,
-            connection=Redis.from_url(settings.RQ_JOBS_URL),
-            is_async=settings.RQ_JOBS_ASYNC,
+            name=settings.JOBS_RQ_QUEUE_NAME,
+            connection=Redis.from_url(settings.JOBS_RQ_URL),
+            is_async=settings.JOBS_RQ_ASYNC,
         )
 
     def __repr__(self) -> str:
@@ -42,8 +42,8 @@ class RQJobs:
     def work(cls, settings: Settings) -> None:
         """Run the RQ worker"""
         worker = Worker(
-            [settings.RQ_JOBS_QUEUE_NAME],
-            connection=Redis.from_url(settings.RQ_JOBS_URL),
-            name=settings.RQ_JOBS_NAME or None,
+            [settings.JOBS_RQ_QUEUE_NAME],
+            connection=Redis.from_url(settings.JOBS_RQ_URL),
+            name=settings.JOBS_RQ_NAME or None,
         )
         worker.work()

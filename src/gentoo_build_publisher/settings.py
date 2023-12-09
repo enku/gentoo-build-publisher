@@ -27,16 +27,16 @@ class Settings:
     RECORDS_BACKEND: str = "django"
 
     # Celery jobs backend config
-    CELERY_JOBS_CONCURRENCY: int = 1
-    CELERY_JOBS_EVENTS: bool = False
-    CELERY_JOBS_HOSTNAME: str = ""
-    CELERY_JOBS_LOGLEVEL: str = "INFO"
+    JOBS_CELERY_CONCURRENCY: int = 1
+    JOBS_CELERY_EVENTS: bool = False
+    JOBS_CELERY_HOSTNAME: str = ""
+    JOBS_CELERY_LOGLEVEL: str = "INFO"
 
     # RQ jobs backend config
-    RQ_JOBS_ASYNC: bool = True
-    RQ_JOBS_URL: str = "redis://localhost.invalid:6379"
-    RQ_JOBS_NAME: str = ""
-    RQ_JOBS_QUEUE_NAME: str = "gbp"
+    JOBS_RQ_ASYNC: bool = True
+    JOBS_RQ_NAME: str = ""
+    JOBS_RQ_QUEUE_NAME: str = "gbp"
+    JOBS_RQ_URL: str = "redis://localhost.invalid:6379"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
