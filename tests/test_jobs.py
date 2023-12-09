@@ -227,6 +227,7 @@ class WorkMethodTests(TestCase):
             JENKINS_BASE_URL="http://jenkins.invalid/",
             JOBS_BACKEND="rq",
             RQ_JOBS_NAME="test-worker",
+            RQ_JOBS_QUEUE_NAME="test-queue",
             RQ_JOBS_URL="redis://localhost.invalid:6379",
             STORAGE_PATH=Path("/dev/null"),
             CELERY_JOBS_CONCURRENCY=55,
@@ -271,6 +272,6 @@ class WorkMethodTests(TestCase):
         mock_redis.from_url.assert_called_once_with("redis://localhost.invalid:6379")
         connection = mock_redis.from_url.return_value
         mock_worker.assert_called_with(
-            ["default"], connection=connection, name="test-worker"
+            ["test-queue"], connection=connection, name="test-worker"
         )
         mock_worker.return_value.work.assert_called_once_with()

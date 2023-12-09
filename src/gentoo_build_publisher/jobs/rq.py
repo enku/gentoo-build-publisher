@@ -10,8 +10,11 @@ class RQJobs:
     """RQ JobsInterface"""
 
     def __init__(self, settings: Settings) -> None:
-        connection = Redis.from_url(settings.RQ_JOBS_URL)
-        self.queue = Queue(connection=connection, is_async=settings.RQ_JOBS_ASYNC)
+        self.queue = Queue(
+            name=settings.RQ_JOBS_QUEUE_NAME,
+            connection=Redis.from_url(settings.RQ_JOBS_URL),
+            is_async=settings.RQ_JOBS_ASYNC,
+        )
 
     def __repr__(self) -> str:
         return type(self).__name__
@@ -39,7 +42,7 @@ class RQJobs:
     def work(cls, settings: Settings) -> None:
         """Run the RQ worker"""
         worker = Worker(
-            ["default"],
+            [settings.RQ_JOBS_QUEUE_NAME],
             connection=Redis.from_url(settings.RQ_JOBS_URL),
             name=settings.RQ_JOBS_NAME or None,
         )

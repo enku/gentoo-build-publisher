@@ -36,6 +36,7 @@ class Settings:
     RQ_JOBS_ASYNC: bool = True
     RQ_JOBS_URL: str = "redis://localhost.invalid:6379"
     RQ_JOBS_NAME: str = ""
+    RQ_JOBS_QUEUE_NAME: str = "gbp"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
