@@ -37,8 +37,10 @@ class GBPChkTestCase(TestCase):
         return build
 
     def test_empty_system(self) -> None:
-        console = string_console()[0]
+        console, stdout, *_ = string_console()
         check.handler(Namespace(), self.gbp, console)
+
+        self.assertEqual(stdout.getvalue(), "0 errors, 0 warnings\n")
 
     def test_uncompleted_builds_are_skipped(self) -> None:
         build = BuildFactory()
@@ -57,9 +59,9 @@ class GBPChkTestCase(TestCase):
         bad_build = self.build_with_missing_content(Content.BINPKGS)
 
         console, _, err = string_console()
-        errors = check.check_build_content(self.publisher, console)
+        result = check.check_build_content(self.publisher, console)
 
-        self.assertEqual(errors, 1)
+        self.assertEqual(result, (1, 0))
         self.assertRegex(
             err.getvalue(), f"^Path missing for {re.escape(str(bad_build))}:"
         )
@@ -72,9 +74,9 @@ class GBPChkTestCase(TestCase):
         binpkg_path = self.publisher.storage.get_path(bad_build, Content.BINPKGS)
 
         console, _, err = string_console()
-        errors = check.check_orphans(self.publisher, console)
+        result = check.check_orphans(self.publisher, console)
 
-        self.assertEqual(errors, len(Content))
+        self.assertEqual(result, (len(Content), 0))
         self.assertRegex(
             err.getvalue(), f"Record missing for {re.escape(str(binpkg_path))}"
         )
@@ -92,9 +94,9 @@ class GBPChkTestCase(TestCase):
         self.publisher.delete(build)
 
         console, _, err = string_console()
-        errors = check.check_orphans(self.publisher, console)
+        result = check.check_orphans(self.publisher, console)
 
-        self.assertEqual(errors, link_count)
+        self.assertEqual(result, (link_count, 0))
 
         lines = err.getvalue().split("\n")
         for line in lines[:-1]:
@@ -119,9 +121,9 @@ class GBPChkTestCase(TestCase):
             link.symlink_to(item_path.name)
 
         console, _, err = string_console()
-        errors = check.check_inconsistent_tags(self.publisher, console)
+        result = check.check_inconsistent_tags(self.publisher, console)
 
-        self.assertEqual(errors, 1)
+        self.assertEqual(result, (1, 0))
         self.assertRegex(err.getvalue(), '^Tag "larry" has multiple targets: ')
 
     def test_error_count_in_exit_status(self) -> None:
