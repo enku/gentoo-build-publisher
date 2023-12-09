@@ -4,18 +4,62 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar, TypeVar
 
 from gentoo_build_publisher.string import get_bool
 
 JENKINS_DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024
 
 
+T = TypeVar("T", bound="BaseSettings")
+
+
+@dataclass(frozen=True)
+class BaseSettings:
+    """Base class for Settings"""
+
+    # Subclasses should define me as the prefix for environment variables for these
+    # settings. For example if prefix is "BUILD_PUBLISHER_" and the field is named "FOO"
+    # then the environment variable for that field is "BUILD_PUBLISHER_FOO"
+    env_prefix: ClassVar = ""
+
+    @classmethod
+    def from_dict(cls: type[T], prefix: str, data_dict: dict[str, Any]) -> T:
+        """Return Settings instantiated from a dict"""
+        params: dict[str, Any] = {}
+        for field in fields(cls):
+            if (key := f"{prefix}{field.name}") not in data_dict:
+                continue
+
+            match field.type:
+                case "bool":
+                    value = get_bool(data_dict[key])
+                case "int":
+                    value = int(data_dict[key])
+                case "Path":
+                    value = Path(data_dict[key])
+                case _:
+                    value = data_dict[key]
+
+            params[field.name] = value
+        return cls(**params)
+
+    @classmethod
+    def from_environ(cls: type[T], prefix: str | None = None) -> T:
+        """Return settings instantiated from environment variables"""
+        if prefix is None:
+            prefix = cls.env_prefix
+
+        return cls.from_dict(prefix, dict(os.environ))
+
+
 @dataclass(frozen=True, slots=True)
-class Settings:
+class Settings(BaseSettings):
     """GBP Settings"""
 
     # pylint: disable=invalid-name,too-many-instance-attributes
+    env_prefix: ClassVar = "BUILD_PUBLISHER_"
+
     JENKINS_BASE_URL: str
     STORAGE_PATH: Path
     ENABLE_PURGE: bool = False
@@ -37,29 +81,3 @@ class Settings:
     JOBS_RQ_NAME: str = ""
     JOBS_RQ_QUEUE_NAME: str = "gbp"
     JOBS_RQ_URL: str = "redis://localhost.invalid:6379"
-
-    @classmethod
-    def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
-        """Return Settings instantiated from a dict"""
-        params: dict[str, Any] = {}
-        for field in fields(cls):
-            if (key := f"{prefix}{field.name}") not in data_dict:
-                continue
-
-            match field.type:
-                case "bool":
-                    value = get_bool(data_dict[key])
-                case "int":
-                    value = int(data_dict[key])
-                case "Path":
-                    value = Path(data_dict[key])
-                case _:
-                    value = data_dict[key]
-
-            params[field.name] = value
-        return cls(**params)
-
-    @classmethod
-    def from_environ(cls, prefix: str = "BUILD_PUBLISHER_") -> Settings:
-        """Return settings instantiated from environment variables"""
-        return cls.from_dict(prefix, dict(os.environ))
