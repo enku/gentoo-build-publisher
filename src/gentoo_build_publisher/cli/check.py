@@ -2,7 +2,7 @@
 import argparse
 import itertools
 from pathlib import Path
-from typing import TypeAlias
+from typing import Callable, TypeAlias
 
 import django
 from gbpcli import GBP, Console
@@ -12,6 +12,15 @@ from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import RecordNotFound
 
 CheckResult: TypeAlias = tuple[int, int]
+Check: TypeAlias = Callable[[BuildPublisher, Console], CheckResult]
+
+_CHECK_REGISTRY: list[Check] = []
+
+
+def register(func: Check) -> Check:
+    """Register a check"""
+    _CHECK_REGISTRY.append(func)
+    return func
 
 
 def parse_args(_parser: argparse.ArgumentParser) -> None:
@@ -27,7 +36,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     total_errors = 0
     total_warnings = 0
 
-    for checker in [check_build_content, check_orphans, check_inconsistent_tags]:
+    for checker in _CHECK_REGISTRY:
         errors, warnings = checker(publisher, console)
         total_errors += errors
         total_warnings += warnings
@@ -39,6 +48,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     return total_errors
 
 
+@register
 def check_build_content(publisher: BuildPublisher, console: Console) -> CheckResult:
     """Check build content"""
     errors = 0
@@ -67,6 +77,7 @@ def check_build_content(publisher: BuildPublisher, console: Console) -> CheckRes
     return errors, warnings
 
 
+@register
 def check_orphans(publisher: BuildPublisher, console: Console) -> CheckResult:
     """Check orphans (builds with no records)"""
     errors = 0
@@ -91,6 +102,7 @@ def check_orphans(publisher: BuildPublisher, console: Console) -> CheckResult:
     return errors, warnings
 
 
+@register
 def check_inconsistent_tags(publisher: BuildPublisher, console: Console) -> CheckResult:
     """Check for tags that have inconsistent targets"""
     errors = 0
