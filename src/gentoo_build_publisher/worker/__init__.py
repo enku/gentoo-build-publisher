@@ -1,4 +1,4 @@
-"""Async Jobs for Gentoo Build Publisher"""
+"""Async Workers for Gentoo Build Publisher"""
 import importlib.metadata
 import logging
 from functools import cache
@@ -9,6 +9,17 @@ import requests.exceptions
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
+
+__all__ = (
+    "PULL_RETRYABLE_EXCEPTIONS",
+    "Worker",
+    "WorkerError",
+    "WorkerNotFoundError",
+    "delete_build",
+    "publish_build",
+    "pull_build",
+    "purge_machine",
+)
 
 HTTP_NOT_FOUND = 404
 PUBLISH_FATAL_EXCEPTIONS = (requests.exceptions.HTTPError,)
@@ -21,15 +32,15 @@ PULL_RETRYABLE_EXCEPTIONS = (
 logger = logging.getLogger(__name__)
 
 
-class Error(Exception):
-    """Errors for jobs"""
+class WorkerError(Exception):
+    """Errors for workers"""
 
 
-class JobInterfaceNotFoundError(LookupError, Error):
-    """Couldn't find you a job"""
+class WorkerNotFoundError(LookupError, WorkerError):
+    """Couldn't find you a worker"""
 
 
-class JobsInterface(Protocol):
+class WorkerInterface(Protocol):
     """Task Queue Interface"""
 
     def __init__(self, settings: Settings) -> None:
@@ -55,45 +66,33 @@ class JobsInterface(Protocol):
         """Run the task worker for this interface"""
 
 
-def get_interface_from_settings(settings: Settings) -> type[JobsInterface]:
-    """Return the appropriate JobsInterface class based on the given settings
+@cache
+def Worker(settings: Settings) -> WorkerInterface:  # pylint: disable=invalid-name
+    """Return the appropriate WorkerInterface based on the given Settings
 
-    Looks at Settings.JOBS_BACKEND and return a JobsInterface based on that setting.
+    Looks at Settings.WORKER_BACKEND and return a WorkerInterface based on that setting.
 
-    Raise JobInterfaceNotFoundError if the setting is invalid.
+    Raise WorkerNotFoundError if the setting is invalid.
     """
     try:
         [backend] = importlib.metadata.entry_points(
-            group="gentoo_build_publisher.jobs_interface",
-            name=settings.JOBS_BACKEND,
+            group="gentoo_build_publisher.worker_interface",
+            name=settings.WORKER_BACKEND,
         )
     except ValueError:
-        raise JobInterfaceNotFoundError(settings.JOBS_BACKEND) from None
+        raise WorkerNotFoundError(settings.WORKER_BACKEND) from None
 
-    iface: type[JobsInterface] = backend.load()
+    worker_class: type[WorkerInterface] = backend.load()
 
-    return iface
-
-
-@cache
-def from_settings(settings: Settings) -> JobsInterface:
-    """Return the appropriate JobsInterface based on the given Settings
-
-    Looks at Settings.JOBS_BACKEND and return a JobsInterface based on that setting.
-
-    Raise JobInterfaceNotFoundError if the setting is invalid.
-    """
-    iface = get_interface_from_settings(settings)
-
-    return iface(settings)
+    return worker_class(settings)
 
 
 #
-# Common functions for async jobs
+# Common functions for async workers
 #
-# These are basically functions that are wrapped by JobsInterface implementations.  The
-# core logic is here and the JobsInterface implementations provide the backend-specific
-# bits like submitting to the task queue, retries, etc.
+# These are basically functions that are wrapped by WorkerInterface implementations.
+# The core logic is here and the WorkerInterface implementations provide the
+# backend-specific bits like submitting to the task queue, retries, etc.
 #
 def publish_build(build_id: str) -> bool:
     """Publish the build"""

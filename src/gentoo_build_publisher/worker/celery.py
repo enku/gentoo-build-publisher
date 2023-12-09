@@ -1,4 +1,4 @@
-"""Celery JobsInterface"""
+"""Celery WorkerInterface"""
 
 from celery.apps.worker import Worker
 
@@ -7,8 +7,8 @@ from gentoo_build_publisher import tasks
 from gentoo_build_publisher.settings import Settings
 
 
-class CeleryJobs:
-    """Celery JobsInterface"""
+class CeleryWorker:
+    """Celery WorkerInterface"""
 
     def __init__(self, _settings: Settings) -> None:
         return
@@ -40,9 +40,9 @@ class CeleryJobs:
         """Run the Celery worker"""
         worker = Worker(  # type: ignore[call-arg]
             app=app,
-            concurrency=settings.JOBS_CELERY_CONCURRENCY,
-            events=settings.JOBS_CELERY_EVENTS,
-            hostname=settings.JOBS_CELERY_HOSTNAME or None,
-            loglevel=settings.JOBS_CELERY_LOGLEVEL,
+            concurrency=settings.WORKER_CELERY_CONCURRENCY,
+            events=settings.WORKER_CELERY_EVENTS,
+            hostname=settings.WORKER_CELERY_HOSTNAME or None,
+            loglevel=settings.WORKER_CELERY_LOGLEVEL,
         )
         worker.start()  # type: ignore[attr-defined]

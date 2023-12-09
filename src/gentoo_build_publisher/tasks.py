@@ -1,13 +1,13 @@
 """Celery task definitions"""
 from celery import shared_task
 
-from gentoo_build_publisher import jobs
+from gentoo_build_publisher import worker
 
 
 @shared_task
 def publish_build(build_id: str) -> bool:
     """Publish the build"""
-    return jobs.publish_build(build_id)
+    return worker.publish_build(build_id)
 
 
 @shared_task
@@ -17,10 +17,10 @@ def pull_build(build_id: str, *, note: str | None = None) -> None:
     If `note` is given, then the build record will be saved with the given note.
     """
     try:
-        jobs.pull_build(build_id, note=note)
+        worker.pull_build(build_id, note=note)
     except Exception as error:
         if (
-            isinstance(error, jobs.PULL_RETRYABLE_EXCEPTIONS)
+            isinstance(error, worker.PULL_RETRYABLE_EXCEPTIONS)
             and getattr(getattr(error, "response", None), "status_code", None) != 404
         ):
             pull_build.retry(exc=error)
@@ -31,10 +31,10 @@ def pull_build(build_id: str, *, note: str | None = None) -> None:
 @shared_task
 def purge_machine(machine: str) -> None:
     """Purge old builds for machine"""
-    jobs.purge_machine(machine)
+    worker.purge_machine(machine)
 
 
 @shared_task
 def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
-    jobs.delete_build(build_id)
+    worker.delete_build(build_id)

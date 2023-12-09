@@ -67,17 +67,17 @@ class Settings(BaseSettings):
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: str | None = None
-    JOBS_BACKEND: str = "celery"
     RECORDS_BACKEND: str = "django"
+    WORKER_BACKEND: str = "celery"
 
-    # Celery jobs backend config
-    JOBS_CELERY_CONCURRENCY: int = 1
-    JOBS_CELERY_EVENTS: bool = False
-    JOBS_CELERY_HOSTNAME: str = ""
-    JOBS_CELERY_LOGLEVEL: str = "INFO"
+    # Celery worker backend config
+    WORKER_CELERY_CONCURRENCY: int = 1
+    WORKER_CELERY_EVENTS: bool = False
+    WORKER_CELERY_HOSTNAME: str = ""
+    WORKER_CELERY_LOGLEVEL: str = "INFO"
 
-    # RQ jobs backend config
-    JOBS_RQ_ASYNC: bool = True
-    JOBS_RQ_NAME: str = ""
-    JOBS_RQ_QUEUE_NAME: str = "gbp"
-    JOBS_RQ_URL: str = "redis://localhost.invalid:6379"
+    # RQ worker backend config
+    WORKER_RQ_ASYNC: bool = True
+    WORKER_RQ_NAME: str = ""
+    WORKER_RQ_QUEUE_NAME: str = "gbp"
+    WORKER_RQ_URL: str = "redis://localhost.invalid:6379"

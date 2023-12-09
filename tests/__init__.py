@@ -53,7 +53,7 @@ class TestCase(UnitTestTestCase):
                 "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
                 "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
-                "BUILD_PUBLISHER_JOBS_BACKEND": "sync",
+                "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
             },
         )
         self.addCleanup(patch.stop)

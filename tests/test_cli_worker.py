@@ -19,7 +19,7 @@ class WorkerTests(TestCase):
         self.console, self.stdout, self.stderr = string_console()
 
     def test(self) -> None:
-        worker_path = "gentoo_build_publisher.jobs.rq.RQJobs.work"
+        worker_path = "gentoo_build_publisher.worker.rq.RQWorker.work"
         with mock.patch(worker_path) as mock_work:
             status = worker.handler(Namespace(type="rq"), self.gbp, self.console)
 
