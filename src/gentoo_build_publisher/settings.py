@@ -19,35 +19,34 @@ class Settings:
     JENKINS_BASE_URL: str
     STORAGE_PATH: Path
     ENABLE_PURGE: bool = False
-    JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_API_KEY: str | None = None
+    JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE
     JENKINS_USER: str | None = None
-    RECORDS_BACKEND: str = "django"
     JOBS_BACKEND: str = "celery"
-    REDIS_JOBS_URL: str = "redis://localhost.invalid:6379"
+    RECORDS_BACKEND: str = "django"
     REDIS_JOBS_ASYNC: bool = True
+    REDIS_JOBS_URL: str = "redis://localhost.invalid:6379"
 
     @classmethod
     def from_dict(cls, prefix: str, data_dict: dict[str, Any]) -> Settings:
         """Return Settings instantiated from a dict"""
         params: dict[str, Any] = {}
-        field_names = [i.name for i in fields(cls)]
-
-        for key, value in data_dict.items():
-            if not key.startswith(prefix):
+        for field in fields(cls):
+            if (key := f"{prefix}{field.name}") not in data_dict:
                 continue
 
-            match name := key.removeprefix(prefix):
-                case "ENABLE_PURGE" | "REDIS_JOB_ASYNC":
-                    params[name] = get_bool(value)
-                case "JENKINS_DOWNLOAD_CHUNK_SIZE":
-                    params[name] = int(value)
-                case "STORAGE_PATH":
-                    params[name] = Path(value)
-                case _ if name in field_names:
-                    params[name] = value
+            match field.type:
+                case "bool":
+                    value = get_bool(data_dict[key])
+                case "int":
+                    value = int(data_dict[key])
+                case "Path":
+                    value = Path(data_dict[key])
+                case _:
+                    value = data_dict[key]
 
+            params[field.name] = value
         return cls(**params)
 
     @classmethod
