@@ -128,3 +128,19 @@ def check_inconsistent_tags(publisher: BuildPublisher, console: Console) -> Chec
             errors += 1
 
     return errors, warnings
+
+
+@register
+def check_dirty_temp(publisher: BuildPublisher, console: Console) -> CheckResult:
+    """Warn if the temp dir is not empty"""
+    errors = 0
+    warnings = 0
+    storage = publisher.storage
+    root = storage.root
+    tmp = root / "tmp"
+
+    if next(tmp.iterdir(), None):
+        warnings += 1
+        console.err.print(f"Warning: {tmp} is not empty.")
+
+    return errors, warnings

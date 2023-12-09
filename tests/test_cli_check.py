@@ -145,6 +145,20 @@ class GBPChkTestCase(TestCase):
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
 
+    def test_check_tmpdir_nonempty(self) -> None:
+        publisher = self.publisher
+        storage = publisher.storage
+        root = storage.root
+        tmp = root / "tmp"
+        dirty_file = tmp / ".keep"
+        dirty_file.write_bytes(b"")
+
+        console, _, err = string_console()
+        result = check.check_dirty_temp(self.publisher, console)
+
+        self.assertEqual(result, (0, 1))
+        self.assertEqual(err.getvalue(), f"Warning: {tmp} is not empty.\n")
+
     def test_parse_args(self) -> None:
         # here for completeness
         parser = ArgumentParser("gbp")
