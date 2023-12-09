@@ -33,7 +33,7 @@ class JobsInterface(Protocol):
     """Task Queue Interface"""
 
     def __init__(self, settings: Settings) -> None:
-        ...
+        """Initialize with the given settings"""
 
     def publish_build(self, build_id: str) -> None:
         """Publish the build"""
