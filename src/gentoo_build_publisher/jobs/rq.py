@@ -1,4 +1,4 @@
-"""RQ jobsInterface"""
+"""RQ JobsInterface"""
 from redis import Redis
 from rq import Queue
 
