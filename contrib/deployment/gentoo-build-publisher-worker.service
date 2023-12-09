@@ -3,6 +3,7 @@ Description=Gentoo Build Publisher Worker
 Requires=gentoo-build-publisher-pre.service
 After=gentoo-build-publisher-pre.service
 After=gentoo-build-publisher-wsgi.service
+After=redis.service
 
 [Service]
 User=gbp
