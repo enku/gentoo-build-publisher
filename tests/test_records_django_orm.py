@@ -8,8 +8,8 @@ from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptB
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.records.django_orm import RecordDB
 
-from .. import DjangoTestCase as TestCase
-from ..factories import BuildModelFactory, BuildRecordFactory
+from . import DjangoTestCase as TestCase
+from .factories import BuildModelFactory, BuildRecordFactory
 
 
 # pylint: disable=too-many-public-methods
