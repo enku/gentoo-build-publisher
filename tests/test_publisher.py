@@ -7,10 +7,11 @@ from unittest import mock
 
 from yarl import URL
 
-from gentoo_build_publisher.common import Content
+from gentoo_build_publisher.common import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.utils import utctime
 
 from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test
@@ -260,33 +261,42 @@ class DispatcherTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.publish_events = []
-        self.publisher.dispatcher.bind(published=self.publish_handler)
-        self.addCleanup(lambda: self.publisher.dispatcher.unbind(self.publish_handler))
+        self.publish_events: list[Build] = []
+        dispatcher.bind(published=self.publish_handler)
+        self.addCleanup(lambda: dispatcher.unbind(self.publish_handler))
 
-        self.pull_events = []
-        self.publisher.dispatcher.bind(pulled=self.pull_handler)
-        self.addCleanup(lambda: self.publisher.dispatcher.unbind(self.pull_handler))
+        self.prepull_events: list[Build] = []
+        self.postpull_events: list[tuple[Build, list[Package], GBPMetadata | None]] = []
+        dispatcher.bind(prepull=self.prepull_handler)
+        dispatcher.bind(postpull=self.postpull_handler)
+        self.addCleanup(lambda: dispatcher.unbind(self.prepull_handler))
+        self.addCleanup(lambda: dispatcher.unbind(self.postpull_handler))
 
-    def publish_handler(self, *, build):
+    def publish_handler(self, *, build: Build) -> None:
         self.publish_events.append(build)
 
-    def pull_handler(self, *, build, packages, gbp_metadata):
-        self.pull_events.append([build, packages, gbp_metadata])
+    def prepull_handler(self, *, build: Build) -> None:
+        self.prepull_events.append(build)
+
+    def postpull_handler(
+        self, *, build: Build, packages: list[Package], gbp_metadata: GBPMetadata | None
+    ) -> None:
+        self.postpull_events.append((build, packages, gbp_metadata))
 
     def test_pull_single(self) -> None:
         new_build = BuildFactory()
         self.publisher.pull(new_build)
 
         packages = self.publisher.storage.get_packages(new_build)
-        expected = [
+        expected = (
             self.publisher.record(new_build),
             packages,
             self.publisher.gbp_metadata(
                 self.publisher.jenkins.get_metadata(new_build), packages
             ),
-        ]
-        self.assertEqual(self.pull_events, [expected])
+        )
+        self.assertEqual(self.postpull_events, [expected])
+        self.assertEqual(self.prepull_events, [new_build])
 
     def test_pull_multi(self) -> None:
         build1 = BuildFactory()
@@ -298,22 +308,23 @@ class DispatcherTestCase(TestCase):
         record2 = self.publisher.record(build2)
 
         packages = self.publisher.storage.get_packages(record1)
-        event1 = [
+        event1 = (
             record1,
             packages,
             self.publisher.gbp_metadata(
                 self.publisher.jenkins.get_metadata(record1), packages
             ),
-        ]
+        )
         packages = self.publisher.storage.get_packages(record2)
-        event2 = [
+        event2 = (
             record2,
             packages,
             self.publisher.gbp_metadata(
                 self.publisher.jenkins.get_metadata(record2), packages
             ),
-        ]
-        self.assertEqual(self.pull_events, [event1, event2])
+        )
+        self.assertEqual(self.prepull_events, [build1, build2])
+        self.assertEqual(self.postpull_events, [event1, event2])
 
     def test_publish(self) -> None:
         new_build = BuildFactory()

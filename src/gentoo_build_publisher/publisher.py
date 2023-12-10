@@ -24,8 +24,6 @@ from datetime import datetime
 from difflib import Differ
 from functools import cache, cached_property
 
-from pydispatch import Dispatcher
-
 from gentoo_build_publisher.common import (
     Build,
     Change,
@@ -43,16 +41,11 @@ from gentoo_build_publisher.records import (
     Records,
 )
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.utils import utctime
 
 logger = logging.getLogger(__name__)
-
-
-class PublisherDispatcher(Dispatcher):
-    """BuildPublisher event dispatcher"""
-
-    _events_ = ["published", "pulled"]
 
 
 class BuildPublisher:
@@ -62,7 +55,6 @@ class BuildPublisher:
         self.jenkins = jenkins
         self.storage = storage
         self.records = records
-        self.dispatcher = PublisherDispatcher()
 
     @classmethod
     def from_settings(cls, settings: Settings) -> BuildPublisher:
@@ -94,7 +86,7 @@ class BuildPublisher:
             self.pull(build)
 
         self.storage.publish(build)
-        self.dispatcher.emit("published", build=self.record(build))
+        dispatcher.emit("published", build=self.record(build))
 
     def tag(self, build: Build, tag_name: str) -> None:
         """Tag a build with the given name
@@ -139,6 +131,10 @@ class BuildPublisher:
 
         logger.info("Pulling build: %s", build)
 
+        # Ensure we only send the Build on pre-pull because the Record a) is incomplete
+        # and b) may get deleted if the pull fails
+        dispatcher.emit("prepull", build=Build(build.machine, build.build_id))
+
         byte_stream = self.jenkins.download_artifact(build)
         self.storage.extract_artifact(build, byte_stream, previous)
 
@@ -165,8 +161,10 @@ class BuildPublisher:
             gbp_metadata = self.gbp_metadata(jenkins_metadata, packages)
             self.storage.set_metadata(record, gbp_metadata)
 
-        self.dispatcher.emit(
-            "pulled", build=record, packages=packages, gbp_metadata=gbp_metadata
+        # We emit postpull here instead of in self.pull() because this has all the
+        # updated Build information
+        dispatcher.emit(
+            "postpull", build=record, packages=packages, gbp_metadata=gbp_metadata
         )
 
     def pulled(self, build: Build) -> bool:
@@ -175,8 +173,10 @@ class BuildPublisher:
 
     def delete(self, build: Build) -> None:
         """Delete this build"""
+        dispatcher.emit("predelete", build=build)
         self.records.delete(build)
         self.storage.delete(build)
+        dispatcher.emit("postdelete", build=build)
 
     def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
