@@ -2,6 +2,7 @@
 Description=GBP WSGI Server
 Requires=gentoo-build-publisher-pre.service
 After=gentoo-build-publisher-pre.service
+After=redis.service
 Wants=nginx.service
 Before=nginx.service
 
