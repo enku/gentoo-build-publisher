@@ -47,6 +47,7 @@ gbp = "gentoo_build_publisher.graphql"
 celery = "gentoo_build_publisher.worker.celery:CeleryWorker"
 rq = "gentoo_build_publisher.worker.rq:RQWorker"
 sync = "gentoo_build_publisher.worker.sync:SyncWorker"
+thread = "gentoo_build_publisher.worker.thread:ThreadWorker"
 
 [project.optional-dependencies]
 redis = [

@@ -54,6 +54,7 @@ class TestCase(UnitTestTestCase):
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
                 "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
                 "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
+                "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
             },
         )
         self.addCleanup(patch.stop)
