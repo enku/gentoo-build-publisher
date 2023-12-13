@@ -16,6 +16,7 @@ from gentoo_build_publisher.graphql import (
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
+from gentoo_build_publisher.worker import tasks
 
 from . import BUILD_LOGS, TestCase, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
@@ -560,7 +561,9 @@ class PublishMutationTestCase(TestCase):
         with mock.patch("gentoo_build_publisher.graphql.Worker") as mock_worker:
             graphql(query)
 
-        mock_worker.return_value.publish_build.assert_called_once_with("babette.193")
+        mock_worker.return_value.run.assert_called_once_with(
+            tasks.publish_build, "babette.193"
+        )
 
 
 class PullMutationTestCase(TestCase):
@@ -582,7 +585,9 @@ class PullMutationTestCase(TestCase):
             result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_worker.return_value.pull_build.assert_called_once_with(build.id, note=None)
+        mock_worker.return_value.run.assert_called_once_with(
+            tasks.pull_build, build.id, note=None
+        )
 
     def test_pull_with_note(self) -> None:
         build = BuildFactory()

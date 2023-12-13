@@ -12,8 +12,12 @@ from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.tasks import pull_build as celery_pull_build
-from gentoo_build_publisher.worker import Worker, WorkerInterface, WorkerNotFoundError
+from gentoo_build_publisher.worker import (
+    Worker,
+    WorkerInterface,
+    WorkerNotFoundError,
+    tasks,
+)
 from gentoo_build_publisher.worker.celery import CeleryWorker
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
@@ -50,7 +54,7 @@ class PublishBuildTestCase(TestCase):
     @params("celery", "rq", "sync")
     def test_publishes_build(self, worker: WorkerInterface) -> None:
         """Should actually publish the build"""
-        worker.publish_build("babette.193")
+        worker.run(tasks.publish_build, "babette.193")
 
         build = Build("babette", "193")
         self.assertIs(self.publisher.published(build), True)
@@ -60,9 +64,9 @@ class PublishBuildTestCase(TestCase):
     def test_should_give_up_when_pull_raises_httperror(
         self, worker: WorkerInterface, log_error_mock: mock.Mock
     ) -> None:
-        with mock.patch("gentoo_build_publisher.worker.pull_build") as apply_mock:
+        with mock.patch("gentoo_build_publisher.worker.tasks.pull_build") as apply_mock:
             apply_mock.side_effect = HTTPError
-            worker.publish_build("babette.193")
+            worker.run(tasks.publish_build, "babette.193")
 
         log_error_mock.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
@@ -77,7 +81,7 @@ class PurgeBuildTestCase(TestCase):
         with mock.patch.object(
             self.publisher, "purge", wraps=self.publisher.purge
         ) as purge_mock:
-            worker.purge_machine("foo")
+            worker.run(tasks.purge_machine, "foo")
 
         purge_mock.assert_called_once_with("foo")
 
@@ -88,7 +92,7 @@ class PullBuildTestCase(TestCase):
     @params("celery", "rq", "sync")
     def test_pulls_build(self, worker: WorkerInterface) -> None:
         """Should actually pull the build"""
-        worker.pull_build("lima.1012")
+        worker.run(tasks.pull_build, "lima.1012", note=None)
 
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
@@ -97,10 +101,10 @@ class PullBuildTestCase(TestCase):
     def test_calls_purge_machine(self, worker: WorkerInterface) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
-            "gentoo_build_publisher.worker.purge_machine"
+            "gentoo_build_publisher.worker.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                worker.pull_build("charlie.197")
+                worker.run(tasks.pull_build, "charlie.197", note=None)
 
         mock_purge_machine.assert_called_with("charlie")
 
@@ -108,12 +112,12 @@ class PullBuildTestCase(TestCase):
     def test_does_not_call_purge_machine(self, worker: WorkerInterface) -> None:
         """Should not issue the purge_machine task when setting is false"""
         with mock.patch(
-            "gentoo_build_publisher.tasks.purge_machine"
+            "gentoo_build_publisher.worker.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                worker.pull_build("delta.424")
+                worker.run(tasks.pull_build, "delta.424", note=None)
 
-        mock_purge_machine.delay.assert_not_called()
+        mock_purge_machine.assert_not_called()
 
     @params("celery", "rq", "sync")
     @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())
@@ -128,43 +132,11 @@ class PullBuildTestCase(TestCase):
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
             try:
-                worker.pull_build("oscar.197")
+                worker.run(tasks.pull_build, "oscar.197", note=None)
             except RuntimeError as error:
                 self.assertIs(error, download_artifact_mock.side_effect)
 
         self.assertFalse(records.exists(Build("oscar", "197")))
-
-    @params("celery")
-    @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())
-    def test_should_retry_on_retryable_exceptions(
-        self, worker: WorkerInterface
-    ) -> None:
-        with mock.patch(
-            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
-        ) as download_artifact_mock:
-            eof_error = EOFError()
-            download_artifact_mock.side_effect = eof_error
-
-            with mock.patch.object(celery_pull_build, "retry") as retry_mock:
-                worker.pull_build("tango.197")
-
-        retry_mock.assert_called_once_with(exc=eof_error)
-
-    @params("celery")
-    @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())
-    def test_should_not_retry_on_404_response(self, worker: WorkerInterface) -> None:
-        with mock.patch(
-            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
-        ) as download_artifact_mock:
-            error = HTTPError()
-            error.response = mock.Mock()
-            error.response.status_code = 404
-            download_artifact_mock.side_effect = error
-
-            with mock.patch.object(celery_pull_build, "retry") as retry_mock:
-                worker.pull_build("tango.197")
-
-        retry_mock.assert_not_called()
 
 
 class DeleteBuildTestCase(TestCase):
@@ -172,8 +144,10 @@ class DeleteBuildTestCase(TestCase):
 
     @params("celery", "rq", "sync")
     def test_should_delete_the_build(self, worker: WorkerInterface) -> None:
-        with mock.patch.object(self.publisher, "delete") as mock_delete:
-            worker.delete_build("zulu.56")
+        with mock.patch(
+            "gentoo_build_publisher.publisher.BuildPublisher.delete"
+        ) as mock_delete:
+            worker.run(tasks.delete_build, "zulu.56")
 
         mock_delete.assert_called_once_with(Build("zulu", "56"))
 
