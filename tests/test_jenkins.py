@@ -637,7 +637,7 @@ class ScheduleBuildTestCase(TestCase):
                 jenkins.schedule_build(name)
 
 
-class URLBuildeTestCase(TestCase):
+class URLBuilderTestCase(TestCase):
     """Tests for the URLBuilder"""
 
     config = JenkinsConfig(base_url=URL("https://jenkins.invalid"))
