@@ -674,8 +674,8 @@ class ScheduleBuildTestCase(TestCase):
 
 
 class GetJobParametersTests(TestCase):
+    # pylint: disable=no-member
     def test_gets_parameter_name_and_default_values(self) -> None:
-        # pylint: disable=no-member
         jenkins = MockJenkins(JENKINS_CONFIG)
         mock_response = jenkins.session.response(200, test_data("job_parameters.json"))
         jenkins.session.mock_response("GET", "/job/babette/api/json", mock_response)
@@ -691,6 +691,17 @@ class GetJobParametersTests(TestCase):
             },
             timeout=10,
         )
+
+    def test_returns_empty_if_no_paramdefs(self) -> None:
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        mock_response = jenkins.session.response(
+            200, json.dumps({"property": []}).encode()
+        )
+        jenkins.session.mock_response("GET", "/job/babette/api/json", mock_response)
+
+        response = jenkins.get_job_parameters("babette")
+
+        self.assertEqual(response, {})
 
 
 class URLBuilderTestCase(TestCase):
