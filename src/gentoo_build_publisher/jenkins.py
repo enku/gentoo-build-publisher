@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.resources
+import json as jsonlib
 import logging
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
@@ -204,12 +205,34 @@ class Jenkins:
         config = JenkinsConfig.from_settings(settings)
         return cls(config)
 
-    def schedule_build(self, machine: str) -> str:
-        """Schedule a build on Jenkins"""
+    def schedule_build(self, machine: str, **params: Any) -> str:
+        """Schedule a build on Jenkins
+
+        `params` are build parameters to pass to the job instead of the defaults.
+        """
         # Here self.url needs a Build, but we only have the machine name. Just pass
         # a bogus Build with that name
-        url = self.url.build_scheduler(Build(machine, "bogus"))
-        response = self.session.post(str(url), timeout=self.timeout)
+        build = Build(machine, "bogus")
+        url = self.url.build_scheduler(build)
+        build_params = self.get_job_parameters(machine)
+
+        # parameter logic here is based on
+        # https://stackoverflow.com/questions/20359810/how-to-trigger-jenkins-builds-remotely-and-to-pass-parameters
+        build_params = build_params.copy()
+
+        for key, value in params.items():
+            if key in build_params:
+                build_params[key] = value
+            else:
+                raise ValueError(f"{key} is not a valid parameter for this build")
+        params_list = [
+            {"name": key, "value": value} for key, value in build_params.items()
+        ]
+        json_params = jsonlib.dumps({"parameter": params_list})
+
+        response = self.session.post(
+            str(url), data={"json": json_params}, timeout=self.timeout
+        )
         response.raise_for_status()
 
         # All that Jenkins gives us is the location of the queued request.  Let's return

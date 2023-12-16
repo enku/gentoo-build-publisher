@@ -267,7 +267,7 @@ class MockJenkins(Jenkins):
         build_time = self.artifact_builder.build_info(build).build_time
         return JenkinsMetadata(duration=124, timestamp=build_time)
 
-    def schedule_build(self, machine: str) -> str:
+    def schedule_build(self, machine: str, **_params: Any) -> str:
         self.scheduled_builds.append(machine)
 
         return str(self.config.base_url / "job" / machine / "build")
