@@ -126,6 +126,7 @@ class URLBuilder:
         "build_scheduler": "job/{build.machine}/build",
         "logs": "job/{build.machine}/{build.build_id}/consoleText",
         "metadata": "job/{build.machine}/{build.build_id}/api/json",
+        "job": "job/{build.machine}/api/json",
     }
     """Format strings using "build" and "config" arguments"""
 
@@ -268,6 +269,35 @@ class Jenkins:
         response.raise_for_status()
 
         return response.text
+
+    def get_job_parameters(self, machine: str) -> dict[str, Any]:
+        """Return the parameters for the machine's job
+
+        Each parameter is a dict of name -> default_value
+        """
+        url = self.url.job(Build(machine, "bogus"))
+        params = {
+            "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
+        }
+
+        response = self.session.get(
+            str(url), params=params, timeout=self.config.requests_timeout
+        )
+        response.raise_for_status()
+
+        properties = response.json()["property"]
+        props = [prop for prop in properties if "parameterDefinitions" in prop]
+
+        if not props:
+            return {}
+
+        if len(props) != 1:
+            raise ValueError("Unexpected number of parameterDefinitions", props)
+
+        return {
+            param["name"]: param["defaultParameterValue"]["value"]
+            for param in props[0]["parameterDefinitions"]
+        }
 
     def make_folder(
         self, project_path: ProjectPath, parents: bool = False, exist_ok: bool = False

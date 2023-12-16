@@ -154,6 +154,7 @@ class MockJenkinsSession(Session):
     def __init__(self) -> None:
         super().__init__()
         self.root = Tree()
+        self.responses: dict[tuple[str, str], Response] = {}
 
     @staticmethod
     def response(status_code: int, content: bytes = b"") -> Response:
@@ -162,6 +163,9 @@ class MockJenkinsSession(Session):
         response.raw = io.BytesIO(content)
 
         return response
+
+    def mock_response(self, method: str, path: str, response: Response) -> None:
+        self.responses[(method, path)] = response
 
     def head(self, url: str, *args: Any, **kwargs: Any) -> Response:
         path = URL(url).path
@@ -205,6 +209,9 @@ class MockJenkinsSession(Session):
 
     def get(self, url: str, *args, **kwargs) -> Response:
         url_obj = URL(url)
+
+        if response := self.responses.get(("GET", url_obj.path)):
+            return response
 
         if url_obj.name != "config.xml":
             return self.response(400)

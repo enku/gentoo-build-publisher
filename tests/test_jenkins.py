@@ -637,6 +637,26 @@ class ScheduleBuildTestCase(TestCase):
                 jenkins.schedule_build(name)
 
 
+class GetJobParametersTests(TestCase):
+    def test_gets_parameter_name_and_default_values(self) -> None:
+        # pylint: disable=no-member
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        mock_response = jenkins.session.response(200, test_data("job_parameters.json"))
+        jenkins.session.mock_response("GET", "/job/babette/api/json", mock_response)
+
+        response = jenkins.get_job_parameters("babette")
+
+        self.assertEqual(response, {"BUILD_TARGET": "world"})
+
+        jenkins.session.get.assert_called_once_with(
+            "https://jenkins.invalid/job/babette/api/json",
+            params={
+                "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
+            },
+            timeout=10,
+        )
+
+
 class URLBuilderTestCase(TestCase):
     """Tests for the URLBuilder"""
 
