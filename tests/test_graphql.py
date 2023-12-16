@@ -627,6 +627,28 @@ class ScheduleBuildMutationTestCase(TestCase):
         )
         mock_schedule_build.assert_called_once_with("babette")
 
+    def test_with_params(self) -> None:
+        query = """mutation
+          {
+            scheduleBuild(
+              machine: "babette",
+              params: [{name: "BUILD_TARGET", value: "world"}],
+            )
+          }
+        """
+
+        with mock.patch.object(self.publisher, "schedule_build") as mock_schedule_build:
+            mock_schedule_build.return_value = (
+                "https://jenkins.invalid/queue/item/31528/"
+            )
+            result = graphql(query)
+
+        self.assertEqual(
+            result,
+            {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
+        )
+        mock_schedule_build.assert_called_once_with("babette", BUILD_TARGET="world")
+
     def test_should_return_error_when_schedule_build_fails(self) -> None:
         query = 'mutation { scheduleBuild(machine: "babette") }'
 

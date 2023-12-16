@@ -61,6 +61,11 @@ type Error {
   message: String!
 }
 
+input BuildParameter {
+  name: String!
+  value: String!
+}
+
 type Query {
   build(id: ID!): Build
   builds(machine: String!): [Build!]!
@@ -77,7 +82,7 @@ type Query {
 type Mutation {
   publish(id: ID!): MachineSummary
   pull(id: ID!, note: String): MachineSummary
-  scheduleBuild(machine: String!): String
+  scheduleBuild(machine: String!, params: [BuildParameter!]): String
   keepBuild(id: ID!): Build
   createBuildTag(id: ID!, tag: String!) : Build!
   removeBuildTag(machine: String!, tag: String!) : MachineSummary

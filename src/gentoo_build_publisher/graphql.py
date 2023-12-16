@@ -12,7 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property, wraps
 from importlib import resources
-from typing import Any
+from typing import Any, TypedDict
 
 from ariadne import (
     EnumType,
@@ -47,6 +47,13 @@ resolvers = [
 
 
 Resolver = Callable[..., Any]
+
+
+class BuildParameterInput(TypedDict):
+    """Python analog to the BuildParameter Graphql type"""
+
+    name: str
+    value: str
 
 
 def load_schema() -> tuple[list[str], list[ObjectType]]:
@@ -353,11 +360,15 @@ def resolve_mutation_pull(
 
 @mutation.field("scheduleBuild")
 def resolve_mutation_schedule_build(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str
+    _obj: Any,
+    _info: GraphQLResolveInfo,
+    machine: str,
+    params: list[BuildParameterInput] | None = None,
 ) -> str:
     publisher = BuildPublisher.get_publisher()
+    params = params or []
 
-    return publisher.schedule_build(machine)
+    return publisher.schedule_build(machine, **{p["name"]: p["value"] for p in params})
 
 
 @mutation.field("keepBuild")

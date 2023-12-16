@@ -23,6 +23,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
 from functools import cache, cached_property
+from typing import Any
 
 from gentoo_build_publisher.common import (
     Build,
@@ -182,9 +183,9 @@ class BuildPublisher:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
 
-    def schedule_build(self, machine: str) -> str:
+    def schedule_build(self, machine: str, **params: Any) -> str:
         """Schedule a build on jenkins for the given machine name"""
-        return self.jenkins.schedule_build(machine)
+        return self.jenkins.schedule_build(machine, **params)
 
     def purge(self, machine: str) -> None:
         """Purge old builds for machine"""
