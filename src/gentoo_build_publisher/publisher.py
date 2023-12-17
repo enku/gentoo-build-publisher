@@ -114,12 +114,19 @@ class BuildPublisher:
         """Return True if this Build is published"""
         return self.storage.published(build)
 
-    def pull(self, build: Build, *, note: str | None = None) -> bool:
+    def pull(
+        self,
+        build: Build,
+        *,
+        note: str | None = None,
+        tags: Iterable[str] | None = None,
+    ) -> bool:
         """pull the Build to storage
 
         If the given build has already been pulled, nothing is pulled.
         Otherwise if `note` is given, then the build record will be saved with the given
         note.
+        Likewise, if `tags` is given then the given tags will be assigned to the Build.
         """
         if self.pulled(build):
             return False
@@ -140,6 +147,9 @@ class BuildPublisher:
         self.storage.extract_artifact(build, byte_stream, previous)
 
         logger.info("Pulled build %s", build)
+
+        for tag in tags or []:
+            self.tag(build, tag)
 
         self._update_build_metadata(record)
 

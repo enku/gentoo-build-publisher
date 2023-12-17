@@ -349,11 +349,18 @@ def resolve_mutation_publish(
 
 @mutation.field("pull")
 def resolve_mutation_pull(
-    _obj: Any, _info: GraphQLResolveInfo, *, id: str, note: str | None = None
+    _obj: Any,
+    _info: GraphQLResolveInfo,
+    *,
+    id: str,
+    note: str | None = None,
+    tags: list[str] | None = None,
 ) -> MachineInfo:
     build = Build.from_id(id)
 
-    Worker(Settings.from_environ()).run(tasks.pull_build, build.id, note=note)
+    Worker(Settings.from_environ()).run(
+        tasks.pull_build, build.id, note=note, tags=tags
+    )
 
     return MachineInfo(build.machine)
 

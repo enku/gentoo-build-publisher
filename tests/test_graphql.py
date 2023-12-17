@@ -586,7 +586,7 @@ class PullMutationTestCase(TestCase):
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
         mock_worker.return_value.run.assert_called_once_with(
-            tasks.pull_build, build.id, note=None
+            tasks.pull_build, build.id, note=None, tags=None
         )
 
     def test_pull_with_note(self) -> None:
@@ -605,6 +605,24 @@ class PullMutationTestCase(TestCase):
         assert_data(self, result, {"pull": {"publishedBuild": None}})
         build_record = self.publisher.record(build)
         self.assertEqual(build_record.note, "This is a test")
+
+    def test_pull_with_tag(self) -> None:
+        build = BuildFactory()
+
+        query = """
+        mutation ($id: ID!, $tags: [String!]) {
+          pull(id: $id, tags: $tags) {
+            publishedBuild {
+              id
+            }
+          }
+        }"""
+        result = graphql(query, variables={"id": build.id, "tags": ["emptytree"]})
+
+        assert_data(self, result, {"pull": {"publishedBuild": None}})
+        build_record = self.publisher.record(build)
+        tags = self.publisher.tags(build_record)
+        self.assertEqual(tags, ["emptytree"])
 
 
 class ScheduleBuildMutationTestCase(TestCase):

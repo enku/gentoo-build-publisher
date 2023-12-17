@@ -127,6 +127,15 @@ class BuildPublisherTestCase(TestCase):
         build_record = self.publisher.record(build)
         self.assertEqual(build_record.note, "This is a test")
 
+    def test_pull_with_tags(self) -> None:
+        build = BuildFactory()
+        tags = {"this", "is", "a", "test"}
+
+        self.publisher.pull(build, tags=tags)
+
+        self.assertIs(self.publisher.storage.pulled(build), True)
+        self.assertEqual(set(self.publisher.tags(build)), tags)
+
     def test_purge_deletes_old_build(self) -> None:
         """Should remove purgeable builds"""
 

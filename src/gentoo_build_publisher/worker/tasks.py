@@ -21,7 +21,7 @@ def publish_build(build_id: str) -> bool:
     publisher = BuildPublisher.get_publisher()
 
     try:
-        pull_build(build_id, note=None)
+        pull_build(build_id, note=None, tags=None)
     except PUBLISH_FATAL_EXCEPTIONS:
         logger.error("Build %s failed to pull. Not publishing", f"{build_id}")
         return False
@@ -31,7 +31,7 @@ def publish_build(build_id: str) -> bool:
     return True
 
 
-def pull_build(build_id: str, *, note: str | None) -> None:
+def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> None:
     """Pull the build into storage
 
     If `note` is given, then the build record will be saved with the given note.
@@ -46,7 +46,7 @@ def pull_build(build_id: str, *, note: str | None) -> None:
     build = Build.from_id(build_id)
 
     try:
-        publisher.pull(build, note=note)
+        publisher.pull(build, note=note, tags=tags)
     except Exception:
         logger.exception("Failed to pull build %s", build)
         publisher.delete(build)

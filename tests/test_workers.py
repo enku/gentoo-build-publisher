@@ -92,7 +92,7 @@ class PullBuildTestCase(TestCase):
     @params("celery", "rq", "sync", "thread")
     def test_pulls_build(self, worker: WorkerInterface) -> None:
         """Should actually pull the build"""
-        worker.run(tasks.pull_build, "lima.1012", note=None)
+        worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
 
         build = Build("lima", "1012")
         self.assertIs(self.publisher.pulled(build), True)
@@ -104,7 +104,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.worker.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                worker.run(tasks.pull_build, "charlie.197", note=None)
+                worker.run(tasks.pull_build, "charlie.197", note=None, tags=None)
 
         mock_purge_machine.assert_called_with("charlie")
 
@@ -115,7 +115,7 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.worker.tasks.purge_machine"
         ) as mock_purge_machine:
             with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                worker.run(tasks.pull_build, "delta.424", note=None)
+                worker.run(tasks.pull_build, "delta.424", note=None, tags=None)
 
         mock_purge_machine.assert_not_called()
 
@@ -132,7 +132,7 @@ class PullBuildTestCase(TestCase):
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
             try:
-                worker.run(tasks.pull_build, "oscar.197", note=None)
+                worker.run(tasks.pull_build, "oscar.197", note=None, tags=None)
             except RuntimeError as error:
                 self.assertIs(error, download_artifact_mock.side_effect)
 
