@@ -31,6 +31,8 @@ JENKINS_CONFIG = JenkinsConfig(
     artifact_name="build.tar.gz",
 )
 
+JOB_PARAMS = json.loads(test_data("job_parameters.json"))
+
 
 class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
@@ -592,30 +594,31 @@ class ProjectPathTestCase(TestCase):
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def test(self) -> None:
-        name = "babette"
-        settings = Settings(
-            JENKINS_BASE_URL="https://jenkins.invalid",
-            JENKINS_API_KEY="super secret key",
-            JENKINS_USER="admin",
-            STORAGE_PATH=Path("/dev/null"),
+    def setUp(self) -> None:
+        super().setUp()
+        self.jenkins = Jenkins(JENKINS_CONFIG)
+        patcher = mock.patch.object(
+            self.jenkins.session,
+            "get",
+            **{"return_value.json.return_value": JOB_PARAMS},
         )
-        jenkins = Jenkins.from_settings(settings)
+        self.addCleanup(patcher.stop)
+        patcher.start()
 
-        with mock.patch.object(jenkins.session, "get") as mock_get:
-            mock_get.return_value.json.return_value = json.loads(
-                test_data("job_parameters.json")
-            )
-            with mock.patch.object(jenkins.session, "post") as mock_post:
-                mock_response = mock_post.return_value
-                mock_response.status_code = 401
-                mock_response.headers = {
-                    "location": "https://jenkins.invalid/queue/item/31528/"
-                }
-                location = jenkins.schedule_build(name, BUILD_TARGET="world")
+    def test(self) -> None:
+        jenkins = self.jenkins
+
+        with mock.patch.object(jenkins.session, "post") as mock_post:
+            mock_response = mock_post.return_value
+            attrs = {
+                "status_code": 401,
+                "headers": {"location": "https://jenkins.invalid/queue/item/31528/"},
+            }
+            mock_response.configure_mock(**attrs)
+            location = jenkins.schedule_build("babette", BUILD_TARGET="world")
 
         self.assertEqual(location, "https://jenkins.invalid/queue/item/31528/")
-        mock_get.assert_called_once_with(
+        jenkins.session.get.assert_called_once_with(  # pylint: disable=no-member
             "https://jenkins.invalid/job/babette/api/json",
             params={
                 "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
@@ -631,46 +634,25 @@ class ScheduleBuildTestCase(TestCase):
         )
 
     def test_schedule_build_with_bogus_build_param(self) -> None:
-        name = "babette"
-        settings = Settings(
-            JENKINS_BASE_URL="https://jenkins.invalid",
-            JENKINS_API_KEY="super secret key",
-            JENKINS_USER="admin",
-            STORAGE_PATH=Path("/dev/null"),
-        )
-        jenkins = Jenkins.from_settings(settings)
-
-        with mock.patch.object(jenkins.session, "get") as mock_get:
-            mock_get.return_value.json.return_value = json.loads(
-                test_data("job_parameters.json")
-            )
-            with self.assertRaises(ValueError) as context:
-                jenkins.schedule_build(name, BOGUS="idunno")
+        with self.assertRaises(ValueError) as context:
+            self.jenkins.schedule_build("babette", BOGUS="idunno")
 
         self.assertEqual(
             context.exception.args, ("BOGUS is not a valid parameter for this build",)
         )
 
     def test_should_raise_on_http_error(self) -> None:
-        name = "babette"
-        settings = Settings(
-            JENKINS_BASE_URL="https://jenkins.invalid",
-            JENKINS_API_KEY="super secret key",
-            JENKINS_USER="admin",
-            STORAGE_PATH=Path("/dev/null"),
-        )
-        jenkins = Jenkins.from_settings(settings)
+        jenkins = self.jenkins
 
         class MyException(Exception):
             pass
 
-        with mock.patch.object(jenkins.session, "get"):
-            with mock.patch.object(jenkins.session, "post") as mock_post:
-                mock_response = mock_post.return_value
-                mock_response.raise_for_status.side_effect = MyException
+        with mock.patch.object(jenkins.session, "post") as mock_post:
+            mock_response = mock_post.return_value
+            mock_response.raise_for_status.side_effect = MyException
 
-                with self.assertRaises(MyException):
-                    jenkins.schedule_build(name)
+            with self.assertRaises(MyException):
+                jenkins.schedule_build("babette")
 
 
 class GetJobParametersTests(TestCase):
