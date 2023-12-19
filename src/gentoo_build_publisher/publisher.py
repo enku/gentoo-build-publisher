@@ -193,7 +193,7 @@ class BuildPublisher:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
 
-    def schedule_build(self, machine: str, **params: Any) -> str:
+    def schedule_build(self, machine: str, **params: Any) -> str | None:
         """Schedule a build on jenkins for the given machine name"""
         return self.jenkins.schedule_build(machine, **params)
 

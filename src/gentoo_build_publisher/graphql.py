@@ -371,7 +371,7 @@ def resolve_mutation_schedule_build(
     _info: GraphQLResolveInfo,
     machine: str,
     params: list[BuildParameterInput] | None = None,
-) -> str:
+) -> str | None:
     publisher = BuildPublisher.get_publisher()
     params = params or []
 

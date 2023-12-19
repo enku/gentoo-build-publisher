@@ -654,6 +654,17 @@ class ScheduleBuildTestCase(TestCase):
             with self.assertRaises(MyException):
                 jenkins.schedule_build("babette")
 
+    def test_with_missing_location_header(self) -> None:
+        # Sometimes the Jenkins response is missing the location header(?)
+        jenkins = self.jenkins
+
+        with mock.patch.object(jenkins.session, "post") as mock_post:
+            attrs = {"status_code": 301, "headers": {}}
+            mock_post.return_value.configure_mock(**attrs)
+            location = jenkins.schedule_build("babette", BUILD_TARGET="world")
+
+        self.assertEqual(location, None)
+
 
 class GetJobParametersTests(TestCase):
     # pylint: disable=no-member

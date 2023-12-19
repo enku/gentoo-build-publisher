@@ -205,7 +205,7 @@ class Jenkins:
         config = JenkinsConfig.from_settings(settings)
         return cls(config)
 
-    def schedule_build(self, machine: str, **params: Any) -> str:
+    def schedule_build(self, machine: str, **params: Any) -> str | None:
         """Schedule a build on Jenkins
 
         `params` are build parameters to pass to the job instead of the defaults.
@@ -237,7 +237,7 @@ class Jenkins:
 
         # All that Jenkins gives us is the location of the queued request.  Let's return
         # that.
-        return response.headers["location"]
+        return response.headers.get("location")
 
     def project_exists(self, project_path: ProjectPath) -> bool:
         """Return True iff project_path exists on the Jenkins instance"""
