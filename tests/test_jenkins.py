@@ -611,7 +611,7 @@ class ScheduleBuildTestCase(TestCase):
         with mock.patch.object(jenkins.session, "post") as mock_post:
             mock_response = mock_post.return_value
             attrs = {
-                "status_code": 401,
+                "status_code": 301,
                 "headers": {"location": "https://jenkins.invalid/queue/item/31528/"},
             }
             mock_response.configure_mock(**attrs)
