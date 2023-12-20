@@ -52,6 +52,16 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(exit_status, 0)
 
+    def test_check_tag_with_dots(self) -> None:
+        build = BuildFactory()
+        self.publisher.pull(build)
+        self.publisher.tag(build, "go-1.21.5")
+
+        console, _, stderr = string_console()
+        exit_status = check.handler(Namespace(), self.gbp, console)
+
+        self.assertEqual(exit_status, 0, stderr.getvalue())
+
     def test_check_build_content(self) -> None:
         good_build = BuildFactory()
         self.publisher.pull(good_build)

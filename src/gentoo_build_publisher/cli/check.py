@@ -87,7 +87,7 @@ def check_orphans(publisher: BuildPublisher, console: Console) -> CheckResult:
         directory = publisher.storage.root / content.value
 
         for path in directory.iterdir():
-            if "." in path.name:
+            if "." in path.name and not path.is_symlink():
                 build = Build(*path.name.split(".", 1))
 
                 try:
