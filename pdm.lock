@@ -4,7 +4,7 @@
 [metadata]
 groups = ["default", "dev", "redis"]
 strategy = ["cross_platform"]
-lock_version = "4.4"
+lock_version = "4.4.1"
 content_hash = "sha256:4c7c86c08a44bcfa0ed5f67a6a2572431a14aaab68a05e8d7e4d6d031aa3a7c5"
 
 [[package]]
