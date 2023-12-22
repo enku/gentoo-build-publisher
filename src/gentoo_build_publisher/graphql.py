@@ -10,7 +10,7 @@ import datetime as dt
 import importlib.metadata
 from collections.abc import Callable
 from dataclasses import dataclass
-from functools import cached_property, wraps
+from functools import wraps
 from importlib import resources
 from typing import Any, TypedDict
 
@@ -39,8 +39,8 @@ type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
     EnumType("StatusEnum", Status),
     datetime_scalar,
-    ObjectType("Build"),
-    ObjectType("MachineSummary"),
+    build_type := ObjectType("Build"),
+    machine_summary := ObjectType("MachineSummary"),
     mutation := ObjectType("Mutation"),
     query := ObjectType("Query"),
 ]
@@ -110,149 +110,148 @@ class Error:
         return cls(f"{exception.__class__.__name__}: {exception}")
 
 
-class BuildProxy:
-    """Build Type resolvers"""
-
-    def __init__(self, build: Build):
-        self.build = build
-        self._record = build if isinstance(build, BuildRecord) else None
-
-    def id(self, _info: GraphQLResolveInfo) -> str:
-        return self.build.id
-
-    def machine(self, _info: GraphQLResolveInfo) -> str:
-        return self.build.machine
-
-    def keep(self, _info: GraphQLResolveInfo) -> bool:
-        return self.record.keep
-
-    def built(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
-        return self.record.built
-
-    def submitted(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
-        return self.record.submitted
-
-    def completed(self, _info: GraphQLResolveInfo) -> dt.datetime | None:
-        return self.record.completed
-
-    def logs(self, _info: GraphQLResolveInfo) -> str | None:
-        return self.record.logs
-
-    def notes(self, _info: GraphQLResolveInfo) -> str | None:
-        return self.record.note
-
-    @cached_property
-    def published(self) -> bool:
-        publisher = BuildPublisher.get_publisher()
-
-        return publisher.published(self.build)
-
-    @cached_property
-    def tags(self) -> list[str]:
-        publisher = BuildPublisher.get_publisher()
-
-        return publisher.tags(self.build)
-
-    @cached_property
-    def pulled(self) -> bool:
-        publisher = BuildPublisher.get_publisher()
-
-        return publisher.pulled(self.build)
-
-    @cached_property
-    def packages(self) -> list[str] | None:
-        publisher = BuildPublisher.get_publisher()
-
-        if not publisher.pulled(self.build):
-            return None
-
-        try:
-            return [package.cpv for package in publisher.get_packages(self.build)]
-        except LookupError:
-            return None
-
-    @cached_property
-    def packages_built(self) -> list[Package] | None:
-        publisher = BuildPublisher.get_publisher()
-
-        try:
-            gbp_metadata = publisher.storage.get_metadata(self.build)
-        except LookupError as error:
-            raise GraphQLError("Packages built unknown") from error
-
-        return gbp_metadata.packages.built
-
-    @cached_property
-    def record(self) -> BuildRecord:
-        publisher = BuildPublisher.get_publisher()
-
-        if self._record is None:
-            self._record = publisher.record(self.build)
-
-        return self._record
+@build_type.field("built")
+def resolve_build_type_built(
+    build: Build, _info: GraphQLResolveInfo
+) -> dt.datetime | None:
+    return BuildPublisher.get_publisher().record(build).built
 
 
-class MachineInfoProxy:  # pylint: disable=too-few-public-methods
-    """A wrapper around MachineInfo
+@build_type.field("completed")
+def resolve_build_type_completed(
+    build: Build, _info: GraphQLResolveInfo
+) -> dt.datetime | None:
+    publisher = BuildPublisher.get_publisher()
+    record = publisher.record(build)
 
-    We mostly need this to ensure that MachineInfo's Build objects get converted to
-    BuildProxy objects.
-    """
+    return record.completed
 
-    def __init__(self, machine_info: MachineInfo):
-        self.machine_info = machine_info
 
-    def __getattr__(self, name: str) -> Any:
-        if name in {"latest_build", "published_build"}:
-            value = getattr(self.machine_info, name)
-            return BuildProxy(value) if value else None
+@build_type.field("keep")
+def resolve_build_type_keep(build: Build, _info: GraphQLResolveInfo) -> bool:
+    return BuildPublisher.get_publisher().record(build).keep
 
-        if name == "builds":
-            value = getattr(self.machine_info, name)
-            return [BuildProxy(i) for i in value]
 
-        return getattr(self.machine_info, name)
+@build_type.field("logs")
+def resolve_build_type_logs(build: Build, _info: GraphQLResolveInfo) -> str | None:
+    return BuildPublisher.get_publisher().record(build).logs
+
+
+@build_type.field("notes")
+def resolve_build_type_notes(build: Build, _info: GraphQLResolveInfo) -> str | None:
+    return BuildPublisher.get_publisher().record(build).note
+
+
+@build_type.field("packages")
+def resolve_build_type_packages(
+    build: Build, _info: GraphQLResolveInfo
+) -> list[str] | None:
+    publisher = BuildPublisher.get_publisher()
+
+    if not publisher.pulled(build):
+        return None
+
+    try:
+        packages = publisher.get_packages(build)
+    except LookupError:
+        return None
+
+    return [package.cpv for package in packages]
+
+
+@build_type.field("packagesBuilt")
+def resolve_build_type_packages_built(
+    build: Build, _info: GraphQLResolveInfo
+) -> list[Package] | None:
+    try:
+        gbp_metadata = BuildPublisher.get_publisher().storage.get_metadata(build)
+    except LookupError as error:
+        raise GraphQLError("Packages built unknown") from error
+
+    return gbp_metadata.packages.built
+
+
+@build_type.field("published")
+def resolve_build_type_published(build: Build, _info: GraphQLResolveInfo) -> bool:
+    return BuildPublisher.get_publisher().published(build)
+
+
+@build_type.field("pulled")
+def resolve_build_type_pulled(build: Build, _info: GraphQLResolveInfo) -> bool:
+    return BuildPublisher.get_publisher().pulled(build)
+
+
+@build_type.field("submitted")
+def resolve_build_type_submitted(
+    build: Build, _info: GraphQLResolveInfo
+) -> dt.datetime:
+    publisher = BuildPublisher.get_publisher()
+    record = publisher.record(build)
+
+    return record.submitted or dt.datetime.now(tz=dt.UTC)
+
+
+@build_type.field("tags")
+def resolve_build_type_tags(build: Build, _info: GraphQLResolveInfo) -> list[str]:
+    publisher = BuildPublisher.get_publisher()
+
+    return publisher.tags(build)
+
+
+@machine_summary.field("buildCount")
+def resolve_machine_summary_build_count(
+    machine_info: MachineInfo, _info: GraphQLResolveInfo
+) -> int:
+    return machine_info.build_count
+
+
+@machine_summary.field("latestBuild")
+def resolve_machine_summary_latest_build(
+    machine_info: MachineInfo, _info: GraphQLResolveInfo
+) -> Build | None:
+    return machine_info.latest_build
+
+
+@machine_summary.field("publishedBuild")
+def resolve_machine_summary_published_build(
+    machine_info: MachineInfo, _info: GraphQLResolveInfo
+) -> Build | None:
+    return machine_info.published_build
 
 
 @query.field("machines")
-def resolve_query_machines(
-    _obj: Any, _info: GraphQLResolveInfo
-) -> list[MachineInfoProxy]:
+def resolve_query_machines(_obj: Any, _info: GraphQLResolveInfo) -> list[MachineInfo]:
     publisher = BuildPublisher.get_publisher()
 
-    return [MachineInfoProxy(machine_info) for machine_info in publisher.machines()]
+    return publisher.machines()
 
 
 @query.field("build")
-def resolve_query_build(
-    _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> BuildProxy | None:
+def resolve_query_build(_obj: Any, _info: GraphQLResolveInfo, id: str) -> Build | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
-    return None if not publisher.records.exists(build) else BuildProxy(build)
+    return None if not publisher.records.exists(build) else build
 
 
 @query.field("latest")
 def resolve_query_latest(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> BuildProxy | None:
+) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
-    return None if record is None else BuildProxy(record)
+    return record
 
 
 @query.field("builds")
 def resolve_query_builds(
     _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> list[BuildProxy]:
+) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
 
     return [
-        BuildProxy(record)
-        for record in publisher.records.for_machine(machine)
-        if record.completed
+        record for record in publisher.records.for_machine(machine) if record.completed
     ]
 
 
@@ -273,30 +272,26 @@ def resolve_query_diff(
 
     items = publisher.diff_binpkgs(left_build, right_build)
 
-    return {
-        "left": BuildProxy(left_build),
-        "right": BuildProxy(right_build),
-        "items": [*items],
-    }
+    return {"left": left_build, "right": right_build, "items": [*items]}
 
 
 @query.field("search")
 def resolve_query_search(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, field: str, key: str
-) -> list[BuildProxy]:
+) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
     publisher = BuildPublisher.get_publisher()
 
-    return [BuildProxy(i) for i in publisher.search(machine, search_field, key)]
+    return publisher.search(machine, search_field, key)
 
 
 @query.field("searchNotes")
 def resolve_query_searchnotes(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
-) -> list[BuildProxy]:
+) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
 
-    return [BuildProxy(i) for i in publisher.search(machine, "note", key)]
+    return publisher.search(machine, "note", key)
 
 
 @query.field("version")
@@ -305,23 +300,23 @@ def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
 
 
 @query.field("working")
-def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildProxy]:
+def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
-    build_types = []
+    records = []
     machines = publisher.records.list_machines()
 
     for machine in machines:
         for record in publisher.records.for_machine(machine):
             if not record.completed:
-                build_types.append(BuildProxy(record))
+                records.append(record)
 
-    return build_types
+    return records
 
 
 @query.field("resolveBuildTag")
 def resolve_query_resolvebuildtag(
     _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
-) -> BuildProxy | None:
+) -> Build | None:
     publisher = BuildPublisher.get_publisher()
 
     try:
@@ -329,7 +324,7 @@ def resolve_query_resolvebuildtag(
     except FileNotFoundError:
         return None
 
-    return BuildProxy(result)
+    return result
 
 
 @mutation.field("publish")
@@ -381,58 +376,52 @@ def resolve_mutation_schedule_build(
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> BuildProxy | None:
+) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build).save(publisher.records, keep=True)
-
-    return BuildProxy(record)
+    return publisher.record(build).save(publisher.records, keep=True)
 
 
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(
     _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> BuildProxy | None:
+) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build).save(publisher.records, keep=False)
-
-    return BuildProxy(record)
+    return publisher.record(build).save(publisher.records, keep=False)
 
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
     _obj: Any, _info: GraphQLResolveInfo, id: str, note: str | None = None
-) -> BuildProxy | None:
+) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
         return None
 
-    record = publisher.record(build).save(publisher.records, note=note)
-
-    return BuildProxy(record)
+    return publisher.record(build).save(publisher.records, note=note)
 
 
 @mutation.field("createBuildTag")
 def resolve_mutation_createbuildtag(
     _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
-) -> BuildProxy:
+) -> Build:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     publisher.tag(build, tag)
 
-    return BuildProxy(build)
+    return build
 
 
 @mutation.field("removeBuildTag")
