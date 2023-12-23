@@ -12,7 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from importlib import resources
-from typing import Any, TypedDict
+from typing import Any, TypeAlias, TypedDict
 
 from ariadne import (
     EnumType,
@@ -34,7 +34,8 @@ from gentoo_build_publisher.worker import Worker, tasks
 LOCALHOST = "127.0.0.1", "::1", "localhost"
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
-Object = dict[str, Any]
+Info: TypeAlias = GraphQLResolveInfo
+Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
     EnumType("StatusEnum", Status),
@@ -80,7 +81,7 @@ def require_localhost(fn: Resolver) -> Resolver:
     @wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         """type annotation"""
-        info: GraphQLResolveInfo = args[1]
+        info: Info = args[1]
         environ = info.context["request"].environ
         client_ip = (
             (
@@ -111,16 +112,12 @@ class Error:
 
 
 @build_type.field("built")
-def resolve_build_type_built(
-    build: Build, _info: GraphQLResolveInfo
-) -> dt.datetime | None:
+def resolve_build_type_built(build: Build, _info: Info) -> dt.datetime | None:
     return BuildPublisher.get_publisher().record(build).built
 
 
 @build_type.field("completed")
-def resolve_build_type_completed(
-    build: Build, _info: GraphQLResolveInfo
-) -> dt.datetime | None:
+def resolve_build_type_completed(build: Build, _info: Info) -> dt.datetime | None:
     publisher = BuildPublisher.get_publisher()
     record = publisher.record(build)
 
@@ -128,24 +125,22 @@ def resolve_build_type_completed(
 
 
 @build_type.field("keep")
-def resolve_build_type_keep(build: Build, _info: GraphQLResolveInfo) -> bool:
+def resolve_build_type_keep(build: Build, _info: Info) -> bool:
     return BuildPublisher.get_publisher().record(build).keep
 
 
 @build_type.field("logs")
-def resolve_build_type_logs(build: Build, _info: GraphQLResolveInfo) -> str | None:
+def resolve_build_type_logs(build: Build, _info: Info) -> str | None:
     return BuildPublisher.get_publisher().record(build).logs
 
 
 @build_type.field("notes")
-def resolve_build_type_notes(build: Build, _info: GraphQLResolveInfo) -> str | None:
+def resolve_build_type_notes(build: Build, _info: Info) -> str | None:
     return BuildPublisher.get_publisher().record(build).note
 
 
 @build_type.field("packages")
-def resolve_build_type_packages(
-    build: Build, _info: GraphQLResolveInfo
-) -> list[str] | None:
+def resolve_build_type_packages(build: Build, _info: Info) -> list[str] | None:
     publisher = BuildPublisher.get_publisher()
 
     if not publisher.pulled(build):
@@ -161,7 +156,7 @@ def resolve_build_type_packages(
 
 @build_type.field("packagesBuilt")
 def resolve_build_type_packages_built(
-    build: Build, _info: GraphQLResolveInfo
+    build: Build, _info: Info
 ) -> list[Package] | None:
     try:
         gbp_metadata = BuildPublisher.get_publisher().storage.get_metadata(build)
@@ -172,19 +167,17 @@ def resolve_build_type_packages_built(
 
 
 @build_type.field("published")
-def resolve_build_type_published(build: Build, _info: GraphQLResolveInfo) -> bool:
+def resolve_build_type_published(build: Build, _info: Info) -> bool:
     return BuildPublisher.get_publisher().published(build)
 
 
 @build_type.field("pulled")
-def resolve_build_type_pulled(build: Build, _info: GraphQLResolveInfo) -> bool:
+def resolve_build_type_pulled(build: Build, _info: Info) -> bool:
     return BuildPublisher.get_publisher().pulled(build)
 
 
 @build_type.field("submitted")
-def resolve_build_type_submitted(
-    build: Build, _info: GraphQLResolveInfo
-) -> dt.datetime:
+def resolve_build_type_submitted(build: Build, _info: Info) -> dt.datetime:
     publisher = BuildPublisher.get_publisher()
     record = publisher.record(build)
 
@@ -192,42 +185,40 @@ def resolve_build_type_submitted(
 
 
 @build_type.field("tags")
-def resolve_build_type_tags(build: Build, _info: GraphQLResolveInfo) -> list[str]:
+def resolve_build_type_tags(build: Build, _info: Info) -> list[str]:
     publisher = BuildPublisher.get_publisher()
 
     return publisher.tags(build)
 
 
 @machine_summary.field("buildCount")
-def resolve_machine_summary_build_count(
-    machine_info: MachineInfo, _info: GraphQLResolveInfo
-) -> int:
+def resolve_machine_summary_build_count(machine_info: MachineInfo, _info: Info) -> int:
     return machine_info.build_count
 
 
 @machine_summary.field("latestBuild")
 def resolve_machine_summary_latest_build(
-    machine_info: MachineInfo, _info: GraphQLResolveInfo
+    machine_info: MachineInfo, _info: Info
 ) -> Build | None:
     return machine_info.latest_build
 
 
 @machine_summary.field("publishedBuild")
 def resolve_machine_summary_published_build(
-    machine_info: MachineInfo, _info: GraphQLResolveInfo
+    machine_info: MachineInfo, _info: Info
 ) -> Build | None:
     return machine_info.published_build
 
 
 @query.field("machines")
-def resolve_query_machines(_obj: Any, _info: GraphQLResolveInfo) -> list[MachineInfo]:
+def resolve_query_machines(_obj: Any, _info: Info) -> list[MachineInfo]:
     publisher = BuildPublisher.get_publisher()
 
     return publisher.machines()
 
 
 @query.field("build")
-def resolve_query_build(_obj: Any, _info: GraphQLResolveInfo, id: str) -> Build | None:
+def resolve_query_build(_obj: Any, _info: Info, id: str) -> Build | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
@@ -235,9 +226,7 @@ def resolve_query_build(_obj: Any, _info: GraphQLResolveInfo, id: str) -> Build 
 
 
 @query.field("latest")
-def resolve_query_latest(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> BuildRecord | None:
+def resolve_query_latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
@@ -245,9 +234,7 @@ def resolve_query_latest(
 
 
 @query.field("builds")
-def resolve_query_builds(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str
-) -> list[BuildRecord]:
+def resolve_query_builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
 
     return [
@@ -256,9 +243,7 @@ def resolve_query_builds(
 
 
 @query.field("diff")
-def resolve_query_diff(
-    _obj: Any, _info: GraphQLResolveInfo, left: str, right: str
-) -> Object | None:
+def resolve_query_diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     publisher = BuildPublisher.get_publisher()
     left_build = Build.from_id(left)
 
@@ -277,7 +262,7 @@ def resolve_query_diff(
 
 @query.field("search")
 def resolve_query_search(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str, field: str, key: str
+    _obj: Any, _info: Info, machine: str, field: str, key: str
 ) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
     publisher = BuildPublisher.get_publisher()
@@ -287,7 +272,7 @@ def resolve_query_search(
 
 @query.field("searchNotes")
 def resolve_query_searchnotes(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str, key: str
+    _obj: Any, _info: Info, machine: str, key: str
 ) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
 
@@ -295,12 +280,12 @@ def resolve_query_searchnotes(
 
 
 @query.field("version")
-def resolve_query_version(_obj: Any, _info: GraphQLResolveInfo) -> str:
+def resolve_query_version(_obj: Any, _info: Info) -> str:
     return get_version()
 
 
 @query.field("working")
-def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildRecord]:
+def resolve_query_working(_obj: Any, _info: Info) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
     records = []
     machines = publisher.records.list_machines()
@@ -315,7 +300,7 @@ def resolve_query_working(_obj: Any, _info: GraphQLResolveInfo) -> list[BuildRec
 
 @query.field("resolveBuildTag")
 def resolve_query_resolvebuildtag(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
+    _obj: Any, _info: Info, machine: str, tag: str
 ) -> Build | None:
     publisher = BuildPublisher.get_publisher()
 
@@ -328,9 +313,7 @@ def resolve_query_resolvebuildtag(
 
 
 @mutation.field("publish")
-def resolve_mutation_publish(
-    _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> MachineInfo:
+def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
@@ -345,7 +328,7 @@ def resolve_mutation_publish(
 @mutation.field("pull")
 def resolve_mutation_pull(
     _obj: Any,
-    _info: GraphQLResolveInfo,
+    _info: Info,
     *,
     id: str,
     note: str | None = None,
@@ -363,7 +346,7 @@ def resolve_mutation_pull(
 @mutation.field("scheduleBuild")
 def resolve_mutation_schedule_build(
     _obj: Any,
-    _info: GraphQLResolveInfo,
+    _info: Info,
     machine: str,
     params: list[BuildParameterInput] | None = None,
 ) -> str | None:
@@ -374,9 +357,7 @@ def resolve_mutation_schedule_build(
 
 
 @mutation.field("keepBuild")
-def resolve_mutation_keepbuild(
-    _obj: Any, _info: GraphQLResolveInfo, id: str
-) -> BuildRecord | None:
+def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
@@ -388,7 +369,7 @@ def resolve_mutation_keepbuild(
 
 @mutation.field("releaseBuild")
 def resolve_mutation_releasebuild(
-    _obj: Any, _info: GraphQLResolveInfo, id: str
+    _obj: Any, _info: Info, id: str
 ) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
@@ -401,7 +382,7 @@ def resolve_mutation_releasebuild(
 
 @mutation.field("createNote")
 def resolve_mutation_createnote(
-    _obj: Any, _info: GraphQLResolveInfo, id: str, note: str | None = None
+    _obj: Any, _info: Info, id: str, note: str | None = None
 ) -> BuildRecord | None:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
@@ -413,9 +394,7 @@ def resolve_mutation_createnote(
 
 
 @mutation.field("createBuildTag")
-def resolve_mutation_createbuildtag(
-    _obj: Any, _info: GraphQLResolveInfo, id: str, tag: str
-) -> Build:
+def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
@@ -426,7 +405,7 @@ def resolve_mutation_createbuildtag(
 
 @mutation.field("removeBuildTag")
 def resolve_mutation_removebuildtag(
-    _obj: Any, _info: GraphQLResolveInfo, machine: str, tag: str
+    _obj: Any, _info: Info, machine: str, tag: str
 ) -> MachineInfo:
     publisher = BuildPublisher.get_publisher()
 
@@ -438,7 +417,7 @@ def resolve_mutation_removebuildtag(
 @mutation.field("createRepo")
 @require_localhost
 def resolve_mutation_createrepo(
-    _obj: Any, _info: GraphQLResolveInfo, name: str, repo: str, branch: str
+    _obj: Any, _info: Info, name: str, repo: str, branch: str
 ) -> Error | None:
     jenkins = BuildPublisher.get_publisher().jenkins
 
@@ -456,7 +435,7 @@ def resolve_mutation_createrepo(
 @require_localhost
 def resolve_mutation_create_machine(
     _obj: Any,
-    _info: GraphQLResolveInfo,
+    _info: Info,
     name: str,
     repo: str,
     branch: str,
