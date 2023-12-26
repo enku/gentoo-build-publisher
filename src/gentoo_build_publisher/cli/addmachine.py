@@ -12,13 +12,13 @@ from . import get_dist_query
 
 def handler(args: argparse.Namespace, gbp: GBP, console: Console) -> int:
     """Add a an ebuild repo to Jenkins"""
-    response = check(
+    api_response = check(
         get_dist_query("create_machine", gbp)(
             branch=args.branch, ebuildRepos=args.deps, name=args.name, repo=args.repo
         )
     )
 
-    if error := response["createMachine"]:
+    if error := api_response["createMachine"]:
         console.err.print(f"error: {error['message']}")
         return 1
 

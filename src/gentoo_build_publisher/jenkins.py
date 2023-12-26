@@ -174,28 +174,28 @@ class Jenkins:
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.url.artifact(build)
-        response = self.session.get(str(url), stream=True, timeout=self.timeout)
-        response.raise_for_status()
+        http_response = self.session.get(str(url), stream=True, timeout=self.timeout)
+        http_response.raise_for_status()
 
-        return response.iter_content(
+        return http_response.iter_content(
             chunk_size=self.config.download_chunk_size, decode_unicode=False
         )
 
     def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
         url = self.url.logs(build)
-        response = self.session.get(str(url), timeout=self.timeout)
-        response.raise_for_status()
+        http_response = self.session.get(str(url), timeout=self.timeout)
+        http_response.raise_for_status()
 
-        return response.text
+        return http_response.text
 
     def get_metadata(self, build: Build) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url.metadata(build)
-        response = self.session.get(str(url), timeout=self.timeout)
-        response.raise_for_status()
+        http_response = self.session.get(str(url), timeout=self.timeout)
+        http_response.raise_for_status()
 
-        json = response.json()
+        json = http_response.json()
 
         return JenkinsMetadata(duration=json["duration"], timestamp=json["timestamp"])
 
@@ -230,14 +230,14 @@ class Jenkins:
         ]
         json_params = jsonlib.dumps({"parameter": params_list})
 
-        response = self.session.post(
+        http_response = self.session.post(
             str(url), data={"json": json_params}, timeout=self.timeout
         )
-        response.raise_for_status()
+        http_response.raise_for_status()
 
         # All that Jenkins gives us is the location of the queued request.  Let's return
         # that.
-        return response.headers.get("location")
+        return http_response.headers.get("location")
 
     def project_exists(self, project_path: ProjectPath) -> bool:
         """Return True iff project_path exists on the Jenkins instance"""
@@ -246,14 +246,14 @@ class Jenkins:
     def url_path_exists(self, url_path: str) -> bool:
         """Return True iff url_path exists on the Jenkins instance"""
         url = self.config.base_url.with_path(url_path)
-        response = self.session.head(
+        http_response = self.session.head(
             str(url), timeout=self.timeout, allow_redirects=True
         )
 
-        if response.status_code == HTTP_NOT_FOUND:
+        if http_response.status_code == HTTP_NOT_FOUND:
             return False
 
-        response.raise_for_status()
+        http_response.raise_for_status()
 
         return True
 
@@ -267,7 +267,7 @@ class Jenkins:
         params = {"name": project_path.name}
         headers = {"Content-Type": "text/xml"}
 
-        response = self.session.post(
+        http_response = self.session.post(
             str(url),
             data=xml,
             headers=headers,
@@ -275,23 +275,23 @@ class Jenkins:
             timeout=self.config.requests_timeout,
         )
 
-        if response.status_code == HTTP_NOT_FOUND:
+        if http_response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
 
-        response.raise_for_status()
+        http_response.raise_for_status()
 
     def get_item(self, project_path: ProjectPath) -> str:
         """Return the xml definition for the given project"""
         url = self.config.base_url.with_path(project_path.url_path) / "config.xml"
 
-        response = self.session.get(str(url), timeout=self.config.requests_timeout)
+        http_response = self.session.get(str(url), timeout=self.config.requests_timeout)
 
-        if response.status_code == HTTP_NOT_FOUND:
+        if http_response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
 
-        response.raise_for_status()
+        http_response.raise_for_status()
 
-        return response.text
+        return http_response.text
 
     def get_job_parameters(self, machine: str) -> dict[str, Any]:
         """Return the parameters for the machine's job
@@ -303,12 +303,12 @@ class Jenkins:
             "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
         }
 
-        response = self.session.get(
+        http_response = self.session.get(
             str(url), params=params, timeout=self.config.requests_timeout
         )
-        response.raise_for_status()
+        http_response.raise_for_status()
 
-        properties = response.json()["property"]
+        properties = http_response.json()["property"]
         props = [prop for prop in properties if "parameterDefinitions" in prop]
 
         if not props:
@@ -359,13 +359,13 @@ class Jenkins:
         Jenkins uses name@version syntax for `plugin`, for example "copyartifact@1.47"
         """
         url = self.config.base_url.with_path("/pluginManager/installNecessaryPlugins")
-        response = self.session.post(
+        http_response = self.session.post(
             str(url),
             headers={"Content-Type": "text/xml"},
             data=f'<jenkins><install plugin="{plugin}" /></jenkins>',
         )
 
-        response.raise_for_status()
+        http_response.raise_for_status()
 
     def create_repo_job(self, repo_name: str, repo_url: str, repo_branch: str) -> None:
         """Create a repo job in the "repos" folder
