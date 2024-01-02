@@ -122,12 +122,12 @@ class URLBuilder:
     """
 
     formatters: dict[str, str] = {
-        "artifact": "job/{build.machine}/{build.build_id}/artifact/{config.artifact_name}",
-        "build": "job/{build.machine}/{build.build_id}",
-        "build_scheduler": "job/{build.machine}/build",
-        "logs": "job/{build.machine}/{build.build_id}/consoleText",
-        "metadata": "job/{build.machine}/{build.build_id}/api/json",
-        "job": "job/{build.machine}/api/json",
+        "artifact": "job/{arg.machine}/{arg.build_id}/artifact/{config.artifact_name}",
+        "build": "job/{arg.machine}/{arg.build_id}",
+        "build_scheduler": "job/{arg}/build",
+        "logs": "job/{arg.machine}/{arg.build_id}/consoleText",
+        "metadata": "job/{arg.machine}/{arg.build_id}/api/json",
+        "job": "job/{arg}/api/json",
     }
     """Format strings using "build" and "config" arguments"""
 
@@ -140,9 +140,9 @@ class URLBuilder:
         except KeyError as error:
             raise AttributeError(repr(name)) from error
 
-    def builder(self, formatter: str, build: Build) -> URL:
+    def builder(self, formatter: str, arg: Any) -> URL:
         """Given the parts, and build, build a URL"""
-        return self.config.base_url / formatter.format(config=self.config, build=build)
+        return self.config.base_url / formatter.format(config=self.config, arg=arg)
 
     def get_builders(self) -> list[str]:
         """Return the names of all the builders
@@ -210,10 +210,7 @@ class Jenkins:
 
         `params` are build parameters to pass to the job instead of the defaults.
         """
-        # Here self.url needs a Build, but we only have the machine name. Just pass
-        # a bogus Build with that name
-        build = Build(machine, "bogus")
-        url = self.url.build_scheduler(build)
+        url = self.url.build_scheduler(machine)
         build_params = self.get_job_parameters(machine)
 
         # parameter logic here is based on
@@ -298,7 +295,7 @@ class Jenkins:
 
         Each parameter is a dict of name -> default_value
         """
-        url = self.url.job(Build(machine, "bogus"))
+        url = self.url.job(machine)
         params = {
             "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
         }
