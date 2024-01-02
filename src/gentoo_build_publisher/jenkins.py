@@ -344,6 +344,8 @@ class Jenkins:
 
     def is_folder(self, project_path: ProjectPath) -> bool:
         """Return True if project_path is a folder"""
+        if project_path == ProjectPath():
+            return True
         try:
             xml = self.get_item(project_path)
         except FileNotFoundError:

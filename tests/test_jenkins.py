@@ -439,6 +439,10 @@ class IsFolderTestCase(TestCase):
 
         self.assertEqual(jenkins.is_folder(project_path), False)
 
+    def test_root_folder(self) -> None:
+        jenkins = MockJenkins(JENKINS_CONFIG)
+        self.assertEqual(jenkins.is_folder(ProjectPath()), True)
+
 
 class InstallPluginTestCase(TestCase):
     """Tests for the Jenkins.install_plugin method"""
