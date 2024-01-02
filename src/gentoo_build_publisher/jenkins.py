@@ -328,9 +328,7 @@ class Jenkins:
         """Create a project folder with the given path"""
         if project_path == ProjectPath():
             # Cannot create the root
-            if not exist_ok:
-                raise FileExistsError(project_path)
-
+            self.maybe_raise_folderexists(project_path, exist_ok)
             return
 
         if parents and (parent := project_path.parent) != ProjectPath():
@@ -339,8 +337,7 @@ class Jenkins:
         try:
             self.create_item(project_path, FOLDER_XML)
         except FileExistsError:
-            if not exist_ok or not self.is_folder(project_path):
-                raise
+            self.maybe_raise_folderexists(project_path, exist_ok)
 
     def is_folder(self, project_path: ProjectPath) -> bool:
         """Return True if project_path is a folder"""
@@ -354,6 +351,11 @@ class Jenkins:
         tree = ET.fromstring(xml)
 
         return tree.tag == "com.cloudbees.hudson.plugins.folder.Folder"
+
+    def maybe_raise_folderexists(self, folder: ProjectPath, exist_ok: bool) -> None:
+        """Maybe raise FileExistsError"""
+        if not exist_ok or not self.is_folder(folder):
+            raise FileExistsError(folder)
 
     def install_plugin(self, plugin: str) -> None:
         """Ensure the given plugin is installed.
