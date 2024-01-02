@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import importlib.resources
 import platform
 import re
 import string
@@ -125,3 +126,10 @@ def utctime(time: dt.datetime | None = None) -> dt.datetime:
         time = dt.datetime.utcnow()
 
     return time.replace(tzinfo=dt.timezone.utc)
+
+
+def read_package_file(filename: str) -> str:
+    """Read the given filename from this package"""
+    return importlib.resources.read_text(
+        "gentoo_build_publisher", filename, encoding="UTF-8"
+    )

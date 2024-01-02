@@ -1,7 +1,6 @@
 """Jenkins api for Gentoo Build Publisher"""
 from __future__ import annotations
 
-import importlib.resources
 import json as jsonlib
 import logging
 import xml.etree.ElementTree as ET
@@ -16,20 +15,15 @@ from yarl import URL
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
+from gentoo_build_publisher.utils import read_package_file
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
 COPY_ARTIFACT_PLUGIN = "copyartifact@1.47"
-CREATE_BUILD_XML = importlib.resources.read_text(
-    "gentoo_build_publisher", "create_machine_job.xml", encoding="UTF-8"
-)
-CREATE_REPO_XML = importlib.resources.read_text(
-    "gentoo_build_publisher", "create_repo_job.xml", encoding="UTF-8"
-)
-FOLDER_XML = importlib.resources.read_text(
-    "gentoo_build_publisher", "folder.xml", encoding="UTF-8"
-)
+CREATE_BUILD_XML = read_package_file("create_machine_job.xml")
+CREATE_REPO_XML = read_package_file("create_repo_job.xml")
+FOLDER_XML = read_package_file("folder.xml")
 PATH_SEPARATOR = "/"
 HTTP_NOT_FOUND = 404
 XML_PATHS = {
