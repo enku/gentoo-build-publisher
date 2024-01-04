@@ -46,3 +46,21 @@ def key(value: dict[Any, Any], arg: Any, default: Any = None) -> Any:
 def addstr(arg1: Any, arg2: Any) -> str:
     """Perform string concatenation"""
     return str(arg1) + str(arg2)
+
+
+@register.inclusion_tag("gentoo_build_publisher/circle.html")
+def circle(number: int, name: str, color: str) -> dict[str, Any]:
+    """Render a circle with a number in it and name below"""
+    if number >= 100_000:
+        number_display = numberize(number, precision=0)
+        number_hover = str(number)
+    else:
+        number_display = str(number)
+        number_hover = ""
+
+    return {
+        "color": color,
+        "name": name,
+        "number": number_hover,
+        "number_display": number_display,
+    }
