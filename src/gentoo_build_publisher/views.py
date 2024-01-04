@@ -28,7 +28,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         cache,
     )
 
-    return render(request, "gentoo_build_publisher/dashboard.html", context)
+    return render(request, "gentoo_build_publisher/dashboard/main.html", context)
 
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:

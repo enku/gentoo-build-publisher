@@ -2,10 +2,10 @@
 {% load static %}
 
 {% block main %}
-  {% include "gentoo_build_publisher/row1.html" %}
-  {% include "gentoo_build_publisher/row2.html" %}
-  {% include "gentoo_build_publisher/row3.html" %}
-  {% include "gentoo_build_publisher/row4.html" %}
+  {% include "gentoo_build_publisher/dashboard/row1.html" %}
+  {% include "gentoo_build_publisher/dashboard/row2.html" %}
+  {% include "gentoo_build_publisher/dashboard/row3.html" %}
+  {% include "gentoo_build_publisher/dashboard/row4.html" %}
 {% endblock %}
 
 {% block scripts %}
@@ -15,5 +15,5 @@
   {{ bot_days|json_script:'botDays' }}
   {{ machine_colors|json_script:'machineColors' }}
   {{ total_package_size|json_script:'packageSizes' }}
-  <script src="{% static 'gbp/gbp.js' %}"></script>
+  <script src="{% static 'gbp/dashboard.js' %}"></script>
 {% endblock %}
