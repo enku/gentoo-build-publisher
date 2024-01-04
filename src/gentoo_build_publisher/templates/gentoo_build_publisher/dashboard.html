@@ -33,24 +33,8 @@
 
     <main role="main">
 
-      <div class="container">
-        <div class="row">
-          {% circle build_count "Builds" machine_colors.0 %}
-          {% circle machines|length "Machines" machine_colors.0 %}
-          {% circle package_count "Packages" machine_colors.0 %}
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-6">
-          <h4 class="d-flex justify-content-between align-items-center mb-3">Build Distribution</h4>
-          <canvas id="myChart" width="500" height="500"></canvas>
-        </div>
-        <div class="col-md-6">
-          <h4 class="d-flex justify-content-between align-items-center mb-3">Builds / Time</h4>
-          <canvas id="botChart" width="500" height="500"></canvas>
-        </div>
-      </div>
+      {% include "gentoo_build_publisher/row1.html" %}
+      {% include "gentoo_build_publisher/row2.html" %}
 
       <div class="row">
         <div class="col-md-4 order-md-2 mb-4">
@@ -118,10 +102,7 @@
       </div>
 
       <div class="row">
-        <div class="col-md-8">
-          <h4 class="d-flex justify-content-between align-items-center">Storage / Machine</h4>
-          <canvas id="packageSizeChart" width="500" height="500"></canvas>
-        </div>
+        {% chart "packageSizeChart" "Storage / Machine" cols=8 %}
         <div class="col-md-4 order-md-2 mb-4">
           <h4 class="d-flex justify-content-between align-items-center mb-3">Recent Packages</h4>
           <ul class="list-group mb-3">

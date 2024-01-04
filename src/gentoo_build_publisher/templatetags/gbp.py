@@ -64,3 +64,17 @@ def circle(number: int, name: str, color: str) -> dict[str, Any]:
         "number": number_hover,
         "number_display": number_display,
     }
+
+
+@register.inclusion_tag("gentoo_build_publisher/chart.html")
+def chart(
+    dom_id: str, title: str, *, cols: int = 6, width: int = 500, height: int = 500
+) -> dict[str, Any]:
+    """Render a chart.js scaffold"""
+    return {
+        "cols": cols,
+        "height": height,
+        "id": dom_id,
+        "title": title,
+        "width": width,
+    }

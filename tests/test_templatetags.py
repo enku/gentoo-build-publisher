@@ -5,7 +5,7 @@ from unittest import TestCase
 from django.template import TemplateSyntaxError
 from django.template.loader import get_template
 
-from gentoo_build_publisher.templatetags.gbp import circle, numberize
+from gentoo_build_publisher.templatetags.gbp import chart, circle, numberize
 
 
 class NumberizeTestCase(TestCase):
@@ -75,5 +75,19 @@ class NumberedCircleTests(TestCase):
 """
         context = circle(212351, "Packages", "#755245")
         template = get_template("gentoo_build_publisher/circle.html")
+        result = template.render(context)
+        self.assertEqual(result, expected)
+
+
+class ChartTests(TestCase):
+    def test(self) -> None:
+        expected = """\
+<div class="col-md-8">
+  <h4 class="d-flex justify-content-between align-items-center mb-3">Test Test</h4>
+  <canvas id="testChart" width="100" height="150"></canvas>
+</div>
+"""
+        context = chart("testChart", "Test Test", cols=8, width=100, height=150)
+        template = get_template("gentoo_build_publisher/chart.html")
         result = template.render(context)
         self.assertEqual(result, expected)
