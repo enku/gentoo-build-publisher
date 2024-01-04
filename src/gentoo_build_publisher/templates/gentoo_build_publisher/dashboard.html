@@ -1,54 +1,19 @@
-<!doctype html>{% load static %}
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" sizes="250x250" href="{% static 'gbp/gbp.png' %}">
-    <link rel="shortcut icon" sizes="32x32" href="{% static 'gbp/gbp-32x32.png' %}">
-    <link rel="shortcut icon" sizes="16x16" href="{% static 'gbp/gbp-16x16.png' %}">
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'gbp/gbp.css' %}">
-    <style>
-      body {
-        padding-top: 4.5rem;
-      }
-      .main-header {
-        background-color: {{ machine_colors.0 }};
-      }
-    </style>
-    <title>Gentoo Build Publisher</title>
-  </head>
-  <body>
+{% extends "gentoo_build_publisher/base.html" %}
+{% load static %}
 
-    <header>
-      <div class="main-header navbar navbar-dark shadow-sm fixed-top">
-        <div class="container">
-          <a href="#" class="navbar-brand d-flex align-items-center">
-            <img src="//www.gentoo.org/assets/img/logo/gentoo-signet.svg" width="40">
-            <strong>&nbsp;Gentoo Build Publisher</strong>
-          </a>
-        </div>
-      </div>
-    </header>
+{% block main %}
+  {% include "gentoo_build_publisher/row1.html" %}
+  {% include "gentoo_build_publisher/row2.html" %}
+  {% include "gentoo_build_publisher/row3.html" %}
+  {% include "gentoo_build_publisher/row4.html" %}
+{% endblock %}
 
-    <main role="main">
-      {% include "gentoo_build_publisher/row1.html" %}
-      {% include "gentoo_build_publisher/row2.html" %}
-      {% include "gentoo_build_publisher/row3.html" %}
-      {% include "gentoo_build_publisher/row4.html" %}
-    </main>
-
-    <footer>
-    </footer>
-
-    <script src="//cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    <script src="//cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha256-+8RZJua0aEWg+QVVKg4LEzEEm/8RFez5Tb4JBNiV5xA=" crossorigin="anonymous"></script>
-    {{ machine_dist|json_script:'machineDist' }}
-    {{ builds_over_time|json_script:'bot' }}
-    {{ machines|json_script:'machines' }}
-    {{ bot_days|json_script:'botDays' }}
-    {{ machine_colors|json_script:'machineColors' }}
-    {{ total_package_size|json_script:'packageSizes' }}
-    <script src="{% static 'gbp/gbp.js' %}"></script>
-  </body>
-</html>
+{% block scripts %}
+  {{ machine_dist|json_script:'machineDist' }}
+  {{ builds_over_time|json_script:'bot' }}
+  {{ machines|json_script:'machines' }}
+  {{ bot_days|json_script:'botDays' }}
+  {{ machine_colors|json_script:'machineColors' }}
+  {{ total_package_size|json_script:'packageSizes' }}
+  <script src="{% static 'gbp/gbp.js' %}"></script>
+{% endblock %}
