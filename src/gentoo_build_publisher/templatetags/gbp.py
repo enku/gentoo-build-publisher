@@ -90,3 +90,15 @@ def build_row(build: Build, build_packages: dict[str, list[str]]) -> dict[str, A
     package_count = len(packages)
 
     return {"build": build, "packages": packages_str, "package_count": package_count}
+
+
+@register.inclusion_tag("gentoo_build_publisher/package_row.html")
+def package_row(package: str, machines: list[str]) -> dict[str, Any]:
+    """Render a package row"""
+    machines_str = "<br/>".join(machines)
+
+    return {
+        "machine_count": len(machines),
+        "machines": machines_str,
+        "package": package,
+    }

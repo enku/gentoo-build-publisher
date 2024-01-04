@@ -6,7 +6,13 @@ from django.template import TemplateSyntaxError
 from django.template.loader import get_template
 
 from gentoo_build_publisher.common import Build
-from gentoo_build_publisher.templatetags.gbp import build_row, chart, circle, numberize
+from gentoo_build_publisher.templatetags.gbp import (
+    build_row,
+    chart,
+    circle,
+    numberize,
+    package_row,
+)
 
 
 class NumberizeTestCase(TestCase):
@@ -110,5 +116,39 @@ class BuildRowTests(TestCase):
         build_packages = {"babette.1094": packages}
         context = build_row(build, build_packages)
         template = get_template("gentoo_build_publisher/build_row.html")
+        result = template.render(context)
+        self.assertEqual(result, expected)
+
+
+class PackageRowTests(TestCase):
+    def test(self) -> None:
+        expected = """\
+<li class="list-group-item d-flex justify-content-between lh-condensed">
+  <div title="Machines" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='babette&lt;br/&gt;polaris' data-bs-html="true">
+    <h6 class="my-0">x11-libs/libdrm-2.4.118</h6>
+    <small class="text-muted">2 machines</small>
+  </div>
+</li>
+"""
+        package = "x11-libs/libdrm-2.4.118"
+        machines = ["babette", "polaris"]
+        context = package_row(package, machines)
+        template = get_template("gentoo_build_publisher/package_row.html")
+        result = template.render(context)
+        self.assertEqual(result, expected)
+
+    def test_single_machine(self) -> None:
+        expected = """\
+<li class="list-group-item d-flex justify-content-between lh-condensed">
+  <div title="Machines" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='babette' data-bs-html="true">
+    <h6 class="my-0">x11-libs/libdrm-2.4.118</h6>
+    <small class="text-muted">1 machine</small>
+  </div>
+</li>
+"""
+        package = "x11-libs/libdrm-2.4.118"
+        machines = ["babette"]
+        context = package_row(package, machines)
+        template = get_template("gentoo_build_publisher/package_row.html")
         result = template.render(context)
         self.assertEqual(result, expected)
