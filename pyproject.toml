@@ -12,7 +12,6 @@ dependencies = [
     "django",
     "python-dispatch>=0.2.1",
     "requests",
-    "simplejson",
     "yarl!=1.9.1",
     "gbpcli>=1.7.0",
     "orjson>=3.9.1",
