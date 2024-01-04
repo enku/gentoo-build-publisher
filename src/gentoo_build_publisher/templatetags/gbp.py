@@ -3,6 +3,8 @@ from typing import Any
 
 from django import template
 
+from gentoo_build_publisher.common import Build
+
 register = template.Library()
 
 
@@ -78,3 +80,13 @@ def chart(
         "title": title,
         "width": width,
     }
+
+
+@register.inclusion_tag("gentoo_build_publisher/build_row.html")
+def build_row(build: Build, build_packages: dict[str, list[str]]) -> dict[str, Any]:
+    """Render a (Jenkins) build row"""
+    packages = build_packages.get(str(build), [])
+    packages_str = "<br/>".join(packages)
+    package_count = len(packages)
+
+    return {"build": build, "packages": packages_str, "package_count": package_count}

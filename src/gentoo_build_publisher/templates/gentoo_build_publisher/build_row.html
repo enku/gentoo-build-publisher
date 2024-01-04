@@ -1,0 +1,7 @@
+<li class="list-group-item d-flex justify-content-between lh-condensed">
+  <div>
+    <h6 class="my-0">{{ build.machine }}</h6>
+    <small class="text-muted">{{ build.build_id }}</small>
+  </div>
+  <span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ packages }}' data-bs-html="true">{% if package_count %}{{ package_count }} package{{ package_count|pluralize }}{% endif %}</span>
+</li>

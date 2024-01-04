@@ -1,0 +1,44 @@
+{% load gbp %}
+<div class="row">
+  <div class="col-md-4 order-md-2 mb-4">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">Recent Unpublished</h4>
+    <ul class="list-group mb-3">
+      {% for build in latest_builds %}
+      {% if not build in latest_published and build in built_recently %}
+        {% build_row build build_packages %}
+      {% endif %}
+      {% endfor %}
+      <li class="list-group-item d-flex justify-content-between">
+        <span>Total</span>
+        <strong>{{ unpublished_builds_count }}</strong>
+      </li>
+    </ul>
+  </div>
+
+  <div class="col-md-4 order-md-2 mb-4">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">Latest Published</h4>
+    <ul class="list-group mb-3">
+      {% for build in latest_builds %}
+      {% if build in latest_published %}
+        {% build_row build build_packages %}
+      {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="col-md-4 order-md-2 mb-4">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">Work Queue</h4>
+    <ul class="list-group mb-3">
+      {% for build in builds_to_do %}
+        {% build_row build build_packages %}
+      {% empty %}
+      <li class="list-group-item d-flex justify-content-between lh-condensed">
+        <div>
+          <h6 class="my-0">Nothing to do!</h6>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+</div>
