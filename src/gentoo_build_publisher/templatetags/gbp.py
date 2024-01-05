@@ -38,18 +38,6 @@ def numberize(val: int, precision: int = 2) -> str:
     return f"{dec}{rest}{suffix}"
 
 
-@register.filter
-def key(value: dict[Any, Any], arg: Any, default: Any = None) -> Any:
-    """Given the dict value and key return the value from the dict"""
-    return value.get(arg, default)
-
-
-@register.filter
-def addstr(arg1: Any, arg2: Any) -> str:
-    """Perform string concatenation"""
-    return str(arg1) + str(arg2)
-
-
 @register.inclusion_tag("gentoo_build_publisher/circle.html")
 def circle(number: int, name: str, color: str) -> dict[str, Any]:
     """Render a circle with a number in it and name below"""
