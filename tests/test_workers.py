@@ -1,6 +1,8 @@
 """Unit tests for the worker module"""
 # pylint: disable=missing-docstring,no-value-for-parameter
+import io
 import os
+from contextlib import redirect_stderr
 from pathlib import Path
 from typing import Callable, cast
 from unittest import mock
@@ -131,10 +133,11 @@ class PullBuildTestCase(TestCase):
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
-            try:
-                worker.run(tasks.pull_build, "oscar.197", note=None, tags=None)
-            except RuntimeError as error:
-                self.assertIs(error, download_artifact_mock.side_effect)
+            with redirect_stderr(io.StringIO()):
+                try:
+                    worker.run(tasks.pull_build, "oscar.197", note=None, tags=None)
+                except RuntimeError as error:
+                    self.assertIs(error, download_artifact_mock.side_effect)
 
         self.assertFalse(records.exists(Build("oscar", "197")))
 
