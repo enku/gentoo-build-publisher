@@ -14,9 +14,7 @@ export PYTHONDONTWRITEBYTECODE
 
 
 .coverage: $(venv) $(src) $(tests)
-	pdm run coverage run --parallel-mode --concurrency=multiprocessing \
-		./tests/runtests.py
-	pdm run coverage combine
+	pdm run coverage run ./tests/runtests.py
 
 test: .coverage
 .PHONY: test
