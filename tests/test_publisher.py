@@ -42,67 +42,62 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
 
 
 class BuildPublisherTestCase(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.build = BuildFactory()
+
     def test_publish(self) -> None:
         """.publish should publish the build artifact"""
-        build = BuildFactory()
+        self.publisher.publish(self.build)
 
-        self.publisher.publish(build)
-
-        self.assertIs(self.publisher.storage.published(build), True)
+        self.assertIs(self.publisher.storage.published(self.build), True)
 
     def test_pull_without_db(self) -> None:
         """pull creates db record and pulls from jenkins"""
-        build = BuildFactory()
+        self.publisher.pull(self.build)
 
-        self.publisher.pull(build)
-
-        self.assertIs(self.publisher.storage.pulled(build), True)
-        self.assertIs(self.publisher.records.exists(build), True)
+        self.assertIs(self.publisher.storage.pulled(self.build), True)
+        self.assertIs(self.publisher.records.exists(self.build), True)
 
     def test_pull_stores_build_logs(self) -> None:
         """Should store the logs of the build"""
-        build = BuildFactory()
+        self.publisher.pull(self.build)
 
-        self.publisher.pull(build)
-
-        url = str(self.publisher.jenkins.url.logs(build))
+        url = str(self.publisher.jenkins.url.logs(self.build))
         self.publisher.jenkins.get_build_logs_mock_get.assert_called_once_with(
             url, timeout=mock.ANY
         )
 
-        record = self.publisher.record(build)
+        record = self.publisher.record(self.build)
         self.assertEqual(record.logs, BUILD_LOGS)
 
     def test_pull_updates_build_models_completed_field(self) -> None:
         """Should update the completed field with the current timestamp"""
         now = utctime()
-        build = BuildFactory()
 
         with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_now:
             mock_now.return_value = now
-            self.publisher.pull(build)
+            self.publisher.pull(self.build)
 
-        record = self.publisher.record(build)
+        record = self.publisher.record(self.build)
         self.assertEqual(record.completed, now)
 
     def test_pull_updates_build_models_built_field(self) -> None:
-        build = BuildFactory()
-        self.publisher.pull(build)
+        self.publisher.pull(self.build)
 
-        record = self.publisher.record(build)
+        record = self.publisher.record(self.build)
 
         jenkins_timestamp = datetime.datetime.utcfromtimestamp(
-            self.artifact_builder.build_info(build).build_time / 1000
+            self.artifact_builder.build_info(self.build).build_time / 1000
         ).replace(tzinfo=utc)
         self.assertEqual(record.built, jenkins_timestamp)
 
     def test_pull_does_not_download_when_already_pulled(self) -> None:
-        build = BuildFactory()
+        self.publisher.pull(self.build)
+        assert self.publisher.pulled(self.build)
 
-        self.publisher.pull(build)
-        assert self.publisher.pulled(build)
-
-        pulled = self.publisher.pull(build)
+        pulled = self.publisher.pull(self.build)
 
         self.assertFalse(pulled)
 
@@ -110,36 +105,30 @@ class BuildPublisherTestCase(TestCase):
         # On rare occasion (server crash) the build appears to be extracted but the
         # record.completed field is None.  In this case Publisher.pulled(build) should
         # be False
-        build = BuildFactory()
-
         with mock.patch.object(self.publisher, "_update_build_metadata"):
             # _update_build_metadata sets the completed attribute
-            self.publisher.pull(build)
+            self.publisher.pull(self.build)
 
-        self.assertFalse(self.publisher.pulled(build))
+        self.assertFalse(self.publisher.pulled(self.build))
 
     def test_pull_with_note(self) -> None:
-        build = BuildFactory()
+        self.publisher.pull(self.build, note="This is a test")
 
-        self.publisher.pull(build, note="This is a test")
-
-        self.assertIs(self.publisher.storage.pulled(build), True)
-        build_record = self.publisher.record(build)
+        self.assertIs(self.publisher.storage.pulled(self.build), True)
+        build_record = self.publisher.record(self.build)
         self.assertEqual(build_record.note, "This is a test")
 
     def test_pull_with_tags(self) -> None:
-        build = BuildFactory()
         tags = {"this", "is", "a", "test"}
 
-        self.publisher.pull(build, tags=tags)
+        self.publisher.pull(self.build, tags=tags)
 
-        self.assertIs(self.publisher.storage.pulled(build), True)
-        self.assertEqual(set(self.publisher.tags(build)), tags)
+        self.assertIs(self.publisher.storage.pulled(self.build), True)
+        self.assertEqual(set(self.publisher.tags(self.build)), tags)
 
     def test_purge_deletes_old_build(self) -> None:
         """Should remove purgeable builds"""
-
-        old_build = BuildFactory()
+        old_build = self.build
         self.publisher.pull(old_build)
         record = self.publisher.record(old_build)
         self.publisher.records.save(
@@ -189,11 +178,9 @@ class BuildPublisherTestCase(TestCase):
 
     def test_purge_doesnt_delete_old_published_build(self) -> None:
         """Should not delete old build if published"""
-        build = BuildFactory()
-
-        self.publisher.publish(build)
+        self.publisher.publish(self.build)
         self.publisher.records.save(
-            self.publisher.record(build),
+            self.publisher.record(self.build),
             submitted=datetime.datetime(1970, 1, 1, tzinfo=utc),
         )
         self.publisher.records.save(
@@ -201,23 +188,22 @@ class BuildPublisherTestCase(TestCase):
             submitted=datetime.datetime(1970, 12, 31, tzinfo=utc),
         )
 
-        self.publisher.purge(build.machine)
+        self.publisher.purge(self.build.machine)
 
-        self.assertIs(self.publisher.records.exists(build), True)
+        self.assertIs(self.publisher.records.exists(self.build), True)
 
     def test_update_build_metadata(self) -> None:
         # pylint: disable=protected-access
-        build = BuildFactory()
-        record = self.publisher.record(build)
+        record = self.publisher.record(self.build)
 
         self.publisher._update_build_metadata(record)
 
-        record = self.publisher.record(build)
+        record = self.publisher.record(self.build)
         self.assertEqual(record.logs, BUILD_LOGS)
         self.assertIsNot(record.completed, None)
 
     def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self) -> None:
-        left = BuildFactory()
+        left = self.build
         self.publisher.get_packages = mock.Mock(wraps=self.publisher.get_packages)
         right = left
 
@@ -229,39 +215,37 @@ class BuildPublisherTestCase(TestCase):
         self.assertEqual(self.publisher.get_packages.call_count, 0)
 
     def test_tags_returns_the_list_of_tags_except_empty_tag(self) -> None:
-        build = BuildFactory()
-        self.publisher.publish(build)
-        self.publisher.storage.tag(build, "prod")
+        self.publisher.publish(self.build)
+        self.publisher.storage.tag(self.build, "prod")
 
-        self.assertEqual(self.publisher.storage.get_tags(build), ["", "prod"])
-        self.assertEqual(self.publisher.tags(build), ["prod"])
+        self.assertEqual(self.publisher.storage.get_tags(self.build), ["", "prod"])
+        self.assertEqual(self.publisher.tags(self.build), ["prod"])
 
     def test_tag_tags_the_build_at_the_storage_layer(self) -> None:
-        build = BuildFactory()
-        self.publisher.pull(build)
-        self.publisher.tag(build, "prod")
-        self.publisher.tag(build, "albert")
+        self.publisher.pull(self.build)
+        self.publisher.tag(self.build, "prod")
+        self.publisher.tag(self.build, "albert")
 
-        self.assertEqual(self.publisher.storage.get_tags(build), ["albert", "prod"])
+        self.assertEqual(
+            self.publisher.storage.get_tags(self.build), ["albert", "prod"]
+        )
 
     def test_untag_removes_tag_from_the_build(self) -> None:
-        build = BuildFactory()
-        self.publisher.pull(build)
-        self.publisher.tag(build, "prod")
-        self.publisher.tag(build, "albert")
+        self.publisher.pull(self.build)
+        self.publisher.tag(self.build, "prod")
+        self.publisher.tag(self.build, "albert")
 
-        self.publisher.untag(build.machine, "albert")
+        self.publisher.untag(self.build.machine, "albert")
 
-        self.assertEqual(self.publisher.storage.get_tags(build), ["prod"])
+        self.assertEqual(self.publisher.storage.get_tags(self.build), ["prod"])
 
     def test_untag_with_empty_unpublishes_the_build(self) -> None:
-        build = BuildFactory()
-        self.publisher.publish(build)
-        self.assertTrue(self.publisher.published(build))
+        self.publisher.publish(self.build)
+        self.assertTrue(self.publisher.published(self.build))
 
-        self.publisher.untag(build.machine, "")
+        self.publisher.untag(self.build.machine, "")
 
-        self.assertFalse(self.publisher.published(build))
+        self.assertFalse(self.publisher.published(self.build))
 
 
 class DispatcherTestCase(TestCase):
@@ -416,28 +400,19 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         self.builds = BuildFactory.create_batch(4)
         machine = self.builds[0].machine
 
-        build1 = self.builds[0]
-        self.publisher.pull(build1)
-        self.publisher.records.save(self.publisher.record(build1), built=None)
+        for build in self.builds:
+            self.pull_build_with_no_built_timestamp(build)
 
-        build2 = self.builds[1]
-        self.publisher.pull(build2)
-        self.publisher.records.save(self.publisher.record(build2), built=None)
+        self.publisher.publish(self.builds[2])
 
-        build3 = self.builds[2]
-        self.publisher.publish(build3)
-        self.publisher.records.save(self.publisher.record(build3), built=None)
+        assert not any(
+            build.built for build in self.publisher.records.for_machine(machine)
+        )
+        self.machine_info = MachineInfo(self.builds[0].machine)
 
-        build4 = self.builds[3]
-        self.publisher.pull(build4)
-        self.publisher.records.save(self.publisher.record(build4), built=None)
-
-        assert [
-            build
-            for build in self.publisher.records.for_machine(machine)
-            if build.built
-        ] == []
-        self.machine_info = MachineInfo(build1.machine)
+    def pull_build_with_no_built_timestamp(self, build: Build) -> None:
+        self.publisher.pull(build)
+        self.publisher.records.save(self.publisher.record(build), built=None)
 
     def test_build_count(self) -> None:
         self.assertEqual(self.machine_info.build_count, 4)
