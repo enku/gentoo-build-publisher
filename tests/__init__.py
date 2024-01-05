@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Sequence
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
@@ -41,33 +41,11 @@ class TestCase(UnitTestTestCase):
     RECORDS_BACKEND = "memory"
 
     def setUp(self) -> None:
-        # pylint: disable=import-outside-toplevel,cyclic-import
-        from .factories import BuildPublisherFactory
-
         super().setUp()
 
         self.tmpdir = set_up_tmpdir_for_test(self)
-        patch = mock.patch.dict(
-            os.environ,
-            {
-                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
-                "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
-                "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
-                "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
-                "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
-            },
-        )
-        self.addCleanup(patch.stop)
-        patch.start()
-
-        self.publisher: publisher.BuildPublisher = BuildPublisherFactory()
-        publisher.BuildPublisher.get_publisher.cache_clear()
-        patch = mock.patch.object(
-            publisher.BuildPublisher, "from_settings", return_value=self.publisher
-        )
-        self.addCleanup(patch.stop)
-        patch.start()
-
+        self._mock_environment()
+        self.publisher = self._setup_publisher()
         self.artifact_builder = self.publisher.jenkins.artifact_builder
 
     def create_file(
@@ -84,6 +62,36 @@ class TestCase(UnitTestTestCase):
             os.utime(path, times=(atime, mtime.timestamp()))
 
         return path
+
+    def _mock_environment(self) -> None:
+        local_environ = getattr(self, "environ", {})
+        patch = mock.patch.dict(
+            os.environ,
+            {
+                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
+                "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
+                "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
+                "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
+                "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
+                **local_environ,
+            },
+        )
+        self.addCleanup(patch.stop)
+        patch.start()
+
+    def _setup_publisher(self) -> publisher.BuildPublisher:
+        # pylint: disable=import-outside-toplevel,cyclic-import
+        from .factories import BuildPublisherFactory
+
+        bp = BuildPublisherFactory()
+        publisher.BuildPublisher.get_publisher.cache_clear()
+        patch = mock.patch.object(
+            publisher.BuildPublisher, "from_settings", return_value=bp
+        )
+        self.addCleanup(patch.stop)
+        patch.start()
+
+        return cast(publisher.BuildPublisher, bp)
 
 
 class QuickCache:

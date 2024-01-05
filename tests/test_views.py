@@ -3,6 +3,8 @@
 import datetime as dt
 from functools import partial
 
+from gentoo_build_publisher.common import Build
+
 from . import DjangoTestCase as BaseTestCase
 from .factories import BuildFactory
 
@@ -12,10 +14,6 @@ now = partial(dt.datetime.now, tz=dt.UTC)
 class TestCase(BaseTestCase):
     RECORDS_BACKEND = "memory"
 
-
-class DashboardTestCase(TestCase):
-    """Tests for the dashboard view"""
-
     def setUp(self) -> None:
         super().setUp()
 
@@ -23,13 +21,21 @@ class DashboardTestCase(TestCase):
         self.machines = ["babette", "lighthouse", "web"]
         self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
 
+    def first_build(self, name: str) -> Build:
+        return self.builds[name][0]
+
+    def latest_build(self, name: str) -> Build:
+        return self.builds[name][-1]
+
+
+class DashboardTestCase(TestCase):
+    """Tests for the dashboard view"""
+
     def test(self) -> None:
-        lighthouse = self.builds["lighthouse"][-1]
-        self.publisher.publish(lighthouse)
+        self.publisher.publish(self.latest_build("lighthouse"))
 
         # pull the latest web
-        web = self.builds["web"][-1]
-        self.publisher.pull(web)
+        self.publisher.pull(self.latest_build("web"))
 
         response = self.client.get("/")
 
@@ -40,37 +46,24 @@ class DashboardTestCase(TestCase):
 class ReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.now = now()
-        self.machines = ["babette", "lighthouse", "web"]
-        self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
-
     def test(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.publish(build)
+        self.publisher.publish(self.latest_build("lighthouse"))
 
-        response = self.client.get(f"/machines/{machine}/repos.conf")
+        response = self.client.get("/machines/lighthouse/repos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
         self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
 
     def test_non_published(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.pull(build)
+        self.publisher.pull(self.latest_build("lighthouse"))
 
-        response = self.client.get(f"/machines/{machine}/repos.conf")
+        response = self.client.get("/machines/lighthouse/repos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_tagged_builds_should_have_a_repos_dot_conf(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.pull(build)
+        self.publisher.pull(build := self.latest_build("lighthouse"))
         self.publisher.tag(build, "prod")
 
         response = self.client.get("/machines/lighthouse@prod/repos.conf")
@@ -89,46 +82,31 @@ class ReposDotConfTestCase(TestCase):
 class BinReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.now = now()
-        self.machines = ["babette", "lighthouse", "web"]
-        self.builds = BuildFactory.buncha_builds(self.machines, self.now, 3, 2)
-
     def test(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.publish(build)
+        self.publisher.publish(self.latest_build("lighthouse"))
 
-        response = self.client.get(f"/machines/{machine}/binrepos.conf")
+        response = self.client.get("/machines/lighthouse/binrepos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
         self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
 
     def test_non_published(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.pull(build)
+        self.publisher.pull(self.latest_build("lighthouse"))
 
-        response = self.client.get(f"/machines/{machine}/binrepos.conf")
+        response = self.client.get("/machines/lighthouse/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_when_no_such_tag_exists_gives_404(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.pull(build)
+        self.publisher.pull(self.latest_build("lighthouse"))
 
-        response = self.client.get(f"/machines/{machine}@bogus/binrepos.conf")
+        response = self.client.get("/machines/lighthouse@bogus/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_tagged_builds_should_have_a_binrepos_dot_conf(self) -> None:
-        machine = "lighthouse"
-        build = self.builds[machine][-1]
-        self.publisher.pull(build)
+        self.publisher.pull(build := self.latest_build("lighthouse"))
         self.publisher.tag(build, "prod")
 
         response = self.client.get("/machines/lighthouse@prod/binrepos.conf")
