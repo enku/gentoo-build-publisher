@@ -32,6 +32,12 @@ from gentoo_build_publisher.jenkins import (
 )
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
+JENKINS_CONFIG = JenkinsConfig(
+    base_url=URL("https://jenkins.invalid"),
+    api_key="foo",
+    user="jenkins",
+    artifact_name="build.tar.gz",
+)
 
 
 logging.basicConfig(handlers=[logging.NullHandler()])

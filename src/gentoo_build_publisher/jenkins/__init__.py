@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json as jsonlib
 import logging
-import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
@@ -13,23 +12,17 @@ from typing import Any, TypeVar
 import requests
 from yarl import URL
 
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.common import Build, EbuildRepo, MachineJob
+from gentoo_build_publisher.jenkins import xml
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.utils import dict_to_list_of_dicts, read_package_file
+from gentoo_build_publisher.utils import dict_to_list_of_dicts
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
 
 COPY_ARTIFACT_PLUGIN = "copyartifact@1.47"
-CREATE_BUILD_XML = read_package_file("create_machine_job.xml")
-CREATE_REPO_XML = read_package_file("create_repo_job.xml")
-FOLDER_XML = read_package_file("folder.xml")
-PATH_SEPARATOR = "/"
 HTTP_NOT_FOUND = 404
-XML_PATHS = {
-    "BRANCH_NAME": "scm/branches/hudson.plugins.git.BranchSpec/name",
-    "SCM_URL": "scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url",
-}
+PATH_SEPARATOR = "/"
 
 _T = TypeVar("_T", bound="JenkinsConfig")
 
@@ -217,8 +210,8 @@ class Jenkins:
         http_response = self.session.post(str(url), data={"json": json_params})
         http_response.raise_for_status()
 
-        # All that Jenkins gives us is the location of the queued request.  Let's return
-        # that.
+        # All that Jenkins (sometimes) gives us is the location of the queued request.
+        # Let's return that.
         return http_response.headers.get("location")
 
     def project_exists(self, project_path: ProjectPath) -> bool:
@@ -237,7 +230,7 @@ class Jenkins:
 
         return True
 
-    def create_item(self, project_path: ProjectPath, xml: str) -> None:
+    def create_item(self, project_path: ProjectPath, xml_str: str) -> None:
         """Given the xml and project path create an item in Jenkins"""
         if self.project_exists(project_path):
             raise FileExistsError(project_path)
@@ -249,7 +242,7 @@ class Jenkins:
 
         http_response = self.session.post(
             str(url),
-            data=xml,
+            data=xml_str,
             headers=headers,
             params=params,
         )
@@ -312,7 +305,7 @@ class Jenkins:
             self.make_folder(parent, parents=True, exist_ok=True)
 
         try:
-            self.create_item(project_path, FOLDER_XML)
+            self.create_item(project_path, xml.FOLDER)
         except FileExistsError:
             self.maybe_raise_folderexists(project_path, exist_ok)
 
@@ -321,13 +314,11 @@ class Jenkins:
         if project_path == ProjectPath():
             return True
         try:
-            xml = self.get_item(project_path)
+            xml_str = self.get_item(project_path)
         except FileNotFoundError:
             return False
 
-        tree = ET.fromstring(xml)
-
-        return tree.tag == "com.cloudbees.hudson.plugins.folder.Folder"
+        return xml.is_folder(xml_str)
 
     def maybe_raise_folderexists(self, folder: ProjectPath, exist_ok: bool) -> None:
         """Maybe raise FileExistsError"""
@@ -343,7 +334,7 @@ class Jenkins:
         http_response = self.session.post(
             str(url),
             headers={"Content-Type": "text/xml"},
-            data=f'<jenkins><install plugin="{plugin}" /></jenkins>',
+            data=xml.install_plugin(plugin),
         )
 
         http_response.raise_for_status()
@@ -355,57 +346,14 @@ class Jenkins:
         """
         repo_path = self.project_root / "repos" / repo.name
 
-        self.create_item(repo_path, self.render_build_repo_xml(repo))
-
-    def render_build_repo_xml(self, repo: EbuildRepo) -> str:
-        """Return XML config for the given repo"""
-        xml = ET.fromstring(CREATE_REPO_XML)
-
-        branch = xml.find(XML_PATHS["BRANCH_NAME"])
-        assert branch is not None
-        branch.text = f"*/{repo.branch}"
-
-        url = xml.find(XML_PATHS["SCM_URL"])
-        assert url is not None
-        url.text = repo.url
-
-        return ET.tostring(xml).decode("UTF-8")
+        self.create_item(repo_path, xml.build_repo(repo))
 
     def create_machine_job(self, job: MachineJob) -> None:
         """Create a machine job to build the given machine"""
         machine_path = self.project_root / job.name
 
         self.install_plugin(COPY_ARTIFACT_PLUGIN)
-        self.create_item(machine_path, render_build_machine_xml(job))
-
-
-def render_build_machine_xml(job: MachineJob) -> str:
-    """Return XML config for the given machine"""
-    xml = ET.fromstring(CREATE_BUILD_XML)
-    parts = [
-        "properties",
-        "org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty",
-        "triggers",
-        "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
-    ]
-    repos_path = PATH_SEPARATOR.join(parts)
-    upstream_repos = xml.find(repos_path)
-    assert upstream_repos is not None
-    upstream_repos.text = ",".join(f"repos/{repo}" for repo in job.ebuild_repos)
-
-    url_path = (
-        "definition/scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url"
-    )
-    url = xml.find(url_path)
-    assert url is not None
-    url.text = job.repo.url
-
-    branch_path = "definition/scm/branches/hudson.plugins.git.BranchSpec/name"
-    branch_name = xml.find(branch_path)
-    assert branch_name is not None
-    branch_name.text = f"*/{job.repo.branch}"
-
-    return ET.tostring(xml).decode("UTF-8")
+        self.create_item(machine_path, xml.build_machine(job))
 
 
 def build_params_list(
@@ -421,27 +369,3 @@ def build_params_list(
         raise ValueError(f"parameter(s) {sorted(keys)} are invalid for this build")
 
     return dict_to_list_of_dicts(job_params | build_params)
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class Repo:
-    """A (git) repo"""
-
-    url: str
-    branch: str
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class EbuildRepo(Repo):
-    """An repository for ebuilds (e.g. "gentoo")"""
-
-    name: str
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class MachineJob:
-    """A machine job definition"""
-
-    name: str
-    repo: Repo
-    ebuild_repos: list[str]

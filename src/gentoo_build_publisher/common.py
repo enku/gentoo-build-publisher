@@ -131,3 +131,27 @@ class CacheProtocol(Protocol):
 
     def set(self, key: str, value: Any) -> None:
         """Set a value in the cache"""
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Repo:
+    """A (git) repo"""
+
+    url: str
+    branch: str
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class EbuildRepo(Repo):
+    """An repository for ebuilds (e.g. "gentoo")"""
+
+    name: str
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MachineJob:
+    """A machine job definition"""
+
+    name: str
+    repo: Repo
+    ebuild_repos: list[str]

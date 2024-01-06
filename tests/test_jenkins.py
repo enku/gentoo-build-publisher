@@ -5,35 +5,25 @@ import io
 import json
 import os
 from pathlib import Path
+from typing import Any
 from unittest import TestCase, mock
 
 import requests
 from yarl import URL
 
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.common import Build, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.jenkins import (
     COPY_ARTIFACT_PLUGIN,
-    FOLDER_XML,
-    EbuildRepo,
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
-    MachineJob,
     ProjectPath,
-    Repo,
     URLBuilder,
-    render_build_machine_xml,
+    xml,
 )
 from gentoo_build_publisher.settings import Settings
 
-from . import MockJenkins, test_data
-
-JENKINS_CONFIG = JenkinsConfig(
-    base_url=URL("https://jenkins.invalid"),
-    api_key="foo",
-    user="jenkins",
-    artifact_name="build.tar.gz",
-)
+from . import JENKINS_CONFIG, MockJenkins, test_data
 
 JOB_PARAMS = json.loads(test_data("job_parameters.json"))
 
@@ -188,7 +178,7 @@ class JenkinsTestCase(TestCase):
 
 class ProjectPathExistsTestCase(TestCase):
     def test_should_return_false_when_does_not_exist(self) -> None:
-        def mock_head(url, *args, **kwargs):
+        def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
             status_code = 404
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
                 status_code = 200
@@ -205,7 +195,7 @@ class ProjectPathExistsTestCase(TestCase):
             self.assertEqual(jenkins.project_exists(project_path), True)
 
     def test_should_return_true_when_exists(self) -> None:
-        def mock_head(url, *args, **kwargs):
+        def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
             status_code = 200
             if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
                 status_code = 404
@@ -223,7 +213,7 @@ class ProjectPathExistsTestCase(TestCase):
             self.assertEqual(jenkins.project_exists(project_path), False)
 
     def test_should_return_true_when_error_response(self) -> None:
-        def mock_head(_url, *args, **kwargs):
+        def mock_head(_url: str, *args: Any, **kwargs: Any) -> requests.Response:
             response = requests.Response()
             response.status_code = 401
             response.reason = "Unauthorized"
@@ -243,11 +233,11 @@ class CreateItemTestCase(TestCase):
     """Tests for the Jenkins.create_item method"""
 
     def test_creates_item(self) -> None:
-        xml = "<jenkins>test</jenkins>"
+        xml_str = "<jenkins>test</jenkins>"
         project_path = ProjectPath("TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
-        jenkins.create_item(project_path, xml)
+        jenkins.create_item(project_path, xml_str)
 
         self.assertEqual(jenkins.root.get(["TestItem"]), "<jenkins>test</jenkins>")
         self.assertEqual(jenkins.session.auth(), ("jenkins", "foo"))
@@ -259,12 +249,12 @@ class CreateItemTestCase(TestCase):
         )
 
     def test_when_parent_folder_does_not_exist(self) -> None:
-        xml = "<jenkins>test</jenkins>"
+        xml_str = "<jenkins>test</jenkins>"
         project_path = ProjectPath("Gentoo/TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         with self.assertRaises(FileNotFoundError) as context:
-            jenkins.create_item(project_path, xml)
+            jenkins.create_item(project_path, xml_str)
 
         exception = context.exception
         self.assertEqual(exception.args, (project_path.parent,))
@@ -276,14 +266,14 @@ class CreateItemTestCase(TestCase):
         )
 
     def test_when_parent_folder_does_exist(self) -> None:
-        xml = "<jenkins>test</jenkins>"
+        xml_str = "<jenkins>test</jenkins>"
         project_path = ProjectPath("Gentoo/TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
         # Create parent
         jenkins.root.set(["Gentoo"], None)
 
-        jenkins.create_item(project_path, xml)
+        jenkins.create_item(project_path, xml_str)
 
         self.assertEqual(
             jenkins.root.get(["Gentoo", "TestItem"]), "<jenkins>test</jenkins>"
@@ -296,7 +286,7 @@ class CreateItemTestCase(TestCase):
         )
 
     def test_raises_exception_on_http_errors(self) -> None:
-        xml = "<jenkins>test</jenkins>"
+        xml_str = "<jenkins>test</jenkins>"
         project_path = ProjectPath("TestItem")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
@@ -306,7 +296,7 @@ class CreateItemTestCase(TestCase):
             mock_post.return_value = response_400
 
             with self.assertRaises(requests.exceptions.HTTPError):
-                jenkins.create_item(project_path, xml)
+                jenkins.create_item(project_path, xml_str)
 
         mock_post.assert_called_once_with(
             "https://jenkins.invalid/createItem",
@@ -354,13 +344,13 @@ class MakeFolderTestCase(TestCase):
 
         jenkins.make_folder(project_path)
 
-        self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
+        self.assertEqual(jenkins.root.get(["Gentoo"]), xml.FOLDER)
 
     def test_when_folder_already_exists(self) -> None:
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
-        jenkins.root.set(["Gentoo"], FOLDER_XML)
+        jenkins.root.set(["Gentoo"], xml.FOLDER)
 
         with self.assertRaises(FileExistsError):
             jenkins.make_folder(project_path)
@@ -378,7 +368,7 @@ class MakeFolderTestCase(TestCase):
         project_path = ProjectPath("Gentoo")
         jenkins = MockJenkins(JENKINS_CONFIG)
 
-        jenkins.root.set(["Gentoo"], FOLDER_XML)
+        jenkins.root.set(["Gentoo"], xml.FOLDER)
         jenkins.make_folder(project_path, exist_ok=True)
 
     def test_when_parent_folder_does_not_exist(self) -> None:
@@ -394,8 +384,8 @@ class MakeFolderTestCase(TestCase):
 
         jenkins.make_folder(project_path, parents=True)
 
-        self.assertEqual(jenkins.root.get(["Gentoo"]), FOLDER_XML)
-        self.assertEqual(jenkins.root.get(["Gentoo", "repos"]), FOLDER_XML)
+        self.assertEqual(jenkins.root.get(["Gentoo"]), xml.FOLDER)
+        self.assertEqual(jenkins.root.get(["Gentoo", "repos"]), xml.FOLDER)
 
     def test_when_passing_root_and_not_exists_ok_returns_error(self) -> None:
         project_path = ProjectPath()
@@ -417,7 +407,7 @@ class IsFolderTestCase(TestCase):
     def test_when_is_a_folder_returns_true(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         project_path = ProjectPath("Gentoo")
-        jenkins.root.set(["Gentoo"], FOLDER_XML)
+        jenkins.root.set(["Gentoo"], xml.FOLDER)
 
         self.assertEqual(jenkins.is_folder(project_path), True)
 
@@ -472,7 +462,7 @@ class CreateRepoJobTestCase(TestCase):
 
         jenkins.session.post.assert_called_once_with(
             "https://jenkins.invalid/job/repos/createItem",
-            data=jenkins.render_build_repo_xml(repo),
+            data=xml.build_repo(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
         )
@@ -495,25 +485,9 @@ class CreateRepoJobTestCase(TestCase):
 
         jenkins.session.post.assert_called_once_with(
             "https://jenkins.invalid/job/Gentoo/job/repos/createItem",
-            data=jenkins.render_build_repo_xml(repo),
+            data=xml.build_repo(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
-        )
-
-    def test_render_build_repo_xml(self) -> None:
-        jenkins = MockJenkins(JENKINS_CONFIG)
-
-        repo = EbuildRepo(
-            url="https://anongit.gentoo.org/git/repo/gentoo.git",
-            branch="feature",
-            name="test",
-        )
-
-        xml = jenkins.render_build_repo_xml(repo)
-
-        self.assertRegex(xml, r"<name>\*/feature</name>")
-        self.assertRegex(
-            xml, r"<url>https://anongit\.gentoo\.org/git/repo/gentoo\.git</url>"
         )
 
 
@@ -544,30 +518,12 @@ class CreateMachineJobTestCase(TestCase):
                 ),
                 mock.call(
                     "https://jenkins.invalid/createItem",
-                    data=render_build_machine_xml(job),
+                    data=xml.build_machine(job),
                     headers={"Content-Type": "text/xml"},
                     params={"name": "base"},
                 ),
             ]
         )
-
-    def test_render_build_machine_xml(self) -> None:
-        job = MachineJob(
-            name="test",
-            repo=Repo(
-                url="https://github.com/enku/gbp-machines.git",
-                branch="feature",
-            ),
-            ebuild_repos=["gentoo", "marduk"],
-        )
-
-        xml = render_build_machine_xml(job)
-
-        self.assertRegex(
-            xml, r"<upstreamProjects>repos/gentoo,repos/marduk</upstreamProjects>"
-        )
-        self.assertRegex(xml, r"<url>https://github\.com/enku/gbp-machines\.git</url>")
-        self.assertRegex(xml, r"<name>\*/feature</name>")
 
 
 class ProjectPathTestCase(TestCase):

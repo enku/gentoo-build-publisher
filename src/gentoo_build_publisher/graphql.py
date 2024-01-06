@@ -24,8 +24,15 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher.common import TAG_SYM, Build, Package, Status
-from gentoo_build_publisher.jenkins import EbuildRepo, MachineJob, Repo
+from gentoo_build_publisher.common import (
+    TAG_SYM,
+    Build,
+    EbuildRepo,
+    MachineJob,
+    Package,
+    Repo,
+    Status,
+)
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings

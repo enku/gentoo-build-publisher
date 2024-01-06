@@ -6,14 +6,14 @@ from unittest import mock
 
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher.common import Content
+from gentoo_build_publisher.common import Content, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.graphql import (
     load_schema,
     require_localhost,
     resolvers,
     type_defs,
 )
-from gentoo_build_publisher.jenkins import EbuildRepo, MachineJob, ProjectPath, Repo
+from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
 from gentoo_build_publisher.worker import tasks

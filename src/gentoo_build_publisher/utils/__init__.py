@@ -140,8 +140,8 @@ def dict_to_list_of_dicts(
 ) -> list[dict[str, Any]]:
     """Convert a dict to a list of dicts
 
-       >>> d = {"first": "albert", "last": "hopkins"}
-       >>> dict_to_list_of_dicts(d)
-       [{"name": "first", "value": "albert"}, {"name": "last", "value": "hopkins"}]
+    >>> d = {"first": "albert", "last": "hopkins"}
+    >>> dict_to_list_of_dicts(d)
+    [{"name": "first", "value": "albert"}, {"name": "last", "value": "hopkins"}]
     """
     return [{key_key: key, value_key: value} for key, value in data.items()]
