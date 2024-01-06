@@ -15,7 +15,7 @@ from yarl import URL
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.utils import read_package_file
+from gentoo_build_publisher.utils import dict_to_list_of_dicts, read_package_file
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
@@ -417,14 +417,10 @@ def build_params_list(
     """
     # parameter logic here is based on
     # https://stackoverflow.com/questions/20359810/how-to-trigger-jenkins-builds-remotely-and-to-pass-parameters
-    job_params = job_params.copy()
+    if keys := build_params.keys() - job_params.keys():
+        raise ValueError(f"parameter(s) {keys} are invalid for this build")
 
-    for key, value in build_params.items():
-        if key in job_params:
-            job_params[key] = value
-        else:
-            raise ValueError(f"{key} is not a valid parameter for this build")
-    return [{"name": key, "value": value} for key, value in job_params.items()]
+    return dict_to_list_of_dicts(job_params | build_params)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -7,7 +7,7 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import NamedTuple, TypeVar
+from typing import Any, NamedTuple, TypeVar
 
 IT = TypeVar("IT")
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
@@ -133,3 +133,15 @@ def read_package_file(filename: str) -> str:
     return importlib.resources.read_text(
         "gentoo_build_publisher", filename, encoding="UTF-8"
     )
+
+
+def dict_to_list_of_dicts(
+    data: dict[str, Any], key_key: str = "name", value_key: str = "value"
+) -> list[dict[str, Any]]:
+    """Convert a dict to a list of dicts
+
+       >>> d = {"first": "albert", "last": "hopkins"}
+       >>> dict_to_list_of_dicts(d)
+       [{"name": "first", "value": "albert"}, {"name": "last", "value": "hopkins"}]
+    """
+    return [{key_key: key, value_key: value} for key, value in data.items()]

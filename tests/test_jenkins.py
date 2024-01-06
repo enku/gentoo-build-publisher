@@ -623,7 +623,7 @@ class ScheduleBuildTestCase(TestCase):
                 "headers": {"location": "https://jenkins.invalid/queue/item/31528/"},
             }
             mock_response.configure_mock(**attrs)
-            location = jenkins.schedule_build("babette", BUILD_TARGET="world")
+            location = jenkins.schedule_build("babette", BUILD_TARGET="emptytree")
 
         self.assertEqual(location, "https://jenkins.invalid/queue/item/31528/")
         jenkins.session.get.assert_called_once_with(  # pylint: disable=no-member
@@ -635,16 +635,17 @@ class ScheduleBuildTestCase(TestCase):
         mock_post.assert_called_once_with(
             "https://jenkins.invalid/job/babette/build",
             data={
-                "json": '{"parameter": [{"name": "BUILD_TARGET", "value": "world"}]}'
+                "json": '{"parameter": [{"name": "BUILD_TARGET", "value": "emptytree"}]}'
             },
         )
 
-    def test_schedule_build_with_bogus_build_param(self) -> None:
+    def test_schedule_build_with_bogus_build_params(self) -> None:
         with self.assertRaises(ValueError) as context:
-            self.jenkins.schedule_build("babette", BOGUS="idunno")
+            self.jenkins.schedule_build("babette", BOGUS="idunno", FOO="bar")
 
         self.assertEqual(
-            context.exception.args, ("BOGUS is not a valid parameter for this build",)
+            context.exception.args,
+            ("parameter(s) {'BOGUS', 'FOO'} are invalid for this build",),
         )
 
     def test_should_raise_on_http_error(self) -> None:
