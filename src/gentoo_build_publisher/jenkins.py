@@ -418,7 +418,7 @@ def build_params_list(
     # parameter logic here is based on
     # https://stackoverflow.com/questions/20359810/how-to-trigger-jenkins-builds-remotely-and-to-pass-parameters
     if keys := build_params.keys() - job_params.keys():
-        raise ValueError(f"parameter(s) {keys} are invalid for this build")
+        raise ValueError(f"parameter(s) {sorted(keys)} are invalid for this build")
 
     return dict_to_list_of_dicts(job_params | build_params)
 

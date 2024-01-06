@@ -645,7 +645,7 @@ class ScheduleBuildTestCase(TestCase):
 
         self.assertEqual(
             context.exception.args,
-            ("parameter(s) {'BOGUS', 'FOO'} are invalid for this build",),
+            ("parameter(s) ['BOGUS', 'FOO'] are invalid for this build",),
         )
 
     def test_should_raise_on_http_error(self) -> None:
