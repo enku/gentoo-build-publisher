@@ -385,26 +385,15 @@ class Jenkins:
 
         return ET.tostring(xml).decode("UTF-8")
 
-    def create_machine_job(
-        self,
-        machine_name: str,
-        repo_url: str,
-        repo_branch: str,
-        ebuild_repos: list[str],
-    ) -> None:
+    def create_machine_job(self, job: MachineJob) -> None:
         """Create a machine job to build the given machine"""
-        machine_path = self.project_root / machine_name
+        machine_path = self.project_root / job.name
 
         self.install_plugin(COPY_ARTIFACT_PLUGIN)
-        self.create_item(
-            machine_path,
-            render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
-        )
+        self.create_item(machine_path, render_build_machine_xml(job))
 
 
-def render_build_machine_xml(
-    repo_url: str, repo_branch: str, ebuild_repos: list[str]
-) -> str:
+def render_build_machine_xml(job: MachineJob) -> str:
     """Return XML config for the given machine"""
     xml = ET.fromstring(CREATE_BUILD_XML)
     parts = [
@@ -416,27 +405,42 @@ def render_build_machine_xml(
     repos_path = PATH_SEPARATOR.join(parts)
     upstream_repos = xml.find(repos_path)
     assert upstream_repos is not None
-    upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)
+    upstream_repos.text = ",".join(f"repos/{repo}" for repo in job.ebuild_repos)
 
     url_path = (
         "definition/scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url"
     )
     url = xml.find(url_path)
     assert url is not None
-    url.text = repo_url
+    url.text = job.repo.url
 
     branch_path = "definition/scm/branches/hudson.plugins.git.BranchSpec/name"
     branch_name = xml.find(branch_path)
     assert branch_name is not None
-    branch_name.text = f"*/{repo_branch}"
+    branch_name.text = f"*/{job.repo.branch}"
 
     return ET.tostring(xml).decode("UTF-8")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class EbuildRepo:
+class Repo:
+    """A (git) repo"""
+
+    url: str
+    branch: str
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class EbuildRepo(Repo):
     """An repository for ebuilds (e.g. "gentoo")"""
 
     name: str
-    url: str
-    branch: str
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MachineJob:
+    """A machine job definition"""
+
+    name: str
+    repo: Repo
+    ebuild_repos: list[str]

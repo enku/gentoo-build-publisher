@@ -25,7 +25,7 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher.common import TAG_SYM, Build, Package, Status
-from gentoo_build_publisher.jenkins import EbuildRepo
+from gentoo_build_publisher.jenkins import EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
@@ -446,8 +446,11 @@ def resolve_mutation_create_machine(
 
     jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)
 
+    job = MachineJob(
+        name=name, repo=Repo(url=repo, branch=branch), ebuild_repos=ebuildRepos
+    )
     try:
-        jenkins.create_machine_job(name, repo, branch, ebuildRepos)
+        jenkins.create_machine_job(job)
     except (FileExistsError, FileNotFoundError) as error:
         return Error.from_exception(error)
 

@@ -18,7 +18,9 @@ from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
+    MachineJob,
     ProjectPath,
+    Repo,
     URLBuilder,
     render_build_machine_xml,
 )
@@ -533,12 +535,16 @@ class CreateMachineJobTestCase(TestCase):
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.session.post.reset_mock()
 
-        machine_name = "base"
-        repo_url = "https://github.com/enku/gbp-machines.git"
-        repo_branch = "master"
-        ebuild_repos = ["gentoo"]
+        job = MachineJob(
+            name="base",
+            repo=Repo(
+                url="https://github.com/enku/gbp-machines.git",
+                branch="master",
+            ),
+            ebuild_repos=["gentoo"],
+        )
 
-        jenkins.create_machine_job(machine_name, repo_url, repo_branch, ebuild_repos)
+        jenkins.create_machine_job(job)
 
         jenkins.session.post.assert_has_calls(
             [
@@ -549,7 +555,7 @@ class CreateMachineJobTestCase(TestCase):
                 ),
                 mock.call(
                     "https://jenkins.invalid/createItem",
-                    data=render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
+                    data=render_build_machine_xml(job),
                     headers={"Content-Type": "text/xml"},
                     params={"name": "base"},
                     timeout=10,
@@ -558,11 +564,16 @@ class CreateMachineJobTestCase(TestCase):
         )
 
     def test_render_build_machine_xml(self) -> None:
-        repo_url = "https://github.com/enku/gbp-machines.git"
-        repo_branch = "feature"
-        ebuild_repos = ["gentoo", "marduk"]
+        job = MachineJob(
+            name="test",
+            repo=Repo(
+                url="https://github.com/enku/gbp-machines.git",
+                branch="feature",
+            ),
+            ebuild_repos=["gentoo", "marduk"],
+        )
 
-        xml = render_build_machine_xml(repo_url, repo_branch, ebuild_repos)
+        xml = render_build_machine_xml(job)
 
         self.assertRegex(
             xml, r"<upstreamProjects>repos/gentoo,repos/marduk</upstreamProjects>"

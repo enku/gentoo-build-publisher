@@ -3,6 +3,7 @@
 from argparse import ArgumentParser, Namespace
 
 from gentoo_build_publisher.cli import addmachine
+from gentoo_build_publisher.jenkins import MachineJob, Repo
 
 from . import TestCase, string_console, test_gbp
 
@@ -26,9 +27,12 @@ class AddMachineTestCase(TestCase):
         self.assertEqual(exit_status, 0)
 
     def test_when_item_already_exists(self) -> None:
-        self.publisher.jenkins.create_machine_job(
-            "base", "https://github.com/enku/gbp-machines.git", "master", ["gentoo"]
+        job = MachineJob(
+            name="base",
+            repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="master"),
+            ebuild_repos=["gentoo"],
         )
+        self.publisher.jenkins.create_machine_job(job)
 
         args = Namespace(
             name="base",
