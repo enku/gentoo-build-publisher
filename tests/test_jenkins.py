@@ -58,9 +58,7 @@ class JenkinsTestCase(TestCase):
             bytes_io.write(chunk)
 
         jenkins.mock_get.assert_called_with(
-            "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            stream=True,
-            timeout=jenkins.config.requests_timeout,
+            "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz", stream=True
         )
 
     def test_download_artifact_with_no_auth(self) -> None:
@@ -75,9 +73,7 @@ class JenkinsTestCase(TestCase):
 
         # Then it requests the artifact with no auth
         jenkins.mock_get.assert_called_with(
-            "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz",
-            stream=True,
-            timeout=jenkins.config.requests_timeout,
+            "https://jenkins.invalid/job/babette/193/artifact/build.tar.gz", stream=True
         )
 
     @mock.patch.dict(os.environ, {}, clear=True)
@@ -117,8 +113,7 @@ class JenkinsTestCase(TestCase):
             metadata, JenkinsMetadata(duration=3892427, timestamp=1635811517838)
         )
         mock_requests_get.assert_called_once_with(
-            "https://jenkins.invalid/job/babette/291/api/json",
-            timeout=jenkins.config.requests_timeout,
+            "https://jenkins.invalid/job/babette/291/api/json"
         )
         mock_requests_get.return_value.json.assert_called_once_with()
 
@@ -261,7 +256,6 @@ class CreateItemTestCase(TestCase):
             data="<jenkins>test</jenkins>",
             headers={"Content-Type": "text/xml"},
             params={"name": "TestItem"},
-            timeout=10,
         )
 
     def test_when_parent_folder_does_not_exist(self) -> None:
@@ -279,7 +273,6 @@ class CreateItemTestCase(TestCase):
             data="<jenkins>test</jenkins>",
             headers={"Content-Type": "text/xml"},
             params={"name": "TestItem"},
-            timeout=10,
         )
 
     def test_when_parent_folder_does_exist(self) -> None:
@@ -300,7 +293,6 @@ class CreateItemTestCase(TestCase):
             data="<jenkins>test</jenkins>",
             headers={"Content-Type": "text/xml"},
             params={"name": "TestItem"},
-            timeout=10,
         )
 
     def test_raises_exception_on_http_errors(self) -> None:
@@ -321,7 +313,6 @@ class CreateItemTestCase(TestCase):
             data="<jenkins>test</jenkins>",
             headers={"Content-Type": "text/xml"},
             params={"name": "TestItem"},
-            timeout=10,
         )
 
 
@@ -334,7 +325,7 @@ class GetItemTestCase(TestCase):
         self.assertEqual(jenkins.get_item(project_path), "<jenkins>Test</jenkins>")
 
         jenkins.session.get.assert_called_once_with(
-            "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
+            "https://jenkins.invalid/job/Gentoo/config.xml"
         )
 
     def test_raises_exception_on_http_errors(self) -> None:
@@ -350,7 +341,7 @@ class GetItemTestCase(TestCase):
                 jenkins.get_item(project_path)
 
         mock_get.assert_called_once_with(
-            "https://jenkins.invalid/job/Gentoo/config.xml", timeout=10
+            "https://jenkins.invalid/job/Gentoo/config.xml"
         )
 
 
@@ -484,7 +475,6 @@ class CreateRepoJobTestCase(TestCase):
             data=jenkins.render_build_repo_xml(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
-            timeout=10,
         )
 
     def test_when_base_url_is_not_root(self) -> None:
@@ -508,7 +498,6 @@ class CreateRepoJobTestCase(TestCase):
             data=jenkins.render_build_repo_xml(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
-            timeout=10,
         )
 
     def test_render_build_repo_xml(self) -> None:
@@ -558,7 +547,6 @@ class CreateMachineJobTestCase(TestCase):
                     data=render_build_machine_xml(job),
                     headers={"Content-Type": "text/xml"},
                     params={"name": "base"},
-                    timeout=10,
                 ),
             ]
         )
@@ -643,14 +631,12 @@ class ScheduleBuildTestCase(TestCase):
             params={
                 "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
             },
-            timeout=10,
         )
         mock_post.assert_called_once_with(
             "https://jenkins.invalid/job/babette/build",
             data={
                 "json": '{"parameter": [{"name": "BUILD_TARGET", "value": "world"}]}'
             },
-            timeout=10,
         )
 
     def test_schedule_build_with_bogus_build_param(self) -> None:
@@ -702,7 +688,6 @@ class GetJobParametersTests(TestCase):
             params={
                 "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
             },
-            timeout=10,
         )
 
     def test_returns_empty_if_no_paramdefs(self) -> None:

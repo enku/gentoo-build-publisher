@@ -151,9 +151,14 @@ class Jenkins:
 
     def __init__(self, config: JenkinsConfig) -> None:
         self.config = config
-        self.session = requests.Session()
-        self.session.auth = config.auth()
-        self.timeout = config.requests_timeout
+        session = requests.Session()
+        session.auth = config.auth()
+        setattr(  # setattr confuses mypy so as not to give warning
+            session,
+            "request",
+            partial(session.request, timeout=config.requests_timeout),
+        )
+        self.session = session
         self.url = URLBuilder(config)
 
     @property
@@ -168,7 +173,7 @@ class Jenkins:
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.url.artifact(build)
-        http_response = self.session.get(str(url), stream=True, timeout=self.timeout)
+        http_response = self.session.get(str(url), stream=True)
         http_response.raise_for_status()
 
         return http_response.iter_content(
@@ -178,7 +183,7 @@ class Jenkins:
     def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
         url = self.url.logs(build)
-        http_response = self.session.get(str(url), timeout=self.timeout)
+        http_response = self.session.get(str(url))
         http_response.raise_for_status()
 
         return http_response.text
@@ -186,7 +191,7 @@ class Jenkins:
     def get_metadata(self, build: Build) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url.metadata(build)
-        http_response = self.session.get(str(url), timeout=self.timeout)
+        http_response = self.session.get(str(url))
         http_response.raise_for_status()
 
         json = http_response.json()
@@ -209,9 +214,7 @@ class Jenkins:
         params_list = build_params_list(job_params, build_params)
         json_params = jsonlib.dumps({"parameter": params_list})
 
-        http_response = self.session.post(
-            str(url), data={"json": json_params}, timeout=self.timeout
-        )
+        http_response = self.session.post(str(url), data={"json": json_params})
         http_response.raise_for_status()
 
         # All that Jenkins gives us is the location of the queued request.  Let's return
@@ -225,9 +228,7 @@ class Jenkins:
     def url_path_exists(self, url_path: str) -> bool:
         """Return True iff url_path exists on the Jenkins instance"""
         url = self.config.base_url.with_path(url_path)
-        http_response = self.session.head(
-            str(url), timeout=self.timeout, allow_redirects=True
-        )
+        http_response = self.session.head(str(url), allow_redirects=True)
 
         if http_response.status_code == HTTP_NOT_FOUND:
             return False
@@ -251,7 +252,6 @@ class Jenkins:
             data=xml,
             headers=headers,
             params=params,
-            timeout=self.config.requests_timeout,
         )
 
         if http_response.status_code == HTTP_NOT_FOUND:
@@ -263,7 +263,7 @@ class Jenkins:
         """Return the xml definition for the given project"""
         url = self.config.base_url.with_path(project_path.url_path) / "config.xml"
 
-        http_response = self.session.get(str(url), timeout=self.config.requests_timeout)
+        http_response = self.session.get(str(url))
 
         if http_response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
@@ -282,9 +282,7 @@ class Jenkins:
             "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
         }
 
-        http_response = self.session.get(
-            str(url), params=params, timeout=self.config.requests_timeout
-        )
+        http_response = self.session.get(str(url), params=params)
         http_response.raise_for_status()
 
         properties = http_response.json()["property"]

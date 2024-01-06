@@ -65,9 +65,7 @@ class BuildPublisherTestCase(TestCase):
         self.publisher.pull(self.build)
 
         url = str(self.publisher.jenkins.url.logs(self.build))
-        self.publisher.jenkins.get_build_logs_mock_get.assert_called_once_with(
-            url, timeout=mock.ANY
-        )
+        self.publisher.jenkins.get_build_logs_mock_get.assert_called_once_with(url)
 
         record = self.publisher.record(self.build)
         self.assertEqual(record.logs, BUILD_LOGS)
