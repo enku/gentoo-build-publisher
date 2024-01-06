@@ -14,11 +14,13 @@ from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.jenkins import (
     COPY_ARTIFACT_PLUGIN,
     FOLDER_XML,
+    EbuildRepo,
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
     ProjectPath,
     URLBuilder,
+    render_build_machine_xml,
 )
 from gentoo_build_publisher.settings import Settings
 
@@ -467,15 +469,17 @@ class CreateRepoJobTestCase(TestCase):
         jenkins.make_folder(ProjectPath("repos"))
         jenkins.session.post.reset_mock()
 
-        repo_name = "gentoo"
-        repo_url = "https://github.com/gentoo-mirror/gentoo.git"
-        repo_branch = "master"
+        repo = EbuildRepo(
+            name="gentoo",
+            url="https://github.com/gentoo-mirror/gentoo.git",
+            branch="master",
+        )
 
-        jenkins.create_repo_job(repo_name, repo_url, repo_branch)
+        jenkins.create_repo_job(repo)
 
         jenkins.session.post.assert_called_once_with(
             "https://jenkins.invalid/job/repos/createItem",
-            data=jenkins.render_build_repo_xml(repo_url, repo_branch),
+            data=jenkins.render_build_repo_xml(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
             timeout=10,
@@ -489,15 +493,17 @@ class CreateRepoJobTestCase(TestCase):
         jenkins.make_folder(ProjectPath("Gentoo/repos"), parents=True)
         jenkins.session.post.reset_mock()
 
-        repo_name = "gentoo"
-        repo_url = "https://anongit.gentoo.org/git/repo/gentoo.git"
-        repo_branch = "feature"
+        repo = EbuildRepo(
+            name="gentoo",
+            url="https://anongit.gentoo.org/git/repo/gentoo.git",
+            branch="feature",
+        )
 
-        jenkins.create_repo_job(repo_name, repo_url, repo_branch)
+        jenkins.create_repo_job(repo)
 
         jenkins.session.post.assert_called_once_with(
             "https://jenkins.invalid/job/Gentoo/job/repos/createItem",
-            data=jenkins.render_build_repo_xml(repo_url, repo_branch),
+            data=jenkins.render_build_repo_xml(repo),
             headers={"Content-Type": "text/xml"},
             params={"name": "gentoo"},
             timeout=10,
@@ -506,10 +512,13 @@ class CreateRepoJobTestCase(TestCase):
     def test_render_build_repo_xml(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
 
-        repo_url = "https://anongit.gentoo.org/git/repo/gentoo.git"
-        repo_branch = "feature"
+        repo = EbuildRepo(
+            url="https://anongit.gentoo.org/git/repo/gentoo.git",
+            branch="feature",
+            name="test",
+        )
 
-        xml = jenkins.render_build_repo_xml(repo_url, repo_branch)
+        xml = jenkins.render_build_repo_xml(repo)
 
         self.assertRegex(xml, r"<name>\*/feature</name>")
         self.assertRegex(
@@ -540,9 +549,7 @@ class CreateMachineJobTestCase(TestCase):
                 ),
                 mock.call(
                     "https://jenkins.invalid/createItem",
-                    data=jenkins.render_build_machine_xml(
-                        repo_url, repo_branch, ebuild_repos
-                    ),
+                    data=render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
                     headers={"Content-Type": "text/xml"},
                     params={"name": "base"},
                     timeout=10,
@@ -551,13 +558,11 @@ class CreateMachineJobTestCase(TestCase):
         )
 
     def test_render_build_machine_xml(self) -> None:
-        jenkins = MockJenkins(JENKINS_CONFIG)
-
         repo_url = "https://github.com/enku/gbp-machines.git"
         repo_branch = "feature"
         ebuild_repos = ["gentoo", "marduk"]
 
-        xml = jenkins.render_build_machine_xml(repo_url, repo_branch, ebuild_repos)
+        xml = render_build_machine_xml(repo_url, repo_branch, ebuild_repos)
 
         self.assertRegex(
             xml, r"<upstreamProjects>repos/gentoo,repos/marduk</upstreamProjects>"

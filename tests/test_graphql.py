@@ -13,7 +13,7 @@ from gentoo_build_publisher.graphql import (
     resolvers,
     type_defs,
 )
-from gentoo_build_publisher.jenkins import ProjectPath
+from gentoo_build_publisher.jenkins import EbuildRepo, ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version, utctime
 from gentoo_build_publisher.worker import tasks
@@ -1089,7 +1089,9 @@ class CreateRepoTestCase(TestCase):
 
     def test_returns_error_when_already_exists(self) -> None:
         self.publisher.jenkins.make_folder(ProjectPath("repos"))
-        self.publisher.jenkins.create_repo_job("gentoo", "foo", "master")
+        self.publisher.jenkins.create_repo_job(
+            EbuildRepo(name="gentoo", url="foo", branch="master")
+        )
 
         result = graphql(
             self.query,

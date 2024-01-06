@@ -362,26 +362,26 @@ class Jenkins:
 
         http_response.raise_for_status()
 
-    def create_repo_job(self, repo_name: str, repo_url: str, repo_branch: str) -> None:
+    def create_repo_job(self, repo: EbuildRepo) -> None:
         """Create a repo job in the "repos" folder
 
         Assumes that the "repos" folder exists under the project root.
         """
-        repo_path = self.project_root / "repos" / repo_name
+        repo_path = self.project_root / "repos" / repo.name
 
-        self.create_item(repo_path, self.render_build_repo_xml(repo_url, repo_branch))
+        self.create_item(repo_path, self.render_build_repo_xml(repo))
 
-    def render_build_repo_xml(self, repo_url: str, repo_branch: str) -> str:
+    def render_build_repo_xml(self, repo: EbuildRepo) -> str:
         """Return XML config for the given repo"""
         xml = ET.fromstring(CREATE_REPO_XML)
 
         branch = xml.find(XML_PATHS["BRANCH_NAME"])
         assert branch is not None
-        branch.text = f"*/{repo_branch}"
+        branch.text = f"*/{repo.branch}"
 
         url = xml.find(XML_PATHS["SCM_URL"])
         assert url is not None
-        url.text = repo_url
+        url.text = repo.url
 
         return ET.tostring(xml).decode("UTF-8")
 
@@ -398,35 +398,45 @@ class Jenkins:
         self.install_plugin(COPY_ARTIFACT_PLUGIN)
         self.create_item(
             machine_path,
-            self.render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
+            render_build_machine_xml(repo_url, repo_branch, ebuild_repos),
         )
 
-    def render_build_machine_xml(
-        self, repo_url: str, repo_branch: str, ebuild_repos: list[str]
-    ) -> str:
-        """Return XML config for the given machine"""
-        xml = ET.fromstring(CREATE_BUILD_XML)
-        parts = [
-            "properties",
-            "org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty",
-            "triggers",
-            "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
-        ]
-        repos_path = PATH_SEPARATOR.join(parts)
-        upstream_repos = xml.find(repos_path)
-        assert upstream_repos is not None
-        upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)
 
-        url_path = (
-            "definition/scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url"
-        )
-        url = xml.find(url_path)
-        assert url is not None
-        url.text = repo_url
+def render_build_machine_xml(
+    repo_url: str, repo_branch: str, ebuild_repos: list[str]
+) -> str:
+    """Return XML config for the given machine"""
+    xml = ET.fromstring(CREATE_BUILD_XML)
+    parts = [
+        "properties",
+        "org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty",
+        "triggers",
+        "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
+    ]
+    repos_path = PATH_SEPARATOR.join(parts)
+    upstream_repos = xml.find(repos_path)
+    assert upstream_repos is not None
+    upstream_repos.text = ",".join(f"repos/{repo}" for repo in ebuild_repos)
 
-        branch_path = "definition/scm/branches/hudson.plugins.git.BranchSpec/name"
-        branch_name = xml.find(branch_path)
-        assert branch_name is not None
-        branch_name.text = f"*/{repo_branch}"
+    url_path = (
+        "definition/scm/userRemoteConfigs/hudson.plugins.git.UserRemoteConfig/url"
+    )
+    url = xml.find(url_path)
+    assert url is not None
+    url.text = repo_url
 
-        return ET.tostring(xml).decode("UTF-8")
+    branch_path = "definition/scm/branches/hudson.plugins.git.BranchSpec/name"
+    branch_name = xml.find(branch_path)
+    assert branch_name is not None
+    branch_name.text = f"*/{repo_branch}"
+
+    return ET.tostring(xml).decode("UTF-8")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class EbuildRepo:
+    """An repository for ebuilds (e.g. "gentoo")"""
+
+    name: str
+    url: str
+    branch: str
