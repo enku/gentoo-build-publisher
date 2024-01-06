@@ -15,7 +15,7 @@ from yarl import URL
 from gentoo_build_publisher.common import Build, EbuildRepo, MachineJob
 from gentoo_build_publisher.jenkins import xml
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
-from gentoo_build_publisher.utils import dict_to_list_of_dicts
+from gentoo_build_publisher.utils import dict_to_list_of_dicts, request_and_raise
 
 AuthTuple = tuple[str, str]
 logger = logging.getLogger(__name__)
@@ -166,8 +166,7 @@ class Jenkins:
     def download_artifact(self, build: Build) -> Iterable[bytes]:
         """Download and yield the build artifact in chunks of bytes"""
         url = self.url.artifact(build)
-        http_response = self.session.get(str(url), stream=True)
-        http_response.raise_for_status()
+        http_response = request_and_raise(self.session.get, url, stream=True)
 
         return http_response.iter_content(
             chunk_size=self.config.download_chunk_size, decode_unicode=False
@@ -176,16 +175,14 @@ class Jenkins:
     def get_logs(self, build: Build) -> str:
         """Get and return the build's jenkins logs"""
         url = self.url.logs(build)
-        http_response = self.session.get(str(url))
-        http_response.raise_for_status()
+        http_response = request_and_raise(self.session.get, url)
 
         return http_response.text
 
     def get_metadata(self, build: Build) -> JenkinsMetadata:
         """Query Jenkins for build's metadata"""
         url = self.url.metadata(build)
-        http_response = self.session.get(str(url))
-        http_response.raise_for_status()
+        http_response = request_and_raise(self.session.get, url)
 
         json = http_response.json()
 
@@ -207,8 +204,9 @@ class Jenkins:
         params_list = build_params_list(job_params, build_params)
         json_params = jsonlib.dumps({"parameter": params_list})
 
-        http_response = self.session.post(str(url), data={"json": json_params})
-        http_response.raise_for_status()
+        http_response = request_and_raise(
+            self.session.post, url, data={"json": json_params}
+        )
 
         # All that Jenkins (sometimes) gives us is the location of the queued request.
         # Let's return that.
@@ -221,12 +219,12 @@ class Jenkins:
     def url_path_exists(self, url_path: str) -> bool:
         """Return True iff url_path exists on the Jenkins instance"""
         url = self.config.base_url.with_path(url_path)
-        http_response = self.session.head(str(url), allow_redirects=True)
+        http_response = request_and_raise(
+            self.session.head, url, exclude=[HTTP_NOT_FOUND], allow_redirects=True
+        )
 
         if http_response.status_code == HTTP_NOT_FOUND:
             return False
-
-        http_response.raise_for_status()
 
         return True
 
@@ -240,8 +238,10 @@ class Jenkins:
         params = {"name": project_path.name}
         headers = {"Content-Type": "text/xml"}
 
-        http_response = self.session.post(
-            str(url),
+        http_response = request_and_raise(
+            self.session.post,
+            url,
+            exclude=[HTTP_NOT_FOUND],
             data=xml_str,
             headers=headers,
             params=params,
@@ -250,18 +250,16 @@ class Jenkins:
         if http_response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
 
-        http_response.raise_for_status()
-
     def get_item(self, project_path: ProjectPath) -> str:
         """Return the xml definition for the given project"""
         url = self.config.base_url.with_path(project_path.url_path) / "config.xml"
 
-        http_response = self.session.get(str(url))
+        http_response = request_and_raise(
+            self.session.get, url, exclude=[HTTP_NOT_FOUND]
+        )
 
         if http_response.status_code == HTTP_NOT_FOUND:
             raise FileNotFoundError(project_path.parent)
-
-        http_response.raise_for_status()
 
         return http_response.text
 
@@ -275,8 +273,7 @@ class Jenkins:
             "tree": "property[parameterDefinitions[name,defaultParameterValue[value]]]"
         }
 
-        http_response = self.session.get(str(url), params=params)
-        http_response.raise_for_status()
+        http_response = request_and_raise(self.session.get, url, params=params)
 
         properties = http_response.json()["property"]
         props = [prop for prop in properties if "parameterDefinitions" in prop]
@@ -331,13 +328,12 @@ class Jenkins:
         Jenkins uses name@version syntax for `plugin`, for example "copyartifact@1.47"
         """
         url = self.config.base_url.with_path("/pluginManager/installNecessaryPlugins")
-        http_response = self.session.post(
-            str(url),
+        request_and_raise(
+            self.session.post,
+            url,
             headers={"Content-Type": "text/xml"},
             data=xml.install_plugin(plugin),
         )
-
-        http_response.raise_for_status()
 
     def create_repo_job(self, repo: EbuildRepo) -> None:
         """Create a repo job in the "repos" folder

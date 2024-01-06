@@ -1,7 +1,13 @@
 """Tests for the gentoo_build_publisher.utils module"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
+from contextlib import contextmanager
+from typing import Generator
 from unittest import TestCase, mock
+
+import requests
+import requests.api
+import requests.exceptions
 
 from gentoo_build_publisher import utils
 
@@ -117,3 +123,55 @@ class UtcTime(TestCase):
         result = utils.utctime()
 
         self.assertEqual(result, utcnow.replace(tzinfo=dt.timezone.utc))
+
+
+class RequestAndRaiseTests(TestCase):
+    """Tests for the request_and_raise function"""
+
+    def test_returns_requests_response(self) -> None:
+        with returns_response(200) as mock_request:
+            response = utils.request_and_raise(requests.get, "http://tests.invalid/")
+
+        # have no idea why pylint things mock_request is a dict
+        # pylint: disable=no-member
+        self.assertEqual(response, mock_request.return_value)
+        self.assertEqual(response.status_code, 200)
+
+    def test_raises_for_error_response(self) -> None:
+        with returns_response(404):
+            with self.assertRaises(requests.exceptions.HTTPError):
+                utils.request_and_raise(requests.get, "http://test.invalid/")
+
+    def test_honors_exclude(self) -> None:
+        with returns_response(404):
+            response = utils.request_and_raise(
+                requests.get, "http://test.invalid/", exclude=[404]
+            )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_honors_exclude2(self) -> None:
+        with returns_response(401):
+            with self.assertRaises(requests.exceptions.HTTPError) as cxt:
+                utils.request_and_raise(
+                    requests.get, "http://test.invalid/", exclude=[404]
+                )
+
+        self.assertEqual(cxt.exception.response.status_code, 401)
+
+
+@contextmanager
+def returns_response(status_code: int) -> Generator[mock.MagicMock, None, None]:
+    patch = mock.patch.object(requests.api, "request")
+    mock_request = patch.start()
+    response = mock_request.return_value = mock.MagicMock(
+        spec=requests.Response, reason="testing", url="http://test.invalid/"
+    )
+    response.raise_for_status.side_effect = lambda: requests.Response.raise_for_status(
+        response
+    )
+    response.status_code = status_code
+
+    yield mock_request
+
+    patch.stop()

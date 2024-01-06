@@ -7,7 +7,10 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import Any, NamedTuple, TypeVar
+from typing import Any, Callable, Collection, NamedTuple, TypeVar
+
+import requests
+from yarl import URL
 
 IT = TypeVar("IT")
 T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
@@ -145,3 +148,23 @@ def dict_to_list_of_dicts(
     [{"name": "first", "value": "albert"}, {"name": "last", "value": "hopkins"}]
     """
     return [{key_key: key, value_key: value} for key, value in data.items()]
+
+
+def request_and_raise(
+    request: Callable[..., requests.Response],
+    url: str | URL,
+    *args: Any,
+    exclude: Collection[int] | None = None,
+    **kwargs: Any,
+) -> requests.Response:
+    """Wrapper for resp = requests.request() ... resp.raise_for_status()
+
+    Except it will not call raise_for_status() for responses with status codes in the
+    exclude list.
+    """
+    response = request(str(url), *args, **kwargs)
+
+    if not (exclude and response.status_code in exclude):
+        response.raise_for_status()
+
+    return response
