@@ -199,26 +199,14 @@ class Jenkins:
         config = JenkinsConfig.from_settings(settings)
         return cls(config)
 
-    def schedule_build(self, machine: str, **params: Any) -> str | None:
+    def schedule_build(self, machine: str, **build_params: Any) -> str | None:
         """Schedule a build on Jenkins
 
         `params` are build parameters to pass to the job instead of the defaults.
         """
         url = self.url.build_scheduler(machine)
-        build_params = self.get_job_parameters(machine)
-
-        # parameter logic here is based on
-        # https://stackoverflow.com/questions/20359810/how-to-trigger-jenkins-builds-remotely-and-to-pass-parameters
-        build_params = build_params.copy()
-
-        for key, value in params.items():
-            if key in build_params:
-                build_params[key] = value
-            else:
-                raise ValueError(f"{key} is not a valid parameter for this build")
-        params_list = [
-            {"name": key, "value": value} for key, value in build_params.items()
-        ]
+        job_params = self.get_job_parameters(machine)
+        params_list = build_params_list(job_params, build_params)
         json_params = jsonlib.dumps({"parameter": params_list})
 
         http_response = self.session.post(
@@ -420,6 +408,25 @@ def render_build_machine_xml(job: MachineJob) -> str:
     branch_name.text = f"*/{job.repo.branch}"
 
     return ET.tostring(xml).decode("UTF-8")
+
+
+def build_params_list(
+    job_params: dict[str, Any], build_params: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Return Jenkins-format parameter list based on the build_parameters
+
+    job_params are a dict of parameters for the job.
+    """
+    # parameter logic here is based on
+    # https://stackoverflow.com/questions/20359810/how-to-trigger-jenkins-builds-remotely-and-to-pass-parameters
+    job_params = job_params.copy()
+
+    for key, value in build_params.items():
+        if key in job_params:
+            job_params[key] = value
+        else:
+            raise ValueError(f"{key} is not a valid parameter for this build")
+    return [{"name": key, "value": value} for key, value in job_params.items()]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
