@@ -31,7 +31,7 @@ class DashboardContext(TypedDict):
     builds_to_do: list[BuildRecord]
 
     # Each machine gets it's own #rrggbb color
-    machine_colors: list[str]
+    gradient_colors: list[str]
 
     machine_dist: list[int]
     machines: list[str]
@@ -96,7 +96,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
         "built_recently": [],
         "latest_builds": [],
         "latest_published": set(),
-        "machine_colors": gradient(*color_range, len(machines)),
+        "gradient_colors": gradient(*color_range, len(machines)),
         "machine_dist": [machine.build_count for machine in machines],
         "machines": [machine.machine for machine in machines],
         "now": start,

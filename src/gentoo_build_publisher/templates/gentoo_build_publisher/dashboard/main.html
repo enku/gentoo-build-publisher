@@ -13,7 +13,7 @@
   {{ builds_over_time|json_script:'bot' }}
   {{ machines|json_script:'machines' }}
   {{ bot_days|json_script:'botDays' }}
-  {{ machine_colors|json_script:'machineColors' }}
+  {{ gradient_colors|json_script:'gradientColors' }}
   {{ total_package_size|json_script:'packageSizes' }}
   <script src="{% static 'gbp/dashboard.js' %}"></script>
 {% endblock %}

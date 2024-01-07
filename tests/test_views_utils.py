@@ -237,7 +237,7 @@ class CreateDashboardContext(TestCase):
                 str(polaris2): [],
             },
         )
-        self.assertEqual(cxt["machine_colors"], ["#ff0000", "#0000ff"])
+        self.assertEqual(cxt["gradient_colors"], ["#ff0000", "#0000ff"])
         self.assertEqual(cxt["machine_dist"], [3, 1])
         self.assertEqual(cxt["machines"], ["polaris", "lighthouse"])
         self.assertEqual(cxt["now"], start)

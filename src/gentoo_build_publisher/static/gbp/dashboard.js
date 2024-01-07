@@ -1,6 +1,6 @@
 /* global bootstrap, Chart */
 
-const machineColors = JSON.parse(document.getElementById('machineColors').textContent);
+const gradientColors = JSON.parse(document.getElementById('gradientColors').textContent);
 const machines = JSON.parse(document.getElementById('machines').textContent);
 
 function numberize(value) {
@@ -26,7 +26,7 @@ function machineDistributionChart() {
         label: 'Build Distribution',
         data: chartData,
         hoverOffset: 4,
-        backgroundColor: machineColors,
+        backgroundColor: gradientColors,
       }],
     },
   };
@@ -41,7 +41,7 @@ function buildsOverTimeChart() {
   const datasets = [];
 
   for (let i = 0; i < bot.length; i += 1) {
-    datasets.push({ label: machines[i], data: bot[i], backgroundColor: machineColors[i] });
+    datasets.push({ label: machines[i], data: bot[i], backgroundColor: gradientColors[i] });
   }
   const botConfig = {
     type: 'bar',
@@ -65,7 +65,7 @@ function packageSizesChart() {
     responsive: true,
     data: {
       labels: machines,
-      datasets: [{ data: sizes, backgroundColor: machineColors }],
+      datasets: [{ data: sizes, backgroundColor: gradientColors }],
     },
     options: {
       plugins: {
