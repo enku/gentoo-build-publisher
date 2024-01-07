@@ -6,7 +6,7 @@ from typing import cast
 from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.dashboard import (
+from gentoo_build_publisher.utils.views import (
     DashboardContext,
     add_package_metadata,
     bot_to_list,

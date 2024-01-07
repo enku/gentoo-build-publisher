@@ -85,7 +85,6 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     bot_days: list[dt.date] = [
         start.date() - dt.timedelta(days=d) for d in range(days - 1, -1, -1)
     ]
-    color_start, color_end = color_range
     machines = publisher.machines()
     machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
@@ -97,10 +96,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
         "built_recently": [],
         "latest_builds": [],
         "latest_published": set(),
-        "machine_colors": [
-            str(color)
-            for color in Color.gradient(color_start, color_end, len(machines))
-        ],
+        "machine_colors": gradient(*color_range, len(machines)),
         "machine_dist": [machine.build_count for machine in machines],
         "machines": [machine.machine for machine in machines],
         "now": start,
@@ -294,3 +290,8 @@ def create_builds_over_time(
             days_builds[machine] = 0
 
     return bot
+
+
+def gradient(start: Color, end: Color, count: int) -> list[str]:
+    """Return gradient from start to end with count colors"""
+    return [str(color) for color in Color.gradient(start, end, count)]

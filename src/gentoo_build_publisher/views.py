@@ -10,7 +10,7 @@ from django.utils import timezone
 from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.dashboard import create_dashboard_context
+from gentoo_build_publisher.utils.views import create_dashboard_context
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 
