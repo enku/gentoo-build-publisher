@@ -90,3 +90,9 @@ def package_row(package: str, machines: list[str]) -> dict[str, Any]:
         "machines": machines_str,
         "package": package,
     }
+
+
+@register.inclusion_tag("gentoo_build_publisher/roundrect.html")
+def roundrect(text: str, title: str, color: str) -> dict[str, Any]:
+    """Render a circle with a number in it and name below"""
+    return {"text": text, "title": title, "color": color}

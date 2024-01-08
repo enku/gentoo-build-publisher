@@ -1,0 +1,13 @@
+{% extends "gentoo_build_publisher/base.html" %}
+{% load static %}
+{% block main %}
+  {% include "gentoo_build_publisher/machine/row1.html" %}
+  {% include "gentoo_build_publisher/machine/row2.html" %}
+{% endblock %}
+{% block scripts %}
+  {{ bot_days|json_script:'botDays' }}
+  {{ builds_over_time|json_script:'bot' }}
+  {{ gradient_colors|json_script:'gradientColors' }}
+  {{ machines|json_script:'machines' }}
+  <script src="{% static 'gbp/machine.js' %}"></script>
+  {% endblock %}

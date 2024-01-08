@@ -1,0 +1,25 @@
+{% load gbp %}
+<div class="card">
+    <h5 class="card-header">{{ build_count }} Build{{ build_count|pluralize }}</h5>
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Latest <span class="badge badge-primary badge-pill">{{ latest_build.build_id }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Published <span class="badge badge-primary badge-pill">{% firstof published_build.build_id "None" %}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Storage <span class="badge badge-primary badge-pill">{{ storage|numberize }}B</span>
+      </li>
+      {% if published_build %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        repos.conf <a href="repos.conf" download><i class="bi bi-download"></i></a>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        binrepos.conf <a href="binrepos.conf" download><i class="bi bi-download"></i></a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+</div>

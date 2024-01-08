@@ -1,21 +1,46 @@
 """Functions/data to support the dashboard view"""
+from __future__ import annotations
+
 import datetime as dt
 import itertools
 from collections.abc import Mapping
-from typing import NamedTuple, TypedDict
+from functools import wraps
+from typing import Any, Callable, NamedTuple, TypeAlias, TypedDict
+
+from django.conf import settings
+from django.http import Http404, HttpRequest, HttpResponse
+from django.utils import timezone
 
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color, lapsed
 
-BuildID = str
-CPV = str
-MachineName = str
+BuildID: TypeAlias = str  # pylint: disable=invalid-name
+CPV: TypeAlias = str  # pylint: disable=invalid-name
+Gradient: TypeAlias = list[str]
+MachineName: TypeAlias = str
+View: TypeAlias = Callable[..., HttpResponse]
+
 
 MAX_DISPLAYED_PKGS = 12
 SECONDS_PER_DAY = 86400
 _NOT_FOUND = object()
+
+
+def experimental(view: View) -> View:
+    """Mark a view as experimental
+
+    Experimental views return 404s when not in DEBUG mode.
+    """
+
+    @wraps(view)
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if not settings.DEBUG:
+            raise Http404
+        return view(request, *args, **kwargs)
+
+    return wrapper
 
 
 class DashboardContext(TypedDict):
@@ -31,7 +56,7 @@ class DashboardContext(TypedDict):
     builds_to_do: list[BuildRecord]
 
     # Each machine gets it's own #rrggbb color
-    gradient_colors: list[str]
+    gradient_colors: Gradient
 
     machine_dist: list[int]
     machines: list[str]
@@ -64,13 +89,18 @@ class DashboardContext(TypedDict):
     unpublished_builds_count: int
 
 
-class BuildSummary(NamedTuple):
-    """Struct returned by get_build_summary()"""
+class MachineContext(TypedDict):
+    """machine view context"""
 
-    latest_builds: list[BuildRecord]
-    built_recently: list[BuildRecord]
-    build_packages: dict[BuildID, list[CPV]]
-    latest_published: set[BuildRecord]
+    bot_days: list[str]
+    build_count: int
+    builds_over_time: list[list[int]]
+    gradient_colors: Gradient
+    latest_build: BuildRecord
+    machine: str
+    machines: list[str]
+    published_build: Build | None
+    storage: int
 
 
 def create_dashboard_context(  # pylint: disable=too-many-arguments
@@ -82,9 +112,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     cache: CacheProtocol,
 ) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    bot_days: list[dt.date] = [
-        start.date() - dt.timedelta(days=d) for d in range(days - 1, -1, -1)
-    ]
+    bot_days = get_bot_days(start, days)
     machines = publisher.machines()
     machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
@@ -133,6 +161,51 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     context["builds_over_time"] = bot_to_list(builds_over_time)
 
     return context
+
+
+def create_machine_context(
+    machine: str,
+    color_start: Color,
+    color_end: Color,
+    publisher: BuildPublisher,
+    cache: CacheProtocol,
+) -> MachineContext:
+    """Return context for the machine view"""
+    bot_days = get_bot_days(timezone.localtime(), 7)
+    builds_over_time = create_builds_over_time(bot_days, [machine])
+    machine_info = MachineInfo(machine)
+    assert machine_info.latest_build
+    storage = 0
+    tzinfo = timezone.get_current_timezone()
+
+    for build in machine_info.builds:
+        metadata = get_metadata(build, publisher, cache)
+        if metadata and build.completed:
+            storage += metadata.packages.size
+        assert build.submitted is not None
+        if (day_submitted := build.submitted.astimezone(tzinfo).date()) >= bot_days[0]:
+            builds_over_time[day_submitted][machine] += 1
+
+    return {
+        "bot_days": [datetime.strftime("%A") for datetime in bot_days],
+        "build_count": machine_info.build_count,
+        "builds_over_time": bot_to_list(builds_over_time),
+        "latest_build": machine_info.latest_build,
+        "machine": machine,
+        "machines": [machine],
+        "gradient_colors": gradient(color_start, color_end, 10),
+        "published_build": machine_info.published_build,
+        "storage": storage,
+    }
+
+
+class BuildSummary(NamedTuple):
+    """Struct returned by get_build_summary()"""
+
+    latest_builds: list[BuildRecord]
+    built_recently: list[BuildRecord]
+    build_packages: dict[BuildID, list[CPV]]
+    latest_published: set[BuildRecord]
 
 
 def add_package_metadata(
@@ -292,6 +365,11 @@ def create_builds_over_time(
     return bot
 
 
-def gradient(start: Color, end: Color, count: int) -> list[str]:
+def gradient(start: Color, end: Color, count: int) -> Gradient:
     """Return gradient from start to end with count colors"""
     return [str(color) for color in Color.gradient(start, end, count)]
+
+
+def get_bot_days(start: dt.datetime, days: int) -> list[dt.date]:
+    """Return initial builds over time (all 0s for the given start date and days"""
+    return [start.date() - dt.timedelta(days=d) for d in range(days - 1, -1, -1)]

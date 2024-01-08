@@ -10,7 +10,11 @@ from django.utils import timezone
 from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.views import create_dashboard_context
+from gentoo_build_publisher.utils.views import (
+    create_dashboard_context,
+    create_machine_context,
+    experimental,
+)
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 
@@ -29,6 +33,17 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     )
 
     return render(request, "gentoo_build_publisher/dashboard/main.html", context)
+
+
+@experimental
+def machines(request: HttpRequest, machine: str) -> HttpResponse:
+    """Response for the machines page"""
+    color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
+    color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
+    publisher = BuildPublisher.get_publisher()
+    context = create_machine_context(machine, color_start, color_end, publisher, cache)
+
+    return render(request, "gentoo_build_publisher/machine/main.html", context)
 
 
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:

@@ -115,3 +115,30 @@ class BinReposDotConfTestCase(TestCase):
         self.assertEqual(response.headers["Content-Type"], "text/plain")
         self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
+
+
+class MachineViewTests(TestCase):
+    """Tests for the machine view"""
+
+    def test(self) -> None:
+        published = self.first_build("lighthouse")
+        self.publisher.publish(published)
+        latest = self.latest_build("lighthouse")
+        self.publisher.pull(latest)
+
+        with self.settings(DEBUG=True):
+            response = self.client.get("/machines/lighthouse/")
+
+        self.assertContains(
+            response,
+            f'Latest <span class="badge badge-primary badge-pill">{latest.build_id}</span>',
+        )
+        self.assertContains(
+            response,
+            f'Published <span class="badge badge-primary badge-pill">{published.build_id}</span>',
+        )
+
+    def test_experimental(self) -> None:
+        response = self.client.get("/machines/lighthouse/")
+
+        self.assertEqual(response.status_code, 404)
