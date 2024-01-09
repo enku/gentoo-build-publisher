@@ -4,11 +4,8 @@ from __future__ import annotations
 import datetime as dt
 import itertools
 from collections.abc import Mapping
-from functools import wraps
-from typing import Any, Callable, NamedTuple, TypeAlias, TypedDict
+from typing import NamedTuple, TypeAlias, TypedDict
 
-from django.conf import settings
-from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
 
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
@@ -20,27 +17,11 @@ BuildID: TypeAlias = str  # pylint: disable=invalid-name
 CPV: TypeAlias = str  # pylint: disable=invalid-name
 Gradient: TypeAlias = list[str]
 MachineName: TypeAlias = str
-View: TypeAlias = Callable[..., HttpResponse]
 
 
 MAX_DISPLAYED_PKGS = 12
 SECONDS_PER_DAY = 86400
 _NOT_FOUND = object()
-
-
-def experimental(view: View) -> View:
-    """Mark a view as experimental
-
-    Experimental views return 404s when not in DEBUG mode.
-    """
-
-    @wraps(view)
-    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        if not settings.DEBUG:
-            raise Http404
-        return view(request, *args, **kwargs)
-
-    return wrapper
 
 
 class DashboardContext(TypedDict):
