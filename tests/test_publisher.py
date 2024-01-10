@@ -12,7 +12,7 @@ from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
-from gentoo_build_publisher.utils import utctime
+from gentoo_build_publisher.utils.time import utctime
 
 from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test
 from .factories import BuildFactory

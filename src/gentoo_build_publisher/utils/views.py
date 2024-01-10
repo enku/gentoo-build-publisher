@@ -11,7 +11,8 @@ from django.utils import timezone
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.utils import Color, lapsed
+from gentoo_build_publisher.utils import Color
+from gentoo_build_publisher.utils.time import lapsed
 
 BuildID: TypeAlias = str  # pylint: disable=invalid-name
 CPV: TypeAlias = str  # pylint: disable=invalid-name

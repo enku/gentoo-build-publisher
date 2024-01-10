@@ -44,7 +44,7 @@ from gentoo_build_publisher.records import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.storage import Storage
-from gentoo_build_publisher.utils import utctime
+from gentoo_build_publisher.utils.time import utctime
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,8 @@ from gentoo_build_publisher.graphql import (
 )
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.utils import get_version, utctime
+from gentoo_build_publisher.utils import get_version
+from gentoo_build_publisher.utils.time import utctime
 from gentoo_build_publisher.worker import tasks
 
 from . import BUILD_LOGS, TestCase, graphql, parametrized

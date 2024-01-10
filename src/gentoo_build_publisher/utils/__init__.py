@@ -1,7 +1,6 @@
 """Misc utilities"""
 from __future__ import annotations
 
-import datetime as dt
 import importlib.resources
 import platform
 import re
@@ -79,11 +78,6 @@ def get_version() -> str:
     return version("gentoo_build_publisher")
 
 
-def lapsed(start: dt.datetime, end: dt.datetime) -> int:
-    """Return the number of seconds between `start` and `end`"""
-    return int((end - start).total_seconds())
-
-
 def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".xpak") -> str:
     """Return the relative path of the would-be package"""
     if not (cpv_match := CPV.match(cpv)):
@@ -121,14 +115,6 @@ def check_tag_name(tag_name: str) -> None:
 
     if not set(tag_name[1:]) <= VALID_TAG_CHARS:
         raise InvalidTagName(tag_name)
-
-
-def utctime(time: dt.datetime | None = None) -> dt.datetime:
-    """Return time but with the timezone being UTC"""
-    if time is None:
-        time = dt.datetime.utcnow()
-
-    return time.replace(tzinfo=dt.timezone.utc)
 
 
 def read_package_file(filename: str) -> str:
