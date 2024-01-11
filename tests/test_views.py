@@ -3,6 +3,8 @@
 import datetime as dt
 from functools import partial
 
+from django import urls
+
 from gentoo_build_publisher.common import Build
 
 from . import DjangoTestCase as BaseTestCase
@@ -41,6 +43,10 @@ class DashboardTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "gentoo_build_publisher/dashboard/main.html")
+
+    def test_can_retrieve_view_by_name(self) -> None:
+        view = urls.reverse("dashboard")
+        self.assertEqual(view, "/")
 
 
 class ReposDotConfTestCase(TestCase):

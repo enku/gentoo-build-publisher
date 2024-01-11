@@ -25,11 +25,11 @@ GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 View: TypeAlias = Callable[..., HttpResponse]
 
 
-def view(pattern: str) -> Callable[[View], View]:
+def view(pattern: str, **kwargs: Any) -> Callable[[View], View]:
     """Decorator to register a view"""
 
     def dec(view_func: View) -> View:
-        ViewFinder.register(pattern, view_func)
+        ViewFinder.register(pattern, view_func, **kwargs)
         return view_func
 
     return dec
@@ -38,17 +38,17 @@ def view(pattern: str) -> Callable[[View], View]:
 class ViewFinder:
     """Django view registry"""
 
-    pattern_views: list[tuple[str, View]] = []
+    pattern_views: list[URLPattern] = []
 
     @classmethod
-    def register(cls, pattern: str, view_func: View) -> None:
+    def register(cls, pattern: str, view_func: View, **kwargs: Any) -> None:
         """Register the given view for the given pattern"""
-        cls.pattern_views.append((pattern, view_func))
+        cls.pattern_views.append(path(pattern, view_func, **kwargs))
 
     @classmethod
     def find(cls) -> list[URLPattern]:
         """Return a list of url_path/view mappings for the Django url resolver"""
-        return [path(pattern, view_func) for pattern, view_func in cls.pattern_views]
+        return cls.pattern_views
 
 
 def experimental(view_func: View) -> View:
@@ -66,7 +66,7 @@ def experimental(view_func: View) -> View:
     return wrapper
 
 
-@view("")
+@view("", name="dashboard")
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
