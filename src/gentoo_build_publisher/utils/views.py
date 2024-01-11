@@ -76,12 +76,14 @@ class MachineContext(TypedDict):
 
     bot_days: list[str]
     build_count: int
+    builds: list[BuildRecord]
     builds_over_time: list[list[int]]
     gradient_colors: Gradient
     latest_build: BuildRecord
     machine: str
     machines: list[str]
     published_build: Build | None
+    recent_packages: list[Package]
     storage: int
 
 
@@ -159,6 +161,7 @@ def create_machine_context(
     assert machine_info.latest_build
     storage = 0
     tzinfo = timezone.get_current_timezone()
+    recent_packages = get_machine_recent_packages(machine_info, publisher, cache)
 
     for build in machine_info.builds:
         metadata = get_metadata(build, publisher, cache)
@@ -171,12 +174,14 @@ def create_machine_context(
     return {
         "bot_days": [datetime.strftime("%A") for datetime in bot_days],
         "build_count": machine_info.build_count,
+        "builds": machine_info.builds,
         "builds_over_time": bot_to_list(builds_over_time),
+        "gradient_colors": gradient(color_start, color_end, 10),
         "latest_build": machine_info.latest_build,
         "machine": machine,
         "machines": [machine],
-        "gradient_colors": gradient(color_start, color_end, 10),
         "published_build": machine_info.published_build,
+        "recent_packages": recent_packages,
         "storage": storage,
     }
 
@@ -305,6 +310,25 @@ def get_metadata(
 
     metadata = cached
     return metadata
+
+
+def get_machine_recent_packages(
+    machine_info: MachineInfo,
+    publisher: BuildPublisher,
+    cache: CacheProtocol,
+    max_count: int = 10,
+) -> list[Package]:
+    """Return the list of recent packages for a machine (up to max_count)"""
+    packages: set[Package] = set()
+    for build in machine_info.builds:
+        metadata = get_metadata(build, publisher, cache)
+        if not metadata:
+            continue
+        packages.update(metadata.packages.built)
+        if len(packages) >= max_count:
+            break
+
+    return sorted(packages, key=lambda package: package.build_time, reverse=True)[:10]
 
 
 def get_packages(

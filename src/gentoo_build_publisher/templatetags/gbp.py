@@ -1,9 +1,13 @@
 """Template tags for numerical values"""
+import datetime as dt
 from typing import Any
 
 from django import template
 
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.common import Build, Package
+from gentoo_build_publisher.publisher import BuildPublisher
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.utils import time
 
 register = template.Library()
 
@@ -36,6 +40,21 @@ def numberize(val: int, precision: int = 2) -> str:
     rest = f".{frac[:precision]}" if precision else ""
 
     return f"{dec}{rest}{suffix}"
+
+
+@register.filter
+def display_time(timestamp: dt.datetime) -> str:
+    """Display the timestamp according to how long ago it was"""
+    timestamp = timestamp.astimezone()
+    now = dt.datetime.now().astimezone()
+
+    if time.is_same_day(timestamp, now):
+        return time.as_time(timestamp)
+
+    if time.is_previous_day(timestamp, now):
+        return time.as_date_and_time(timestamp)
+
+    return time.as_date(timestamp)
 
 
 @register.inclusion_tag("gentoo_build_publisher/circle.html")
@@ -96,3 +115,27 @@ def package_row(package: str, machines: list[str]) -> dict[str, Any]:
 def roundrect(text: str, title: str, color: str) -> dict[str, Any]:
     """Render a circle with a number in it and name below"""
     return {"text": text, "title": title, "color": color}
+
+
+@register.inclusion_tag("gentoo_build_publisher/machine/build_row.html")
+def machine_build_row(build: Build) -> dict[str, Any]:
+    """Render a (Jenkins) build row"""
+    publisher = BuildPublisher.from_settings(Settings.from_environ())
+    packages_built = publisher.storage.get_metadata(build).packages.built
+    packages_built_str = "<br/>".join(p.cpv for p in packages_built)
+
+    return {
+        "build": build,
+        "package_count": len(packages_built),
+        "packages_built": packages_built_str,
+    }
+
+
+@register.inclusion_tag("gentoo_build_publisher/machine/package_row.html")
+def machine_package_row(package: Package) -> dict[str, Any]:
+    """Render a package row"""
+
+    return {
+        "package": package,
+        "build_time": dt.datetime.fromtimestamp(package.build_time).astimezone(),
+    }

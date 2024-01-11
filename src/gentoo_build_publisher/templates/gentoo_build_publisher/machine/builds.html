@@ -1,0 +1,9 @@
+{% load gbp %}
+<h4 class="d-flex justify-content-between align-items-center mb-3">Recent Builds</h4>
+<ul class="list-group mb-3">
+  {% for build in builds|slice:10 %}
+  {% if build.completed %}
+    {% machine_build_row build %}
+  {% endif %}
+  {% endfor %}
+</ul>

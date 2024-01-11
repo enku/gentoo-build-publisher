@@ -1,0 +1,7 @@
+{% load gbp %}
+<h4 class="d-flex justify-content-between align-items-center mb-3">Recent Packages</h4>
+<ul class="list-group mb-3">
+  {% for package in recent_packages %}
+    {% machine_package_row package %}
+  {% endfor %}
+</ul>

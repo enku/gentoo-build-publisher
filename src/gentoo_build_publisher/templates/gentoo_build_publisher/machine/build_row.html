@@ -1,0 +1,8 @@
+{% load gbp %}
+<li class="list-group-item d-flex justify-content-between lh-condensed">
+  <div>
+    <h6 class="my-0">{{ build.build_id }}</h6>
+    <small class="text-muted" title="{{ build.built }}">{{ build.built|display_time }}</small>
+  </div>
+  <span title="Packages Built" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='{{ packages_built }}' data-bs-html="true">{{ package_count }} package{{ package_count|pluralize }}</span>
+</li>

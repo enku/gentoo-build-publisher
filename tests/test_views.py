@@ -120,23 +120,33 @@ class BinReposDotConfTestCase(TestCase):
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 
-    def test(self) -> None:
-        published = self.first_build("lighthouse")
-        self.publisher.publish(published)
-        latest = self.latest_build("lighthouse")
-        self.publisher.pull(latest)
+    def setUp(self) -> None:
+        super().setUp()
+        self.published = self.first_build("lighthouse")
+        self.artifact_builder.advance(-86400)
+        self.artifact_builder.build(self.published, "sys-libs/pam-1.5.3")
+        self.publisher.pull(self.published)
+        self.publisher.publish(self.published)
+        self.latest = self.latest_build("lighthouse")
+        self.artifact_builder.advance(86400)
+        self.artifact_builder.build(self.latest, "www-client/firefox-121.0.1")
+        self.publisher.pull(self.latest)
 
         with self.settings(DEBUG=True):
-            response = self.client.get("/machines/lighthouse/")
+            self.response = self.client.get("/machines/lighthouse/")
 
-        self.assertContains(
-            response,
-            f'Latest <span class="badge badge-primary badge-pill">{latest.build_id}</span>',
+    def test_row1(self) -> None:
+        latest_str = (
+            'Latest <span class="badge badge-primary badge-pill">'
+            f"{self.latest.build_id}</span>"
         )
-        self.assertContains(
-            response,
-            f'Published <span class="badge badge-primary badge-pill">{published.build_id}</span>',
+        self.assertContains(self.response, latest_str)
+
+        published_str = (
+            'Published <span class="badge badge-primary badge-pill">'
+            f"{self.published.build_id}</span>"
         )
+        self.assertContains(self.response, published_str)
 
     def test_experimental(self) -> None:
         response = self.client.get("/machines/lighthouse/")

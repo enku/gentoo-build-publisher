@@ -1,7 +1,7 @@
 {% load gbp %}
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-5">
     {% include "gentoo_build_publisher/machine/buildcard.html" %}
   </div>
-  {% chart "botChart" "Builds / Time" %}
+  {% chart "botChart" "Builds / Time" cols=7 %}
 </div>
