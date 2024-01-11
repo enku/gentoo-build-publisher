@@ -2,6 +2,7 @@
 # pylint: disable=missing-docstring
 import datetime as dt
 from typing import cast
+from unittest import mock
 
 from gentoo_build_publisher.common import Content
 from gentoo_build_publisher.publisher import MachineInfo
@@ -14,6 +15,7 @@ from gentoo_build_publisher.utils.views import (
     get_build_summary,
     get_metadata,
     get_packages,
+    get_query_value_from_request,
 )
 
 from . import QuickCache, TestCase
@@ -250,3 +252,23 @@ class CreateDashboardContext(TestCase):
                 "dev-vcs/git-2.34.1": {"lighthouse"},
             },
         )
+
+
+class GetQueryValueFromRequestTests(TestCase):
+    def test_returns_fallback(self) -> None:
+        request = mock.Mock(GET={})
+        bot_days = get_query_value_from_request(request, "bot_days", int, 10)
+
+        self.assertEqual(bot_days, 10)
+
+    def test_with_queryparam(self) -> None:
+        request = mock.Mock(GET={"bot_days": "10"})
+        bot_days = get_query_value_from_request(request, "bot_days", int, 7)
+
+        self.assertEqual(bot_days, 10)
+
+    def test_with_invalid_queryparam(self) -> None:
+        request = mock.Mock(GET={"bot_days": "bogus"})
+        bot_days = get_query_value_from_request(request, "bot_days", int, 10)
+
+        self.assertEqual(bot_days, 10)

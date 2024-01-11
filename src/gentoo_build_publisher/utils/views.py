@@ -4,8 +4,9 @@ from __future__ import annotations
 import datetime as dt
 import itertools
 from collections.abc import Mapping
-from typing import NamedTuple, TypeAlias, TypedDict
+from typing import Any, NamedTuple, TypeAlias, TypedDict
 
+from django.http import HttpRequest
 from django.utils import timezone
 
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
@@ -100,7 +101,9 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     machines = publisher.machines()
     machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
-        "bot_days": [datetime.strftime("%A") for datetime in bot_days],
+        "bot_days": [
+            datetime.strftime("%A" if days <= 7 else "%x") for datetime in bot_days
+        ],
         "build_count": 0,
         "builds_to_do": [],
         "build_packages": {},
@@ -147,15 +150,16 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     return context
 
 
-def create_machine_context(
+def create_machine_context(  # pylint: disable=too-many-arguments
     machine: str,
+    days: int,
     color_start: Color,
     color_end: Color,
     publisher: BuildPublisher,
     cache: CacheProtocol,
 ) -> MachineContext:
     """Return context for the machine view"""
-    bot_days = get_bot_days(timezone.localtime(), 7)
+    bot_days = get_bot_days(timezone.localtime(), days)
     builds_over_time = create_builds_over_time(bot_days, [machine])
     machine_info = MachineInfo(machine)
     assert machine_info.latest_build
@@ -172,7 +176,9 @@ def create_machine_context(
             builds_over_time[day_submitted][machine] += 1
 
     return {
-        "bot_days": [datetime.strftime("%A") for datetime in bot_days],
+        "bot_days": [
+            datetime.strftime("%A" if days <= 7 else "%x") for datetime in bot_days
+        ],
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": bot_to_list(builds_over_time),
@@ -379,3 +385,15 @@ def gradient(start: Color, end: Color, count: int) -> Gradient:
 def get_bot_days(start: dt.datetime, days: int) -> list[dt.date]:
     """Return initial builds over time (all 0s for the given start date and days"""
     return [start.date() - dt.timedelta(days=d) for d in range(days - 1, -1, -1)]
+
+
+def get_query_value_from_request(
+    request: HttpRequest, key: str, type_: type, fallback: int
+) -> Any:
+    """Return given query value from the query params"""
+    if (query_value := request.GET.get(key, _NOT_FOUND)) == _NOT_FOUND:
+        return fallback
+    try:
+        return type_(query_value)
+    except ValueError:
+        return fallback

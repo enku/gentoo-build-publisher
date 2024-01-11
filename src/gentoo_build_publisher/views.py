@@ -19,6 +19,7 @@ from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.views import (
     create_dashboard_context,
     create_machine_context,
+    get_query_value_from_request,
 )
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
@@ -71,9 +72,10 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
+    days = get_query_value_from_request(request, "bot_days", int, 7)
     context = create_dashboard_context(
         timezone.localtime(),
-        7,
+        days,
         timezone.get_current_timezone(),
         (color_start, color_end),
         BuildPublisher.get_publisher(),
@@ -90,7 +92,10 @@ def machines(request: HttpRequest, machine: str) -> HttpResponse:
     color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
     color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
     publisher = BuildPublisher.get_publisher()
-    context = create_machine_context(machine, color_start, color_end, publisher, cache)
+    days = get_query_value_from_request(request, "bot_days", int, 7)
+    context = create_machine_context(
+        machine, days, color_start, color_end, publisher, cache
+    )
 
     return render(request, "gentoo_build_publisher/machine/main.html", context)
 
