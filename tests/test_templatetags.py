@@ -98,7 +98,7 @@ class BuildRowTests(TemplateTagTests):
         expected = """\
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
-    <h6 class="my-0">babette</h6>
+    <h6 class="my-0"><a class="machine-link" href="/machines/babette/">babette</a></h6>
     <small class="text-muted">1094</small>
   </div>
   <span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='x11-libs/libdrm-2.4.118&lt;br/&gt;x11-misc/xkeyboard-config-2.40-r1' data-bs-html="true">2 packages</span>
