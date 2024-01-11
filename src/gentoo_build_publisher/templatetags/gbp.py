@@ -3,7 +3,10 @@ import datetime as dt
 from typing import Any
 
 from django import template
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
+from gentoo_build_publisher import views
 from gentoo_build_publisher.common import Build, Package
 from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
@@ -129,6 +132,13 @@ def machine_build_row(build: Build) -> dict[str, Any]:
         "package_count": len(packages_built),
         "packages_built": packages_built_str,
     }
+
+
+@register.filter(is_safe=True)
+def machine_link(machine: str) -> str:
+    """Render machine link (anchor tag)"""
+    path = reverse(views.machines, args=(machine,))
+    return mark_safe(f'<a class="machine-link" href="{path}">{machine}</a>')
 
 
 @register.inclusion_tag("gentoo_build_publisher/machine/package_row.html")

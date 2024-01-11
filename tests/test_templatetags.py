@@ -160,3 +160,9 @@ class RoundRectTests(TemplateTagTests):
 
         result = self.render(text="lighthouse", title="This is a test", color="#572554")
         self.assertEqual(result, expected)
+
+
+class MachineLinkTests(TemplateTagTests):
+    def test_renders_link(self) -> None:
+        expected = '<a class="machine-link" href="/machines/lighthouse/">lighthouse</a>'
+        self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
