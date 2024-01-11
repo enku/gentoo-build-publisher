@@ -17,7 +17,7 @@ function buildsOverTimeChart() {
     responsive: true,
     options: {
       plugins: { legend: { display: false } },
-      scales: { x: { stacked: true }, y: { stacked: true } },
+      scales: { y: { ticks: { stepSize: 1 } } },
     },
   };
   const botCtx = document.getElementById('botChart');
