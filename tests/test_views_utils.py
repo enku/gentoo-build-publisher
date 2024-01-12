@@ -14,13 +14,14 @@ from gentoo_build_publisher.utils.views import (
     bot_to_list,
     create_dashboard_context,
     get_build_summary,
+    get_machine_recent_packages,
     get_metadata,
     get_packages,
     get_query_value_from_request,
 )
 
 from . import QuickCache, TestCase
-from .factories import BuildFactory, BuildRecordFactory
+from .factories import BuildFactory, BuildRecordFactory, package_factory
 
 
 class GetPackagesTestCase(TestCase):
@@ -277,3 +278,28 @@ class GetQueryValueFromRequestTests(TestCase):
         bot_days = get_query_value_from_request(request, "bot_days", int, 10)
 
         self.assertEqual(bot_days, 10)
+
+
+class GetMachinesRecentPackagesTests(TestCase):
+    def test(self) -> None:
+        packages = []
+        pf = package_factory()
+        builds = BuildFactory.build_batch(3, machine="babette")
+        for build in builds:
+            for _ in range(4):
+                package = next(pf)
+                packages.append(package)
+                self.artifact_builder.build(build, package)
+            self.publisher.pull(build)
+
+        machine_info = MachineInfo("babette")
+
+        recent_packages = get_machine_recent_packages(
+            machine_info, self.publisher, QuickCache()
+        )
+
+        self.assertEqual(len(recent_packages), 10)
+        pkgs_sorted = sorted(
+            recent_packages, key=lambda pkg: pkg.build_time, reverse=True
+        )
+        self.assertEqual(recent_packages, pkgs_sorted)

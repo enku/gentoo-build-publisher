@@ -6,6 +6,8 @@ import tarfile
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from itertools import product
+from typing import Generator
 
 import factory
 
@@ -273,3 +275,11 @@ class ArtifactFactory:
         self.timer += seconds
 
         return self.timer
+
+
+def package_factory() -> Generator[str, None, None]:
+    cats = ("dev-python", "media-libs", "app-admin", "net-im")
+    pkgs = ("markdown", "mesa", "pycups", "gcc", "ffmpeg")
+
+    for cat, pkg in product(cats, pkgs):
+        yield f"{cat}/{pkg}-1.0"
