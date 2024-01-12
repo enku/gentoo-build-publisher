@@ -137,6 +137,24 @@ class DictOfValuesTests(TestCase):
         self.assertEqual(result, {"this": 0, "that": 0, "the": 0, "other": 0})
 
 
+class DictOfDictToListOfListsTests(TestCase):
+    """Tests for the bot_to_list function"""
+
+    def test(self) -> None:
+        dod = {
+            (2023, 1, 24): {"foo": 4, "bar": 0},
+            (2023, 1, 25): {"foo": 0, "bar": 4},
+            (2023, 1, 26): {"foo": 4, "bar": 4},
+        }
+
+        lst = utils.dict_of_dicts_to_list_of_lists(dod)
+
+        self.assertEqual(lst, [[4, 0, 4], [0, 4, 4]])
+
+    def test_when_empty(self) -> None:
+        self.assertEqual(utils.dict_of_dicts_to_list_of_lists({}), [])
+
+
 @contextmanager
 def returns_response(status_code: int) -> Generator[mock.MagicMock, None, None]:
     patch = mock.patch.object(requests.api, "request")

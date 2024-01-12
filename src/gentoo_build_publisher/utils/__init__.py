@@ -6,7 +6,16 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import Any, Callable, Collection, Hashable, Iterable, NamedTuple, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Hashable,
+    Iterable,
+    Mapping,
+    NamedTuple,
+    TypeVar,
+)
 
 import requests
 from yarl import URL
@@ -163,3 +172,26 @@ KT = TypeVar("KT", bound=Hashable)
 def dict_of_values(keys: Iterable[KT], factory: Callable[[], VT]) -> dict[KT, VT]:
     """Return a dict of given keys and values of the given type"""
     return {key: factory() for key in keys}
+
+
+def dict_of_dicts_to_list_of_lists(
+    dict_of_dicts: Mapping[Any, Mapping[KT, VT]]
+) -> list[list[VT]]:
+    """Return dict of dict as a list of lists
+
+    Chart APIs like these things.
+    """
+    if not (outer_keys := sorted(dict_of_dicts.keys())):
+        return []
+
+    inner_keys = [*dict_of_dicts[outer_keys[0]].keys()]
+    list_of_lists = []
+
+    for inner_key in inner_keys:
+        values = []
+
+        for key in outer_keys:
+            values.append(dict_of_dicts[key][inner_key])
+        list_of_lists.append(values)
+
+    return list_of_lists

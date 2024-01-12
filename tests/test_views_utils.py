@@ -11,7 +11,6 @@ from gentoo_build_publisher.utils.views import (
     DashboardContext,
     ViewInputContext,
     add_package_metadata,
-    bot_to_list,
     create_dashboard_context,
     get_build_summary,
     get_machine_recent_packages,
@@ -178,26 +177,6 @@ class GetMetadataTestCase(TestCase):
         metadata = get_metadata(build, self.publisher, cache)
 
         self.assertEqual(metadata, [1, 2, 3])
-
-
-class BOTToListTestCase(TestCase):
-    """Tests for the bot_to_list function"""
-
-    def test(self) -> None:
-        bot = {
-            dt.date(2023, 1, 24): {"polaris": 4, "babette": 0},
-            dt.date(2023, 1, 25): {"polaris": 0, "babette": 4},
-            dt.date(2023, 1, 26): {"polaris": 4, "babette": 4},
-        }
-
-        lst = bot_to_list(bot)
-
-        self.assertEqual(lst, [[4, 0, 4], [0, 4, 4]])
-
-    def test_when_empty(self) -> None:
-        lst = bot_to_list({})
-
-        self.assertEqual(lst, [])
 
 
 class CreateDashboardContext(TestCase):

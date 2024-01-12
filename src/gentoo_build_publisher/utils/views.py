@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple, TypeAlias, TypedDict
 
@@ -13,7 +12,11 @@ from django.utils import timezone
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.utils import Color, dict_of_values
+from gentoo_build_publisher.utils import (
+    Color,
+    dict_of_dicts_to_list_of_lists,
+    dict_of_values,
+)
 from gentoo_build_publisher.utils.time import lapsed
 
 BuildID: TypeAlias = str  # pylint: disable=invalid-name
@@ -157,7 +160,7 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
     context["unpublished_builds_count"] = len(
         [build for build in context["latest_builds"] if not publisher.published(build)]
     )
-    context["builds_over_time"] = bot_to_list(builds_over_time)
+    context["builds_over_time"] = dict_of_dicts_to_list_of_lists(builds_over_time)
 
     return context
 
@@ -195,7 +198,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "bot_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
-        "builds_over_time": bot_to_list(builds_over_time),
+        "builds_over_time": dict_of_dicts_to_list_of_lists(builds_over_time),
         "gradient_colors": gradient_colors(*input_context.color_range, 10),
         "latest_build": machine_info.latest_build,
         "machine": machine,
@@ -280,32 +283,6 @@ def get_build_summary(
             built_recently.append(latest_build)
 
     return BuildSummary(latest_builds, built_recently, build_packages, latest_published)
-
-
-def bot_to_list(
-    builds_over_time: Mapping[dt.date, Mapping[MachineName, int]],
-) -> list[list[int]]:
-    """Return builds_over_time dict of lists into a list of lists
-
-    Each list is a list for each machine in `machines`
-    """
-    list_of_lists = []
-    days = [*builds_over_time.keys()]
-    days.sort()
-
-    if not days:
-        return []
-
-    machines = [*builds_over_time[days[0]].keys()]
-
-    for machine in machines:
-        tally = []
-
-        for day in days:
-            tally.append(builds_over_time[day][machine])
-        list_of_lists.append(tally)
-
-    return list_of_lists
 
 
 def get_metadata(
