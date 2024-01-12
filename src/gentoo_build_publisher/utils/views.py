@@ -13,7 +13,7 @@ from django.utils import timezone
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.utils import Color
+from gentoo_build_publisher.utils import Color, dict_of_values
 from gentoo_build_publisher.utils.time import lapsed
 
 BuildID: TypeAlias = str  # pylint: disable=invalid-name
@@ -380,15 +380,9 @@ def create_builds_over_time(
 
     All the machines for all the days will have 0 builds.
     """
-    bot: dict[dt.date, dict[str, int]] = {}
-
-    for day in get_bot_days(start, days):
-        days_builds = bot[day] = {}
-
-        for machine in machines:
-            days_builds[machine] = 0
-
-    return bot
+    return dict_of_values(
+        get_bot_days(start, days), lambda: dict_of_values(machines, int)
+    )
 
 
 def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
