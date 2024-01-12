@@ -169,7 +169,10 @@ class MachineLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
 
 
-@mock.patch("gentoo_build_publisher.templatetags.gbp", dt.datetime(2024, 1, 11, 20, 54))
+@mock.patch(
+    "gentoo_build_publisher.templatetags.gbp.dt_now",
+    mock.Mock(return_value=dt.datetime(2024, 1, 11, 20, 54)),
+)
 class DisplayTimeTests(TemplateTagTests):
     template = "{{ timestamp|display_time }}"
 

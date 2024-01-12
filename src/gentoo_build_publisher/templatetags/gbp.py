@@ -12,6 +12,7 @@ from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import time
 
+dt_now = dt.datetime.now
 register = template.Library()
 
 
@@ -49,7 +50,7 @@ def numberize(val: int, precision: int = 2) -> str:
 def display_time(timestamp: dt.datetime) -> str:
     """Display the timestamp according to how long ago it was"""
     timestamp = timestamp.astimezone()
-    now = dt.datetime.now().astimezone()
+    now = dt_now().astimezone()
 
     if time.is_same_day(timestamp, now):
         return time.as_time(timestamp)
