@@ -78,7 +78,7 @@ def get_version() -> str:
     return version("gentoo_build_publisher")
 
 
-def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".xpak") -> str:
+def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".gpkg.tar") -> str:
     """Return the relative path of the would-be package"""
     if not (cpv_match := CPV.match(cpv)):
         raise ValueError(cpv)

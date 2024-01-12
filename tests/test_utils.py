@@ -65,7 +65,7 @@ class CPVToPathTestCase(TestCase):
         cpv = "app-vim/gentoo-syntax-1"
         path = utils.cpv_to_path(cpv)
 
-        self.assertEqual("app-vim/gentoo-syntax/gentoo-syntax-1-1.xpak", path)
+        self.assertEqual("app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar", path)
 
     def test_raises_valueerror_when_not_valid_cpv(self) -> None:
         with self.assertRaises(ValueError):

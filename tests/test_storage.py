@@ -252,7 +252,7 @@ class StorageGetPackagesTestCase(TestCase):
         package = packages[3]
         self.assertEqual(package.cpv, "app-crypt/gpgme-1.14.0")
         self.assertEqual(package.repo, "gentoo")
-        self.assertEqual(package.path, "app-crypt/gpgme/gpgme-1.14.0-1.xpak")
+        self.assertEqual(package.path, "app-crypt/gpgme/gpgme-1.14.0-1.gpkg.tar")
         self.assertEqual(package.build_id, 1)
         self.assertEqual(package.size, 484)
         self.assertEqual(package.build_time, 0)
@@ -291,7 +291,7 @@ class StorageGetMetadataTestCase(TestCase):
                     Package(
                         cpv="dev-libs/cyrus-sasl-2.1.28-r1",
                         repo="gentoo",
-                        path="dev-libs/cyrus-sasl/cyrus-sasl-2.1.28-r1-1.xpak",
+                        path="dev-libs/cyrus-sasl/cyrus-sasl-2.1.28-r1-1.gpkg.tar",
                         build_id=1,
                         size=841,
                         build_time=self.timestamp + 10,
@@ -299,7 +299,7 @@ class StorageGetMetadataTestCase(TestCase):
                     Package(
                         cpv="net-libs/nghttp2-1.47.0",
                         repo="gentoo",
-                        path="net-libs/nghttp2/nghttp2-1.47.0-1.xpak",
+                        path="net-libs/nghttp2/nghttp2-1.47.0-1.gpkg.tar",
                         build_id=1,
                         size=529,
                         build_time=self.timestamp + 20,
@@ -307,7 +307,7 @@ class StorageGetMetadataTestCase(TestCase):
                     Package(
                         cpv="sys-libs/glibc-2.34-r9",
                         repo="gentoo",
-                        path="sys-libs/glibc/glibc-2.34-r9-1.xpak",
+                        path="sys-libs/glibc/glibc-2.34-r9-1.gpkg.tar",
                         build_id=1,
                         size=484,
                         build_time=self.timestamp + 30,

@@ -41,7 +41,7 @@ class ArtifactFactoryTestCase(TestCase):
         expected = Package(
             "app-vim/gentoo-syntax-1",
             "marduk",
-            "app-vim/gentoo-syntax/gentoo-syntax-1-35.xpak",
+            "app-vim/gentoo-syntax/gentoo-syntax-1-35.gpkg.tar",
             35,
             529,
             timer + 10,
@@ -108,7 +108,7 @@ class ArtifactFactoryTestCase(TestCase):
                     Package(
                         "app-vim/gentoo-syntax-1",
                         "gentoo",
-                        "app-vim/gentoo-syntax/gentoo-syntax-1-1.xpak",
+                        "app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",
                         1,
                         529,
                         self.builder.timer,
