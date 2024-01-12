@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import itertools
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Any, NamedTuple, TypeAlias, TypedDict
 
 from django.http import HttpRequest
@@ -88,22 +89,31 @@ class MachineContext(TypedDict):
     storage: int
 
 
-def create_dashboard_context(  # pylint: disable=too-many-arguments
-    start: dt.datetime,
-    days: int,
-    tzinfo: dt.tzinfo,
-    color_range: tuple[Color, Color],
-    publisher: BuildPublisher,
-    cache: CacheProtocol,
-) -> DashboardContext:
+@dataclass(frozen=True, kw_only=True)
+class ViewInputContext:
+    """Input context to generate output context"""
+
+    days: int
+    color_range: tuple[Color, Color]
+    publisher: BuildPublisher
+    cache: CacheProtocol
+    now: dt.datetime = field(default_factory=timezone.localtime)
+
+
+def days_strings(start: dt.datetime, days: int) -> list[str]:
+    """Return list of datetimes from start as strings"""
+    fmt = "%A" if days <= 7 else "%x"
+    return [datetime.strftime(fmt) for datetime in get_bot_days(start, days)]
+
+
+def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    bot_days = get_bot_days(start, days)
+    publisher = input_context.publisher
+    bot_days = get_bot_days(input_context.now, input_context.days)
     machines = publisher.machines()
     machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
-        "bot_days": [
-            datetime.strftime("%A" if days <= 7 else "%x") for datetime in bot_days
-        ],
+        "bot_days": days_strings(input_context.now, input_context.days),
         "build_count": 0,
         "builds_to_do": [],
         "build_packages": {},
@@ -111,10 +121,10 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
         "built_recently": [],
         "latest_builds": [],
         "latest_published": set(),
-        "gradient_colors": gradient(*color_range, len(machines)),
+        "gradient_colors": gradient_colors(*input_context.color_range, len(machines)),
         "machine_dist": [machine.build_count for machine in machines],
         "machines": [machine.machine for machine in machines],
-        "now": start,
+        "now": input_context.now,
         "package_count": 0,
         "recent_packages": {},
         "total_package_size": {machine.machine: 0 for machine in machines},
@@ -123,17 +133,19 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     records = itertools.chain(
         *(publisher.records.for_machine(machine.machine) for machine in machines)
     )
-    builds_over_time = create_builds_over_time(bot_days, [m.machine for m in machines])
+    builds_over_time = create_builds_over_time(
+        input_context.now, input_context.days, [m.machine for m in machines]
+    )
     for record in records:
         context["build_count"] += 1
         if not record.completed:
             context["builds_to_do"].append(record)
 
-        context = add_package_metadata(record, context, publisher, cache)
+        context = add_package_metadata(record, context, publisher, input_context.cache)
 
         assert record.submitted is not None
 
-        if (day_submitted := record.submitted.astimezone(tzinfo).date()) >= bot_days[0]:
+        if (day_submitted := record.submitted.astimezone().date()) >= bot_days[0]:
             builds_over_time[day_submitted][record.machine] += 1
 
     (
@@ -141,7 +153,7 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
         context["built_recently"],
         context["build_packages"],
         context["latest_published"],
-    ) = get_build_summary(start, machines, publisher, cache)
+    ) = get_build_summary(input_context.now, machines, publisher, input_context.cache)
     context["unpublished_builds_count"] = len(
         [build for build in context["latest_builds"] if not publisher.published(build)]
     )
@@ -150,39 +162,41 @@ def create_dashboard_context(  # pylint: disable=too-many-arguments
     return context
 
 
-def create_machine_context(  # pylint: disable=too-many-arguments
-    machine: str,
-    days: int,
-    color_start: Color,
-    color_end: Color,
-    publisher: BuildPublisher,
-    cache: CacheProtocol,
-) -> MachineContext:
+@dataclass(frozen=True, kw_only=True)
+class MachineInputContext(ViewInputContext):
+    """ViewInputContext for the machine view"""
+
+    machine: str
+
+
+def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    bot_days = get_bot_days(timezone.localtime(), days)
-    builds_over_time = create_builds_over_time(bot_days, [machine])
+    machine = input_context.machine
+    bot_days = get_bot_days(input_context.now, input_context.days)
+    builds_over_time = create_builds_over_time(
+        input_context.now, input_context.days, [machine]
+    )
     machine_info = MachineInfo(machine)
     assert machine_info.latest_build
     storage = 0
-    tzinfo = timezone.get_current_timezone()
-    recent_packages = get_machine_recent_packages(machine_info, publisher, cache)
+    recent_packages = get_machine_recent_packages(
+        machine_info, input_context.publisher, input_context.cache
+    )
 
     for build in machine_info.builds:
-        metadata = get_metadata(build, publisher, cache)
+        metadata = get_metadata(build, input_context.publisher, input_context.cache)
         if metadata and build.completed:
             storage += metadata.packages.size
         assert build.submitted is not None
-        if (day_submitted := build.submitted.astimezone(tzinfo).date()) >= bot_days[0]:
+        if (day_submitted := build.submitted.astimezone().date()) >= bot_days[0]:
             builds_over_time[day_submitted][machine] += 1
 
     return {
-        "bot_days": [
-            datetime.strftime("%A" if days <= 7 else "%x") for datetime in bot_days
-        ],
+        "bot_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": bot_to_list(builds_over_time),
-        "gradient_colors": gradient(color_start, color_end, 10),
+        "gradient_colors": gradient_colors(*input_context.color_range, 10),
         "latest_build": machine_info.latest_build,
         "machine": machine,
         "machines": [machine],
@@ -360,7 +374,7 @@ def get_packages(
 
 
 def create_builds_over_time(
-    days: list[dt.date], machines: list[MachineName]
+    start: dt.datetime, days: int, machines: list[MachineName]
 ) -> dict[dt.date, dict[str, int]]:
     """Return an "empty" builds_over_time dict given the days and machines
 
@@ -368,13 +382,18 @@ def create_builds_over_time(
     """
     bot: dict[dt.date, dict[str, int]] = {}
 
-    for day in days:
+    for day in get_bot_days(start, days):
         days_builds = bot[day] = {}
 
         for machine in machines:
             days_builds[machine] = 0
 
     return bot
+
+
+def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
+    """Return a list of size color strings (#rrggbb) as a gradient from start to stop"""
+    return gradient(start, stop, size)
 
 
 def gradient(start: Color, end: Color, count: int) -> Gradient:

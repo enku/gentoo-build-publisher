@@ -9,6 +9,7 @@ from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.views import (
     DashboardContext,
+    ViewInputContext,
     add_package_metadata,
     bot_to_list,
     create_dashboard_context,
@@ -206,7 +207,6 @@ class CreateDashboardContext(TestCase):
     def test(self) -> None:
         start = dt.datetime.now(tz=dt.UTC)
         days = 2
-        tzinfo = dt.UTC
         color_range = (Color(255, 0, 0), Color(0, 0, 255))
         publisher = self.publisher
         cache = QuickCache()
@@ -224,9 +224,14 @@ class CreateDashboardContext(TestCase):
         polaris3 = BuildRecordFactory(machine="polaris")
         publisher.records.save(polaris3)
 
-        cxt = create_dashboard_context(
-            start, days, tzinfo, color_range, publisher, cache
+        input_context = ViewInputContext(
+            cache=cache,
+            color_range=color_range,
+            days=days,
+            now=start,
+            publisher=publisher,
         )
+        cxt = create_dashboard_context(input_context)
         self.assertEqual(len(cxt["bot_days"]), 2)
         self.assertEqual(cxt["build_count"], 4)
         self.assertEqual(

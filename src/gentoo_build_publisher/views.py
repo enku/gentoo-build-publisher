@@ -10,13 +10,14 @@ from django.core.cache import cache
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import URLPattern, path
-from django.utils import timezone
 
 from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.views import (
+    MachineInputContext,
+    ViewInputContext,
     create_dashboard_context,
     create_machine_context,
     get_query_value_from_request,
@@ -70,17 +71,13 @@ def experimental(view_func: View) -> View:
 @view("", name="dashboard")
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
-    color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
-    color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
-    days = get_query_value_from_request(request, "bot_days", int, 7)
-    context = create_dashboard_context(
-        timezone.localtime(),
-        days,
-        timezone.get_current_timezone(),
-        (color_start, color_end),
-        BuildPublisher.get_publisher(),
-        cache,
+    input_context = ViewInputContext(
+        days=get_query_value_from_request(request, "bot_days", int, 7),
+        color_range=color_range_from_settings(),
+        publisher=BuildPublisher.get_publisher(),
+        cache=cache,
     )
+    context = create_dashboard_context(input_context)
 
     return render(request, "gentoo_build_publisher/dashboard/main.html", context)
 
@@ -89,13 +86,14 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 @experimental
 def machines(request: HttpRequest, machine: str) -> HttpResponse:
     """Response for the machines page"""
-    color_start = Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117)))
-    color_end = Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236)))
-    publisher = BuildPublisher.get_publisher()
-    days = get_query_value_from_request(request, "bot_days", int, 7)
-    context = create_machine_context(
-        machine, days, color_start, color_end, publisher, cache
+    input_context = MachineInputContext(
+        machine=machine,
+        days=get_query_value_from_request(request, "bot_days", int, 7),
+        color_range=color_range_from_settings(),
+        publisher=BuildPublisher.get_publisher(),
+        cache=cache,
     )
+    context = create_machine_context(input_context)
 
     return render(request, "gentoo_build_publisher/machine/main.html", context)
 
@@ -157,3 +155,11 @@ def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
     dirname = machine if not tag_name else f"{build.machine}{TAG_SYM}{tag_name}"
 
     return build, tag_name, dirname
+
+
+def color_range_from_settings() -> tuple[Color, Color]:
+    """Return a color tuple for gradients and such based on Django settings"""
+    return (
+        Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117))),
+        Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236))),
+    )
