@@ -1,7 +1,8 @@
 """Tests for custom template tags"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
+import datetime as dt
 from typing import Any
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from django.template import Context, Template, TemplateSyntaxError
 
@@ -166,3 +167,23 @@ class MachineLinkTests(TemplateTagTests):
     def test_renders_link(self) -> None:
         expected = '<a class="machine-link" href="/machines/lighthouse/">lighthouse</a>'
         self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
+
+
+@mock.patch("gentoo_build_publisher.templatetags.gbp", dt.datetime(2024, 1, 11, 20, 54))
+class DisplayTimeTests(TemplateTagTests):
+    template = "{{ timestamp|display_time }}"
+
+    def test_same_day(self) -> None:
+        timestamp = dt.datetime(2024, 1, 11, 8, 54).astimezone()
+
+        self.assertEqual(self.render(timestamp=timestamp), "08:54:00")
+
+    def test_previous_day(self) -> None:
+        timestamp = dt.datetime(2024, 1, 10, 8, 54).astimezone()
+
+        self.assertEqual(self.render(timestamp=timestamp), "Jan 10 08:54")
+
+    def test_previous_week(self) -> None:
+        timestamp = dt.datetime(2024, 1, 4, 8, 54).astimezone()
+
+        self.assertEqual(self.render(timestamp=timestamp), "Jan 4")
