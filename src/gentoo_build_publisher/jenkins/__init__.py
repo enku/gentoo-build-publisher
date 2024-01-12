@@ -281,7 +281,7 @@ class Jenkins:
         if not props:
             return {}
 
-        if len(props) != 1:
+        if len(props) != 1:  # pragma: no cover
             raise ValueError("Unexpected number of parameterDefinitions", props)
 
         return {
