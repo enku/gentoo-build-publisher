@@ -130,6 +130,13 @@ class RequestAndRaiseTests(TestCase):
         self.assertEqual(cxt.exception.response.status_code, 401)
 
 
+class DictOfValuesTests(TestCase):
+    def test(self) -> None:
+        keys = ["this", "that", "the", "other"]
+        result = utils.dict_of_values(keys, int)
+        self.assertEqual(result, {"this": 0, "that": 0, "the": 0, "other": 0})
+
+
 @contextmanager
 def returns_response(status_code: int) -> Generator[mock.MagicMock, None, None]:
     patch = mock.patch.object(requests.api, "request")

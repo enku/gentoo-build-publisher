@@ -6,7 +6,7 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import Any, Callable, Collection, NamedTuple, TypeVar
+from typing import Any, Callable, Collection, Hashable, Iterable, NamedTuple, TypeVar
 
 import requests
 from yarl import URL
@@ -154,3 +154,12 @@ def request_and_raise(
         response.raise_for_status()
 
     return response
+
+
+VT = TypeVar("VT")
+KT = TypeVar("KT", bound=Hashable)
+
+
+def dict_of_values(keys: Iterable[KT], factory: Callable[[], VT]) -> dict[KT, VT]:
+    """Return a dict of given keys and values of the given type"""
+    return {key: factory() for key in keys}
