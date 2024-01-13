@@ -86,11 +86,16 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 @experimental
 def machines(request: HttpRequest, machine: str) -> HttpResponse:
     """Response for the machines page"""
+    publisher = BuildPublisher.get_publisher()
+
+    if not next(iter(publisher.records.for_machine(machine)), None):
+        raise Http404("No builds for this machine")
+
     input_context = MachineInputContext(
         machine=machine,
         days=get_query_value_from_request(request, "bot_days", int, 7),
         color_range=color_range_from_settings(),
-        publisher=BuildPublisher.get_publisher(),
+        publisher=publisher,
         cache=cache,
     )
     context = create_machine_context(input_context)

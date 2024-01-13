@@ -158,3 +158,9 @@ class MachineViewTests(TestCase):
         response = self.client.get("/machines/lighthouse/")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_on_nonbuild_machines(self) -> None:
+        with self.settings(DEBUG=True):
+            response = self.client.get("/machines/bogus/")
+
+        self.assertEqual(response.status_code, 404)
