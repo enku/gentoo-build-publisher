@@ -175,24 +175,27 @@ class MachineInputContext(ViewInputContext):
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
     machine = input_context.machine
-    start = input_context.now - dt.timedelta(days=input_context.days)
+    bot_days = get_bot_days(input_context.now, input_context.days)
     builds_over_time = create_builds_over_time(
         input_context.now, input_context.days, [machine]
     )
     machine_info = MachineInfo(machine)
     assert machine_info.latest_build
     storage = 0
+    recent_packages = get_machine_recent_packages(
+        machine_info, input_context.publisher, input_context.cache
+    )
 
     for build in machine_info.builds:
         metadata = get_metadata(build, input_context.publisher, input_context.cache)
         if metadata and build.completed:
             storage += metadata.packages.size
         assert build.submitted is not None
-        if (day_submitted := build.submitted.astimezone().date()) >= start.date():
+        if (day_submitted := build.submitted.astimezone().date()) >= bot_days[0]:
             builds_over_time[day_submitted][machine] += 1
 
     return {
-        "bot_days": days_strings(start, input_context.days),
+        "bot_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": dict_of_dicts_to_list_of_lists(builds_over_time),
@@ -201,9 +204,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "machine": machine,
         "machines": [machine],
         "published_build": machine_info.published_build,
-        "recent_packages": get_machine_recent_packages(
-            machine_info, input_context.publisher, input_context.cache
-        ),
+        "recent_packages": recent_packages,
         "storage": storage,
     }
 
