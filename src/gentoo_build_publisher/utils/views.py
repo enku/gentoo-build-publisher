@@ -304,7 +304,9 @@ def get_machine_recent_packages(
         if len(packages) >= max_count:
             break
 
-    return sorted(packages, key=lambda package: package.build_time, reverse=True)[:10]
+    return sorted(packages, key=lambda package: package.build_time, reverse=True)[
+        :max_count
+    ]
 
 
 def get_packages(

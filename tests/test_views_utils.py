@@ -274,10 +274,10 @@ class GetMachinesRecentPackagesTests(TestCase):
         machine_info = MachineInfo("babette")
 
         recent_packages = get_machine_recent_packages(
-            machine_info, self.publisher, QuickCache()
+            machine_info, self.publisher, QuickCache(), max_count=11
         )
 
-        self.assertEqual(len(recent_packages), 10)
+        self.assertEqual(len(recent_packages), 11)
         pkgs_sorted = sorted(
             recent_packages, key=lambda pkg: pkg.build_time, reverse=True
         )
