@@ -34,44 +34,20 @@ class DashboardContext(TypedDict):
     """Definition for the Dashboard context"""
 
     chart_days: list[str]
-
-    # Total # of builds
     build_count: int
-
-    # Builds not yet completed
-    builds_to_do: list[BuildRecord]
-
-    # Each machine gets it's own #rrggbb color
+    builds_not_completed: list[BuildRecord]
     gradient_colors: Gradient
-
-    machine_dist: list[int]
+    builds_per_machine: list[int]
     machines: list[str]
     now: dt.datetime
-
-    # Total number of packages for all machines
     package_count: int
-
-    # list of packages for a build, key is the str(build)
     build_packages: dict[str, list[str]]
-
-    # set of latest_packages that are published
     latest_published: set[BuildRecord]
-
-    # recently built packages (for all machines)
     recent_packages: dict[str, set[str]]
-
-    # Each machine's total package size
-    total_package_size: dict[str, int]
-
-    # List of the latest builds for each machine, if the machine has one
+    total_package_size_per_machine: dict[str, int]
     latest_builds: list[BuildRecord]
-
-    # List of builds from the last 24 hours
     built_recently: list[BuildRecord]
-
     builds_over_time: list[list[int]]
-
-    # Total count machines with unpublished latest builds
     unpublished_builds_count: int
 
 
@@ -117,19 +93,19 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
     context: DashboardContext = {
         "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": 0,
-        "builds_to_do": [],
+        "builds_not_completed": [],
         "build_packages": {},
         "builds_over_time": [],
         "built_recently": [],
         "latest_builds": [],
         "latest_published": set(),
         "gradient_colors": gradient_colors(*input_context.color_range, len(machines)),
-        "machine_dist": [machine.build_count for machine in machines],
+        "builds_per_machine": [machine.build_count for machine in machines],
         "machines": [machine.machine for machine in machines],
         "now": input_context.now,
         "package_count": 0,
         "recent_packages": {},
-        "total_package_size": {machine.machine: 0 for machine in machines},
+        "total_package_size_per_machine": {machine.machine: 0 for machine in machines},
         "unpublished_builds_count": 0,
     }
     records = itertools.chain(
@@ -141,7 +117,7 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
     for record in records:
         context["build_count"] += 1
         if not record.completed:
-            context["builds_to_do"].append(record)
+            context["builds_not_completed"].append(record)
 
         context = add_package_metadata(record, context, publisher, input_context.cache)
 
@@ -223,13 +199,15 @@ def add_package_metadata(
     publisher: BuildPublisher,
     cache: CacheProtocol,
 ) -> DashboardContext:
-    """Update `context` with `package_count` and `total_package_size`"""
+    """Update `context` with `package_count` and `total_package_size_per_machine`"""
     context = context.copy()
     metadata = get_metadata(record, publisher, cache)
 
     if metadata and record.completed:
         context["package_count"] += metadata.packages.total
-        context["total_package_size"][record.machine] += metadata.packages.size
+        context["total_package_size_per_machine"][
+            record.machine
+        ] += metadata.packages.size
 
         if (
             record.submitted
@@ -243,7 +221,9 @@ def add_package_metadata(
     else:
         packages = get_packages(record, publisher, cache)
         context["package_count"] += len(packages)
-        context["total_package_size"][record.machine] += sum(i.size for i in packages)
+        context["total_package_size_per_machine"][record.machine] += sum(
+            i.size for i in packages
+        )
 
     return context
 

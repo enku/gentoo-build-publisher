@@ -63,7 +63,7 @@ class AddPackageMetadataTestCase(TestCase):
                 "now": now,
                 "package_count": 0,
                 "recent_packages": {"dev-vcs/git-2.34.1": {"gbp"}},
-                "total_package_size": {"babette": 0},
+                "total_package_size_per_machine": {"babette": 0},
             },
         )
         new_context = add_package_metadata(record, context, self.publisher, cache)
@@ -75,7 +75,7 @@ class AddPackageMetadataTestCase(TestCase):
                 "dev-vcs/git-2.34.1": {"babette", "gbp"},
                 "app-portage/gentoolkit-0.5.1-r1": {"babette"},
             },
-            "total_package_size": {"babette": 3238},
+            "total_package_size_per_machine": {"babette": 3238},
         }
 
         self.assertEqual(new_context, expected)
@@ -92,7 +92,7 @@ class AddPackageMetadataTestCase(TestCase):
                 "now": now,
                 "package_count": 0,
                 "recent_packages": {},
-                "total_package_size": {"babette": 0},
+                "total_package_size_per_machine": {"babette": 0},
             },
         )
         new_context = add_package_metadata(record, context, self.publisher, cache)
@@ -101,7 +101,7 @@ class AddPackageMetadataTestCase(TestCase):
             "now": now,
             "package_count": 0,
             "recent_packages": {},
-            "total_package_size": {"babette": 0},
+            "total_package_size_per_machine": {"babette": 0},
         }
 
         self.assertEqual(new_context, expected)
@@ -225,7 +225,7 @@ class CreateDashboardContext(TestCase):
             },
         )
         self.assertEqual(cxt["gradient_colors"], ["#ff0000", "#0000ff"])
-        self.assertEqual(cxt["machine_dist"], [3, 1])
+        self.assertEqual(cxt["builds_per_machine"], [3, 1])
         self.assertEqual(cxt["machines"], ["polaris", "lighthouse"])
         self.assertEqual(cxt["now"], start)
         self.assertEqual(cxt["package_count"], 14)

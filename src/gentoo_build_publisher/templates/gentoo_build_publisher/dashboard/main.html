@@ -9,11 +9,11 @@
 {% endblock %}
 
 {% block scripts %}
-  {{ machine_dist|json_script:'machineDist' }}
+  {{ builds_per_machine|json_script:'machineDist' }}
   {{ builds_over_time|json_script:'bot' }}
   {{ machines|json_script:'machines' }}
   {{ chart_days|json_script:'chartDays' }}
   {{ gradient_colors|json_script:'gradientColors' }}
-  {{ total_package_size|json_script:'packageSizes' }}
+  {{ total_package_size_per_machine|json_script:'packageSizes' }}
   <script src="{% static 'gbp/dashboard.js' %}"></script>
 {% endblock %}
