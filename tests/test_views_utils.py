@@ -4,7 +4,7 @@ import datetime as dt
 from typing import cast
 from unittest import mock
 
-from gentoo_build_publisher.common import Content
+from gentoo_build_publisher.common import Build, Content
 from gentoo_build_publisher.publisher import MachineInfo
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.views import (
@@ -260,15 +260,24 @@ class GetQueryValueFromRequestTests(TestCase):
 
 
 class GetMachinesRecentPackagesTests(TestCase):
-    def test(self) -> None:
-        packages = []
+    def create_builds_and_packages(
+        self, machine: str, number_of_builds: int, pkgs_per_build: int
+    ) -> list[Build]:
+        builds: list[Build] = BuildFactory.build_batch(
+            number_of_builds, machine=machine
+        )
         pf = package_factory()
-        builds = BuildFactory.build_batch(3, machine="babette")
+
         for build in builds:
-            for _ in range(4):
+            for _ in range(pkgs_per_build):
                 package = next(pf)
-                packages.append(package)
                 self.artifact_builder.build(build, package)
+
+        return builds
+
+    def test(self) -> None:
+        builds = self.create_builds_and_packages("babette", 3, 4)
+        for build in builds:
             self.publisher.pull(build)
 
         machine_info = MachineInfo("babette")
@@ -276,9 +285,27 @@ class GetMachinesRecentPackagesTests(TestCase):
         recent_packages = get_machine_recent_packages(
             machine_info, self.publisher, QuickCache(), max_count=11
         )
-
         self.assertEqual(len(recent_packages), 11)
+
         pkgs_sorted = sorted(
             recent_packages, key=lambda pkg: pkg.build_time, reverse=True
         )
         self.assertEqual(recent_packages, pkgs_sorted)
+
+    def test_no_builds(self) -> None:
+        machine_info = MachineInfo("babette")
+        recent_packages = get_machine_recent_packages(
+            machine_info, self.publisher, QuickCache()
+        )
+        self.assertEqual(len(recent_packages), 0)
+
+    def test_build_not_pulled(self) -> None:
+        [build] = self.create_builds_and_packages("babette", 1, 4)
+        publisher = self.publisher
+        publisher.record(build).save(publisher.records)
+        machine_info = MachineInfo("babette")
+
+        recent_packages = get_machine_recent_packages(
+            machine_info, self.publisher, QuickCache()
+        )
+        self.assertEqual(len(recent_packages), 0)
