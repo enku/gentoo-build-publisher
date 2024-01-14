@@ -6,7 +6,7 @@
   {% include "gentoo_build_publisher/machine/row3.html" %}
 {% endblock %}
 {% block scripts %}
-  {{ bot_days|json_script:'botDays' }}
+  {{ chart_days|json_script:'chartDays' }}
   {{ builds_over_time|json_script:'bot' }}
   {{ gradient_colors|json_script:'gradientColors' }}
   {{ machines|json_script:'machines' }}

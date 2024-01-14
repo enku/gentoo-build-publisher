@@ -37,7 +37,7 @@ function machineDistributionChart() {
 
 function buildsOverTimeChart() {
   const bot = JSON.parse(document.getElementById('bot').textContent);
-  const botDays = JSON.parse(document.getElementById('botDays').textContent);
+  const chartDays = JSON.parse(document.getElementById('chartDays').textContent);
   const datasets = [];
 
   for (let i = 0; i < bot.length; i += 1) {
@@ -45,7 +45,7 @@ function buildsOverTimeChart() {
   }
   const botConfig = {
     type: 'bar',
-    data: { labels: botDays, datasets },
+    data: { labels: chartDays, datasets },
     responsive: true,
     options: {
       plugins: { legend: { display: false } },

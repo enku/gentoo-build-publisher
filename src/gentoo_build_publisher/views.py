@@ -72,7 +72,7 @@ def experimental(view_func: View) -> View:
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
     input_context = ViewInputContext(
-        days=get_query_value_from_request(request, "bot_days", int, 7),
+        days=get_query_value_from_request(request, "chart_days", int, 7),
         color_range=color_range_from_settings(),
         publisher=BuildPublisher.get_publisher(),
         cache=cache,
@@ -93,7 +93,7 @@ def machines(request: HttpRequest, machine: str) -> HttpResponse:
 
     input_context = MachineInputContext(
         machine=machine,
-        days=get_query_value_from_request(request, "bot_days", int, 7),
+        days=get_query_value_from_request(request, "chart_days", int, 7),
         color_range=color_range_from_settings(),
         publisher=publisher,
         cache=cache,

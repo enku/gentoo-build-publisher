@@ -33,8 +33,7 @@ _NOT_FOUND = object()
 class DashboardContext(TypedDict):
     """Definition for the Dashboard context"""
 
-    # Days of the week
-    bot_days: list[str]
+    chart_days: list[str]
 
     # Total # of builds
     build_count: int
@@ -79,7 +78,7 @@ class DashboardContext(TypedDict):
 class MachineContext(TypedDict):
     """machine view context"""
 
-    bot_days: list[str]
+    chart_days: list[str]
     build_count: int
     builds: list[BuildRecord]
     builds_over_time: list[list[int]]
@@ -106,17 +105,17 @@ class ViewInputContext:
 def days_strings(start: dt.datetime, days: int) -> list[str]:
     """Return list of datetimes from start as strings"""
     fmt = "%A" if days <= 7 else "%x"
-    return [datetime.strftime(fmt) for datetime in get_bot_days(start, days)]
+    return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
 
 
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
     publisher = input_context.publisher
-    bot_days = get_bot_days(input_context.now, input_context.days)
+    chart_days = get_chart_days(input_context.now, input_context.days)
     machines = publisher.machines()
     machines.sort(key=lambda machine: machine.build_count, reverse=True)
     context: DashboardContext = {
-        "bot_days": days_strings(input_context.now, input_context.days),
+        "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": 0,
         "builds_to_do": [],
         "build_packages": {},
@@ -148,7 +147,7 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
 
         assert record.submitted is not None
 
-        if (day_submitted := record.submitted.astimezone().date()) >= bot_days[0]:
+        if (day_submitted := record.submitted.astimezone().date()) >= chart_days[0]:
             builds_over_time[day_submitted][record.machine] += 1
 
     (
@@ -175,7 +174,7 @@ class MachineInputContext(ViewInputContext):
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
     machine = input_context.machine
-    bot_days = get_bot_days(input_context.now, input_context.days)
+    chart_days = get_chart_days(input_context.now, input_context.days)
     builds_over_time = create_builds_over_time(
         input_context.now, input_context.days, [machine]
     )
@@ -191,11 +190,11 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         if metadata and build.completed:
             storage += metadata.packages.size
         assert build.submitted is not None
-        if (day_submitted := build.submitted.astimezone().date()) >= bot_days[0]:
+        if (day_submitted := build.submitted.astimezone().date()) >= chart_days[0]:
             builds_over_time[day_submitted][machine] += 1
 
     return {
-        "bot_days": days_strings(input_context.now, input_context.days),
+        "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": dict_of_dicts_to_list_of_lists(builds_over_time),
@@ -358,7 +357,7 @@ def create_builds_over_time(
     All the machines for all the days will have 0 builds.
     """
     return dict_of_values(
-        get_bot_days(start, days), lambda: dict_of_values(machines, int)
+        get_chart_days(start, days), lambda: dict_of_values(machines, int)
     )
 
 
@@ -372,8 +371,8 @@ def gradient(start: Color, end: Color, count: int) -> Gradient:
     return [str(color) for color in Color.gradient(start, end, count)]
 
 
-def get_bot_days(start: dt.datetime, days: int) -> list[dt.date]:
-    """Return initial builds over time (all 0s for the given start date and days"""
+def get_chart_days(start: dt.datetime, days: int) -> list[dt.date]:
+    """Return initial chart data (all 0s for the given start date and days"""
     return [start.date() - dt.timedelta(days=d) for d in range(days - 1, -1, -1)]
 
 

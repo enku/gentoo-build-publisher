@@ -212,7 +212,7 @@ class CreateDashboardContext(TestCase):
             publisher=publisher,
         )
         cxt = create_dashboard_context(input_context)
-        self.assertEqual(len(cxt["bot_days"]), 2)
+        self.assertEqual(len(cxt["chart_days"]), 2)
         self.assertEqual(cxt["build_count"], 4)
         self.assertEqual(
             cxt["build_packages"],
@@ -242,21 +242,21 @@ class CreateDashboardContext(TestCase):
 class GetQueryValueFromRequestTests(TestCase):
     def test_returns_fallback(self) -> None:
         request = mock.Mock(GET={})
-        bot_days = get_query_value_from_request(request, "bot_days", int, 10)
+        chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
-        self.assertEqual(bot_days, 10)
+        self.assertEqual(chart_days, 10)
 
     def test_with_queryparam(self) -> None:
-        request = mock.Mock(GET={"bot_days": "10"})
-        bot_days = get_query_value_from_request(request, "bot_days", int, 7)
+        request = mock.Mock(GET={"chart_days": "10"})
+        chart_days = get_query_value_from_request(request, "chart_days", int, 7)
 
-        self.assertEqual(bot_days, 10)
+        self.assertEqual(chart_days, 10)
 
     def test_with_invalid_queryparam(self) -> None:
-        request = mock.Mock(GET={"bot_days": "bogus"})
-        bot_days = get_query_value_from_request(request, "bot_days", int, 10)
+        request = mock.Mock(GET={"chart_days": "bogus"})
+        chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
-        self.assertEqual(bot_days, 10)
+        self.assertEqual(chart_days, 10)
 
 
 class GetMachinesRecentPackagesTests(TestCase):
