@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import itertools
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any, NamedTuple, TypeAlias, TypedDict
 
 from django.http import HttpRequest
@@ -28,6 +29,125 @@ MachineName: TypeAlias = str
 MAX_DISPLAYED_PKGS = 12
 SECONDS_PER_DAY = 86400
 _NOT_FOUND = object()
+
+
+class StatsCollector:
+    """Interface to collect statistics about the Publisher"""
+
+    def __init__(self, publisher: BuildPublisher, cache: CacheProtocol) -> None:
+        self.publisher = publisher
+        self.cache = cache
+        self._machine_info = {mi.machine: mi for mi in publisher.machines()}
+
+    def machine_info(self, machine: MachineName) -> MachineInfo:
+        """Return the MachineInfo object for the given machine"""
+        return self._machine_info.get(machine, MachineInfo(machine))
+
+    def machine_infos(self) -> list[MachineInfo]:
+        """Return the MachineInfo instance for each machine with builds"""
+        return list(self._machine_info.values())
+
+    @property
+    @lru_cache
+    def machines(self) -> list[MachineName]:
+        """Returns a list of machines with builds
+
+        Machines are ordered by build count (descending), then machine name (ascending)
+        """
+        return sorted(
+            self._machine_info,
+            key=lambda machine: (-1 * self._machine_info[machine].build_count, machine),
+        )
+
+    @lru_cache
+    def package_count(self, machine: MachineName) -> int:
+        """Return the total number of completed builds for the given machine"""
+        if not (mi := self.machine_info(machine)):
+            return 0
+
+        total = 0
+        for build in mi.builds:
+            metadata = get_metadata(build, self.publisher, self.cache)
+            if metadata and build.completed:
+                total += metadata.packages.total
+
+        return total
+
+    def build_packages(self, build: Build) -> list[str]:
+        """Return a list of CPVs build in the given build"""
+        metadata = get_metadata(build, self.publisher, self.cache)
+        return [i.cpv for i in metadata.packages.built] if metadata is not None else []
+
+    def latest_build(self, machine: MachineName) -> BuildRecord | None:
+        """Return the latest build for the given machine
+
+        If the Machine has no builds, return None.
+        """
+        if not ((mi := self.machine_info(machine)) and (build := mi.latest_build)):
+            return None
+
+        return build
+
+    def latest_published(self, machine: MachineName) -> BuildRecord | None:
+        """Return the latest build for the given machine if that build is published
+
+        Otherwise return None.
+        """
+        if not (
+            (latest := self.latest_build(machine))
+            and (mi := self.machine_info(machine))
+            and (published := mi.published_build)
+        ):
+            return None
+
+        return latest if latest == self.publisher.record(published) else None
+
+    def recent_packages(self, machine: MachineName, maximum: int = 10) -> list[Package]:
+        """Return the list of recent packages for a machine (up to maximum)"""
+        if not (mi := self.machine_info(machine)):
+            return []
+
+        packages: set[Package] = set()
+        for build in mi.builds:
+            if not (metadata := get_metadata(build, self.publisher, self.cache)):
+                continue
+            packages.update(metadata.packages.built)
+            if len(packages) >= maximum:
+                break
+
+        return sorted(packages, key=lambda p: p.build_time, reverse=True)[:maximum]
+
+    def total_package_size(self, machine: MachineName) -> int:
+        """Return the total size (bytes) of all packages in all builds for machine"""
+        if not (mi := self.machine_info(machine)):
+            return 0
+
+        total = 0
+        for record in mi.builds:
+            if record.completed and (
+                metadata := get_metadata(record, self.publisher, self.cache)
+            ):
+                total += metadata.packages.size
+
+        return total
+
+    def built_recently(self, build: BuildRecord, now: dt.datetime) -> bool:
+        """Return True if the given build was built within 24 hours of the given time"""
+        return False if not build.built else lapsed(build.built, now) < SECONDS_PER_DAY
+
+    def builds_by_day(self, machine: MachineName) -> dict[dt.date, int]:
+        """Return a dict of count of builds by day for the given machine"""
+        if not (mi := self.machine_info(machine)):
+            return {}
+
+        bbd: dict[dt.date, int] = {}
+        for build in mi.builds:
+            if not build.submitted:
+                continue
+            date = build.submitted.date()
+            bbd[date] = bbd.setdefault(date, 0) + 1
+
+        return bbd
 
 
 class DashboardContext(TypedDict):
