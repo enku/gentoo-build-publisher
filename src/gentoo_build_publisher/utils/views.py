@@ -212,7 +212,7 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
                 if len(recent_packages) < MAX_DISPLAYED_PKGS:
                     recent_packages.setdefault(package, set()).add(machine)
 
-    context: DashboardContext = {
+    return {
         "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": sum(
             machine_info.build_count for machine_info in sc.machine_infos()
@@ -264,8 +264,6 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
             if (build := sc.latest_build(machine))
         ),
     }
-
-    return context
 
 
 @dataclass(frozen=True, kw_only=True)
