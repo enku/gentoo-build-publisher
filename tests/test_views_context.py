@@ -1,19 +1,28 @@
 """Tests for the views context helpers"""
 # pylint: disable=missing-docstring
 import datetime as dt
+from typing import Any
 from unittest import mock
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
 from gentoo_build_publisher.utils import Color
+from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.views.context import (
+    MachineInputContext,
     ViewInputContext,
     create_dashboard_context,
+    create_machine_context,
 )
 
 from . import QuickCache, TestCase
-from .factories import BuildFactory, BuildRecordFactory
+from .factories import (
+    ArtifactFactory,
+    BuildFactory,
+    BuildRecordFactory,
+    package_factory,
+)
 
 
 class CreateDashboardContextTests(TestCase):
@@ -115,3 +124,40 @@ class CreateDashboardContextTests(TestCase):
             cxt = create_dashboard_context(self.input_context(now=localtime(now)))
         self.assertEqual(cxt["builds_over_time"], [[3, 1], [3, 1]])
         self.assertEqual(len(cxt["built_recently"]), 2)
+
+
+class CreateMachineContextTests(TestCase):
+    def input_context(self, **kwargs: Any) -> MachineInputContext:
+        defaults: dict[str, Any] = {
+            "cache": QuickCache(),
+            "color_range": (Color(255, 0, 0), Color(0, 0, 255)),
+            "days": 2,
+            "now": timezone.localtime(),
+            "publisher": self.publisher,
+        }
+        defaults |= kwargs
+        return MachineInputContext(**defaults)
+
+    def test_average_storage(self) -> None:
+        pf = package_factory()
+        ab: ArtifactFactory = self.artifact_builder
+        ab.initial_packages = []
+        ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
+        total_size = 0
+        build_size = 0
+
+        for _builds in range(3):
+            ab.advance(3600)
+            build = BuildFactory(machine="babette")
+            for _pkgs in range(3):
+                cpv = next(pf)
+                pkg = ab.build(build, cpv)
+                build_size += pkg.size
+            total_size += build_size
+            self.publisher.pull(build)
+
+        now = localtime(dt.datetime.fromtimestamp(ab.timer))
+        input_context = self.input_context(now=now, machine="babette")
+        cxt = create_machine_context(input_context)
+
+        self.assertEqual(cxt["average_storage"], total_size / 3)

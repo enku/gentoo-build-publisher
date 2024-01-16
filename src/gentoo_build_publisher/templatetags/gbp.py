@@ -17,18 +17,18 @@ register = template.Library()
 
 
 @register.filter(is_safe=False)
-def numberize(val: int, precision: int = 2) -> str:
+def numberize(val: float | int, precision: int = 2) -> str:
     """Format number, `val` as a string.
 
     E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precision
     2) etc.
     """
-    if not isinstance(val, int):
+    if not isinstance(val, (float, int)):
         raise template.TemplateSyntaxError(
-            f"Value must be an integer. {val!r} is not an integer"
+            f"Value must be a float or integer. {val!r} is not"
         )
 
-    str_val = str(val)
+    str_val = str(int(round(val)))
     num_digits = len(str_val)
 
     if num_digits >= 10:

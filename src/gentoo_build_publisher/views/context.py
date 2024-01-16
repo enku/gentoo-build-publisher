@@ -45,6 +45,7 @@ class DashboardContext(TypedDict):
 class MachineContext(TypedDict):
     """machine view context"""
 
+    average_storage: float
     chart_days: list[str]
     build_count: int
     builds: list[BuildRecord]
@@ -150,11 +151,13 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
     machine = input_context.machine
     machine_info = sc.machine_info(machine)
     latest_build = sc.latest_build(machine)
+    storage = sc.total_package_size(machine)
 
     if not latest_build:
         raise ValueError(f"machine {machine} has no builds")
 
     return {
+        "average_storage": storage / machine_info.build_count,
         "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
@@ -167,5 +170,5 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "machines": [machine],
         "published_build": machine_info.published_build,
         "recent_packages": sc.recent_packages(machine),
-        "storage": sc.total_package_size(machine),
+        "storage": storage,
     }
