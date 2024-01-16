@@ -1,24 +1,17 @@
 """Tests for the dashboard utils"""
 # pylint: disable=missing-docstring
 import datetime as dt
-from typing import cast
 from unittest import mock
 
 from django.utils import timezone
 
-from gentoo_build_publisher.common import Build, Content
-from gentoo_build_publisher.publisher import MachineInfo
+from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.views import (
-    DashboardContext,
     StatsCollector,
     ViewInputContext,
-    add_package_metadata,
     create_dashboard_context,
-    get_build_summary,
-    get_machine_recent_packages,
     get_metadata,
-    get_packages,
     get_query_value_from_request,
 )
 
@@ -29,139 +22,6 @@ from .factories import (
     BuildRecordFactory,
     package_factory,
 )
-
-
-class GetPackagesTestCase(TestCase):
-    """This is just cached Build.get_packages()"""
-
-    def test(self) -> None:
-        build = BuildFactory()
-        cache = QuickCache()
-        self.publisher.pull(build)
-
-        packages = get_packages(build, self.publisher, cache)
-
-        self.assertEqual(packages, self.publisher.get_packages(build))
-        self.assertEqual(cache.cache, {f"packages-{build}": packages})
-
-    def test_when_cached_return_cache(self) -> None:
-        build = BuildFactory()
-        cache = QuickCache()
-        cache.set(f"packages-{build}", [1, 2, 3])  # not real packages
-
-        packages = get_packages(build, self.publisher, cache)
-
-        self.assertEqual(packages, [1, 2, 3])
-
-
-class AddPackageMetadataTestCase(TestCase):
-    def test(self) -> None:
-        now = dt.datetime.now(tz=dt.UTC)
-        build = BuildFactory(machine="babette")
-        cache = QuickCache()
-
-        for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
-            self.artifact_builder.build(build, cpv)
-
-        self.publisher.pull(build)
-        record = self.publisher.record(build)
-        context = cast(
-            DashboardContext,
-            {
-                "now": now,
-                "package_count": 0,
-                "recent_packages": {"dev-vcs/git-2.34.1": {"gbp"}},
-                "total_package_size_per_machine": {"babette": 0},
-            },
-        )
-        new_context = add_package_metadata(record, context, self.publisher, cache)
-
-        expected = {
-            "now": now,
-            "package_count": 6,
-            "recent_packages": {
-                "dev-vcs/git-2.34.1": {"babette", "gbp"},
-                "app-portage/gentoolkit-0.5.1-r1": {"babette"},
-            },
-            "total_package_size_per_machine": {"babette": 3238},
-        }
-
-        self.assertEqual(new_context, expected)
-
-    def test_when_record_not_completed(self) -> None:
-        now = dt.datetime.now(tz=dt.UTC)
-        build = BuildFactory(machine="babette")
-        cache = QuickCache()
-
-        record = self.publisher.record(build)
-        context = cast(
-            DashboardContext,
-            {
-                "now": now,
-                "package_count": 0,
-                "recent_packages": {},
-                "total_package_size_per_machine": {"babette": 0},
-            },
-        )
-        new_context = add_package_metadata(record, context, self.publisher, cache)
-
-        expected = {
-            "now": now,
-            "package_count": 0,
-            "recent_packages": {},
-            "total_package_size_per_machine": {"babette": 0},
-        }
-
-        self.assertEqual(new_context, expected)
-
-
-class GetBuildSummaryTestCase(TestCase):
-    def test(self) -> None:
-        now = dt.datetime.now(tz=dt.UTC)
-        machines = ["babette", "lighthouse", "web"]
-        cache = QuickCache()
-        builds = BuildFactory.buncha_builds(machines, now, 3, 2)
-
-        lighthouse = builds["lighthouse"][-1]
-        for cpv in [
-            "acct-group/sgx-0",
-            "app-admin/perl-cleaner-2.30",
-            "app-crypt/gpgme-1.14.0",
-        ]:
-            self.artifact_builder.build(lighthouse, cpv)
-        self.publisher.publish(lighthouse)
-
-        web = builds["web"][-1]
-        self.publisher.pull(web)
-
-        # Make sure it doesn't fail when a gbp.json is missing
-        (self.publisher.storage.get_path(web, Content.BINPKGS) / "gbp.json").unlink()
-
-        machine_info = [MachineInfo(i) for i in machines]
-
-        # Make sure it doesn't fail when a machine has no latest build (i.e. being built
-        # for the first time)
-        machine_info.append(MachineInfo("foo"))
-
-        result = get_build_summary(now, machine_info, self.publisher, cache)
-
-        self.assertEqual(
-            result.latest_builds,
-            [self.publisher.record(lighthouse), self.publisher.record(web)],
-        )
-        self.assertEqual(
-            result.built_recently,
-            [self.publisher.record(lighthouse), self.publisher.record(web)],
-        )
-        self.assertEqual(
-            result.latest_published, set([self.publisher.record(lighthouse)])
-        )
-        pkgs = [
-            "acct-group/sgx-0",
-            "app-admin/perl-cleaner-2.30",
-            "app-crypt/gpgme-1.14.0",
-        ]
-        self.assertEqual(result.build_packages, {str(lighthouse): pkgs, str(web): []})
 
 
 class GetMetadataTestCase(TestCase):
@@ -192,13 +52,17 @@ class CreateDashboardContext(TestCase):
 
     maxDiff = None
 
-    def test(self) -> None:
-        start = dt.datetime.now(tz=dt.UTC)
-        days = 2
-        color_range = (Color(255, 0, 0), Color(0, 0, 255))
-        publisher = self.publisher
-        cache = QuickCache()
+    def input_context(self) -> ViewInputContext:
+        return ViewInputContext(
+            cache=QuickCache(),
+            color_range=(Color(255, 0, 0), Color(0, 0, 255)),
+            days=2,
+            now=timezone.localtime(),
+            publisher=self.publisher,
+        )
 
+    def test(self) -> None:
+        publisher = self.publisher
         lighthouse1 = BuildFactory(machine="lighthouse")
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
             self.artifact_builder.build(lighthouse1, cpv)
@@ -212,13 +76,7 @@ class CreateDashboardContext(TestCase):
         polaris3 = BuildRecordFactory(machine="polaris")
         publisher.records.save(polaris3)
 
-        input_context = ViewInputContext(
-            cache=cache,
-            color_range=color_range,
-            days=days,
-            now=start,
-            publisher=publisher,
-        )
+        input_context = self.input_context()
         cxt = create_dashboard_context(input_context)
         self.assertEqual(len(cxt["chart_days"]), 2)
         self.assertEqual(cxt["build_count"], 4)
@@ -235,9 +93,12 @@ class CreateDashboardContext(TestCase):
         self.assertEqual(cxt["gradient_colors"], ["#ff0000", "#0000ff"])
         self.assertEqual(cxt["builds_per_machine"], [3, 1])
         self.assertEqual(cxt["machines"], ["polaris", "lighthouse"])
-        self.assertEqual(cxt["now"], start)
+        self.assertEqual(cxt["now"], input_context.now)
         self.assertEqual(cxt["package_count"], 14)
         self.assertEqual(cxt["unpublished_builds_count"], 2)
+        self.assertEqual(
+            cxt["total_package_size_per_machine"], {"lighthouse": 3238, "polaris": 3906}
+        )
         self.assertEqual(
             cxt["recent_packages"],
             {
@@ -245,6 +106,44 @@ class CreateDashboardContext(TestCase):
                 "dev-vcs/git-2.34.1": {"lighthouse"},
             },
         )
+
+    def test_not_completed(self) -> None:
+        publisher = self.publisher
+
+        publisher.pull(BuildFactory())
+        build = BuildFactory()
+        record = publisher.record(build).save(publisher.records, completed=None)
+
+        cxt = create_dashboard_context(self.input_context())
+        self.assertEqual(cxt["builds_not_completed"], [record])
+
+    def test_latest_published(self) -> None:
+        babette = BuildFactory(machine="babette")
+        self.publisher.publish(babette)
+        self.publisher.pull(BuildFactory(machine="lighthouse"))
+        self.publisher.pull(BuildFactory(machine="polaris"))
+
+        cxt = create_dashboard_context(self.input_context())
+        self.assertEqual(cxt["latest_published"], set([self.publisher.record(babette)]))
+        self.assertEqual(cxt["unpublished_builds_count"], 2)
+
+    def test_builds_over_time_and_build_recently(self) -> None:
+        now = timezone.localtime()
+        for machine in ["babette", "lighthouse"]:
+            for day in range(2):
+                for _ in range(3):
+                    build = BuildFactory(machine=machine)
+                    record = self.publisher.record(build)
+                    record = record.save(
+                        self.publisher.records, submitted=now - dt.timedelta(days=day)
+                    )
+                    self.publisher.pull(record)
+                    if day == 0:
+                        break
+
+        cxt = create_dashboard_context(self.input_context())
+        self.assertEqual(cxt["builds_over_time"], [[3, 1], [3, 1]])
+        self.assertEqual(len(cxt["built_recently"]), 2)
 
 
 class GetQueryValueFromRequestTests(TestCase):
@@ -265,43 +164,6 @@ class GetQueryValueFromRequestTests(TestCase):
         chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
         self.assertEqual(chart_days, 10)
-
-
-class GetMachinesRecentPackagesTests(TestCase):
-    def test(self) -> None:
-        builds = create_builds_and_packages("babette", 3, 4, self.artifact_builder)
-        for build in builds:
-            self.publisher.pull(build)
-
-        machine_info = MachineInfo("babette")
-
-        recent_packages = get_machine_recent_packages(
-            machine_info, self.publisher, QuickCache(), max_count=11
-        )
-        self.assertEqual(len(recent_packages), 11)
-
-        pkgs_sorted = sorted(
-            recent_packages, key=lambda pkg: pkg.build_time, reverse=True
-        )
-        self.assertEqual(recent_packages, pkgs_sorted)
-
-    def test_no_builds(self) -> None:
-        machine_info = MachineInfo("babette")
-        recent_packages = get_machine_recent_packages(
-            machine_info, self.publisher, QuickCache()
-        )
-        self.assertEqual(len(recent_packages), 0)
-
-    def test_build_not_pulled(self) -> None:
-        [build] = create_builds_and_packages("babette", 1, 4, self.artifact_builder)
-        publisher = self.publisher
-        publisher.record(build).save(publisher.records)
-        machine_info = MachineInfo("babette")
-
-        recent_packages = get_machine_recent_packages(
-            machine_info, self.publisher, QuickCache()
-        )
-        self.assertEqual(len(recent_packages), 0)
 
 
 class StatsCollectorTests(TestCase):
