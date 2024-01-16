@@ -279,7 +279,10 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
     chart_days = get_chart_days(input_context.now, input_context.days)
     machine = input_context.machine
     machine_info = sc.machine_info(machine)
-    assert (latest_build := sc.latest_build(machine))
+    latest_build = sc.latest_build(machine)
+
+    if not latest_build:
+        raise ValueError(f"machine {machine} has no builds")
 
     return {
         "chart_days": days_strings(input_context.now, input_context.days),
