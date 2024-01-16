@@ -15,7 +15,7 @@ from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.views import (
+from gentoo_build_publisher.views.utils import (
     MachineInputContext,
     ViewInputContext,
     create_dashboard_context,

@@ -9,7 +9,7 @@ from django.utils import timezone
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import localtime
-from gentoo_build_publisher.utils.views import (
+from gentoo_build_publisher.views.utils import (
     StatsCollector,
     ViewInputContext,
     create_dashboard_context,
