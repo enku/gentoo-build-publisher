@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import datetime as dt
-import itertools
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, NamedTuple, TypeAlias, TypedDict
+from typing import Any, TypeAlias, TypedDict
 
 from django.http import HttpRequest
 from django.utils import timezone
@@ -13,11 +12,7 @@ from django.utils import timezone
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.utils import (
-    Color,
-    dict_of_dicts_to_list_of_lists,
-    dict_of_values,
-)
+from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import lapsed
 
 BuildID: TypeAlias = str  # pylint: disable=invalid-name
@@ -207,55 +202,68 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
     publisher = input_context.publisher
+    sc = StatsCollector(publisher, input_context.cache)
     chart_days = get_chart_days(input_context.now, input_context.days)
-    machines = publisher.machines()
-    machines.sort(key=lambda machine: machine.build_count, reverse=True)
+
+    recent_packages: dict[str, set[MachineName]] = {}
+    for machine in sc.machines:
+        if record := sc.latest_build(machine):
+            for package in sc.build_packages(record):
+                if len(recent_packages) < MAX_DISPLAYED_PKGS:
+                    recent_packages.setdefault(package, set()).add(machine)
+
     context: DashboardContext = {
         "chart_days": days_strings(input_context.now, input_context.days),
-        "build_count": 0,
-        "builds_not_completed": [],
-        "build_packages": {},
-        "builds_over_time": [],
-        "built_recently": [],
-        "latest_builds": [],
-        "latest_published": set(),
-        "gradient_colors": gradient_colors(*input_context.color_range, len(machines)),
-        "builds_per_machine": [machine.build_count for machine in machines],
-        "machines": [machine.machine for machine in machines],
+        "build_count": sum(
+            machine_info.build_count for machine_info in sc.machine_infos()
+        ),
+        "builds_not_completed": [
+            build
+            for machine_info in sc.machine_infos()
+            for build in machine_info.builds
+            if not build.completed
+        ],
+        "build_packages": {
+            latest.id: sc.build_packages(latest)
+            for machine in sc.machines
+            if (latest := sc.latest_build(machine))
+        },
+        "builds_over_time": [
+            [sc.builds_by_day(machine).get(day, 0) for day in chart_days]
+            for machine in sc.machines
+        ],
+        "built_recently": [
+            latest
+            for machine in sc.machines
+            if (latest := sc.latest_build(machine))
+            and latest.completed
+            and lapsed(latest.completed, input_context.now) < SECONDS_PER_DAY
+        ],
+        "latest_builds": [
+            build for machine in sc.machines if (build := sc.latest_build(machine))
+        ],
+        "latest_published": set(
+            lp for machine in sc.machines if (lp := sc.latest_published(machine))
+        ),
+        "gradient_colors": gradient_colors(
+            *input_context.color_range, len(sc.machines)
+        ),
+        "builds_per_machine": [
+            sc.machine_info(machine).build_count for machine in sc.machines
+        ],
+        "machines": sc.machines,
         "now": input_context.now,
-        "package_count": 0,
-        "recent_packages": {},
-        "total_package_size_per_machine": {machine.machine: 0 for machine in machines},
-        "unpublished_builds_count": 0,
+        "package_count": sum(sc.package_count(machine) for machine in sc.machines),
+        "recent_packages": recent_packages,
+        "total_package_size_per_machine": {
+            machine: sc.total_package_size(machine) for machine in sc.machines
+        },
+        "unpublished_builds_count": sum(
+            not publisher.published(build)
+            for machine in sc.machines
+            if (build := sc.latest_build(machine))
+        ),
     }
-    records = itertools.chain(
-        *(publisher.records.for_machine(machine.machine) for machine in machines)
-    )
-    builds_over_time = create_builds_over_time(
-        input_context.now, input_context.days, [m.machine for m in machines]
-    )
-    for record in records:
-        context["build_count"] += 1
-        if not record.completed:
-            context["builds_not_completed"].append(record)
-
-        context = add_package_metadata(record, context, publisher, input_context.cache)
-
-        assert record.submitted is not None
-
-        if (day_submitted := record.submitted.astimezone().date()) >= chart_days[0]:
-            builds_over_time[day_submitted][record.machine] += 1
-
-    (
-        context["latest_builds"],
-        context["built_recently"],
-        context["build_packages"],
-        context["latest_published"],
-    ) = get_build_summary(input_context.now, machines, publisher, input_context.cache)
-    context["unpublished_builds_count"] = len(
-        [build for build in context["latest_builds"] if not publisher.published(build)]
-    )
-    context["builds_over_time"] = dict_of_dicts_to_list_of_lists(builds_over_time)
 
     return context
 
@@ -269,119 +277,27 @@ class MachineInputContext(ViewInputContext):
 
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    machine = input_context.machine
+    sc = StatsCollector(input_context.publisher, input_context.cache)
     chart_days = get_chart_days(input_context.now, input_context.days)
-    builds_over_time = create_builds_over_time(
-        input_context.now, input_context.days, [machine]
-    )
-    machine_info = MachineInfo(machine)
-    assert machine_info.latest_build
-    storage = 0
-    recent_packages = get_machine_recent_packages(
-        machine_info, input_context.publisher, input_context.cache
-    )
-
-    for build in machine_info.builds:
-        metadata = get_metadata(build, input_context.publisher, input_context.cache)
-        if metadata and build.completed:
-            storage += metadata.packages.size
-        assert build.submitted is not None
-        if (day_submitted := build.submitted.astimezone().date()) >= chart_days[0]:
-            builds_over_time[day_submitted][machine] += 1
+    machine = input_context.machine
+    machine_info = sc.machine_info(machine)
+    assert (latest_build := sc.latest_build(machine))
 
     return {
         "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
-        "builds_over_time": dict_of_dicts_to_list_of_lists(builds_over_time),
+        "builds_over_time": [
+            [sc.builds_by_day(machine).get(day, 0) for day in chart_days]
+        ],
         "gradient_colors": gradient_colors(*input_context.color_range, 10),
-        "latest_build": machine_info.latest_build,
+        "latest_build": latest_build,
         "machine": machine,
         "machines": [machine],
         "published_build": machine_info.published_build,
-        "recent_packages": recent_packages,
-        "storage": storage,
+        "recent_packages": sc.recent_packages(machine),
+        "storage": sc.total_package_size(machine),
     }
-
-
-class BuildSummary(NamedTuple):
-    """Struct returned by get_build_summary()"""
-
-    latest_builds: list[BuildRecord]
-    built_recently: list[BuildRecord]
-    build_packages: dict[BuildID, list[CPV]]
-    latest_published: set[BuildRecord]
-
-
-def add_package_metadata(
-    record: BuildRecord,
-    context: DashboardContext,
-    publisher: BuildPublisher,
-    cache: CacheProtocol,
-) -> DashboardContext:
-    """Update `context` with `package_count` and `total_package_size_per_machine`"""
-    context = context.copy()
-    metadata = get_metadata(record, publisher, cache)
-
-    if metadata and record.completed:
-        context["package_count"] += metadata.packages.total
-        context["total_package_size_per_machine"][
-            record.machine
-        ] += metadata.packages.size
-
-        if (
-            record.submitted
-            and lapsed(record.submitted, context["now"]) < SECONDS_PER_DAY
-        ):
-            for package in metadata.packages.built:
-                if package.cpv in context["recent_packages"]:
-                    context["recent_packages"][package.cpv].add(record.machine)
-                elif len(context["recent_packages"]) < MAX_DISPLAYED_PKGS:
-                    context["recent_packages"][package.cpv] = {record.machine}
-    else:
-        packages = get_packages(record, publisher, cache)
-        context["package_count"] += len(packages)
-        context["total_package_size_per_machine"][record.machine] += sum(
-            i.size for i in packages
-        )
-
-    return context
-
-
-def get_build_summary(
-    now: dt.datetime,
-    machines: list[MachineInfo],
-    publisher: BuildPublisher,
-    cache: CacheProtocol,
-) -> BuildSummary:
-    """Update `context` with `latest_builds` and `build_recently`"""
-    latest_builds = []
-    built_recently = []
-    build_packages = {}
-    latest_published = set()
-
-    for machine in machines:
-        if not (latest_build := machine.latest_build):
-            continue
-
-        if publisher.published(latest_build):
-            latest_published.add(latest_build)
-
-        record = publisher.record(latest_build)
-
-        latest_builds.append(latest_build)
-        build_id = latest_build.id
-        metadata = get_metadata(latest_build, publisher, cache)
-        build_packages[build_id] = (
-            [i.cpv for i in metadata.packages.built] if metadata is not None else []
-        )
-
-        assert record.completed, record
-
-        if lapsed(record.completed, now) < SECONDS_PER_DAY:
-            built_recently.append(latest_build)
-
-    return BuildSummary(latest_builds, built_recently, build_packages, latest_published)
 
 
 def get_metadata(
@@ -406,61 +322,6 @@ def get_metadata(
 
     metadata = cached
     return metadata
-
-
-def get_machine_recent_packages(
-    machine_info: MachineInfo,
-    publisher: BuildPublisher,
-    cache: CacheProtocol,
-    max_count: int = 10,
-) -> list[Package]:
-    """Return the list of recent packages for a machine (up to max_count)"""
-    packages: set[Package] = set()
-    for build in machine_info.builds:
-        metadata = get_metadata(build, publisher, cache)
-        if not metadata:
-            continue
-        packages.update(metadata.packages.built)
-        if len(packages) >= max_count:
-            break
-
-    return sorted(packages, key=lambda package: package.build_time, reverse=True)[
-        :max_count
-    ]
-
-
-def get_packages(
-    build: Build, publisher: BuildPublisher, cache: CacheProtocol
-) -> list[Package]:
-    """Return a list of packages from a build by looking up the index.
-
-    This call may be cached for performance.
-    """
-    cache_key = f"packages-{build}"
-
-    if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
-        try:
-            packages = publisher.get_packages(build)
-        except LookupError:
-            packages = []
-
-        cache.set(cache_key, packages)
-    else:
-        packages = cached
-
-    return packages
-
-
-def create_builds_over_time(
-    start: dt.datetime, days: int, machines: list[MachineName]
-) -> dict[dt.date, dict[str, int]]:
-    """Return an "empty" builds_over_time dict given the days and machines
-
-    All the machines for all the days will have 0 builds.
-    """
-    return dict_of_values(
-        get_chart_days(start, days), lambda: dict_of_values(machines, int)
-    )
 
 
 def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
