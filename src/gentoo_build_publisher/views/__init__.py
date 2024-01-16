@@ -15,13 +15,13 @@ from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.views.utils import (
+from gentoo_build_publisher.views.context import (
     MachineInputContext,
     ViewInputContext,
     create_dashboard_context,
     create_machine_context,
-    get_query_value_from_request,
 )
+from gentoo_build_publisher.views.utils import get_query_value_from_request
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 View: TypeAlias = Callable[..., HttpResponse]

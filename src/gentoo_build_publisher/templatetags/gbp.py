@@ -148,5 +148,5 @@ def machine_package_row(package: Package) -> dict[str, Any]:
 
     return {
         "package": package,
-        "build_time": localtime(dt.datetime.fromtimestamp(package.build_time))
+        "build_time": localtime(dt.datetime.fromtimestamp(package.build_time)),
     }

@@ -2,6 +2,7 @@
 import datetime as dt
 
 LOCAL_TIMEZONE = dt.datetime.now().astimezone().tzinfo
+SECONDS_PER_DAY = 86400
 
 now = dt.datetime.now
 
