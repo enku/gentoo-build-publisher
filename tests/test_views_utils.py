@@ -2,11 +2,13 @@
 # pylint: disable=missing-docstring
 import datetime as dt
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.utils import Color
+from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.utils.views import (
     StatsCollector,
     ViewInputContext,
@@ -128,7 +130,7 @@ class CreateDashboardContext(TestCase):
         self.assertEqual(cxt["unpublished_builds_count"], 2)
 
     def test_builds_over_time_and_build_recently(self) -> None:
-        now = timezone.localtime()
+        now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.timezone.utc)
         for machine in ["babette", "lighthouse"]:
             for day in range(2):
                 for _ in range(3):
@@ -141,7 +143,9 @@ class CreateDashboardContext(TestCase):
                     if day == 0:
                         break
 
-        cxt = create_dashboard_context(self.input_context())
+        localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
+        with mock.patch(localtimezone, new=ZoneInfo("America/Chicago")):
+            cxt = create_dashboard_context(self.input_context())
         self.assertEqual(cxt["builds_over_time"], [[3, 1], [3, 1]])
         self.assertEqual(len(cxt["built_recently"]), 2)
 
@@ -282,19 +286,19 @@ class StatsCollectorTests(TestCase):
         for hour in range(2):
             self.publisher.record(BuildFactory(machine="babette")).save(
                 self.publisher.records,
-                submitted=dt.datetime(2024, 1, 13, 12).astimezone()
+                submitted=localtime(dt.datetime(2024, 1, 13, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(3):
             self.publisher.record(BuildFactory(machine="babette")).save(
                 self.publisher.records,
-                submitted=dt.datetime(2024, 1, 14, 12).astimezone()
+                submitted=localtime(dt.datetime(2024, 1, 14, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(4):
             self.publisher.record(BuildFactory(machine="babette")).save(
                 self.publisher.records,
-                submitted=dt.datetime(2024, 1, 15, 12).astimezone()
+                submitted=localtime(dt.datetime(2024, 1, 15, 12))
                 + dt.timedelta(hours=hour),
             )
 

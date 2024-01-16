@@ -12,7 +12,7 @@ from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import time
 
-dt_now = dt.datetime.now
+localtime = time.localtime
 register = template.Library()
 
 
@@ -49,8 +49,8 @@ def numberize(val: int, precision: int = 2) -> str:
 @register.filter
 def display_time(timestamp: dt.datetime) -> str:
     """Display the timestamp according to how long ago it was"""
-    timestamp = timestamp.astimezone()
-    now = dt_now().astimezone()
+    timestamp = localtime(timestamp)
+    now = localtime()
 
     if time.is_same_day(timestamp, now):
         return time.as_time(timestamp)
@@ -148,5 +148,5 @@ def machine_package_row(package: Package) -> dict[str, Any]:
 
     return {
         "package": package,
-        "build_time": dt.datetime.fromtimestamp(package.build_time).astimezone(),
+        "build_time": localtime(dt.datetime.fromtimestamp(package.build_time))
     }

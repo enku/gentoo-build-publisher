@@ -7,6 +7,9 @@ from unittest import TestCase, mock
 from django.template import Context, Template, TemplateSyntaxError
 
 from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.utils.time import localtime
+
+NOW = "gentoo_build_publisher.utils.time.now"
 
 
 class TemplateTagTests(TestCase):
@@ -169,24 +172,21 @@ class MachineLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
 
 
-@mock.patch(
-    "gentoo_build_publisher.templatetags.gbp.dt_now",
-    mock.Mock(return_value=dt.datetime(2024, 1, 11, 20, 54)),
-)
+@mock.patch(NOW, mock.Mock(return_value=dt.datetime(2024, 1, 11, 20, 54)))
 class DisplayTimeTests(TemplateTagTests):
     template = "{{ timestamp|display_time }}"
 
     def test_same_day(self) -> None:
-        timestamp = dt.datetime(2024, 1, 11, 8, 54).astimezone()
+        timestamp = localtime(dt.datetime(2024, 1, 11, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "08:54:00")
 
     def test_previous_day(self) -> None:
-        timestamp = dt.datetime(2024, 1, 10, 8, 54).astimezone()
+        timestamp = localtime(dt.datetime(2024, 1, 10, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 10 08:54")
 
     def test_previous_week(self) -> None:
-        timestamp = dt.datetime(2024, 1, 4, 8, 54).astimezone()
+        timestamp = localtime(dt.datetime(2024, 1, 4, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 4")

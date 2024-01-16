@@ -1,16 +1,28 @@
 """Utilities for dealing with time and dates"""
 import datetime as dt
 
+LOCAL_TIMEZONE = dt.datetime.now().astimezone().tzinfo
+
+now = dt.datetime.now
+
 
 def lapsed(start: dt.datetime, end: dt.datetime) -> int:
     """Return the number of seconds between `start` and `end`"""
     return int((end - start).total_seconds())
 
 
+def localtime(time: dt.datetime | None = None) -> dt.datetime:
+    """Return the given time (or now) in the local timezone"""
+    if time is None:
+        time = now()
+
+    return time.astimezone(LOCAL_TIMEZONE)
+
+
 def utctime(time: dt.datetime | None = None) -> dt.datetime:
     """Return time but with the timezone being UTC"""
     if time is None:
-        time = dt.datetime.utcnow()
+        time = now()
 
     return time.replace(tzinfo=dt.timezone.utc)
 

@@ -22,9 +22,9 @@ class UtcTime(TestCase):
 
         self.assertEqual(result, timestamp.replace(tzinfo=dt.timezone.utc))
 
-    @mock.patch("gentoo_build_publisher.utils.time.dt.datetime")
-    def test_time_defaults_to_now(self, datetime: mock.Mock) -> None:
-        datetime.utcnow.return_value = utcnow = dt.datetime(2022, 9, 17, 17, 36)
+    @mock.patch("gentoo_build_publisher.utils.time.now")
+    def test_time_defaults_to_now(self, now: mock.Mock) -> None:
+        now.return_value = utcnow = dt.datetime(2022, 9, 17, 17, 36)
 
         result = time.utctime()
 
