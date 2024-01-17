@@ -16,17 +16,19 @@ from . import QuickCache, TestCase
 from .factories import BuildFactory, BuildRecordFactory
 
 
-class CreateDashboardContext(TestCase):
+class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
 
-    def input_context(self) -> ViewInputContext:
-        return ViewInputContext(
-            cache=QuickCache(),
-            color_range=(Color(255, 0, 0), Color(0, 0, 255)),
-            days=2,
-            now=timezone.localtime(),
-            publisher=self.publisher,
-        )
+    def input_context(self, **kwargs: Any) -> ViewInputContext:
+        defaults: dict[str, Any] = {
+            "cache": QuickCache(),
+            "color_range": (Color(255, 0, 0), Color(0, 0, 255)),
+            "days": 2,
+            "now": timezone.localtime(),
+            "publisher": self.publisher,
+        }
+        defaults |= kwargs
+        return ViewInputContext(**defaults)
 
     def test(self) -> None:
         publisher = self.publisher
@@ -110,6 +112,6 @@ class CreateDashboardContext(TestCase):
 
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
         with mock.patch(localtimezone, new=ZoneInfo("America/Chicago")):
-            cxt = create_dashboard_context(self.input_context())
+            cxt = create_dashboard_context(self.input_context(now=localtime(now)))
         self.assertEqual(cxt["builds_over_time"], [[3, 1], [3, 1]])
         self.assertEqual(len(cxt["built_recently"]), 2)
