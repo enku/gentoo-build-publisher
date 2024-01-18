@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.time import localtime
+from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime
 from gentoo_build_publisher.views.context import (
     MachineInputContext,
     ViewInputContext,
@@ -127,6 +127,14 @@ class CreateDashboardContextTests(TestCase):
 
 
 class CreateMachineContextTests(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.pf = package_factory()
+        ab: ArtifactFactory = self.artifact_builder
+        ab.initial_packages = []
+        ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
+
     def input_context(self, **kwargs: Any) -> MachineInputContext:
         defaults: dict[str, Any] = {
             "cache": QuickCache(),
@@ -139,25 +147,36 @@ class CreateMachineContextTests(TestCase):
         return MachineInputContext(**defaults)
 
     def test_average_storage(self) -> None:
-        pf = package_factory()
-        ab: ArtifactFactory = self.artifact_builder
-        ab.initial_packages = []
-        ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
         total_size = 0
         build_size = 0
 
-        for _builds in range(3):
-            ab.advance(3600)
-            build = BuildFactory(machine="babette")
+        for _ in range(3):
+            self.artifact_builder.advance(3600)
+            build = BuildFactory()
             for _pkgs in range(3):
-                cpv = next(pf)
-                pkg = ab.build(build, cpv)
+                cpv = next(self.pf)
+                pkg = self.artifact_builder.build(build, cpv)
                 build_size += pkg.size
             total_size += build_size
             self.publisher.pull(build)
 
-        now = localtime(dt.datetime.fromtimestamp(ab.timer))
-        input_context = self.input_context(now=now, machine="babette")
+        now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
+        input_context = self.input_context(now=now, machine=build.machine)
         cxt = create_machine_context(input_context)
 
         self.assertEqual(cxt["average_storage"], total_size / 3)
+
+    def test_packages_built_today(self) -> None:
+        for day in [1, 1, 1, 0]:
+            self.artifact_builder.advance(day * SECONDS_PER_DAY)
+            build = BuildFactory()
+            for _ in range(3):
+                cpv = next(self.pf)
+                self.artifact_builder.build(build, cpv)
+            self.publisher.pull(build)
+
+        now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
+        input_context = self.input_context(now=now, machine=build.machine)
+        cxt = create_machine_context(input_context)
+
+        self.assertEqual(len(cxt["packages_built_today"]), 6)

@@ -140,6 +140,26 @@ class StatsCollector:
 
         return bbd
 
+    def packages_by_day(self, machine: MachineName) -> dict[dt.date, list[Package]]:
+        """Return dict of machine's packages distributed by build date"""
+        if not (mi := self.machine_info(machine)):
+            return {}
+
+        pbd: dict[dt.date, list[Package]] = {}
+        for build in mi.builds:
+            if not build.submitted:
+                continue
+            date = localtime(build.built).date()
+
+            try:
+                metadata = self.publisher.storage.get_metadata(build)
+            except LookupError:
+                continue
+
+            pbd.setdefault(date, []).extend(metadata.packages.built)
+
+        return pbd
+
 
 def days_strings(start: dt.datetime, days: int) -> list[str]:
     """Return list of datetimes from start as strings"""

@@ -46,14 +46,15 @@ class MachineContext(TypedDict):
     """machine view context"""
 
     average_storage: float
-    chart_days: list[str]
     build_count: int
     builds: list[BuildRecord]
     builds_over_time: list[list[int]]
+    chart_days: list[str]
     gradient_colors: Gradient
     latest_build: BuildRecord
     machine: str
     machines: list[str]
+    packages_built_today: list[Package]
     published_build: Build | None
     recent_packages: list[Package]
     storage: int
@@ -147,7 +148,8 @@ class MachineInputContext(ViewInputContext):
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
     sc = StatsCollector(input_context.publisher, input_context.cache)
-    chart_days = get_chart_days(input_context.now, input_context.days)
+    now = input_context.now
+    chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine
     machine_info = sc.machine_info(machine)
     latest_build = sc.latest_build(machine)
@@ -158,7 +160,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
 
     return {
         "average_storage": storage / machine_info.build_count,
-        "chart_days": days_strings(input_context.now, input_context.days),
+        "chart_days": days_strings(now, input_context.days),
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": [
@@ -168,6 +170,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "latest_build": latest_build,
         "machine": machine,
         "machines": [machine],
+        "packages_built_today": sc.packages_by_day(machine).get(now.date(), []),
         "published_build": machine_info.published_build,
         "recent_packages": sc.recent_packages(machine),
         "storage": storage,
