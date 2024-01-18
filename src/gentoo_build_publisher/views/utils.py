@@ -207,7 +207,7 @@ def get_chart_days(start: dt.datetime, days: int) -> list[dt.date]:
 
 
 def get_query_value_from_request(
-    request: HttpRequest, key: str, type_: type, fallback: int
+    request: HttpRequest, key: str, type_: type, fallback: Any
 ) -> Any:
     """Return given query value from the query params"""
     if (query_value := request.GET.get(key, _NOT_FOUND)) == _NOT_FOUND:

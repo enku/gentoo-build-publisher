@@ -72,10 +72,10 @@ def experimental(view_func: View) -> View:
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Dashboard view"""
     input_context = ViewInputContext(
-        days=get_query_value_from_request(request, "chart_days", int, 7),
-        color_range=color_range_from_settings(),
-        publisher=BuildPublisher.get_publisher(),
         cache=cache,
+        color_range=color_range_from_settings(),
+        days=get_query_value_from_request(request, "chart_days", int, 7),
+        publisher=BuildPublisher.get_publisher(),
     )
     context = create_dashboard_context(input_context)
 
@@ -92,11 +92,11 @@ def machines(request: HttpRequest, machine: str) -> HttpResponse:
         raise Http404("No builds for this machine")
 
     input_context = MachineInputContext(
-        machine=machine,
-        days=get_query_value_from_request(request, "chart_days", int, 7),
-        color_range=color_range_from_settings(),
-        publisher=publisher,
         cache=cache,
+        color_range=color_range_from_settings(),
+        days=get_query_value_from_request(request, "chart_days", int, 7),
+        machine=machine,
+        publisher=publisher,
     )
     context = create_machine_context(input_context)
 
