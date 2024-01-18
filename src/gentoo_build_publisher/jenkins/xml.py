@@ -25,12 +25,10 @@ def install_plugin(plugin: str) -> str:
 def build_repo(repo: EbuildRepo) -> str:
     """Return XML config for the given repo"""
     xml = ET.fromstring(CREATE_REPO)
-    branch = xml.find(PATHS["BRANCH_NAME"])
 
-    if is_element(branch):
+    if is_element(branch := xml.find(PATHS["BRANCH_NAME"])):
         branch.text = f"*/{repo.branch}"
-        url = xml.find(PATHS["SCM_URL"])
-        if is_element(url):
+        if is_element(url := xml.find(PATHS["SCM_URL"])):
             url.text = repo.url
             return ET.tostring(xml).decode("UTF-8")
 
@@ -47,15 +45,12 @@ def build_machine(job: MachineJob) -> str:
         "jenkins.triggers.ReverseBuildTrigger/upstreamProjects",
     ]
     repos_path = PATH_SEPARATOR.join(parts)
-    upstream_repos = xml.find(repos_path)
 
-    if is_element(upstream_repos):
+    if is_element(upstream_repos := xml.find(repos_path)):
         upstream_repos.text = ",".join(f"repos/{repo}" for repo in job.ebuild_repos)
-        url = xml.find(PATHS["USER_REMOTE_URL"])
-        if is_element(url):
+        if is_element(url := xml.find(PATHS["USER_REMOTE_URL"])):
             url.text = job.repo.url
-            branch_name = xml.find(PATHS["BRANCH_PLUGIN"])
-            if is_element(branch_name):
+            if is_element(branch_name := xml.find(PATHS["BRANCH_PLUGIN"])):
                 branch_name.text = f"*/{job.repo.branch}"
                 return ET.tostring(xml).decode("UTF-8")
 
