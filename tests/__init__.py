@@ -318,7 +318,7 @@ class DjangoToRequestsAdapter(BaseAdapter):
 
 def test_gbp(url: str) -> GBP:
     """Return a gbp instance capable of calling the /graphql view"""
-    gbp = GBP(url, distribution="gentoo_build_publisher")
+    gbp = GBP(url)
     gbp.query._session.mount(  # pylint: disable=protected-access
         url, DjangoToRequestsAdapter()
     )

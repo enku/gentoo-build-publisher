@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:9b8fee0947b8e29b1cd775a639b62ac4628ffe07fbae1e57c7181a8ea4a48941"
+content_hash = "sha256:ef2cc79fffea7a347741fab396460fa60b94e0b5bdf4be28466343d81b224f19"
 
 [[package]]
 name = "amqp"
@@ -32,6 +32,16 @@ dependencies = [
 files = [
     {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
     {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+]
+
+[[package]]
+name = "argcomplete"
+version = "3.2.1"
+requires_python = ">=3.8"
+summary = "Bash tab completion for argparse"
+files = [
+    {file = "argcomplete-3.2.1-py3-none-any.whl", hash = "sha256:30891d87f3c1abe091f2142613c9d33cac84a5e15404489f033b20399b691fec"},
+    {file = "argcomplete-3.2.1.tar.gz", hash = "sha256:437f67fb9b058da5a090df505ef9be0297c4883993f3f56cb186ff087778cfb4"},
 ]
 
 [[package]]
@@ -149,15 +159,15 @@ files = [
 
 [[package]]
 name = "celery-types"
-version = "0.20.0"
-requires_python = ">=3.10,<4.0"
+version = "0.21.0"
+requires_python = ">=3.9,<4.0"
 summary = "Type stubs for Celery and its related packages"
 dependencies = [
-    "typing-extensions<5.0.0,>=3.10.0",
+    "typing-extensions<5.0.0,>=4.9.0",
 ]
 files = [
-    {file = "celery-types-0.20.0.tar.gz", hash = "sha256:e5c762555605ed0592baed9d519230046ce8e7a11c67a821555c08b7cece1960"},
-    {file = "celery_types-0.20.0-py3-none-any.whl", hash = "sha256:5ebf858a4bf73ca610652d82940dc3a2e4c86afed0421ab1becbff66b49feea4"},
+    {file = "celery_types-0.21.0-py3-none-any.whl", hash = "sha256:a447e653b70b47385b67175cd2f87b6e1dff6bc88dadcedb7a72143bd92118f2"},
+    {file = "celery_types-0.21.0.tar.gz", hash = "sha256:c6f1628943280c7a253fbb30381621771f3d9e3a3e77c36979ed35043d6d416b"},
 ]
 
 [[package]]
@@ -422,15 +432,15 @@ files = [
 
 [[package]]
 name = "faker"
-version = "22.0.0"
+version = "22.2.0"
 requires_python = ">=3.8"
 summary = "Faker is a Python package that generates fake data for you."
 dependencies = [
     "python-dateutil>=2.4",
 ]
 files = [
-    {file = "Faker-22.0.0-py3-none-any.whl", hash = "sha256:9c22c0a734ca01c6e4f2259eab5dab9081905a9d67b27272aea5c9feeb5a3789"},
-    {file = "Faker-22.0.0.tar.gz", hash = "sha256:1d5dc0a75da7bc40741ee4c84d99dc087b97bd086d4222ad06ac4dd2219bcf3f"},
+    {file = "Faker-22.2.0-py3-none-any.whl", hash = "sha256:2c2b7a8e55368defd718226bd5b48ef31b2d082c2900ccb4200987e433be500e"},
+    {file = "Faker-22.2.0.tar.gz", hash = "sha256:fab78f435d27fa7bd109b095eea3504477e4149051c903fd63f11ce252e3d9b7"},
 ]
 
 [[package]]
@@ -449,17 +459,18 @@ files = [
 
 [[package]]
 name = "gbpcli"
-version = "1.7.0"
+version = "2.0.0"
 requires_python = ">=3.10"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
+    "argcomplete>=3.2.1",
     "requests",
     "rich>=12.5.1",
     "yarl",
 ]
 files = [
-    {file = "gbpcli-1.7.0-py3-none-any.whl", hash = "sha256:a9051c1ae5d5cdf6bbe9c03b97a2bf77bffa700ee5e4aee93d0c7bc53d5963f0"},
-    {file = "gbpcli-1.7.0.tar.gz", hash = "sha256:c665617cfb550b335f387091f64efd0cc58f46183494defaa00770d479cd3e3b"},
+    {file = "gbpcli-2.0.0-py3-none-any.whl", hash = "sha256:908f281b86b916bae1091e9ca30f517078c3fa1641e5be4dbf1ae1bdad7ac663"},
+    {file = "gbpcli-2.0.0.tar.gz", hash = "sha256:fe5335772d020d11f9a992ee7071e35a82ae4f6bb8a1419ccf539944d61d0c69"},
 ]
 
 [[package]]
@@ -494,7 +505,7 @@ files = [
 
 [[package]]
 name = "kombu"
-version = "5.3.4"
+version = "5.3.5"
 requires_python = ">=3.8"
 summary = "Messaging library for Python."
 dependencies = [
@@ -502,8 +513,8 @@ dependencies = [
     "vine",
 ]
 files = [
-    {file = "kombu-5.3.4-py3-none-any.whl", hash = "sha256:63bb093fc9bb80cfb3a0972336a5cec1fa7ac5f9ef7e8237c6bf8dda9469313e"},
-    {file = "kombu-5.3.4.tar.gz", hash = "sha256:0bb2e278644d11dea6272c17974a3dbb9688a949f3bb60aeb5b791329c44fadc"},
+    {file = "kombu-5.3.5-py3-none-any.whl", hash = "sha256:0eac1bbb464afe6fb0924b21bf79460416d25d8abc52546d4f16cad94f789488"},
+    {file = "kombu-5.3.5.tar.gz", hash = "sha256:30e470f1a6b49c70dc6f6d13c3e4cc4e178aa6c469ceb6bcd55645385fc84b93"},
 ]
 
 [[package]]
@@ -630,30 +641,30 @@ files = [
 
 [[package]]
 name = "orjson"
-version = "3.9.10"
+version = "3.9.12"
 requires_python = ">=3.8"
 summary = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
 files = [
-    {file = "orjson-3.9.10-cp311-cp311-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:cff7570d492bcf4b64cc862a6e2fb77edd5e5748ad715f487628f102815165e9"},
-    {file = "orjson-3.9.10-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ed8bc367f725dfc5cabeed1ae079d00369900231fbb5a5280cf0736c30e2adf7"},
-    {file = "orjson-3.9.10-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c812312847867b6335cfb264772f2a7e85b3b502d3a6b0586aa35e1858528ab1"},
-    {file = "orjson-3.9.10-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:9edd2856611e5050004f4722922b7b1cd6268da34102667bd49d2a2b18bafb81"},
-    {file = "orjson-3.9.10-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:674eb520f02422546c40401f4efaf8207b5e29e420c17051cddf6c02783ff5ca"},
-    {file = "orjson-3.9.10-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1d0dc4310da8b5f6415949bd5ef937e60aeb0eb6b16f95041b5e43e6200821fb"},
-    {file = "orjson-3.9.10-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:e99c625b8c95d7741fe057585176b1b8783d46ed4b8932cf98ee145c4facf499"},
-    {file = "orjson-3.9.10-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:ec6f18f96b47299c11203edfbdc34e1b69085070d9a3d1f302810cc23ad36bf3"},
-    {file = "orjson-3.9.10-cp311-none-win32.whl", hash = "sha256:ce0a29c28dfb8eccd0f16219360530bc3cfdf6bf70ca384dacd36e6c650ef8e8"},
-    {file = "orjson-3.9.10-cp311-none-win_amd64.whl", hash = "sha256:cf80b550092cc480a0cbd0750e8189247ff45457e5a023305f7ef1bcec811616"},
-    {file = "orjson-3.9.10-cp312-cp312-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:602a8001bdf60e1a7d544be29c82560a7b49319a0b31d62586548835bbe2c862"},
-    {file = "orjson-3.9.10-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f295efcd47b6124b01255d1491f9e46f17ef40d3d7eabf7364099e463fb45f0f"},
-    {file = "orjson-3.9.10-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:92af0d00091e744587221e79f68d617b432425a7e59328ca4c496f774a356071"},
-    {file = "orjson-3.9.10-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:c5a02360e73e7208a872bf65a7554c9f15df5fe063dc047f79738998b0506a14"},
-    {file = "orjson-3.9.10-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:858379cbb08d84fe7583231077d9a36a1a20eb72f8c9076a45df8b083724ad1d"},
-    {file = "orjson-3.9.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:666c6fdcaac1f13eb982b649e1c311c08d7097cbda24f32612dae43648d8db8d"},
-    {file = "orjson-3.9.10-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:3fb205ab52a2e30354640780ce4587157a9563a68c9beaf52153e1cea9aa0921"},
-    {file = "orjson-3.9.10-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:7ec960b1b942ee3c69323b8721df2a3ce28ff40e7ca47873ae35bfafeb4555ca"},
-    {file = "orjson-3.9.10-cp312-none-win_amd64.whl", hash = "sha256:3e892621434392199efb54e69edfff9f699f6cc36dd9553c5bf796058b14b20d"},
-    {file = "orjson-3.9.10.tar.gz", hash = "sha256:9ebbdbd6a046c304b1845e96fbcc5559cd296b4dfd3ad2509e33c4d9ce07d6a1"},
+    {file = "orjson-3.9.12-cp311-cp311-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:2849f88a0a12b8d94579b67486cbd8f3a49e36a4cb3d3f0ab352c596078c730c"},
+    {file = "orjson-3.9.12-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3186b18754befa660b31c649a108a915493ea69b4fc33f624ed854ad3563ac65"},
+    {file = "orjson-3.9.12-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:cbbf313c9fb9d4f6cf9c22ced4b6682230457741daeb3d7060c5d06c2e73884a"},
+    {file = "orjson-3.9.12-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:99e8cd005b3926c3db9b63d264bd05e1bf4451787cc79a048f27f5190a9a0311"},
+    {file = "orjson-3.9.12-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:59feb148392d9155f3bfed0a2a3209268e000c2c3c834fb8fe1a6af9392efcbf"},
+    {file = "orjson-3.9.12-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a4ae815a172a1f073b05b9e04273e3b23e608a0858c4e76f606d2d75fcabde0c"},
+    {file = "orjson-3.9.12-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:ed398f9a9d5a1bf55b6e362ffc80ac846af2122d14a8243a1e6510a4eabcb71e"},
+    {file = "orjson-3.9.12-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:d3cfb76600c5a1e6be91326b8f3b83035a370e727854a96d801c1ea08b708073"},
+    {file = "orjson-3.9.12-cp311-none-win32.whl", hash = "sha256:a2b6f5252c92bcab3b742ddb3ac195c0fa74bed4319acd74f5d54d79ef4715dc"},
+    {file = "orjson-3.9.12-cp311-none-win_amd64.whl", hash = "sha256:c95488e4aa1d078ff5776b58f66bd29d628fa59adcb2047f4efd3ecb2bd41a71"},
+    {file = "orjson-3.9.12-cp312-cp312-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:d6ce2062c4af43b92b0221ed4f445632c6bf4213f8a7da5396a122931377acd9"},
+    {file = "orjson-3.9.12-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:950951799967558c214cd6cceb7ceceed6f81d2c3c4135ee4a2c9c69f58aa225"},
+    {file = "orjson-3.9.12-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:2dfaf71499d6fd4153f5c86eebb68e3ec1bf95851b030a4b55c7637a37bbdee4"},
+    {file = "orjson-3.9.12-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:659a8d7279e46c97661839035a1a218b61957316bf0202674e944ac5cfe7ed83"},
+    {file = "orjson-3.9.12-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:af17fa87bccad0b7f6fd8ac8f9cbc9ee656b4552783b10b97a071337616db3e4"},
+    {file = "orjson-3.9.12-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cd52dec9eddf4c8c74392f3fd52fa137b5f2e2bed1d9ae958d879de5f7d7cded"},
+    {file = "orjson-3.9.12-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:640e2b5d8e36b970202cfd0799d11a9a4ab46cf9212332cd642101ec952df7c8"},
+    {file = "orjson-3.9.12-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:daa438bd8024e03bcea2c5a92cd719a663a58e223fba967296b6ab9992259dbf"},
+    {file = "orjson-3.9.12-cp312-none-win_amd64.whl", hash = "sha256:1bb8f657c39ecdb924d02e809f992c9aafeb1ad70127d53fb573a6a6ab59d549"},
+    {file = "orjson-3.9.12.tar.gz", hash = "sha256:da908d23a3b3243632b523344403b128722a5f45e278a8343c2bb67538dff0e4"},
 ]
 
 [[package]]
@@ -876,15 +887,15 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.34.0"
+version = "0.35.1"
 requires_python = ">=3.8"
 summary = "The little ASGI library that shines."
 dependencies = [
     "anyio<5,>=3.4.0",
 ]
 files = [
-    {file = "starlette-0.34.0-py3-none-any.whl", hash = "sha256:2e14ee943f2df59eb8c141326240ce601643f1a97b577db44634f6d05d368c37"},
-    {file = "starlette-0.34.0.tar.gz", hash = "sha256:ed050aaf3896945bfaae93bdf337e53ef3f29115a9d9c153e402985115cd9c8e"},
+    {file = "starlette-0.35.1-py3-none-any.whl", hash = "sha256:50bbbda9baa098e361f398fda0928062abbaf1f54f4fadcbe17c092a01eb9a25"},
+    {file = "starlette-0.35.1.tar.gz", hash = "sha256:3e2639dac3520e4f58734ed22553f950d3f3cb1001cd2eaac4d57e8cdc5f66bc"},
 ]
 
 [[package]]
@@ -950,20 +961,20 @@ files = [
 
 [[package]]
 name = "typos"
-version = "1.17.0"
+version = "1.17.1"
 requires_python = ">=3.7"
 summary = "Source Code Spelling Correction"
 files = [
-    {file = "typos-1.17.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:d9cad8250a1b7ec23687279fe4a33f04452b7573e04b340a025d63cf6011bb80"},
-    {file = "typos-1.17.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:ef724e2729747168759e1659ee0d1015c284db1d40140101364a775bd1ebc958"},
-    {file = "typos-1.17.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a6f1386d50be71f727d257deaa4aa962c6c0c1336337ee65611f06e8a0444a21"},
-    {file = "typos-1.17.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:bb3feccfdaa028ec5a082244a4f145ab2bf4a4162e3a5e978eea0341e24c76d4"},
-    {file = "typos-1.17.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:812b1ebe9dcc79fd8b0e7857bd0e6f459d1a7c87eed1103fda3ebc32b1b9b46c"},
-    {file = "typos-1.17.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:8ade689068df9cde9ce7a7fffce98adbc4147ef6760a1e055bf14dc12de1b4ca"},
-    {file = "typos-1.17.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:00ead2146feca2aedb62e3515457cbb54659ea12332f417a1510e1e527efcab5"},
-    {file = "typos-1.17.0-py3-none-win32.whl", hash = "sha256:60746ebe8d7381d9e0cc252f4dc81a2d3730e389469210fe82a81bd78f6d1f71"},
-    {file = "typos-1.17.0-py3-none-win_amd64.whl", hash = "sha256:acb8befeddb267682dd3484bb4b29edee2a3227b64d46e0940cb3fbb50f1292e"},
-    {file = "typos-1.17.0.tar.gz", hash = "sha256:b9091898829bdff389d0df61b443b516860245298429481a746d5da1f44cf432"},
+    {file = "typos-1.17.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:0c308ea928818b36eece4ddc28ead1fb1f3e638e88cf1e85a4fbba69cfb9dd71"},
+    {file = "typos-1.17.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:00cdcc1897cc7f0b42c0981a28784fc8e191d9f19a0e995736127a9a66280b15"},
+    {file = "typos-1.17.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:325a586408f9ddf1bf31cb89098c2f1e6164208c7da7966a423e85e885e46abf"},
+    {file = "typos-1.17.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c83cfd575f2c80b3306845af64a7f3417fe47937632b4cb604cde19d29319df2"},
+    {file = "typos-1.17.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:204e97ca4a9015ac95e027368a476b3a193014d885fa7856d3ac03b028f4b4ea"},
+    {file = "typos-1.17.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:c314b7020a0ed47f04ecc70caeb0dd037ee3891eb4e0f821fbd09a0421f3475c"},
+    {file = "typos-1.17.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:49bf5d2ddf3a9e010d60f1412836d18f5b8d58b6ca9640f382093aa6c95c7741"},
+    {file = "typos-1.17.1-py3-none-win32.whl", hash = "sha256:d1c58d24bd62ac5c4f7571233b0a9cd37eb85ade9f22eb7af567ea8ac250e925"},
+    {file = "typos-1.17.1-py3-none-win_amd64.whl", hash = "sha256:b758012af482da9ab8855612277d5ec0b9713b0734b19a02e04470d7de648367"},
+    {file = "typos-1.17.1.tar.gz", hash = "sha256:1c62de8873870c427d86bff2b22fba0ca1e21a7c2ec8c0c2b964cef4b3dd2e66"},
 ]
 
 [[package]]
@@ -998,11 +1009,11 @@ files = [
 
 [[package]]
 name = "wcwidth"
-version = "0.2.12"
+version = "0.2.13"
 summary = "Measures the displayed width of unicode strings in a terminal"
 files = [
-    {file = "wcwidth-0.2.12-py2.py3-none-any.whl", hash = "sha256:f26ec43d96c8cbfed76a5075dac87680124fa84e0855195a6184da9c187f133c"},
-    {file = "wcwidth-0.2.12.tar.gz", hash = "sha256:f01c104efdf57971bcb756f054dd58ddec5204dd15fa31d6503ea57947d97c02"},
+    {file = "wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859"},
+    {file = "wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5"},
 ]
 
 [[package]]

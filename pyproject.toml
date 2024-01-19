@@ -13,7 +13,7 @@ dependencies = [
     "python-dispatch>=0.2.1",
     "requests",
     "yarl!=1.9.1",
-    "gbpcli>=1.7.0",
+    "gbpcli>=2.0.0",
     "orjson>=3.9.1",
 ]
 requires-python = ">=3.11"
