@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 
 from gentoo_build_publisher.utils import Color
-from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime
+from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 from gentoo_build_publisher.views.context import (
     MachineInputContext,
     ViewInputContext,
@@ -180,3 +180,29 @@ class CreateMachineContextTests(TestCase):
         cxt = create_machine_context(input_context)
 
         self.assertEqual(len(cxt["packages_built_today"]), 6)
+
+    def test_packages_built_today_when_build_built_is_none(self) -> None:
+        built = utctime(dt.datetime(2021, 4, 25, 7, 50, 7))
+        submitted = utctime(dt.datetime(2021, 4, 25, 7, 56, 2))
+        completed = utctime(dt.datetime(2021, 4, 25, 7, 56, 36))
+        build = BuildFactory()
+
+        cpv = "dev-build/autoconf-2.71-r6"
+        self.artifact_builder.timer = int(built.timestamp())
+        self.artifact_builder.build(build, cpv)
+        self.publisher.pull(build)
+        record = self.publisher.record(build)
+
+        # In 2021 GBP didn't have a built field and in the database. They were
+        # back-filled to NULL
+        record = record.save(
+            self.publisher.records,
+            built=None,
+            submitted=submitted,
+            completed=completed,
+        )
+        now = localtime(dt.datetime(2024, 1, 19, 7, 38))
+        input_context = self.input_context(now=now, machine=build.machine)
+        cxt = create_machine_context(input_context)
+
+        self.assertEqual(len(cxt["packages_built_today"]), 0)

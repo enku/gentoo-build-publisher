@@ -146,9 +146,7 @@ class StatsCollector:
             return {}
 
         pbd: dict[dt.date, list[Package]] = {}
-        for build in mi.builds:
-            if not build.submitted:
-                continue
+        for build in filter(lambda b: b.built and b.submitted, mi.builds):
             date = localtime(build.built).date()
 
             try:
