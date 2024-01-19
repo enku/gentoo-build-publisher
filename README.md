@@ -79,4 +79,4 @@ detail.
 - [Rolling Back a Rolling Release with Gentoo Build Publisher](https://lunarcowboy.com/rolling-back-a-rolling-release-with-gentoo-build-publisher.html): September 2022
 - [Bisecting GBP Builds to Find a Bad Package](https://lunarcowboy.com/bisecting-gbp-builds-to-find-a-bad-package.html): April 2023
 - [Gentoo Build Publisher: Pro-Tip: Purging a Machine that is Disabled on Jenkins](https://lunarcowboy.com/gentoo-build-publisher-pro-tip-purging-a-machine-that-is-disabled-on-jenkins.html): August 2023
-- [Gentoo binary host, Gentoo Build Publisher & Plugins](https://lunarcowboy.com/gentoo-binary-host-gentoo-build-publisher-verision-2-plugins.html): January 2024
+- [Gentoo binary host, Gentoo Build Publisher version 2 & Plugins](https://lunarcowboy.com/gentoo-binary-host-gentoo-build-publisher-verision-2-plugins.html): January 2024
