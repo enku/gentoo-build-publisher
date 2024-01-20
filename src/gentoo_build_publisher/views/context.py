@@ -86,13 +86,11 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
 
     return {
         "chart_days": days_strings(input_context.now, input_context.days),
-        "build_count": sum(
-            machine_info.build_count for machine_info in sc.machine_infos()
-        ),
+        "build_count": sum(sc.machine_info(m).build_count for m in sc.machines),
         "builds_not_completed": [
             build
-            for machine_info in sc.machine_infos()
-            for build in machine_info.builds
+            for machine in sc.machines
+            for build in sc.machine_info(machine).builds
             if not build.completed
         ],
         "build_packages": {

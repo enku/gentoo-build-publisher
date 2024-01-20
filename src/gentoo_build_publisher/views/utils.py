@@ -28,15 +28,11 @@ class StatsCollector:
     def __init__(self, publisher: BuildPublisher, cache: CacheProtocol) -> None:
         self.publisher = publisher
         self.cache = cache
-        self._machine_info = {mi.machine: mi for mi in publisher.machines()}
 
+    @lru_cache
     def machine_info(self, machine: MachineName) -> MachineInfo:
         """Return the MachineInfo object for the given machine"""
-        return self._machine_info.get(machine, MachineInfo(machine))
-
-    def machine_infos(self) -> list[MachineInfo]:
-        """Return the MachineInfo instance for each machine with builds"""
-        return list(self._machine_info.values())
+        return MachineInfo(machine)
 
     @property
     @lru_cache
@@ -46,18 +42,16 @@ class StatsCollector:
         Machines are ordered by build count (descending), then machine name (ascending)
         """
         return sorted(
-            self._machine_info,
-            key=lambda machine: (-1 * self._machine_info[machine].build_count, machine),
+            (m.machine for m in self.publisher.machines()),
+            key=lambda m: (-1 * self.machine_info(m).build_count, m),
         )
 
     @lru_cache
     def package_count(self, machine: MachineName) -> int:
         """Return the total number of completed builds for the given machine"""
-        if not (mi := self.machine_info(machine)):
-            return 0
-
         total = 0
-        for build in mi.builds:
+
+        for build in self.machine_info(machine).builds:
             metadata = get_metadata(build, self.publisher, self.cache)
             if metadata and build.completed:
                 total += metadata.packages.total
@@ -74,32 +68,24 @@ class StatsCollector:
 
         If the Machine has no builds, return None.
         """
-        if not ((mi := self.machine_info(machine)) and (build := mi.latest_build)):
-            return None
-
-        return build
+        return self.machine_info(machine).latest_build
 
     def latest_published(self, machine: MachineName) -> BuildRecord | None:
         """Return the latest build for the given machine if that build is published
 
         Otherwise return None.
         """
-        if not (
-            (latest := self.latest_build(machine))
-            and (mi := self.machine_info(machine))
-            and (published := mi.published_build)
-        ):
-            return None
-
-        return latest if latest == self.publisher.record(published) else None
+        if latest := self.latest_build(machine):
+            if published := self.machine_info(machine).published_build:
+                if latest == self.publisher.record(published):
+                    return latest
+        return None
 
     def recent_packages(self, machine: MachineName, maximum: int = 10) -> list[Package]:
         """Return the list of recent packages for a machine (up to maximum)"""
-        if not (mi := self.machine_info(machine)):
-            return []
-
         packages: set[Package] = set()
-        for build in mi.builds:
+
+        for build in self.machine_info(machine).builds:
             if not (metadata := get_metadata(build, self.publisher, self.cache)):
                 continue
             packages.update(metadata.packages.built)
@@ -110,11 +96,9 @@ class StatsCollector:
 
     def total_package_size(self, machine: MachineName) -> int:
         """Return the total size (bytes) of all packages in all builds for machine"""
-        if not (mi := self.machine_info(machine)):
-            return 0
-
         total = 0
-        for record in mi.builds:
+
+        for record in self.machine_info(machine).builds:
             if record.completed and (
                 metadata := get_metadata(record, self.publisher, self.cache)
             ):
@@ -128,11 +112,9 @@ class StatsCollector:
 
     def builds_by_day(self, machine: MachineName) -> dict[dt.date, int]:
         """Return a dict of count of builds by day for the given machine"""
-        if not (mi := self.machine_info(machine)):
-            return {}
-
         bbd: dict[dt.date, int] = {}
-        for build in mi.builds:
+
+        for build in self.machine_info(machine).builds:
             if not build.submitted:
                 continue
             date = localtime(build.submitted).date()
@@ -142,11 +124,11 @@ class StatsCollector:
 
     def packages_by_day(self, machine: MachineName) -> dict[dt.date, list[Package]]:
         """Return dict of machine's packages distributed by build date"""
-        if not (mi := self.machine_info(machine)):
-            return {}
-
         pbd: dict[dt.date, list[Package]] = {}
-        for build in filter(lambda b: b.built and b.submitted, mi.builds):
+
+        for build in filter(
+            lambda b: b.built and b.submitted, self.machine_info(machine).builds
+        ):
             date = localtime(build.built).date()
 
             try:
