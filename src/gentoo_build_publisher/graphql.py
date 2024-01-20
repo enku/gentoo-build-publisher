@@ -27,11 +27,11 @@ from graphql import GraphQLError, GraphQLResolveInfo
 from gentoo_build_publisher.common import (
     TAG_SYM,
     Build,
+    ChangeState,
     EbuildRepo,
     MachineJob,
     Package,
     Repo,
-    Status,
 )
 from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
@@ -46,7 +46,7 @@ Info: TypeAlias = GraphQLResolveInfo
 Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
-    EnumType("StatusEnum", Status),
+    EnumType("ChangeStateEnum", ChangeState),
     datetime_scalar,
     build_type := ObjectType("Build"),
     machine_summary := ObjectType("MachineSummary"),

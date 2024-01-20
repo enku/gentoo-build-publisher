@@ -28,10 +28,10 @@ from typing import Any
 from gentoo_build_publisher.common import (
     Build,
     Change,
+    ChangeState,
     GBPMetadata,
     Package,
     PackageMetadata,
-    Status,
 )
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
@@ -227,7 +227,7 @@ class BuildPublisher:
                 continue
             cpvb = item[2:].rstrip()
 
-            yield Change(cpvb, Status[code_map[code]])
+            yield Change(cpvb, ChangeState[code_map[code]])
 
     def machines(self) -> list[MachineInfo]:
         """Return list of machines with metadata"""

@@ -40,7 +40,7 @@ enum SearchField {
   LOGS
 }
 
-enum StatusEnum {
+enum ChangeStateEnum {
   REMOVED
   CHANGED
   ADDED
@@ -48,7 +48,7 @@ enum StatusEnum {
 
 type Change {
   item: String!
-  status: StatusEnum!
+  status: ChangeStateEnum!
 }
 
 type DiffStat {

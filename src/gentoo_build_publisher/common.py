@@ -84,7 +84,7 @@ class Package:
         return f"{self.cpv}-{self.build_id}"
 
 
-class Status(Enum):
+class ChangeState(Enum):
     """Change item status (added, changed, removed)"""
 
     REMOVED = -1
@@ -97,7 +97,7 @@ class Change:
     """A changed item (file or directory)"""
 
     item: str
-    status: Status
+    status: ChangeState
 
 
 @dataclass(frozen=True, slots=True)
