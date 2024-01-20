@@ -4,5 +4,5 @@
     <h6 class="my-0">{{ package.cpv }}</h6>
     <small class="text-muted" title="{{ build.built }}">{{ build_time|display_time }}</small>
   </div>
-  <span class="text-muted">{{ package.size|numberize:1 }}B</span>
+  <span class="text-muted">{{ package.size|numberize:"b1" }}B</span>
 </li>

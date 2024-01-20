@@ -28,7 +28,7 @@ class NumberizeTestCase(TemplateTagTests):
     def test_should_return_whole_number_when_precision_0(self) -> None:
         result = self.render(number=96_858_412, precision=0)
 
-        self.assertEqual(result, "96M")
+        self.assertEqual(result, "97M")
 
     def test_number_less_than_1000(self) -> None:
         result = self.render(number=968, precision=2)
@@ -38,12 +38,12 @@ class NumberizeTestCase(TemplateTagTests):
     def test_number_less_than_1_000_000(self) -> None:
         result = self.render(number=968_584, precision=1)
 
-        self.assertEqual(result, "968.5k")
+        self.assertEqual(result, "968.6k")
 
     def test_number_less_than_1_000_000_000(self) -> None:
         result = self.render(number=96_858_412, precision=2)
 
-        self.assertEqual(result, "96.85M")
+        self.assertEqual(result, "96.86M")
 
     def test_number_greater_than_1_000_000_000(self) -> None:
         result = self.render(number=6_123_000_548, precision=2)
@@ -53,6 +53,20 @@ class NumberizeTestCase(TemplateTagTests):
     def test_invalid_value(self) -> None:
         with self.assertRaises(TemplateSyntaxError):
             self.render(number="this is not a number", precision=2)
+
+    def test_number_greater_than_1_000_000_000_binary(self) -> None:
+        result = self.render(number=6_123_000_548, precision="b2")
+        self.assertEqual(result, "5.70G")
+
+        result = self.render(number=6_123_000_548, precision="b")
+        self.assertEqual(result, "6G")
+
+    def test_1024_binary_vs_decimal(self) -> None:
+        result = self.render(number=1024, precision=3)
+        self.assertEqual(result, "1.024k")
+
+        result = self.render(number=1024, precision="b3")
+        self.assertEqual(result, "1k")
 
 
 class NumberedCircleTests(TemplateTagTests):

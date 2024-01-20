@@ -17,7 +17,7 @@ register = template.Library()
 
 
 @register.filter(is_safe=False)
-def numberize(val: float | int, precision: int = 2) -> str:
+def numberize(val: float | int, precision: int | str = 2) -> str:
     """Format number, `val` as a string.
 
     E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precision
@@ -28,22 +28,26 @@ def numberize(val: float | int, precision: int = 2) -> str:
             f"Value must be a float or integer. {val!r} is not"
         )
 
-    str_val = str(int(round(val)))
-    num_digits = len(str_val)
-
-    if num_digits >= 10:
-        split, suffix = -9, "G"
-    elif num_digits >= 7:
-        split, suffix = -6, "M"
-    elif num_digits > 4:
-        split, suffix = -3, "k"
+    if isinstance(precision, str):
+        base = {"b": 1024, "d": 1000}[precision[0]]
+        precision = int("0" + precision[1:])
     else:
-        return str_val
+        base = 1000
 
-    dec, frac = str_val[:split], str_val[split:]
-    rest = f".{frac[:precision]}" if precision else ""
+    if (x := val / base**3) >= 1:
+        unit = "G"
+    elif (x := val / base**2) >= 1:
+        unit = "M"
+    elif (x := val / base) >= 1:
+        unit = "k"
+    else:
+        x = val
+        unit = ""
 
-    return f"{dec}{rest}{suffix}"
+    if float(x).is_integer():
+        return f"{int(x)}{unit}"
+
+    return f"{x:.{precision}f}{unit}"
 
 
 @register.filter
