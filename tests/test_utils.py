@@ -122,12 +122,12 @@ class RequestAndRaiseTests(TestCase):
 
     def test_honors_exclude2(self) -> None:
         with returns_response(401):
-            with self.assertRaises(requests.exceptions.HTTPError) as cxt:
+            with self.assertRaises(requests.exceptions.HTTPError) as ctx:
                 utils.request_and_raise(
                     requests.get, "http://test.invalid/", exclude=[404]
                 )
 
-        self.assertEqual(cxt.exception.response.status_code, 401)
+        self.assertEqual(ctx.exception.response.status_code, 401)
 
 
 @contextmanager

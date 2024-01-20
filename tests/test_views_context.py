@@ -55,11 +55,11 @@ class CreateDashboardContextTests(TestCase):
         publisher.records.save(polaris3)
 
         input_context = self.input_context()
-        cxt = create_dashboard_context(input_context)
-        self.assertEqual(len(cxt["chart_days"]), 2)
-        self.assertEqual(cxt["build_count"], 4)
+        ctx = create_dashboard_context(input_context)
+        self.assertEqual(len(ctx["chart_days"]), 2)
+        self.assertEqual(ctx["build_count"], 4)
         self.assertEqual(
-            cxt["build_packages"],
+            ctx["build_packages"],
             {
                 str(lighthouse1): [
                     "app-portage/gentoolkit-0.5.1-r1",
@@ -68,17 +68,17 @@ class CreateDashboardContextTests(TestCase):
                 str(polaris2): [],
             },
         )
-        self.assertEqual(cxt["gradient_colors"], ["#ff0000", "#0000ff"])
-        self.assertEqual(cxt["builds_per_machine"], [3, 1])
-        self.assertEqual(cxt["machines"], ["polaris", "lighthouse"])
-        self.assertEqual(cxt["now"], input_context.now)
-        self.assertEqual(cxt["package_count"], 14)
-        self.assertEqual(cxt["unpublished_builds_count"], 2)
+        self.assertEqual(ctx["gradient_colors"], ["#ff0000", "#0000ff"])
+        self.assertEqual(ctx["builds_per_machine"], [3, 1])
+        self.assertEqual(ctx["machines"], ["polaris", "lighthouse"])
+        self.assertEqual(ctx["now"], input_context.now)
+        self.assertEqual(ctx["package_count"], 14)
+        self.assertEqual(ctx["unpublished_builds_count"], 2)
         self.assertEqual(
-            cxt["total_package_size_per_machine"], {"lighthouse": 3238, "polaris": 3906}
+            ctx["total_package_size_per_machine"], {"lighthouse": 3238, "polaris": 3906}
         )
         self.assertEqual(
-            cxt["recent_packages"],
+            ctx["recent_packages"],
             {
                 "app-portage/gentoolkit-0.5.1-r1": {"lighthouse"},
                 "dev-vcs/git-2.34.1": {"lighthouse"},
@@ -92,8 +92,8 @@ class CreateDashboardContextTests(TestCase):
         build = BuildFactory()
         record = publisher.record(build).save(publisher.records, completed=None)
 
-        cxt = create_dashboard_context(self.input_context())
-        self.assertEqual(cxt["builds_not_completed"], [record])
+        ctx = create_dashboard_context(self.input_context())
+        self.assertEqual(ctx["builds_not_completed"], [record])
 
     def test_latest_published(self) -> None:
         babette = BuildFactory(machine="babette")
@@ -101,9 +101,9 @@ class CreateDashboardContextTests(TestCase):
         self.publisher.pull(BuildFactory(machine="lighthouse"))
         self.publisher.pull(BuildFactory(machine="polaris"))
 
-        cxt = create_dashboard_context(self.input_context())
-        self.assertEqual(cxt["latest_published"], set([self.publisher.record(babette)]))
-        self.assertEqual(cxt["unpublished_builds_count"], 2)
+        ctx = create_dashboard_context(self.input_context())
+        self.assertEqual(ctx["latest_published"], set([self.publisher.record(babette)]))
+        self.assertEqual(ctx["unpublished_builds_count"], 2)
 
     def test_builds_over_time_and_build_recently(self) -> None:
         now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.timezone.utc)
@@ -121,9 +121,9 @@ class CreateDashboardContextTests(TestCase):
 
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
         with mock.patch(localtimezone, new=ZoneInfo("America/Chicago")):
-            cxt = create_dashboard_context(self.input_context(now=localtime(now)))
-        self.assertEqual(cxt["builds_over_time"], [[3, 1], [3, 1]])
-        self.assertEqual(len(cxt["built_recently"]), 2)
+            ctx = create_dashboard_context(self.input_context(now=localtime(now)))
+        self.assertEqual(ctx["builds_over_time"], [[3, 1], [3, 1]])
+        self.assertEqual(len(ctx["built_recently"]), 2)
 
 
 class CreateMachineContextTests(TestCase):
@@ -162,9 +162,9 @@ class CreateMachineContextTests(TestCase):
 
         now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
         input_context = self.input_context(now=now, machine=build.machine)
-        cxt = create_machine_context(input_context)
+        ctx = create_machine_context(input_context)
 
-        self.assertEqual(cxt["average_storage"], total_size / 3)
+        self.assertEqual(ctx["average_storage"], total_size / 3)
 
     def test_packages_built_today(self) -> None:
         for day in [1, 1, 1, 0]:
@@ -177,9 +177,9 @@ class CreateMachineContextTests(TestCase):
 
         now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
         input_context = self.input_context(now=now, machine=build.machine)
-        cxt = create_machine_context(input_context)
+        ctx = create_machine_context(input_context)
 
-        self.assertEqual(len(cxt["packages_built_today"]), 6)
+        self.assertEqual(len(ctx["packages_built_today"]), 6)
 
     def test_packages_built_today_when_build_built_is_none(self) -> None:
         built = utctime(dt.datetime(2021, 4, 25, 7, 50, 7))
@@ -203,6 +203,6 @@ class CreateMachineContextTests(TestCase):
         )
         now = localtime(dt.datetime(2024, 1, 19, 7, 38))
         input_context = self.input_context(now=now, machine=build.machine)
-        cxt = create_machine_context(input_context)
+        ctx = create_machine_context(input_context)
 
-        self.assertEqual(len(cxt["packages_built_today"]), 0)
+        self.assertEqual(len(ctx["packages_built_today"]), 0)

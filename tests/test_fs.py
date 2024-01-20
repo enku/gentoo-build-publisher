@@ -89,11 +89,11 @@ class SymlinkTestCase(TestCase):
         target = self.create_file("target")
 
         # Then an exception is raised
-        with self.assertRaises(EnvironmentError) as cxt:
+        with self.assertRaises(EnvironmentError) as ctx:
             # When we call synlink on source and target
             fs.symlink(str(source), str(target))
 
-        exception = cxt.exception
+        exception = ctx.exception
 
         self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
 
