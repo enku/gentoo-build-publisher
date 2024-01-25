@@ -295,15 +295,14 @@ def resolve_query_version(_obj: Any, _info: Info) -> str:
 @query.field("working")
 def resolve_query_working(_obj: Any, _info: Info) -> list[BuildRecord]:
     publisher = BuildPublisher.get_publisher()
-    records = []
     machines = publisher.records.list_machines()
 
-    for machine in machines:
-        for record in publisher.records.for_machine(machine):
-            if not record.completed:
-                records.append(record)
-
-    return records
+    return [
+        record
+        for machine in machines
+        for record in publisher.records.for_machine(machine)
+        if not record.completed
+    ]
 
 
 @query.field("resolveBuildTag")
