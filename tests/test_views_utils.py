@@ -5,7 +5,6 @@ from unittest import mock
 
 from django.utils import timezone
 
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.views.utils import (
@@ -24,11 +23,11 @@ class GetMetadataTestCase(TestCase):
     def test(self) -> None:
         build = BuildFactory()
         cache = QuickCache()
-        publisher.pull(build)
+        self.publisher.pull(build)
 
-        metadata = get_metadata(build, cache)
+        metadata = get_metadata(build, self.publisher, cache)
 
-        self.assertEqual(metadata, publisher.storage.get_metadata(build))
+        self.assertEqual(metadata, self.publisher.storage.get_metadata(build))
         self.assertEqual(cache.cache, {f"metadata-{build}": metadata})
 
     def test_when_cached_return_cache(self) -> None:
@@ -36,7 +35,7 @@ class GetMetadataTestCase(TestCase):
         cache = QuickCache()
         cache.set(f"metadata-{build}", [1, 2, 3])  # not real metadata
 
-        metadata = get_metadata(build, cache)
+        metadata = get_metadata(build, self.publisher, cache)
 
         self.assertEqual(metadata, [1, 2, 3])
 
@@ -63,11 +62,11 @@ class GetQueryValueFromRequestTests(TestCase):
 
 class StatsCollectorTests(TestCase):
     def stats_collector(self) -> StatsCollector:
-        return StatsCollector(QuickCache())
+        return StatsCollector(self.publisher, QuickCache())
 
     def test_init(self) -> None:
-        publisher.pull(BuildFactory(machine="lighthouse"))
-        publisher.pull(BuildFactory(machine="babette"))
+        self.publisher.pull(BuildFactory(machine="lighthouse"))
+        self.publisher.pull(BuildFactory(machine="babette"))
         sc = self.stats_collector()
 
         self.assertEqual(sc.machines, ["babette", "lighthouse"])
@@ -77,7 +76,7 @@ class StatsCollectorTests(TestCase):
             *create_builds_and_packages("babette", 5, 2, self.artifact_builder),
             *create_builds_and_packages("lighthouse", 3, 4, self.artifact_builder),
         ]:
-            publisher.pull(build)
+            self.publisher.pull(build)
 
         sc = self.stats_collector()
 
@@ -89,7 +88,7 @@ class StatsCollectorTests(TestCase):
 
     def test_build_packages(self) -> None:
         [build] = create_builds_and_packages("lighthouse", 1, 4, self.artifact_builder)
-        publisher.pull(build)
+        self.publisher.pull(build)
 
         sc = self.stats_collector()
 
@@ -108,20 +107,20 @@ class StatsCollectorTests(TestCase):
             *create_builds_and_packages("lighthouse", 3, 4, self.artifact_builder),
             *create_builds_and_packages("polaris", 3, 1, self.artifact_builder),
         ]:
-            publisher.pull(build)
+            self.publisher.pull(build)
         assert build
-        publisher.publish(build)
+        self.publisher.publish(build)
 
         sc = self.stats_collector()
 
-        record = publisher.record(build)
+        record = self.publisher.record(build)
         self.assertEqual(sc.latest_published("polaris"), record)
         self.assertEqual(sc.latest_published("babette"), None)
         self.assertEqual(sc.latest_published("lighthouse"), None)
 
     def test_recent_packages(self) -> None:
         for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
-            publisher.pull(build)
+            self.publisher.pull(build)
 
         sc = self.stats_collector()
         recent_packages = sc.recent_packages("babette", maximum=11)
@@ -135,7 +134,7 @@ class StatsCollectorTests(TestCase):
 
     def test_total_package_size(self) -> None:
         for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
-            publisher.pull(build)
+            self.publisher.pull(build)
 
         sc = self.stats_collector()
 
@@ -145,27 +144,27 @@ class StatsCollectorTests(TestCase):
     def test_latest_build(self) -> None:
         build = None
         for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
-            publisher.pull(build)
+            self.publisher.pull(build)
         assert build
 
         sc = self.stats_collector()
 
-        self.assertEqual(sc.latest_build("babette"), publisher.record(build))
+        self.assertEqual(sc.latest_build("babette"), self.publisher.record(build))
         self.assertEqual(sc.latest_build("bogus"), None)
 
     def test_built_recently(self) -> None:
         day = dt.timedelta(days=1)
         now = timezone.localtime()
-        b1 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now - 2 * day
+        b1 = self.publisher.record(BuildFactory(machine="babette")).save(
+            self.publisher.records, built=now - 2 * day
         )
-        b2 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now - day
+        b2 = self.publisher.record(BuildFactory(machine="babette")).save(
+            self.publisher.records, built=now - day
         )
-        b3 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now
+        b3 = self.publisher.record(BuildFactory(machine="babette")).save(
+            self.publisher.records, built=now
         )
-        publisher.pull(b3)
+        self.publisher.pull(b3)
 
         sc = self.stats_collector()
 
@@ -175,20 +174,20 @@ class StatsCollectorTests(TestCase):
 
     def test_builds_by_day(self) -> None:
         for hour in range(2):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            self.publisher.record(BuildFactory(machine="babette")).save(
+                self.publisher.records,
                 submitted=localtime(dt.datetime(2024, 1, 13, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(3):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            self.publisher.record(BuildFactory(machine="babette")).save(
+                self.publisher.records,
                 submitted=localtime(dt.datetime(2024, 1, 14, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(4):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            self.publisher.record(BuildFactory(machine="babette")).save(
+                self.publisher.records,
                 submitted=localtime(dt.datetime(2024, 1, 15, 12))
                 + dt.timedelta(hours=hour),
             )

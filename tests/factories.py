@@ -11,9 +11,9 @@ from typing import Generator
 
 import factory
 
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build, Content, Package
 from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import BuildRecord, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -62,6 +62,7 @@ class BuildFactory(factory.Factory):
         num_days: int,
         per_day: int,
     ) -> defaultdict[str, list[Build]]:
+        publisher = BuildPublisher.get_publisher()
         buildmap = defaultdict(list)
 
         for i in reversed(range(num_days)):
@@ -94,7 +95,7 @@ class BuildPublisherFactory(factory.Factory):
     """BuildPublisher factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
-        model = publisher.BuildPublisher
+        model = BuildPublisher
 
     jenkins = factory.LazyAttribute(
         lambda _: MockJenkins.from_settings(Settings.from_environ())

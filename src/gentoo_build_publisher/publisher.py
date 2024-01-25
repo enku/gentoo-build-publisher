@@ -22,7 +22,7 @@ import math
 from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
-from functools import cached_property
+from functools import cache, cached_property
 from typing import Any
 
 from gentoo_build_publisher.common import (
@@ -52,7 +52,6 @@ logger = logging.getLogger(__name__)
 class BuildPublisher:
     """Pulls a build's db, jenkins and storage all together"""
 
-    # pylint: disable=redefined-outer-name
     def __init__(self, *, jenkins: Jenkins, storage: Storage, records: RecordDB):
         self.jenkins = jenkins
         self.storage = storage
@@ -259,28 +258,11 @@ class BuildPublisher:
             packages=PackageMetadata(total=total, size=size, built=built),
         )
 
-
-_inst = BuildPublisher.from_settings(Settings.from_environ())
-delete = _inst.delete
-diff_binpkgs = _inst.diff_binpkgs
-get_packages = _inst.get_packages
-gbp_metadata = _inst.gbp_metadata
-jenkins = _inst.jenkins
-latest_build = _inst.latest_build
-machines = _inst.machines
-publish = _inst.publish
-published = _inst.published
-pull = _inst.pull
-pulled = _inst.pulled
-purge = _inst.purge
-record = _inst.record
-records = _inst.records
-schedule_build = _inst.schedule_build
-search = _inst.search
-storage = _inst.storage
-tag = _inst.tag
-tags = _inst.tags
-untag = _inst.untag
+    @staticmethod
+    @cache
+    def get_publisher() -> BuildPublisher:
+        """Return the "system" publisher"""
+        return BuildPublisher.from_settings(Settings.from_environ())
 
 
 class MachineInfo:
@@ -307,7 +289,9 @@ class MachineInfo:
     @cached_property
     def builds(self) -> list[BuildRecord]:
         """List of builds held for the machine"""
-        return [*records.for_machine(self.machine)]
+        publisher = BuildPublisher.get_publisher()
+
+        return [*publisher.records.for_machine(self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:
@@ -317,12 +301,20 @@ class MachineInfo:
     @cached_property
     def published_build(self) -> Build | None:
         """The latest published build, or None"""
+        publisher = BuildPublisher.get_publisher()
+
         return next(
-            (Build.from_id(build.id) for build in self.builds if published(build)),
+            (
+                Build.from_id(build.id)
+                for build in self.builds
+                if publisher.published(build)
+            ),
             None,
         )
 
     @cached_property
     def tags(self) -> list[str]:
         """All the machines build tags"""
-        return sorted(tag for build in self.builds for tag in tags(build))
+        publisher = BuildPublisher.get_publisher()
+
+        return sorted(tag for build in self.builds for tag in publisher.tags(build))

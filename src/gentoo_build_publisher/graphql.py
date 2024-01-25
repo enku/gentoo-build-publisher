@@ -24,7 +24,6 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import (
     TAG_SYM,
     Build,
@@ -34,6 +33,7 @@ from gentoo_build_publisher.common import (
     Package,
     Repo,
 )
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import get_version
@@ -43,7 +43,6 @@ LOCALHOST = "127.0.0.1", "::1", "localhost"
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 Info: TypeAlias = GraphQLResolveInfo
-MachineInfo = publisher.MachineInfo
 Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
@@ -122,11 +121,12 @@ class Error:
 
 @build_type.field("built")
 def resolve_build_type_built(build: Build, _info: Info) -> dt.datetime | None:
-    return publisher.record(build).built
+    return BuildPublisher.get_publisher().record(build).built
 
 
 @build_type.field("completed")
 def resolve_build_type_completed(build: Build, _info: Info) -> dt.datetime | None:
+    publisher = BuildPublisher.get_publisher()
     record = publisher.record(build)
 
     return record.completed
@@ -134,21 +134,23 @@ def resolve_build_type_completed(build: Build, _info: Info) -> dt.datetime | Non
 
 @build_type.field("keep")
 def resolve_build_type_keep(build: Build, _info: Info) -> bool:
-    return publisher.record(build).keep
+    return BuildPublisher.get_publisher().record(build).keep
 
 
 @build_type.field("logs")
 def resolve_build_type_logs(build: Build, _info: Info) -> str | None:
-    return publisher.record(build).logs
+    return BuildPublisher.get_publisher().record(build).logs
 
 
 @build_type.field("notes")
 def resolve_build_type_notes(build: Build, _info: Info) -> str | None:
-    return publisher.record(build).note
+    return BuildPublisher.get_publisher().record(build).note
 
 
 @build_type.field("packages")
 def resolve_build_type_packages(build: Build, _info: Info) -> list[str] | None:
+    publisher = BuildPublisher.get_publisher()
+
     if not publisher.pulled(build):
         return None
 
@@ -165,7 +167,7 @@ def resolve_build_type_packages_built(
     build: Build, _info: Info
 ) -> list[Package] | None:
     try:
-        gbp_metadata = publisher.storage.get_metadata(build)
+        gbp_metadata = BuildPublisher.get_publisher().storage.get_metadata(build)
     except LookupError as error:
         raise GraphQLError("Packages built unknown") from error
 
@@ -174,21 +176,26 @@ def resolve_build_type_packages_built(
 
 @build_type.field("published")
 def resolve_build_type_published(build: Build, _info: Info) -> bool:
-    return publisher.published(build)
+    return BuildPublisher.get_publisher().published(build)
 
 
 @build_type.field("pulled")
 def resolve_build_type_pulled(build: Build, _info: Info) -> bool:
-    return publisher.pulled(build)
+    return BuildPublisher.get_publisher().pulled(build)
 
 
 @build_type.field("submitted")
 def resolve_build_type_submitted(build: Build, _info: Info) -> dt.datetime:
-    return publisher.record(build).submitted or dt.datetime.now(tz=dt.UTC)
+    publisher = BuildPublisher.get_publisher()
+    record = publisher.record(build)
+
+    return record.submitted or dt.datetime.now(tz=dt.UTC)
 
 
 @build_type.field("tags")
 def resolve_build_type_tags(build: Build, _info: Info) -> list[str]:
+    publisher = BuildPublisher.get_publisher()
+
     return publisher.tags(build)
 
 
@@ -213,11 +220,14 @@ def resolve_machine_summary_published_build(
 
 @query.field("machines")
 def resolve_query_machines(_obj: Any, _info: Info) -> list[MachineInfo]:
+    publisher = BuildPublisher.get_publisher()
+
     return publisher.machines()
 
 
 @query.field("build")
 def resolve_query_build(_obj: Any, _info: Info, id: str) -> Build | None:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     return None if not publisher.records.exists(build) else build
@@ -225,6 +235,7 @@ def resolve_query_build(_obj: Any, _info: Info, id: str) -> Build | None:
 
 @query.field("latest")
 def resolve_query_latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
+    publisher = BuildPublisher.get_publisher()
     record = publisher.latest_build(machine, completed=True)
 
     return record
@@ -232,6 +243,8 @@ def resolve_query_latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | 
 
 @query.field("builds")
 def resolve_query_builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
+    publisher = BuildPublisher.get_publisher()
+
     return [
         record for record in publisher.records.for_machine(machine) if record.completed
     ]
@@ -239,6 +252,7 @@ def resolve_query_builds(_obj: Any, _info: Info, machine: str) -> list[BuildReco
 
 @query.field("diff")
 def resolve_query_diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
+    publisher = BuildPublisher.get_publisher()
     left_build = Build.from_id(left)
 
     if not publisher.records.exists(left_build):
@@ -259,6 +273,7 @@ def resolve_query_search(
     _obj: Any, _info: Info, machine: str, field: str, key: str
 ) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
+    publisher = BuildPublisher.get_publisher()
 
     return publisher.search(machine, search_field, key)
 
@@ -267,6 +282,8 @@ def resolve_query_search(
 def resolve_query_searchnotes(
     _obj: Any, _info: Info, machine: str, key: str
 ) -> list[BuildRecord]:
+    publisher = BuildPublisher.get_publisher()
+
     return publisher.search(machine, "note", key)
 
 
@@ -277,18 +294,24 @@ def resolve_query_version(_obj: Any, _info: Info) -> str:
 
 @query.field("working")
 def resolve_query_working(_obj: Any, _info: Info) -> list[BuildRecord]:
-    return [
-        record
-        for machine in publisher.records.list_machines()
-        for record in publisher.records.for_machine(machine)
-        if not record.completed
-    ]
+    publisher = BuildPublisher.get_publisher()
+    records = []
+    machines = publisher.records.list_machines()
+
+    for machine in machines:
+        for record in publisher.records.for_machine(machine):
+            if not record.completed:
+                records.append(record)
+
+    return records
 
 
 @query.field("resolveBuildTag")
 def resolve_query_resolvebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
 ) -> Build | None:
+    publisher = BuildPublisher.get_publisher()
+
     try:
         result = publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
     except FileNotFoundError:
@@ -299,6 +322,7 @@ def resolve_query_resolvebuildtag(
 
 @mutation.field("publish")
 def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if publisher.pulled(build):
@@ -334,6 +358,7 @@ def resolve_mutation_schedule_build(
     machine: str,
     params: list[BuildParameterInput] | None = None,
 ) -> str | None:
+    publisher = BuildPublisher.get_publisher()
     params = params or []
 
     return publisher.schedule_build(machine, **{p["name"]: p["value"] for p in params})
@@ -341,6 +366,7 @@ def resolve_mutation_schedule_build(
 
 @mutation.field("keepBuild")
 def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -353,6 +379,7 @@ def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord |
 def resolve_mutation_releasebuild(
     _obj: Any, _info: Info, id: str
 ) -> BuildRecord | None:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -365,6 +392,7 @@ def resolve_mutation_releasebuild(
 def resolve_mutation_createnote(
     _obj: Any, _info: Info, id: str, note: str | None = None
 ) -> BuildRecord | None:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     if not publisher.records.exists(build):
@@ -375,6 +403,7 @@ def resolve_mutation_createnote(
 
 @mutation.field("createBuildTag")
 def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
+    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(id)
 
     publisher.tag(build, tag)
@@ -386,6 +415,8 @@ def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -
 def resolve_mutation_removebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
 ) -> MachineInfo:
+    publisher = BuildPublisher.get_publisher()
+
     publisher.untag(machine, tag)
 
     return MachineInfo(machine)
@@ -396,7 +427,7 @@ def resolve_mutation_removebuildtag(
 def resolve_mutation_createrepo(
     _obj: Any, _info: Info, name: str, repo: str, branch: str
 ) -> Error | None:
-    jenkins = publisher.jenkins
+    jenkins = BuildPublisher.get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root / "repos", parents=True, exist_ok=True)
 
@@ -418,7 +449,7 @@ def resolve_mutation_create_machine(
     branch: str,
     ebuildRepos: list[str],
 ) -> Error | None:
-    jenkins = publisher.jenkins
+    jenkins = BuildPublisher.get_publisher().jenkins
 
     jenkins.make_folder(jenkins.project_root, parents=True, exist_ok=True)
 

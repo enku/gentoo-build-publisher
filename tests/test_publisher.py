@@ -1,14 +1,15 @@
 """Tests for the GBP publisher"""
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
+import os
 import unittest
 from unittest import mock
 from zoneinfo import ZoneInfo
 
 from yarl import URL
 
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build, Content, GBPMetadata, Package
+from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
@@ -32,13 +33,13 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
             RECORDS_BACKEND="memory",
             STORAGE_PATH=self.tmpdir / "test_from_settings",
         )
-        pub = publisher.BuildPublisher.from_settings(settings)
+        publisher = BuildPublisher.from_settings(settings)
 
         self.assertEqual(
-            pub.jenkins.config.base_url, URL("https://testserver.invalid/")
+            publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
-        self.assertEqual(pub.storage.root, self.tmpdir / "test_from_settings")
-        self.assertIsInstance(pub.records, RecordDB)
+        self.assertEqual(publisher.storage.root, self.tmpdir / "test_from_settings")
+        self.assertIsInstance(publisher.records, RecordDB)
 
 
 class BuildPublisherTestCase(TestCase):
@@ -46,7 +47,6 @@ class BuildPublisherTestCase(TestCase):
         super().setUp()
 
         self.build = BuildFactory()
-        self.publisher = publisher._inst  # pylint: disable=protected-access
 
     def test_publish(self) -> None:
         """.publish should publish the build artifact"""
@@ -228,7 +228,7 @@ class BuildPublisherTestCase(TestCase):
 
         # This should actually fail if not short-circuited because the builds have not
         # been pulled
-        diff = [*publisher.diff_binpkgs(left, right)]
+        diff = [*self.publisher.diff_binpkgs(left, right)]
 
         self.assertEqual(diff, [])
         self.assertEqual(self.publisher.get_packages.call_count, 0)
@@ -245,7 +245,9 @@ class BuildPublisherTestCase(TestCase):
         self.publisher.tag(self.build, "prod")
         self.publisher.tag(self.build, "albert")
 
-        self.assertEqual(publisher.storage.get_tags(self.build), ["albert", "prod"])
+        self.assertEqual(
+            self.publisher.storage.get_tags(self.build), ["albert", "prod"]
+        )
 
     def test_untag_removes_tag_from_the_build(self) -> None:
         self.publisher.pull(self.build)
@@ -295,13 +297,15 @@ class DispatcherTestCase(TestCase):
 
     def test_pull_single(self) -> None:
         new_build = BuildFactory()
-        publisher.pull(new_build)
+        self.publisher.pull(new_build)
 
-        packages = publisher.storage.get_packages(new_build)
+        packages = self.publisher.storage.get_packages(new_build)
         expected = (
-            publisher.record(new_build),
+            self.publisher.record(new_build),
             packages,
-            publisher.gbp_metadata(publisher.jenkins.get_metadata(new_build), packages),
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(new_build), packages
+            ),
         )
         self.assertEqual(self.postpull_events, [expected])
         self.assertEqual(self.prepull_events, [new_build])
@@ -309,32 +313,36 @@ class DispatcherTestCase(TestCase):
     def test_pull_multi(self) -> None:
         build1 = BuildFactory()
         build2 = BuildFactory(machine="fileserver")
-        publisher.pull(build1)
-        publisher.pull(build2)
+        self.publisher.pull(build1)
+        self.publisher.pull(build2)
 
-        record1 = publisher.record(build1)
-        record2 = publisher.record(build2)
+        record1 = self.publisher.record(build1)
+        record2 = self.publisher.record(build2)
 
-        packages = publisher.storage.get_packages(record1)
+        packages = self.publisher.storage.get_packages(record1)
         event1 = (
             record1,
             packages,
-            publisher.gbp_metadata(publisher.jenkins.get_metadata(record1), packages),
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(record1), packages
+            ),
         )
-        packages = publisher.storage.get_packages(record2)
+        packages = self.publisher.storage.get_packages(record2)
         event2 = (
             record2,
             packages,
-            publisher.gbp_metadata(publisher.jenkins.get_metadata(record2), packages),
+            self.publisher.gbp_metadata(
+                self.publisher.jenkins.get_metadata(record2), packages
+            ),
         )
         self.assertEqual(self.prepull_events, [build1, build2])
         self.assertEqual(self.postpull_events, [event1, event2])
 
     def test_publish(self) -> None:
         new_build = BuildFactory()
-        publisher.publish(new_build)
+        self.publisher.publish(new_build)
 
-        record = publisher.record(new_build)
+        record = self.publisher.record(new_build)
         self.assertEqual(self.publish_events, [record])
 
 
@@ -344,26 +352,26 @@ class MachineInfoTestCase(TestCase):
     def test(self) -> None:
         # Given the "foo" builds, one of which is published
         first_build = BuildFactory(machine="foo")
-        publisher.publish(first_build)
+        self.publisher.publish(first_build)
         latest_build = BuildFactory(machine="foo")
-        publisher.pull(latest_build)
+        self.publisher.pull(latest_build)
 
         # Given the "other" builds
         for build in BuildFactory.create_batch(3, machine="other"):
-            publisher.pull(build)
+            self.publisher.pull(build)
 
         # When we get MachineInfo for foo
-        machine_info = publisher.MachineInfo("foo")
+        machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.machine, "foo")
         self.assertEqual(machine_info.build_count, 2)
-        self.assertEqual(machine_info.latest_build, publisher.record(latest_build))
+        self.assertEqual(machine_info.latest_build, self.publisher.record(latest_build))
         self.assertEqual(machine_info.published_build, first_build)
 
     def test_empty_db(self) -> None:
         # When we get MachineInfo for foo
-        machine_info = publisher.MachineInfo("foo")
+        machine_info = MachineInfo("foo")
 
         # Then it contains the expected attributes
         self.assertEqual(machine_info.machine, "foo")
@@ -375,26 +383,26 @@ class MachineInfoTestCase(TestCase):
         # Given the "foo" builds
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
-            publisher.pull(build)
+            self.publisher.pull(build)
 
         # Given the MachineInfo for foo
-        machine_info = publisher.MachineInfo("foo")
+        machine_info = MachineInfo("foo")
 
         # When we call its .builds method
         result = machine_info.builds
 
         # Then we get the list of builds in reverse chronological order
-        self.assertEqual(result, [publisher.record(i) for i in reversed(builds)])
+        self.assertEqual(result, [self.publisher.record(i) for i in reversed(builds)])
 
     def test_tags_property_shows_tags_across_machines_builds(self) -> None:
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
-            publisher.pull(build)
+            self.publisher.pull(build)
 
-        publisher.tag(builds[-1], "testing")
-        publisher.tag(builds[0], "stable")
+        self.publisher.tag(builds[-1], "testing")
+        self.publisher.tag(builds[0], "stable")
 
-        machine_info = publisher.MachineInfo("foo")
+        machine_info = MachineInfo("foo")
 
         self.assertEqual(machine_info.tags, ["stable", "testing"])
 
@@ -414,14 +422,16 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         for build in self.builds:
             self.pull_build_with_no_built_timestamp(build)
 
-        publisher.publish(self.builds[2])
+        self.publisher.publish(self.builds[2])
 
-        assert not any(build.built for build in publisher.records.for_machine(machine))
-        self.machine_info = publisher.MachineInfo(self.builds[0].machine)
+        assert not any(
+            build.built for build in self.publisher.records.for_machine(machine)
+        )
+        self.machine_info = MachineInfo(self.builds[0].machine)
 
     def pull_build_with_no_built_timestamp(self, build: Build) -> None:
-        publisher.pull(build)
-        publisher.records.save(publisher.record(build), built=None)
+        self.publisher.pull(build)
+        self.publisher.records.save(self.publisher.record(build), built=None)
 
     def test_build_count(self) -> None:
         self.assertEqual(self.machine_info.build_count, 4)
@@ -429,36 +439,61 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
     def test_builds(self) -> None:
         builds = self.machine_info.builds
 
-        expected = list(reversed([publisher.record(i) for i in self.builds]))
+        expected = list(reversed([self.publisher.record(i) for i in self.builds]))
         self.assertEqual(expected, builds)
 
     def test_latest_build(self) -> None:
         build4 = self.builds[3]
         latest_build = self.machine_info.latest_build
 
-        self.assertEqual(publisher.record(build4), latest_build)
+        self.assertEqual(self.publisher.record(build4), latest_build)
 
     def test_latest_with_latest_having_built_timestamp(self) -> None:
         build5 = BuildFactory()
-        publisher.pull(build5)
+        self.publisher.pull(build5)
 
         latest_build = self.machine_info.latest_build
 
-        self.assertEqual(publisher.record(build5), latest_build)
+        self.assertEqual(self.publisher.record(build5), latest_build)
 
     def test_published_build(self) -> None:
         build3 = self.builds[2]
         published_build = self.machine_info.published_build
 
         self.assertEqual(build3, published_build)
-        self.assertTrue(publisher.published(build3))
+        self.assertTrue(self.publisher.published(build3))
 
 
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
     def test(self) -> None:
-        response = publisher.schedule_build("babette")
+        response = self.publisher.schedule_build("babette")
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)
-        self.assertEqual(publisher.jenkins.scheduled_builds, ["babette"])
+        self.assertEqual(self.publisher.jenkins.scheduled_builds, ["babette"])
+
+
+class GetPublisherTestCase(unittest.TestCase):
+    """Tests for the get_publisher function"""
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        BuildPublisher.get_publisher.cache_clear()
+        self.tmpdir = set_up_tmpdir_for_test(self)
+
+    def test_creates_publisher_from_env_variables_when_global_is_none(self) -> None:
+        env = {
+            "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://testserver.invalid/",
+            "BUILD_PUBLISHER_RECORDS_BACKEND": "memory",
+            "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "test_get_publisher"),
+        }
+        with mock.patch.dict(os.environ, env, clear=True):
+            publisher = BuildPublisher.get_publisher()
+
+        self.assertEqual(
+            publisher.jenkins.config.base_url, URL("https://testserver.invalid/")
+        )
+        self.assertEqual(publisher.storage.root, self.tmpdir / "test_get_publisher")
+        self.assertIsInstance(publisher.records, RecordDB)
