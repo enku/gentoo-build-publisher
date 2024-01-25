@@ -2,10 +2,13 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from functools import partial
+from unittest import mock
 
 from django import urls
+from django.http import Http404, HttpRequest, HttpResponse
 
 from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
 from .factories import BuildFactory
@@ -164,3 +167,31 @@ class MachineViewTests(TestCase):
             response = self.client.get("/machines/bogus/")
 
         self.assertEqual(response.status_code, 404)
+
+
+class ExperimentalMarkerTests(TestCase):
+    def test_debug_is_false(self) -> None:
+        request = mock.MagicMock(spec=HttpRequest)
+        experimental_view = experimental(dummy_view)
+
+        with self.settings(DEBUG=False):
+            response = dummy_view(request)
+            self.assertEqual(response.status_code, 200)
+
+            with self.assertRaises(Http404):
+                response = experimental_view(request)
+
+    def test_debug_is_true(self) -> None:
+        request = mock.MagicMock(spec=HttpRequest)
+        experimental_view = experimental(dummy_view)
+
+        with self.settings(DEBUG=True):
+            response = dummy_view(request)
+            self.assertEqual(response.status_code, 200)
+
+            response = experimental_view(request)
+            self.assertEqual(response.status_code, 200)
+
+
+def dummy_view(request: HttpRequest) -> HttpResponse:
+    return HttpResponse("Hi!")
