@@ -83,7 +83,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
 
 @view("machines/<str:machine>/")
-@experimental
 def machines(request: HttpRequest, machine: str) -> HttpResponse:
     """Response for the machines page"""
     publisher = BuildPublisher.get_publisher()

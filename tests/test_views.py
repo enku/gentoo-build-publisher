@@ -141,8 +141,7 @@ class MachineViewTests(TestCase):
         self.artifact_builder.build(self.latest, "www-client/firefox-121.0.1")
         self.publisher.pull(self.latest)
 
-        with self.settings(DEBUG=True):
-            self.response = self.client.get("/machines/lighthouse/")
+        self.response = self.client.get("/machines/lighthouse/")
 
     def test_row1(self) -> None:
         latest_str = (
@@ -157,14 +156,8 @@ class MachineViewTests(TestCase):
         )
         self.assertContains(self.response, published_str)
 
-    def test_experimental(self) -> None:
-        response = self.client.get("/machines/lighthouse/")
-
-        self.assertEqual(response.status_code, 404)
-
     def test_returns_404_on_nonbuild_machines(self) -> None:
-        with self.settings(DEBUG=True):
-            response = self.client.get("/machines/bogus/")
+        response = self.client.get("/machines/bogus/")
 
         self.assertEqual(response.status_code, 404)
 
