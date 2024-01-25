@@ -4,9 +4,9 @@ import itertools
 from pathlib import Path
 from typing import Callable, TypeAlias
 
-import django
 from gbpcli import GBP, Console
 
+import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.common import Build, Content
 from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import RecordNotFound
@@ -30,7 +30,6 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Check GBP storage and records"""
-    django.setup()
     publisher = BuildPublisher.get_publisher()
 
     total_errors = 0

@@ -6,9 +6,9 @@ This is a simple wrapper that calls the appropriate worker according to
 import argparse
 from dataclasses import replace
 
-import django
 from gbpcli import GBP, Console
 
+import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.worker import Worker
 
@@ -23,7 +23,6 @@ def parse_args(parser: argparse.ArgumentParser) -> None:
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Run the Gentoo Build Publisher task worker"""
-    django.setup()
     settings = Settings.from_environ()
 
     if args.type:
