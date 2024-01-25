@@ -2,6 +2,7 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.common import MachineJob, Repo
 
@@ -32,7 +33,7 @@ class AddMachineTestCase(TestCase):
             repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="master"),
             ebuild_repos=["gentoo"],
         )
-        self.publisher.jenkins.create_machine_job(job)
+        publisher.jenkins.create_machine_job(job)
 
         args = Namespace(
             name="base",

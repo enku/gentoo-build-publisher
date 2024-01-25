@@ -11,6 +11,7 @@ import fakeredis
 from requests import HTTPError
 
 from gentoo_build_publisher import celery as celery_app
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import Records
 from gentoo_build_publisher.settings import Settings
@@ -59,7 +60,7 @@ class PublishBuildTestCase(TestCase):
         worker.run(tasks.publish_build, "babette.193")
 
         build = Build("babette", "193")
-        self.assertIs(self.publisher.published(build), True)
+        self.assertIs(publisher.published(build), True)
 
     @params("celery", "rq", "sync", "thread")
     @mock.patch("gentoo_build_publisher.worker.logger.error")
@@ -80,9 +81,7 @@ class PurgeBuildTestCase(TestCase):
 
     @params("celery", "rq", "sync", "thread")
     def test(self, worker: WorkerInterface) -> None:
-        with mock.patch.object(
-            self.publisher, "purge", wraps=self.publisher.purge
-        ) as purge_mock:
+        with mock.patch.object(publisher, "purge", wraps=publisher.purge) as purge_mock:
             worker.run(tasks.purge_machine, "foo")
 
         purge_mock.assert_called_once_with("foo")
@@ -97,7 +96,7 @@ class PullBuildTestCase(TestCase):
         worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
 
         build = Build("lima", "1012")
-        self.assertIs(self.publisher.pulled(build), True)
+        self.assertIs(publisher.pulled(build), True)
 
     @params("celery", "rq", "sync", "thread")
     def test_calls_purge_machine(self, worker: WorkerInterface) -> None:
@@ -147,9 +146,7 @@ class DeleteBuildTestCase(TestCase):
 
     @params("celery", "rq", "sync", "thread")
     def test_should_delete_the_build(self, worker: WorkerInterface) -> None:
-        with mock.patch(
-            "gentoo_build_publisher.publisher.BuildPublisher.delete"
-        ) as mock_delete:
+        with mock.patch.object(publisher, "delete") as mock_delete:
             worker.run(tasks.delete_build, "zulu.56")
 
         mock_delete.assert_called_once_with(Build("zulu", "56"))

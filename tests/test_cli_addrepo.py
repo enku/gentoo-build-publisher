@@ -2,8 +2,10 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addrepo
-from gentoo_build_publisher.jenkins import EbuildRepo, ProjectPath
+from gentoo_build_publisher.common import EbuildRepo
+from gentoo_build_publisher.jenkins import ProjectPath
 
 from . import TestCase, string_console, test_gbp
 
@@ -26,8 +28,8 @@ class AddRepoTestCase(TestCase):
         self.assertEqual(exit_status, 0)
 
     def test_when_item_already_exists(self) -> None:
-        self.publisher.jenkins.make_folder(ProjectPath("repos"))
-        self.publisher.jenkins.create_repo_job(
+        publisher.jenkins.make_folder(ProjectPath("repos"))
+        publisher.jenkins.create_repo_job(
             EbuildRepo(name="gentoo", url="foo", branch="master")
         )
 

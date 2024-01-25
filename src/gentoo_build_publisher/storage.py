@@ -62,7 +62,8 @@ class Storage:
     """
 
     def __init__(self, root: Path):
-        fs.init_root(root, ["tmp"] + [content.value for content in Content])
+        if not root.exists():
+            fs.init_root(root, ["tmp"] + [content.value for content in Content])
         self.root = root
 
     @classmethod

@@ -13,12 +13,10 @@ bits like submitting to the task queue, retries, etc.
 
 def publish_build(build_id: str) -> bool:
     """Publish the build"""
+    from gentoo_build_publisher import publisher
     from gentoo_build_publisher.common import Build
-    from gentoo_build_publisher.publisher import BuildPublisher
     from gentoo_build_publisher.worker import PUBLISH_FATAL_EXCEPTIONS, logger
     from gentoo_build_publisher.worker.tasks import pull_build
-
-    publisher = BuildPublisher.get_publisher()
 
     try:
         pull_build(build_id, note=None, tags=None)
@@ -36,13 +34,12 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
 
     If `note` is given, then the build record will be saved with the given note.
     """
+    from gentoo_build_publisher import publisher
     from gentoo_build_publisher.common import Build
-    from gentoo_build_publisher.publisher import BuildPublisher
     from gentoo_build_publisher.settings import Settings
     from gentoo_build_publisher.worker import logger
     from gentoo_build_publisher.worker.tasks import purge_machine
 
-    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(build_id)
 
     try:
@@ -58,20 +55,17 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
 
 def purge_machine(machine: str) -> None:
     """Purge old builds for machine"""
-    from gentoo_build_publisher.publisher import BuildPublisher
-
-    publisher = BuildPublisher.get_publisher()
+    from gentoo_build_publisher import publisher
 
     publisher.purge(machine)
 
 
 def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
+    from gentoo_build_publisher import publisher
     from gentoo_build_publisher.common import Build
-    from gentoo_build_publisher.publisher import BuildPublisher
     from gentoo_build_publisher.worker import logger
 
-    publisher = BuildPublisher.get_publisher()
     build = Build.from_id(build_id)
 
     logger.info("Deleting build: %s", build)

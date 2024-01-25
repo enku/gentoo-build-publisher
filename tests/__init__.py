@@ -51,8 +51,23 @@ class TestCase(UnitTestTestCase):
 
         self.tmpdir = set_up_tmpdir_for_test(self)
         self._mock_environment()
-        self.publisher = self._setup_publisher()
-        self.artifact_builder = self.publisher.jenkins.artifact_builder
+        mock_publisher = self._setup_publisher()
+        self._patch_publisher("jenkins", mock_publisher)
+        self._patch_publisher("records", mock_publisher)
+        self._patch_publisher("storage", mock_publisher)
+        self.artifact_builder = mock_publisher.jenkins.artifact_builder
+
+    def _patch_publisher(
+        self, name: str, mock_publisher: publisher.BuildPublisher
+    ) -> None:
+        # pylint: disable=protected-access
+        p1 = mock.patch.object(publisher._inst, name, getattr(mock_publisher, name))
+        self.addCleanup(p1.stop)
+        p1.start()
+
+        p2 = mock.patch.object(publisher, name, getattr(mock_publisher, name))
+        self.addCleanup(p2.stop)
+        p2.start()
 
     def create_file(
         self, name: str, content: bytes = b"", mtime: dt.datetime | None = None
@@ -74,7 +89,7 @@ class TestCase(UnitTestTestCase):
         patch = mock.patch.dict(
             os.environ,
             {
-                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir),
+                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "root"),
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
                 "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
                 "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
@@ -89,15 +104,7 @@ class TestCase(UnitTestTestCase):
         # pylint: disable=import-outside-toplevel,cyclic-import
         from .factories import BuildPublisherFactory
 
-        bp = BuildPublisherFactory()
-        publisher.BuildPublisher.get_publisher.cache_clear()
-        patch = mock.patch.object(
-            publisher.BuildPublisher, "from_settings", return_value=bp
-        )
-        self.addCleanup(patch.stop)
-        patch.start()
-
-        return cast(publisher.BuildPublisher, bp)
+        return cast(publisher.BuildPublisher, BuildPublisherFactory())
 
 
 class QuickCache:

@@ -7,12 +7,12 @@ from typing import Callable, TypeAlias
 from gbpcli import GBP, Console
 
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build, Content
-from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import RecordNotFound
 
 CheckResult: TypeAlias = tuple[int, int]
-Check: TypeAlias = Callable[[BuildPublisher, Console], CheckResult]
+Check: TypeAlias = Callable[[Console], CheckResult]
 
 _CHECK_REGISTRY: list[Check] = []
 
@@ -30,13 +30,11 @@ def parse_args(_parser: argparse.ArgumentParser) -> None:
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Check GBP storage and records"""
-    publisher = BuildPublisher.get_publisher()
-
     total_errors = 0
     total_warnings = 0
 
     for checker in _CHECK_REGISTRY:
-        errors, warnings = checker(publisher, console)
+        errors, warnings = checker(console)
         total_errors += errors
         total_warnings += warnings
 
@@ -48,7 +46,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
 
 
 @register
-def check_build_content(publisher: BuildPublisher, console: Console) -> CheckResult:
+def check_build_content(console: Console) -> CheckResult:
     """Check build content"""
     errors = 0
     warnings = 0
@@ -77,7 +75,7 @@ def check_build_content(publisher: BuildPublisher, console: Console) -> CheckRes
 
 
 @register
-def check_orphans(publisher: BuildPublisher, console: Console) -> CheckResult:
+def check_orphans(console: Console) -> CheckResult:
     """Check orphans (builds with no records)"""
     errors = 0
     warnings = 0
@@ -102,7 +100,7 @@ def check_orphans(publisher: BuildPublisher, console: Console) -> CheckResult:
 
 
 @register
-def check_inconsistent_tags(publisher: BuildPublisher, console: Console) -> CheckResult:
+def check_inconsistent_tags(console: Console) -> CheckResult:
     """Check for tags that have inconsistent targets"""
     errors = 0
     warnings = 0
@@ -130,7 +128,7 @@ def check_inconsistent_tags(publisher: BuildPublisher, console: Console) -> Chec
 
 
 @register
-def check_dirty_temp(publisher: BuildPublisher, console: Console) -> CheckResult:
+def check_dirty_temp(console: Console) -> CheckResult:
     """Warn if the temp dir is not empty"""
     errors = 0
     warnings = 0
