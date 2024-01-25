@@ -7,8 +7,8 @@ from typing import Any, TypeAlias
 
 from django.http import HttpRequest
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
-from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
@@ -25,14 +25,13 @@ _NOT_FOUND = object()
 class StatsCollector:
     """Interface to collect statistics about the Publisher"""
 
-    def __init__(self, publisher: BuildPublisher, cache: CacheProtocol) -> None:
-        self.publisher = publisher
+    def __init__(self, cache: CacheProtocol) -> None:
         self.cache = cache
 
     @lru_cache
-    def machine_info(self, machine: MachineName) -> MachineInfo:
+    def machine_info(self, machine: MachineName) -> publisher.MachineInfo:
         """Return the MachineInfo object for the given machine"""
-        return MachineInfo(machine)
+        return publisher.MachineInfo(machine)
 
     @property
     @lru_cache
@@ -42,7 +41,7 @@ class StatsCollector:
         Machines are ordered by build count (descending), then machine name (ascending)
         """
         return sorted(
-            (m.machine for m in self.publisher.machines()),
+            (m.machine for m in publisher.machines()),
             key=lambda m: (-1 * self.machine_info(m).build_count, m),
         )
 
@@ -52,7 +51,7 @@ class StatsCollector:
         total = 0
 
         for build in self.machine_info(machine).builds:
-            metadata = get_metadata(build, self.publisher, self.cache)
+            metadata = get_metadata(build, self.cache)
             if metadata and build.completed:
                 total += metadata.packages.total
 
@@ -60,7 +59,7 @@ class StatsCollector:
 
     def build_packages(self, build: Build) -> list[str]:
         """Return a list of CPVs build in the given build"""
-        metadata = get_metadata(build, self.publisher, self.cache)
+        metadata = get_metadata(build, self.cache)
         return [i.cpv for i in metadata.packages.built] if metadata is not None else []
 
     def latest_build(self, machine: MachineName) -> BuildRecord | None:
@@ -77,7 +76,7 @@ class StatsCollector:
         """
         if latest := self.latest_build(machine):
             if published := self.machine_info(machine).published_build:
-                if latest == self.publisher.record(published):
+                if latest == publisher.record(published):
                     return latest
         return None
 
@@ -86,7 +85,7 @@ class StatsCollector:
         packages: set[Package] = set()
 
         for build in self.machine_info(machine).builds:
-            if not (metadata := get_metadata(build, self.publisher, self.cache)):
+            if not (metadata := get_metadata(build, self.cache)):
                 continue
             packages.update(metadata.packages.built)
             if len(packages) >= maximum:
@@ -99,9 +98,7 @@ class StatsCollector:
         total = 0
 
         for record in self.machine_info(machine).builds:
-            if record.completed and (
-                metadata := get_metadata(record, self.publisher, self.cache)
-            ):
+            if record.completed and (metadata := get_metadata(record, self.cache)):
                 total += metadata.packages.size
 
         return total
@@ -132,7 +129,7 @@ class StatsCollector:
             date = localtime(build.built).date()
 
             try:
-                metadata = self.publisher.storage.get_metadata(build)
+                metadata = publisher.storage.get_metadata(build)
             except LookupError:
                 continue
 
@@ -147,9 +144,7 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
     return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
 
 
-def get_metadata(
-    build: Build, publisher: BuildPublisher, cache: CacheProtocol
-) -> GBPMetadata | None:
+def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.

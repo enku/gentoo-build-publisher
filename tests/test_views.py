@@ -5,6 +5,7 @@ from functools import partial
 
 from django import urls
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build
 
 from . import DjangoTestCase as BaseTestCase
@@ -34,10 +35,10 @@ class DashboardTestCase(TestCase):
     """Tests for the dashboard view"""
 
     def test(self) -> None:
-        self.publisher.publish(self.latest_build("lighthouse"))
+        publisher.publish(self.latest_build("lighthouse"))
 
         # pull the latest web
-        self.publisher.pull(self.latest_build("web"))
+        publisher.pull(self.latest_build("web"))
 
         response = self.client.get("/")
 
@@ -53,7 +54,7 @@ class ReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self) -> None:
-        self.publisher.publish(self.latest_build("lighthouse"))
+        publisher.publish(self.latest_build("lighthouse"))
 
         response = self.client.get("/machines/lighthouse/repos.conf")
 
@@ -62,15 +63,15 @@ class ReposDotConfTestCase(TestCase):
         self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
 
     def test_non_published(self) -> None:
-        self.publisher.pull(self.latest_build("lighthouse"))
+        publisher.pull(self.latest_build("lighthouse"))
 
         response = self.client.get("/machines/lighthouse/repos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_tagged_builds_should_have_a_repos_dot_conf(self) -> None:
-        self.publisher.pull(build := self.latest_build("lighthouse"))
-        self.publisher.tag(build, "prod")
+        publisher.pull(build := self.latest_build("lighthouse"))
+        publisher.tag(build, "prod")
 
         response = self.client.get("/machines/lighthouse@prod/repos.conf")
 
@@ -89,7 +90,7 @@ class BinReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self) -> None:
-        self.publisher.publish(self.latest_build("lighthouse"))
+        publisher.publish(self.latest_build("lighthouse"))
 
         response = self.client.get("/machines/lighthouse/binrepos.conf")
 
@@ -98,22 +99,22 @@ class BinReposDotConfTestCase(TestCase):
         self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
 
     def test_non_published(self) -> None:
-        self.publisher.pull(self.latest_build("lighthouse"))
+        publisher.pull(self.latest_build("lighthouse"))
 
         response = self.client.get("/machines/lighthouse/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_when_no_such_tag_exists_gives_404(self) -> None:
-        self.publisher.pull(self.latest_build("lighthouse"))
+        publisher.pull(self.latest_build("lighthouse"))
 
         response = self.client.get("/machines/lighthouse@bogus/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_tagged_builds_should_have_a_binrepos_dot_conf(self) -> None:
-        self.publisher.pull(build := self.latest_build("lighthouse"))
-        self.publisher.tag(build, "prod")
+        publisher.pull(build := self.latest_build("lighthouse"))
+        publisher.tag(build, "prod")
 
         response = self.client.get("/machines/lighthouse@prod/binrepos.conf")
 
@@ -131,12 +132,12 @@ class MachineViewTests(TestCase):
         self.published = self.first_build("lighthouse")
         self.artifact_builder.advance(-86400)
         self.artifact_builder.build(self.published, "sys-libs/pam-1.5.3")
-        self.publisher.pull(self.published)
-        self.publisher.publish(self.published)
+        publisher.pull(self.published)
+        publisher.publish(self.published)
         self.latest = self.latest_build("lighthouse")
         self.artifact_builder.advance(86400)
         self.artifact_builder.build(self.latest, "www-client/firefox-121.0.1")
-        self.publisher.pull(self.latest)
+        publisher.pull(self.latest)
 
         with self.settings(DEBUG=True):
             self.response = self.client.get("/machines/lighthouse/")

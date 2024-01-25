@@ -5,8 +5,8 @@ from typing import TypedDict
 
 from django.utils import timezone
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import Build, CacheProtocol, Package
-from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
@@ -66,15 +66,13 @@ class ViewInputContext:
 
     days: int
     color_range: tuple[Color, Color]
-    publisher: BuildPublisher
     cache: CacheProtocol
     now: dt.datetime = field(default_factory=timezone.localtime)
 
 
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    publisher = input_context.publisher
-    sc = StatsCollector(publisher, input_context.cache)
+    sc = StatsCollector(input_context.cache)
     chart_days = get_chart_days(input_context.now, input_context.days)
 
     recent_packages: dict[str, set[str]] = {}
@@ -145,7 +143,7 @@ class MachineInputContext(ViewInputContext):
 
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    sc = StatsCollector(input_context.publisher, input_context.cache)
+    sc = StatsCollector(input_context.cache)
     now = input_context.now
     chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine

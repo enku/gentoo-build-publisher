@@ -11,9 +11,9 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import URLPattern, path
 
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.graphql import schema
-from gentoo_build_publisher.publisher import BuildPublisher, MachineInfo
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.views.context import (
     MachineInputContext,
@@ -75,7 +75,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         cache=cache,
         color_range=color_range_from_settings(),
         days=get_query_value_from_request(request, "chart_days", int, 7),
-        publisher=BuildPublisher.get_publisher(),
     )
     context = create_dashboard_context(input_context)
 
@@ -86,8 +85,6 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 @experimental
 def machines(request: HttpRequest, machine: str) -> HttpResponse:
     """Response for the machines page"""
-    publisher = BuildPublisher.get_publisher()
-
     if not next(iter(publisher.records.for_machine(machine)), None):
         raise Http404("No builds for this machine")
 
@@ -96,7 +93,6 @@ def machines(request: HttpRequest, machine: str) -> HttpResponse:
         color_range=color_range_from_settings(),
         days=get_query_value_from_request(request, "chart_days", int, 7),
         machine=machine,
-        publisher=publisher,
     )
     context = create_machine_context(input_context)
 
@@ -107,7 +103,6 @@ def machines(request: HttpRequest, machine: str) -> HttpResponse:
 def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = parse_tag_or_raise_404(machine)
-    publisher = BuildPublisher.get_publisher()
 
     context = {
         "dirname": dirname,
@@ -148,11 +143,11 @@ def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
 
     if tag_name:
         try:
-            build = BuildPublisher.get_publisher().storage.resolve_tag(machine_tag)
+            build = publisher.storage.resolve_tag(machine_tag)
         except (ValueError, FileNotFoundError):
             build = None
     else:
-        build = MachineInfo(machine).published_build
+        build = publisher.MachineInfo(machine).published_build
 
     if build is None:
         raise Http404("Published build for that machine does not exist")
