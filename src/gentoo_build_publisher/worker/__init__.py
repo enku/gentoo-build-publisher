@@ -1,7 +1,6 @@
 """Async Workers for Gentoo Build Publisher"""
 import importlib.metadata
 import logging
-from functools import cache
 from typing import Any, Callable, Protocol
 
 import requests.exceptions
@@ -41,7 +40,6 @@ class WorkerInterface(Protocol):
         """Run the task worker for this interface"""
 
 
-@cache
 def Worker(settings: Settings) -> WorkerInterface:  # pylint: disable=invalid-name
     """Return the appropriate WorkerInterface based on the given Settings
 
@@ -60,3 +58,7 @@ def Worker(settings: Settings) -> WorkerInterface:  # pylint: disable=invalid-na
     worker_class: type[WorkerInterface] = backend.load()
 
     return worker_class(settings)
+
+
+_inst = Worker(Settings.from_environ())
+run = _inst.run

@@ -560,12 +560,10 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        with mock.patch("gentoo_build_publisher.graphql.Worker") as mock_worker:
+        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
             graphql(query)
 
-        mock_worker.return_value.run.assert_called_once_with(
-            tasks.publish_build, "babette.193"
-        )
+        mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
 class PullMutationTestCase(TestCase):
@@ -583,11 +581,11 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch("gentoo_build_publisher.graphql.Worker") as mock_worker:
+        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
             result = graphql(query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_worker.return_value.run.assert_called_once_with(
+        mock_worker.run.assert_called_once_with(
             tasks.pull_build, build.id, note=None, tags=None
         )
 

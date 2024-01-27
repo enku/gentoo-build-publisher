@@ -24,7 +24,7 @@ from ariadne import (
 from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher import publisher
+from gentoo_build_publisher import publisher, worker
 from gentoo_build_publisher.common import (
     TAG_SYM,
     Build,
@@ -35,9 +35,8 @@ from gentoo_build_publisher.common import (
     Repo,
 )
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import get_version
-from gentoo_build_publisher.worker import Worker, tasks
+from gentoo_build_publisher.worker import tasks
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
@@ -298,7 +297,7 @@ def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
     if publisher.pulled(build):
         publisher.publish(build)
     else:
-        Worker(Settings.from_environ()).run(tasks.publish_build, build.id)
+        worker.run(tasks.publish_build, build.id)
 
     return MachineInfo(build.machine)
 
@@ -314,9 +313,7 @@ def resolve_mutation_pull(
 ) -> MachineInfo:
     build = Build.from_id(id)
 
-    Worker(Settings.from_environ()).run(
-        tasks.pull_build, build.id, note=note, tags=tags
-    )
+    worker.run(tasks.pull_build, build.id, note=note, tags=tags)
 
     return MachineInfo(build.machine)
 

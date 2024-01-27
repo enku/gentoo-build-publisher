@@ -29,7 +29,6 @@ from . import TestCase, parametrized
 
 
 def get_worker(name: str) -> WorkerInterface:
-    Worker.cache_clear()
     settings = Settings(
         JENKINS_BASE_URL="http://jenkins.invalid/",
         WORKER_BACKEND=name,
@@ -153,10 +152,6 @@ class DeleteBuildTestCase(TestCase):
 
 
 class JobsTests(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        Worker.cache_clear()
-
     def test_celery(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
