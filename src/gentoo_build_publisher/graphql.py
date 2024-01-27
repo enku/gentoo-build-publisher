@@ -43,6 +43,7 @@ LOCALHOST = "127.0.0.1", "::1", "localhost"
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 Info: TypeAlias = GraphQLResolveInfo
+MachineInfo = publisher.MachineInfo
 Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
@@ -126,9 +127,7 @@ def resolve_build_type_built(build: Build, _info: Info) -> dt.datetime | None:
 
 @build_type.field("completed")
 def resolve_build_type_completed(build: Build, _info: Info) -> dt.datetime | None:
-    record = publisher.record(build)
-
-    return record.completed
+    return publisher.record(build).completed
 
 
 @build_type.field("keep")
@@ -183,9 +182,7 @@ def resolve_build_type_pulled(build: Build, _info: Info) -> bool:
 
 @build_type.field("submitted")
 def resolve_build_type_submitted(build: Build, _info: Info) -> dt.datetime:
-    record = publisher.record(build)
-
-    return record.submitted or dt.datetime.now(tz=dt.UTC)
+    return publisher.record(build).submitted or dt.datetime.now(tz=dt.UTC)
 
 
 @build_type.field("tags")
@@ -194,28 +191,26 @@ def resolve_build_type_tags(build: Build, _info: Info) -> list[str]:
 
 
 @machine_summary.field("buildCount")
-def resolve_machine_summary_build_count(
-    machine_info: publisher.MachineInfo, _info: Info
-) -> int:
+def resolve_machine_summary_build_count(machine_info: MachineInfo, _info: Info) -> int:
     return machine_info.build_count
 
 
 @machine_summary.field("latestBuild")
 def resolve_machine_summary_latest_build(
-    machine_info: publisher.MachineInfo, _info: Info
+    machine_info: MachineInfo, _info: Info
 ) -> Build | None:
     return machine_info.latest_build
 
 
 @machine_summary.field("publishedBuild")
 def resolve_machine_summary_published_build(
-    machine_info: publisher.MachineInfo, _info: Info
+    machine_info: MachineInfo, _info: Info
 ) -> Build | None:
     return machine_info.published_build
 
 
 @query.field("machines")
-def resolve_query_machines(_obj: Any, _info: Info) -> list[publisher.MachineInfo]:
+def resolve_query_machines(_obj: Any, _info: Info) -> list[MachineInfo]:
     return publisher.machines()
 
 
@@ -228,9 +223,7 @@ def resolve_query_build(_obj: Any, _info: Info, id: str) -> Build | None:
 
 @query.field("latest")
 def resolve_query_latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
-    record = publisher.latest_build(machine, completed=True)
-
-    return record
+    return publisher.latest_build(machine, completed=True)
 
 
 @query.field("builds")
@@ -293,15 +286,13 @@ def resolve_query_resolvebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
 ) -> Build | None:
     try:
-        result = publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
+        return publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
     except FileNotFoundError:
         return None
 
-    return result
-
 
 @mutation.field("publish")
-def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> publisher.MachineInfo:
+def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
     build = Build.from_id(id)
 
     if publisher.pulled(build):
@@ -309,7 +300,7 @@ def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> publisher.Machi
     else:
         Worker(Settings.from_environ()).run(tasks.publish_build, build.id)
 
-    return publisher.MachineInfo(build.machine)
+    return MachineInfo(build.machine)
 
 
 @mutation.field("pull")
@@ -320,14 +311,14 @@ def resolve_mutation_pull(
     id: str,
     note: str | None = None,
     tags: list[str] | None = None,
-) -> publisher.MachineInfo:
+) -> MachineInfo:
     build = Build.from_id(id)
 
     Worker(Settings.from_environ()).run(
         tasks.pull_build, build.id, note=note, tags=tags
     )
 
-    return publisher.MachineInfo(build.machine)
+    return MachineInfo(build.machine)
 
 
 @mutation.field("scheduleBuild")
@@ -388,10 +379,10 @@ def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -
 @mutation.field("removeBuildTag")
 def resolve_mutation_removebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
-) -> publisher.MachineInfo:
+) -> MachineInfo:
     publisher.untag(machine, tag)
 
-    return publisher.MachineInfo(machine)
+    return MachineInfo(machine)
 
 
 @mutation.field("createRepo")
