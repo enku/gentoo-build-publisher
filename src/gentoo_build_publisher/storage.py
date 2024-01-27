@@ -22,6 +22,7 @@ from gentoo_build_publisher.common import (
 )
 from gentoo_build_publisher.settings import Settings
 
+INVALID_TEST_PATH = "__testing__"
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +63,7 @@ class Storage:
     """
 
     def __init__(self, root: Path):
-        if not root.exists():
+        if str(root) != INVALID_TEST_PATH:
             fs.init_root(root, ["tmp"] + [content.value for content in Content])
         self.root = root
 

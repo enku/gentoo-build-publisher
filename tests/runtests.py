@@ -13,6 +13,11 @@ def main() -> None:
     """Program entry point"""
     args = parse_args()
     os.environ["DJANGO_SETTINGS_MODULE"] = args.settings
+
+    # These values are required in order to import the publisher module
+    os.environ.setdefault("BUILD_PUBLISHER_JENKINS_BASE_URL", "http://jenkins.invalid/")
+    os.environ.setdefault("BUILD_PUBLISHER_STORAGE_PATH", "__testing__")
+
     django.setup()
 
     TestRunner = get_runner(settings)  # pylint: disable=invalid-name

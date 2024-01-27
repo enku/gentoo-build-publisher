@@ -60,8 +60,8 @@ class Settings(BaseSettings):
     # pylint: disable=invalid-name,too-many-instance-attributes
     env_prefix: ClassVar = "BUILD_PUBLISHER_"
 
-    STORAGE_PATH: Path = Path("/dev/null")
-    JENKINS_BASE_URL: str = "http://jenkins.invalid/"
+    STORAGE_PATH: Path
+    JENKINS_BASE_URL: str
     ENABLE_PURGE: bool = False
     JENKINS_API_KEY: str | None = None
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
