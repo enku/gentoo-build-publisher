@@ -26,7 +26,6 @@ class DashboardContext(TypedDict):
 
     chart_days: list[str]
     build_count: int
-    builds_not_completed: list[BuildRecord]
     gradient_colors: Gradient
     builds_per_machine: list[int]
     machines: list[str]
@@ -85,12 +84,6 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
     return {
         "chart_days": days_strings(input_context.now, input_context.days),
         "build_count": sum(sc.machine_info(m).build_count for m in sc.machines),
-        "builds_not_completed": [
-            build
-            for machine in sc.machines
-            for build in sc.machine_info(machine).builds
-            if not build.completed
-        ],
         "build_packages": {
             latest.id: sc.build_packages(latest)
             for machine in sc.machines

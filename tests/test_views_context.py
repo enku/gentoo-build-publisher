@@ -84,14 +84,6 @@ class CreateDashboardContextTests(TestCase):
             },
         )
 
-    def test_not_completed(self) -> None:
-        publisher.pull(BuildFactory())
-        build = BuildFactory()
-        record = publisher.record(build).save(publisher.records, completed=None)
-
-        ctx = create_dashboard_context(self.input_context())
-        self.assertEqual(ctx["builds_not_completed"], [record])
-
     def test_latest_published(self) -> None:
         babette = BuildFactory(machine="babette")
         publisher.publish(babette)
