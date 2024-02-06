@@ -1,4 +1,5 @@
 """Memory-based RecordDB implementation"""
+
 import datetime as dt
 import typing as t
 from collections.abc import Iterable

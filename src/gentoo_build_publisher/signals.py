@@ -1,4 +1,5 @@
 """Signal dispatcher for Gentoo Build Publisher"""
+
 from pydispatch import Dispatcher
 
 

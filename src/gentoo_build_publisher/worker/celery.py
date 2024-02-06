@@ -1,4 +1,5 @@
 """Celery WorkerInterface"""
+
 import base64
 import marshal
 from typing import Any, Callable

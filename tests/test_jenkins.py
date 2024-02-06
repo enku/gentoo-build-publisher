@@ -1,4 +1,5 @@
 """Tests for the Jenkins interface"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import dataclasses as dc
 import io

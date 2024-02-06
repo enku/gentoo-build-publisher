@@ -1,4 +1,5 @@
 """Tests for the jenkins.xml utils"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from unittest import TestCase
 

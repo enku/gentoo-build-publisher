@@ -15,6 +15,7 @@ extracted into Storage, and appropriate metadata is created in the RecordDB.  Li
 when a build is deleted (BuildPublisher.delete(build)) then it makes sure that the
 Storage and Record are removed.
 """
+
 from __future__ import annotations
 
 import logging

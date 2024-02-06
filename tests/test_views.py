@@ -1,4 +1,5 @@
 """Unit tests for gbp views"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from functools import partial

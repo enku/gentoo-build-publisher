@@ -1,4 +1,5 @@
 """Tests for the common module"""
+
 # pylint: disable=missing-docstring
 from unittest import TestCase
 

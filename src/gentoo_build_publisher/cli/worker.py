@@ -3,6 +3,7 @@
 This is a simple wrapper that calls the appropriate worker according to
 `settings.WORKER_BACKEND`.
 """
+
 import argparse
 from dataclasses import replace
 

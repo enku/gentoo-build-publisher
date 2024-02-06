@@ -1,4 +1,5 @@
 """Misc string operations"""
+
 from collections.abc import Iterator
 from typing import IO
 

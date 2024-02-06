@@ -1,4 +1,5 @@
 """Tests for the dashboard utils"""
+
 # pylint: disable=missing-docstring
 import datetime as dt
 from unittest import mock

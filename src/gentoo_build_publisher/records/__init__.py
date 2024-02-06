@@ -1,4 +1,5 @@
 """DB interface for Gentoo Build Publisher"""
+
 from __future__ import annotations
 
 import datetime as dt

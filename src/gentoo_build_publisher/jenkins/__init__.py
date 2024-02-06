@@ -1,4 +1,5 @@
 """Jenkins api for Gentoo Build Publisher"""
+
 from __future__ import annotations
 
 import json as jsonlib

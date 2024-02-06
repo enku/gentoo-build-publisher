@@ -1,4 +1,5 @@
 """Functions/data to support the dashboard view"""
+
 from __future__ import annotations
 
 import datetime as dt

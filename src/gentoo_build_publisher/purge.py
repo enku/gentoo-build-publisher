@@ -4,6 +4,7 @@ I copied this (idea, not code) from someone years ago but I don't remember so I 
 give a proper attribution.  It's originally a backup purging strategy but I want to be
 able to use it for purging builds or anything else for that matter.
 """
+
 from __future__ import annotations
 
 import datetime

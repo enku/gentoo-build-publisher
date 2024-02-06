@@ -1,4 +1,5 @@
 """Unit tests for gbp models"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from gentoo_build_publisher.models import BuildLog, BuildNote, KeptBuild
 

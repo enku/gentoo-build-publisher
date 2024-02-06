@@ -1,4 +1,5 @@
 """Tests for the db module"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from datetime import timezone

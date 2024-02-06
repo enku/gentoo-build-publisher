@@ -1,4 +1,5 @@
 """Tests for the gbpck management command"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import itertools
 import re

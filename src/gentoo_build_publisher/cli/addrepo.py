@@ -2,6 +2,7 @@
 
 This adds an ebuild repo to Jenkins that can be used by machine builds.
 """
+
 import argparse
 
 from gbpcli import GBP, Console

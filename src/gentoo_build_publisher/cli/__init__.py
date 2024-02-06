@@ -1,4 +1,5 @@
 """Gentoo Build Publisher-specific gbpcli subcommands"""
+
 from typing import cast
 
 from gbpcli import GBP

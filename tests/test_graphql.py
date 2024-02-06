@@ -1,4 +1,5 @@
 """Tests for the GraphQL interface for Gentoo Build Publisher"""
+
 # pylint: disable=missing-docstring,too-many-lines
 import datetime as dt
 from typing import Any

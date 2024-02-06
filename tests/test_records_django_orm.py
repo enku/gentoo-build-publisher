@@ -1,4 +1,5 @@
 """Tests for the Django ORM RecordDB implementation"""
+
 # pylint: disable=missing-docstring
 import datetime as dt
 from dataclasses import replace

@@ -1,4 +1,5 @@
 """GBP View Context Utilities"""
+
 import datetime as dt
 from dataclasses import dataclass, field
 from typing import TypedDict

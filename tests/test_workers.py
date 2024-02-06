@@ -1,4 +1,5 @@
 """Unit tests for the worker module"""
+
 # pylint: disable=missing-docstring,no-value-for-parameter
 import io
 import os
@@ -221,9 +222,10 @@ class WorkMethodTests(TestCase):
 
     def test_sync(self) -> None:
         stderr_path = "gentoo_build_publisher.worker.sync.sys.stderr"
-        with self.assertRaises(SystemExit) as context, mock.patch(
-            stderr_path
-        ) as mock_stderr:
+        with (
+            self.assertRaises(SystemExit) as context,
+            mock.patch(stderr_path) as mock_stderr,
+        ):
             SyncWorker.work(self.settings)
 
         self.assertEqual(context.exception.args, (1,))
@@ -233,9 +235,10 @@ class WorkMethodTests(TestCase):
         worker_path = "gentoo_build_publisher.worker.rq.Worker"
         redis_path = "gentoo_build_publisher.worker.rq.Redis"
 
-        with mock.patch(worker_path) as mock_worker, mock.patch(
-            redis_path
-        ) as mock_redis:
+        with (
+            mock.patch(worker_path) as mock_worker,
+            mock.patch(redis_path) as mock_redis,
+        ):
             RQWorker.work(self.settings)
 
         mock_redis.from_url.assert_called_once_with("redis://localhost.invalid:6379")

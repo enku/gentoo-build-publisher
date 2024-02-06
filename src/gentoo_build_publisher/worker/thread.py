@@ -2,6 +2,7 @@
 
 Basically this is like the "sync" worker but instead throws the function into a thread.
 """
+
 import threading
 from typing import Any, Callable
 

@@ -1,4 +1,5 @@
 """Template tags for numerical values"""
+
 import datetime as dt
 from typing import Any
 

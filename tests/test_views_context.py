@@ -1,4 +1,5 @@
 """Tests for the views context helpers"""
+
 # pylint: disable=missing-docstring
 import datetime as dt
 from typing import Any

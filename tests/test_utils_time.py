@@ -1,4 +1,5 @@
 """Tests for the gentoo_build_publisher.utils module"""
+
 # pylint: disable=missing-docstring
 import datetime as dt
 from unittest import TestCase, mock

@@ -1,4 +1,5 @@
 """AppsConfigs for Gentoo Build Publisher"""
+
 from django.apps import AppConfig
 
 

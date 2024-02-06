@@ -1,4 +1,5 @@
 """Tests for the gentoo_build_publisher.utils module"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from contextlib import contextmanager
 from typing import Generator

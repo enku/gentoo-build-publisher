@@ -1,4 +1,5 @@
 """RQ WorkerInterface"""
+
 from typing import Any, Callable
 
 from redis import Redis

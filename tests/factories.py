@@ -1,4 +1,5 @@
 """Test factories for GBP"""
+
 # pylint: disable=missing-docstring,too-few-public-methods
 import datetime as dt
 import io

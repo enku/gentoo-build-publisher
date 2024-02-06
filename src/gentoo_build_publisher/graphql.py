@@ -1,4 +1,5 @@
 """GraphQL resolvers for Gentoo Build Publisher"""
+
 # Most of the functions are resolvers and need no explanation
 # pylint: disable=missing-function-docstring
 

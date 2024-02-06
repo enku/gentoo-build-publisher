@@ -1,4 +1,5 @@
 """Storage (filesystem) interface for Gentoo Build Publisher"""
+
 from __future__ import annotations
 
 import logging

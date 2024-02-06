@@ -1,4 +1,5 @@
 """Tests for custom template tags"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from typing import Any

@@ -1,4 +1,5 @@
 """Tests for the gbpcli "addrepo" subcommand"""
+
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 

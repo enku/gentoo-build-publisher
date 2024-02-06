@@ -1,4 +1,5 @@
 """Async Workers for Gentoo Build Publisher"""
+
 import importlib.metadata
 import logging
 from typing import Any, Callable, Protocol

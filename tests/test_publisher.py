@@ -1,4 +1,5 @@
 """Tests for the GBP publisher"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 import unittest

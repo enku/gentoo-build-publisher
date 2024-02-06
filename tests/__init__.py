@@ -1,4 +1,5 @@
 """Tests for gentoo build publisher"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
 import datetime as dt
 import io

@@ -1,4 +1,5 @@
 """Tests for GBP Settings"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from pathlib import Path
 from unittest import TestCase

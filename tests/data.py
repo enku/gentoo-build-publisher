@@ -1,4 +1,5 @@
 """Test data"""
+
 PACKAGE_LINES: list[str] = [
     "BDEPEND: >=sys-devel/gettext-0.19.8 app-arch/xz-utils >=dev-util/meson-0.62.2",
     "BUILD_ID: 3",

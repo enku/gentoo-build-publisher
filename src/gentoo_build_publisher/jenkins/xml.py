@@ -1,4 +1,5 @@
 """XML Handling For Jenkins"""
+
 import xml.etree.ElementTree as ET
 from typing import TypeGuard
 

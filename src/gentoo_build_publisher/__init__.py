@@ -1,4 +1,5 @@
 """Gentoo Build Publisher"""
+
 # pylint: disable=invalid-name
 from celery import Celery
 

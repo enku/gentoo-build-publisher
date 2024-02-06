@@ -3,6 +3,7 @@
 The "sync" WorkerInterface is a simple (testing) WorkerInterface that runs the jobs
 synchronously (in process).
 """
+
 import sys
 from typing import Any, Callable
 

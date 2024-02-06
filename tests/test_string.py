@@ -1,4 +1,5 @@
 """Tests for the string module"""
+
 # pylint: disable=missing-docstring
 import io
 import unittest

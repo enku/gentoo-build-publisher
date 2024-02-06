@@ -1,4 +1,5 @@
 """Tests for the storage type"""
+
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import json
 import os

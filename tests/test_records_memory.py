@@ -1,4 +1,5 @@
 """Tests for the memorydb module"""
+
 # pylint: disable=missing-docstring
 import unittest
 
