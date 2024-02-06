@@ -113,8 +113,7 @@ class StatsCollector:
         bbd: dict[dt.date, int] = {}
 
         for build in self.machine_info(machine).builds:
-            if not build.submitted:
-                continue
+            assert build.submitted
             date = localtime(build.submitted).date()
             bbd[date] = bbd.setdefault(date, 0) + 1
 

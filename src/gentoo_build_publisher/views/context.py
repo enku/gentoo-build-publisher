@@ -145,8 +145,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
     latest_build = sc.latest_build(machine)
     storage = sc.total_package_size(machine)
 
-    if not latest_build:
-        raise ValueError(f"machine {machine} has no builds")
+    assert latest_build
 
     return {
         "average_storage": storage / machine_info.build_count,
