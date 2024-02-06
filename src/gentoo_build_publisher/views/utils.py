@@ -121,7 +121,7 @@ class StatsCollector:
 
     def packages_by_day(self, machine: MachineName) -> dict[dt.date, list[Package]]:
         """Return dict of machine's packages distributed by build date"""
-        pbd: dict[dt.date, list[Package]] = {}
+        pbd: dict[dt.date, set[Package]] = {}
 
         for build in filter(
             lambda b: b.built and b.submitted, self.machine_info(machine).builds
@@ -133,9 +133,9 @@ class StatsCollector:
             except LookupError:
                 continue
 
-            pbd.setdefault(date, []).extend(metadata.packages.built)
+            pbd.setdefault(date, set()).update(metadata.packages.built)
 
-        return pbd
+        return {date: list(packages) for date, packages in pbd.items()}
 
 
 def days_strings(start: dt.datetime, days: int) -> list[str]:

@@ -7,7 +7,7 @@ from unittest import mock
 from django.utils import timezone
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.common import Build, Content
 from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.views.utils import (
     StatsCollector,
@@ -201,6 +201,26 @@ class StatsCollectorTests(TestCase):
             dt.date(2024, 1, 15): 4,
         }
         self.assertEqual(bbd, expected)
+
+    def test_packages_by_day(self) -> None:
+        d1 = dt.datetime(2021, 4, 13, 9, 5)
+        self.artifact_builder.timer = int(d1.timestamp())
+        [build] = create_builds_and_packages("babette", 1, 3, self.artifact_builder)
+        publisher.pull(build)
+        gbp_json_path = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_json_path.unlink()
+
+        d2 = dt.datetime(2024, 1, 14, 9, 5)
+        self.artifact_builder.timer = int(d2.timestamp())
+        for build in create_builds_and_packages("babette", 2, 3, self.artifact_builder):
+            publisher.pull(build)
+
+        pbd = self.stats_collector().packages_by_day("babette")
+
+        # d1's packages are skipped because there is on gbp.json
+        self.assertEqual(list(pbd.keys()), [d2.date()])
+
+        self.assertEqual(len(pbd[d2.date()]), 6)
 
 
 def create_builds_and_packages(
