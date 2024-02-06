@@ -100,7 +100,7 @@ dev = [
     "black>=22.6.0",
     "coverage[toml]>=6.4.2",
     "factory-boy>=3.2.1",
-    "mypy>=0.971",
+    "mypy==1.7.1",
     # pylint-django fails with 2.15.0. See bug #370
     # https://github.com/PyCQA/pylint-django/issues/370
     "pylint>=2.14.5,!=2.15.0",
