@@ -39,7 +39,7 @@ machines sync from.
 ## Procedure
 
 * Build a Gentoo Build Publisher instance. Refer to the [Install
-  Guide](https://github.com/enku/gentoo-build-publisher/wiki/Install-Guide).
+  Guide](https://github.com/enku/gentoo-build-publisher/blob/master/docs/how-to-install.md).
 * Create "machines" and "repos" jobs in Jenkins.  For example `gbp addrepo
   gentoo https://anongit.gentoo.org/git/repo/gentoo.git; gbp addmachine base
   https://github.com/enku/gbp-machines.git` Use [the gbp-machines
