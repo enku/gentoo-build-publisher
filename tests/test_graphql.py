@@ -184,7 +184,7 @@ class BuildsQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self) -> None:
-        now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.timezone.utc)
+        now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.UTC)
         builds = BuildFactory.create_batch(3)
 
         for build in builds:
@@ -253,22 +253,22 @@ class LatestQueryTestCase(TestCase):
 
         publisher.records.save(
             BuildRecordFactory.build(
-                built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.timezone.utc),
-                submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.timezone.utc),
-                completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.timezone.utc),
+                built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
+                submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.UTC),
+                completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.UTC),
             )
         )
         publisher.records.save(
             latest := BuildRecordFactory.build(
-                built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.timezone.utc),
-                submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.timezone.utc),
-                completed=dt.datetime(2022, 2, 25, 0, 20, tzinfo=dt.timezone.utc),
+                built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.UTC),
+                submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.UTC),
+                completed=dt.datetime(2022, 2, 25, 0, 20, tzinfo=dt.UTC),
             )
         )
         self.latest = latest
         publisher.records.save(
             BuildRecordFactory.build(
-                submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.timezone.utc),
+                submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.UTC),
             )
         )
 

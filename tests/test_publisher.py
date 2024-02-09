@@ -18,8 +18,6 @@ from gentoo_build_publisher.utils.time import utctime
 from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test
 from .factories import BuildFactory
 
-utc = dt.timezone.utc
-
 
 class BuildPublisherFromSettingsTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -90,7 +88,7 @@ class BuildPublisherTestCase(TestCase):
 
         jenkins_timestamp = dt.datetime.utcfromtimestamp(
             self.artifact_builder.build_info(self.build).build_time / 1000
-        ).replace(tzinfo=utc)
+        ).replace(tzinfo=dt.UTC)
         self.assertEqual(record.built, jenkins_timestamp)
 
     def test_pull_does_not_download_when_already_pulled(self) -> None:
@@ -114,7 +112,7 @@ class BuildPublisherTestCase(TestCase):
     def test_build_timestamps(self) -> None:
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
         with mock.patch(localtimezone, new=ZoneInfo("America/New_York")):
-            submitted = dt.datetime(2024, 1, 19, 11, 5, 49, tzinfo=dt.timezone.utc)
+            submitted = dt.datetime(2024, 1, 19, 11, 5, 49, tzinfo=dt.UTC)
             now = "gentoo_build_publisher.utils.time.now"
             with mock.patch(now, return_value=submitted):
                 self.artifact_builder.timer = 1705662194  # 2024-01-19 11:03 UTC
@@ -152,14 +150,14 @@ class BuildPublisherTestCase(TestCase):
         self.publisher.pull(old_build)
         record = self.publisher.record(old_build)
         self.publisher.records.save(
-            record, submitted=dt.datetime(1970, 1, 1, tzinfo=utc)
+            record, submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
         )
 
         new_build = BuildFactory()
         self.publisher.pull(new_build)
         record = self.publisher.record(new_build)
         self.publisher.records.save(
-            record, submitted=dt.datetime(1970, 12, 31, tzinfo=utc)
+            record, submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC)
         )
 
         self.publisher.purge(old_build.machine)
@@ -176,19 +174,19 @@ class BuildPublisherTestCase(TestCase):
         kept_build = BuildFactory(machine="lighthouse")
         self.publisher.records.save(
             self.publisher.record(kept_build),
-            submitted=dt.datetime(1970, 1, 1, tzinfo=utc),
+            submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
             keep=True,
         )
         tagged_build = BuildFactory(machine="lighthouse")
         self.publisher.records.save(
             self.publisher.record(tagged_build),
-            submitted=dt.datetime(1970, 1, 1, tzinfo=utc),
+            submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
         )
         self.publisher.pull(tagged_build)
         self.publisher.tag(tagged_build, "prod")
         self.publisher.records.save(
             self.publisher.record(BuildFactory(machine="lighthouse")),
-            submitted=dt.datetime(1970, 12, 31, tzinfo=utc),
+            submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC),
         )
 
         self.publisher.purge("lighthouse")
@@ -201,11 +199,11 @@ class BuildPublisherTestCase(TestCase):
         self.publisher.publish(self.build)
         self.publisher.records.save(
             self.publisher.record(self.build),
-            submitted=dt.datetime(1970, 1, 1, tzinfo=utc),
+            submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
         )
         self.publisher.records.save(
             self.publisher.record(BuildFactory()),
-            submitted=dt.datetime(1970, 12, 31, tzinfo=utc),
+            submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC),
         )
 
         self.publisher.purge(self.build.machine)

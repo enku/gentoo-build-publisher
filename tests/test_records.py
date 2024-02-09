@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
-from datetime import timezone
 from itertools import product
 from pathlib import Path
 
@@ -23,7 +22,6 @@ from . import parametrized
 from .factories import BuildRecordFactory
 
 BACKENDS = [["django"], ["memory"]]
-UTC = timezone.utc
 
 
 class RecordDBTestCase(TestCase):
@@ -38,7 +36,7 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_save(self, backend: str) -> None:
         records = self.backend(backend)
-        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
+        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
         build_record = records.save(
             BuildRecord("lighthouse", "8924", completed=timestamp)
@@ -50,7 +48,7 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_save_with_given_fields_updates_fields(self, backend: str) -> None:
         records = self.backend(backend)
-        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, UTC)
+        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
         build_record = BuildRecord("lighthouse", "8924", completed=timestamp)
         build_record = records.save(build_record, logs="Build succeeded!", keep=True)
@@ -120,11 +118,11 @@ class RecordDBTestCase(TestCase):
     def test_previous(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build1)
-        build2 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662315204, UTC))
+        build2 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662315204, dt.UTC))
         records.save(build2)
 
         self.assertEqual(records.previous(build2).id, build1.id)
@@ -135,12 +133,12 @@ class RecordDBTestCase(TestCase):
     def test_next(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
         )
         records.save(build1)
         build2 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662315204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            built=dt.datetime.fromtimestamp(1662315204, dt.UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build2)
 
@@ -152,12 +150,12 @@ class RecordDBTestCase(TestCase):
     def test_next_excludes_unbuilt(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
         )
         records.save(build1)
         build2 = BuildRecordFactory(
             built=None,
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build2)
 
@@ -167,13 +165,13 @@ class RecordDBTestCase(TestCase):
     def test_next_second_built_before_first(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
         )
         records.save(build1)
 
         build2 = BuildRecordFactory(
             built=build1.built - dt.timedelta(hours=1),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build2)
 
@@ -184,13 +182,13 @@ class RecordDBTestCase(TestCase):
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
         )
         records.save(build1)
         build2 = BuildRecordFactory(
             machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662315204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            built=dt.datetime.fromtimestamp(1662315204, dt.UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build2)
 
@@ -204,13 +202,13 @@ class RecordDBTestCase(TestCase):
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662310204, UTC),
+            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
         )
         records.save(build1)
         build2 = BuildRecordFactory(
             machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662315204, UTC),
-            completed=dt.datetime.fromtimestamp(1662311204, UTC),
+            built=dt.datetime.fromtimestamp(1662315204, dt.UTC),
+            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
         )
         records.save(build2)
 
@@ -224,8 +222,8 @@ class RecordDBTestCase(TestCase):
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             **{
-                "built": dt.datetime.fromtimestamp(1662310204, UTC),
-                "completed": dt.datetime.fromtimestamp(1662311204, UTC),
+                "built": dt.datetime.fromtimestamp(1662310204, dt.UTC),
+                "completed": dt.datetime.fromtimestamp(1662311204, dt.UTC),
                 "machine": "lighthouse",
                 field: "foo",
             },
@@ -233,8 +231,8 @@ class RecordDBTestCase(TestCase):
         records.save(build1)
         build2 = BuildRecordFactory(
             **{
-                "built": dt.datetime.fromtimestamp(1662310204, UTC),
-                "completed": dt.datetime.fromtimestamp(1662311204, UTC),
+                "built": dt.datetime.fromtimestamp(1662310204, dt.UTC),
+                "completed": dt.datetime.fromtimestamp(1662311204, dt.UTC),
                 "machine": "lighthouse",
                 field: "foobar",
             },
@@ -264,7 +262,7 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_count(self, backend: str) -> None:
         records = self.backend(backend)
-        today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=UTC)
+        today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=dt.UTC)
 
         for i in reversed(range(4)):
             day = today - dt.timedelta(days=i)

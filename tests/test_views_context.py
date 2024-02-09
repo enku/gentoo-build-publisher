@@ -96,7 +96,7 @@ class CreateDashboardContextTests(TestCase):
         self.assertEqual(ctx["unpublished_builds_count"], 2)
 
     def test_builds_over_time_and_build_recently(self) -> None:
-        now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.timezone.utc)
+        now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.UTC)
         for machine in ["babette", "lighthouse"]:
             for day in range(2):
                 for _ in range(3):

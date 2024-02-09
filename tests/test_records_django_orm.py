@@ -20,9 +20,9 @@ class RecordDBTestCase(TestCase):
 
         self.records = RecordDB()
         self.build_model = BuildModelFactory.create(
-            submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.timezone.utc),
-            completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
-            built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.timezone.utc),
+            submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),
+            completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
+            built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
         )
         BuildLog.objects.create(build_model=self.build_model, logs="This is a test")
         self.record = self.records.get(Build.from_id(str(self.build_model)))
@@ -30,7 +30,7 @@ class RecordDBTestCase(TestCase):
     def test_submitted_set(self) -> None:
         record = replace(
             self.record,
-            submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
+            submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
         )
         self.records.save(record)
 
@@ -38,19 +38,19 @@ class RecordDBTestCase(TestCase):
 
         self.assertEqual(
             self.build_model.submitted,
-            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
+            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
         )
 
     def test_completed_get(self) -> None:
         self.assertEqual(
             self.record.submitted,
-            dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.timezone.utc),
+            dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),
         )
 
     def test_completed_set(self) -> None:
         record = replace(
             self.record,
-            completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
+            completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
         )
         self.records.save(record)
 
@@ -58,7 +58,7 @@ class RecordDBTestCase(TestCase):
 
         self.assertEqual(
             self.build_model.completed,
-            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.timezone.utc),
+            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
         )
 
     def test_save_note(self) -> None:
@@ -184,7 +184,7 @@ class RecordDBTestCase(TestCase):
         # completed as BuildPublisher._update_build_metadata updates both fields
         # simultaneously, but...
         next_build = BuildModelFactory(
-            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc)
+            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC)
         )
 
         assert next_build.machine == self.build_model.machine
@@ -196,8 +196,8 @@ class RecordDBTestCase(TestCase):
 
     def test_next_when_completed(self) -> None:
         next_build = BuildModelFactory(
-            completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
-            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.timezone.utc),
+            completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC),
+            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC),
         )
 
         assert next_build.machine == self.build_model.machine

@@ -24,9 +24,9 @@ def localtime(time: dt.datetime | None = None) -> dt.datetime:
 def utctime(time: dt.datetime | None = None) -> dt.datetime:
     """Return time but with the timezone being UTC"""
     if time is None:
-        return now(dt.timezone.utc)
+        return now(dt.UTC)
 
-    return time.replace(tzinfo=dt.timezone.utc)
+    return time.replace(tzinfo=dt.UTC)
 
 
 def is_same_day(first: dt.datetime, second: dt.datetime) -> bool:

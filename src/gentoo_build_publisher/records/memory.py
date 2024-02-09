@@ -4,7 +4,6 @@ import datetime as dt
 import typing as t
 from collections.abc import Iterable
 from dataclasses import replace
-from datetime import timezone
 
 from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
@@ -44,7 +43,7 @@ class RecordDB:
         record = replace(record, **fields)
 
         if record.submitted is None:
-            record = replace(record, submitted=dt.datetime.now(tz=timezone.utc))
+            record = replace(record, submitted=dt.datetime.now(tz=dt.UTC))
 
         if (machine := record.machine) not in self.builds:
             self.builds[machine] = {record.build_id: record}
