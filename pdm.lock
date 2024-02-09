@@ -373,7 +373,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "5.0.1"
+version = "5.0.2"
 requires_python = ">=3.10"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 dependencies = [
@@ -382,8 +382,8 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "Django-5.0.1-py3-none-any.whl", hash = "sha256:f47a37a90b9bbe2c8ec360235192c7fddfdc832206fcf618bb849b39256affc1"},
-    {file = "Django-5.0.1.tar.gz", hash = "sha256:8c8659665bc6e3a44fefe1ab0a291e5a3fb3979f9a8230be29de975e57e8f854"},
+    {file = "Django-5.0.2-py3-none-any.whl", hash = "sha256:56ab63a105e8bb06ee67381d7b65fe6774f057e41a8bab06c8020c8882d8ecd4"},
+    {file = "Django-5.0.2.tar.gz", hash = "sha256:b5bb1d11b2518a5f91372a282f24662f58f66749666b0a286ab057029f728080"},
 ]
 
 [[package]]
@@ -961,20 +961,20 @@ files = [
 
 [[package]]
 name = "typos"
-version = "1.18.1"
+version = "1.18.2"
 requires_python = ">=3.7"
 summary = "Source Code Spelling Correction"
 files = [
-    {file = "typos-1.18.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:785daf44d37d6fc1c4509f1ec5a7cf3ee46b965d09d4009f40c41b34c464a605"},
-    {file = "typos-1.18.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:d1150b1e3f813bcf7635645aafe98005d6d652459d71cfb8fe2fbe31011aea38"},
-    {file = "typos-1.18.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e22740e724eebcc744bd036163962781ff4e635fc543143ec1850434273e4e27"},
-    {file = "typos-1.18.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8f2ddb4277905754f426e5487421dc598ab685bb9328842f84646a5d128b1c51"},
-    {file = "typos-1.18.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:83011e4902f260997b094d7c82d249ac08257703e7562dfce4b662cdc6d3d57d"},
-    {file = "typos-1.18.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:2b9d4e48c709a68e467259fc2dcef59c5718e1712db1aaf5c14f0aa402b9d57b"},
-    {file = "typos-1.18.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:6333585689e74c9ca8922454d3a31a4a60f48d07f7a11f38cb654ad1e40a09de"},
-    {file = "typos-1.18.1-py3-none-win32.whl", hash = "sha256:b8741eb4e40bf0b1d5f1a650e5d80e3cd66cd4077547bb89cb8aa69fb1bc0d94"},
-    {file = "typos-1.18.1-py3-none-win_amd64.whl", hash = "sha256:1fbb815f6efc06161228e5851a9087ff371d4a7db1032219ad9ecfa280fde64b"},
-    {file = "typos-1.18.1.tar.gz", hash = "sha256:1bba27b2788fb0ace930ac61d5a4867bfada133956d2020f6d7bc0f3d58f677e"},
+    {file = "typos-1.18.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:dbfa8637fcc530b57890a40ced904edba643cf07334e7cc7e34a4ceaeb2fd13a"},
+    {file = "typos-1.18.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:e442333b7d09002d4cc34946c120757f7af6ecda55270ce574f552dd8758b1eb"},
+    {file = "typos-1.18.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:190132183a1dce4c3a5990bf383c893bf95871f8feb122fccf9ef6b0dba3a422"},
+    {file = "typos-1.18.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:608d5d30c0fe9d1b2b007fc8924e791cf7be4750dc1ef0cd0a2d41688c849155"},
+    {file = "typos-1.18.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8241c6a5f6a77937badf23fe318d3dcdf36c46c97f1cf8b73a4158c7e3414d9a"},
+    {file = "typos-1.18.2-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:75e2097be128e73f465741e337b2a3fae7a8b5cddd7f30abaec7f9f92c9e8863"},
+    {file = "typos-1.18.2-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:32f42c035161810b3e279f23715408b5421e2fadc491fe32e5f4c7ee7ea8881a"},
+    {file = "typos-1.18.2-py3-none-win32.whl", hash = "sha256:b3efa4a9fe7e434df751355cb18bcee00dbacf75eb4608d99ceefe2ef9d0c5f4"},
+    {file = "typos-1.18.2-py3-none-win_amd64.whl", hash = "sha256:28a583aeb65031f74f0e6d139956930161e3c4b73510478898b251c808d82706"},
+    {file = "typos-1.18.2.tar.gz", hash = "sha256:5ac8fd37f892bb74de5acb44bde3338cbb2eca44b406f24cdecc76a81edd1676"},
 ]
 
 [[package]]
