@@ -562,13 +562,13 @@ class ScheduleBuildTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.jenkins = Jenkins(JENKINS_CONFIG)
-        patcher = mock.patch.object(
-            self.jenkins.session,
-            "get",
-            **{"return_value.json.return_value": JOB_PARAMS},
+        self.enterContext(
+            mock.patch.object(
+                self.jenkins.session,
+                "get",
+                **{"return_value.json.return_value": JOB_PARAMS},
+            )
         )
-        self.addCleanup(patcher.stop)
-        patcher.start()
 
     def test(self) -> None:
         jenkins = self.jenkins

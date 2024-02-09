@@ -62,13 +62,13 @@ class TestCase(UnitTestTestCase):
         self, name: str, mock_publisher: publisher.BuildPublisher
     ) -> None:
         # pylint: disable=protected-access
-        p1 = mock.patch.object(publisher._inst, name, getattr(mock_publisher, name))
-        self.addCleanup(p1.stop)
-        p1.start()
+        self.enterContext(
+            mock.patch.object(publisher._inst, name, getattr(mock_publisher, name))
+        )
 
-        p2 = mock.patch.object(publisher, name, getattr(mock_publisher, name))
-        self.addCleanup(p2.stop)
-        p2.start()
+        self.enterContext(
+            mock.patch.object(publisher, name, getattr(mock_publisher, name))
+        )
 
     def create_file(
         self, name: str, content: bytes = b"", mtime: dt.datetime | None = None
@@ -98,8 +98,7 @@ class TestCase(UnitTestTestCase):
                 **local_environ,
             },
         )
-        self.addCleanup(patch.stop)
-        patch.start()
+        self.enterContext(patch)
 
     def _setup_publisher(self) -> publisher.BuildPublisher:
         # pylint: disable=import-outside-toplevel,cyclic-import
@@ -350,10 +349,8 @@ def graphql(query: str, variables: dict[str, Any] | None = None) -> Any:
 
 
 def set_up_tmpdir_for_test(test_case: UnitTestTestCase) -> Path:
-    tmpdir = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-    test_case.addCleanup(tmpdir.cleanup)
-
-    return Path(tmpdir.name)
+    # pylint: disable=consider-using-with
+    return Path(test_case.enterContext(tempfile.TemporaryDirectory()))
 
 
 def string_console() -> tuple[Console, io.StringIO, io.StringIO]:
