@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from pathlib import PurePosixPath
-from typing import Any, TypeVar
+from typing import Any, Self
 
 import requests
 from yarl import URL
@@ -25,8 +25,6 @@ COPY_ARTIFACT_PLUGIN = "copyartifact@1.47"
 HTTP_NOT_FOUND = 404
 PATH_SEPARATOR = "/"
 
-_T = TypeVar("_T", bound="JenkinsConfig")
-
 
 @dataclass(frozen=True, slots=True)
 class JenkinsConfig:
@@ -40,7 +38,7 @@ class JenkinsConfig:
     requests_timeout: int = 10  # seconds
 
     @classmethod
-    def from_settings(cls: type[_T], settings: Settings) -> _T:
+    def from_settings(cls: type[Self], settings: Settings) -> Self:
         """Return config given settings"""
         return cls(
             base_url=URL(settings.JENKINS_BASE_URL),

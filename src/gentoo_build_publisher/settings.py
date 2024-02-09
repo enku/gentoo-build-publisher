@@ -5,14 +5,11 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, Self
 
 from gentoo_build_publisher.string import get_bool
 
 JENKINS_DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024
-
-
-T = TypeVar("T", bound="BaseSettings")
 
 
 @dataclass(frozen=True)
@@ -25,7 +22,7 @@ class BaseSettings:
     env_prefix: ClassVar = ""
 
     @classmethod
-    def from_dict(cls: type[T], prefix: str, data_dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[Self], prefix: str, data_dict: dict[str, Any]) -> Self:
         """Return Settings instantiated from a dict"""
         params: dict[str, Any] = {}
         for field in fields(cls):
@@ -46,7 +43,7 @@ class BaseSettings:
         return cls(**params)
 
     @classmethod
-    def from_environ(cls: type[T], prefix: str | None = None) -> T:
+    def from_environ(cls: type[Self], prefix: str | None = None) -> Self:
         """Return settings instantiated from environment variables"""
         if prefix is None:
             prefix = cls.env_prefix

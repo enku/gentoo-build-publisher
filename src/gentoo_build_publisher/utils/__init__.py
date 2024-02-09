@@ -7,13 +7,10 @@ import platform
 import re
 import string
 from importlib.metadata import version
-from typing import Any, Callable, Collection, NamedTuple, TypeVar
+from typing import Any, Callable, Collection, NamedTuple, Self
 
 import requests
 from yarl import URL
-
-IT = TypeVar("IT")
-T = TypeVar("T", bound="Color")  # pylint: disable=invalid-name
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_TAG_START = {".", "-"}
@@ -32,7 +29,9 @@ class Color(NamedTuple):
         return f"#{self.red:02x}{self.green:02x}{self.blue:02x}"
 
     @classmethod
-    def gradient(cls: type[T], start: T, end: T, num_colors: int) -> list[T]:
+    def gradient(
+        cls: type[Self], start: Self, end: Self, num_colors: int
+    ) -> list[Self]:
         """Return a list of colors representing a gradient from `start` to `end`"""
         if num_colors < 1:
             return []
