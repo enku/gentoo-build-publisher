@@ -1,3 +1,5 @@
+name: Build distribution
+on: [push]
 jobs:
   build_sdist_and_wheel:
     name: Build distribution
