@@ -153,17 +153,22 @@ class BuildPublisher:
         for tag in tags or []:
             self.tag(build, tag)
 
-        self._update_build_metadata(record)
+        record, packages, gbp_metadata = self._update_build_metadata(record)
+
+        dispatcher.emit(
+            "postpull", build=record, packages=packages, gbp_metadata=gbp_metadata
+        )
 
         return True
 
-    def _update_build_metadata(self, record: BuildRecord) -> None:
+    def _update_build_metadata(
+        self, record: BuildRecord
+    ) -> tuple[BuildRecord, list[Package] | None, GBPMetadata | None]:
         packages: list[Package] | None = None
         gbp_metadata: GBPMetadata | None = None
         jenkins_metadata = self.jenkins.get_metadata(record)
         built = utctime(datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000))
         logs = self.jenkins.get_logs(record)
-
         record = self.records.save(record, logs=logs, completed=utctime(), built=built)
 
         try:
@@ -174,11 +179,7 @@ class BuildPublisher:
             gbp_metadata = self.gbp_metadata(jenkins_metadata, packages)
             self.storage.set_metadata(record, gbp_metadata)
 
-        # We emit postpull here instead of in self.pull() because this has all the
-        # updated Build information
-        dispatcher.emit(
-            "postpull", build=record, packages=packages, gbp_metadata=gbp_metadata
-        )
+        return record, packages, gbp_metadata
 
     def pulled(self, build: Build) -> bool:
         """Return true if the Build has been pulled"""

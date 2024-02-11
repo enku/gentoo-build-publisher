@@ -103,8 +103,11 @@ class BuildPublisherTestCase(TestCase):
         # On rare occasion (server crash) the build appears to be extracted but the
         # record.completed field is None.  In this case Publisher.pulled(build) should
         # be False
-        with mock.patch.object(self.publisher, "_update_build_metadata"):
+        with mock.patch.object(
+            self.publisher, "_update_build_metadata"
+        ) as update_build_metadata:
             # _update_build_metadata sets the completed attribute
+            update_build_metadata.return_value = None, None, None  # dummy values
             self.publisher.pull(self.build)
 
         self.assertFalse(self.publisher.pulled(self.build))
