@@ -83,6 +83,10 @@ class BuildPublisher:
         except RecordNotFound:
             return BuildRecord(build.machine, build.build_id)
 
+    def save(self, record: BuildRecord, **fields: Any) -> BuildRecord:
+        """Save the build or record to the records repository"""
+        return self.records.save(record, **fields)
+
     def publish(self, build: Build) -> None:
         """Publish the build"""
         if not self.pulled(build):
@@ -134,9 +138,7 @@ class BuildPublisher:
             return False
 
         record = self.record(build)
-        record = record.save(
-            self.records, submitted=record.submitted or utctime(), note=note
-        )
+        record = self.save(record, submitted=record.submitted or utctime(), note=note)
         logger.info("Pulling build: %s", build)
 
         # Ensure we only send the Build on pre-pull because the Record a) is incomplete
@@ -168,7 +170,7 @@ class BuildPublisher:
         jenkins_metadata = self.jenkins.get_metadata(record)
         built = utctime(datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000))
         logs = self.jenkins.get_logs(record)
-        record = self.records.save(record, logs=logs, completed=utctime(), built=built)
+        record = self.save(record, logs=logs, completed=utctime(), built=built)
 
         try:
             packages = self.storage.get_packages(record)
@@ -276,6 +278,7 @@ pulled = _inst.pulled
 purge = _inst.purge
 record = _inst.record
 records = _inst.records
+save = _inst.save
 schedule_build = _inst.schedule_build
 search = _inst.search
 storage = _inst.storage

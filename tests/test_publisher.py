@@ -16,7 +16,7 @@ from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.utils.time import utctime
 
 from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test
-from .factories import BuildFactory
+from .factories import BuildFactory, BuildRecordFactory
 
 
 class BuildPublisherFromSettingsTestCase(unittest.TestCase):
@@ -40,7 +40,7 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
         self.assertIsInstance(pub.records, RecordDB)
 
 
-class BuildPublisherTestCase(TestCase):
+class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
     def setUp(self) -> None:
         super().setUp()
 
@@ -265,6 +265,15 @@ class BuildPublisherTestCase(TestCase):
         self.publisher.untag(self.build.machine, "")
 
         self.assertFalse(self.publisher.published(self.build))
+
+    def test_save(self) -> None:
+        r1 = BuildRecordFactory()
+        r2 = publisher.save(r1, note="This is a test")
+
+        self.assertEqual(r2.note, "This is a test")
+
+        r3 = publisher.record(Build(r1.machine, r1.build_id))
+        self.assertEqual(r2, r3)
 
 
 class DispatcherTestCase(TestCase):

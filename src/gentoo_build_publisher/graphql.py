@@ -338,7 +338,7 @@ def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord |
     if not publisher.records.exists(build):
         return None
 
-    return publisher.record(build).save(publisher.records, keep=True)
+    return publisher.save(publisher.record(build), keep=True)
 
 
 @mutation.field("releaseBuild")
@@ -350,7 +350,7 @@ def resolve_mutation_releasebuild(
     if not publisher.records.exists(build):
         return None
 
-    return publisher.record(build).save(publisher.records, keep=False)
+    return publisher.save(publisher.record(build), keep=False)
 
 
 @mutation.field("createNote")
@@ -362,7 +362,7 @@ def resolve_mutation_createnote(
     if not publisher.records.exists(build):
         return None
 
-    return publisher.record(build).save(publisher.records, note=note)
+    return publisher.save(publisher.record(build), note=note)
 
 
 @mutation.field("createBuildTag")
