@@ -137,16 +137,15 @@ class BuildPublisher:
         record = record.save(
             self.records, submitted=record.submitted or utctime(), note=note
         )
-        previous = self.records.previous(record)
-
         logger.info("Pulling build: %s", build)
 
         # Ensure we only send the Build on pre-pull because the Record a) is incomplete
         # and b) may get deleted if the pull fails
         dispatcher.emit("prepull", build=Build(build.machine, build.build_id))
 
-        byte_stream = self.jenkins.download_artifact(build)
-        self.storage.extract_artifact(build, byte_stream, previous)
+        self.storage.extract_artifact(
+            build, self.jenkins.download_artifact(build), self.records.previous(record)
+        )
 
         logger.info("Pulled build %s", build)
 
