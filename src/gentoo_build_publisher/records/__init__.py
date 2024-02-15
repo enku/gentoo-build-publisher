@@ -50,10 +50,6 @@ class BuildRecord(Build):
 
         return submitted.replace(tzinfo=None)
 
-    def save(self, record_db: RecordDB, **fields: Any) -> BuildRecord:
-        """Save changes to record_db. Return new record"""
-        return record_db.save(self, **fields)
-
 
 class RecordDB(Protocol):
     """Repository for BuildRecords"""

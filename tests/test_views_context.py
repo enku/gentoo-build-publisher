@@ -100,11 +100,10 @@ class CreateDashboardContextTests(TestCase):
         for machine in ["babette", "lighthouse"]:
             for day in range(2):
                 for _ in range(3):
-                    build = BuildFactory(machine=machine)
-                    record = publisher.record(build)
-                    record = record.save(
-                        publisher.records, submitted=now - dt.timedelta(days=day)
+                    record = BuildRecordFactory(
+                        machine=machine, submitted=now - dt.timedelta(days=day)
                     )
+                    publisher.save(record)
                     publisher.pull(record)
                     if day == 0:
                         break
@@ -180,12 +179,11 @@ class CreateMachineContextTests(TestCase):
         self.artifact_builder.timer = int(built.timestamp())
         self.artifact_builder.build(build, cpv)
         publisher.pull(build)
-        record = publisher.record(build)
 
         # In 2021 GBP didn't have a built field and in the database. They were
         # back-filled to NULL
-        record = record.save(
-            publisher.records,
+        publisher.save(
+            publisher.record(build),
             built=None,
             submitted=submitted,
             completed=completed,

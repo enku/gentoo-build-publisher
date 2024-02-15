@@ -16,7 +16,12 @@ from gentoo_build_publisher.views.utils import (
 )
 
 from . import QuickCache, TestCase
-from .factories import ArtifactFactory, BuildFactory, package_factory
+from .factories import (
+    ArtifactFactory,
+    BuildFactory,
+    BuildRecordFactory,
+    package_factory,
+)
 
 
 class GetMetadataTestCase(TestCase):
@@ -157,15 +162,9 @@ class StatsCollectorTests(TestCase):
     def test_built_recently(self) -> None:
         day = dt.timedelta(days=1)
         now = timezone.localtime()
-        b1 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now - 2 * day
-        )
-        b2 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now - day
-        )
-        b3 = publisher.record(BuildFactory(machine="babette")).save(
-            publisher.records, built=now
-        )
+        b1 = publisher.save(BuildRecordFactory(machine="babette"))
+        b2 = publisher.save(BuildRecordFactory(machine="babette"), built=now - day)
+        b3 = publisher.save(BuildRecordFactory(machine="babette"), built=now)
         publisher.pull(b3)
 
         sc = self.stats_collector()
@@ -176,20 +175,20 @@ class StatsCollectorTests(TestCase):
 
     def test_builds_by_day(self) -> None:
         for hour in range(2):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            publisher.save(
+                BuildRecordFactory(machine="babette"),
                 submitted=localtime(dt.datetime(2024, 1, 13, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(3):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            publisher.save(
+                BuildRecordFactory(machine="babette"),
                 submitted=localtime(dt.datetime(2024, 1, 14, 12))
                 + dt.timedelta(hours=hour),
             )
         for hour in range(4):
-            publisher.record(BuildFactory(machine="babette")).save(
-                publisher.records,
+            publisher.save(
+                BuildRecordFactory(machine="babette"),
                 submitted=localtime(dt.datetime(2024, 1, 15, 12))
                 + dt.timedelta(hours=hour),
             )
