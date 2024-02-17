@@ -7,10 +7,8 @@ from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from gentoo_build_publisher import views
+from gentoo_build_publisher import publisher, views
 from gentoo_build_publisher.common import Build, Package
-from gentoo_build_publisher.publisher import BuildPublisher
-from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import time
 
 localtime = time.localtime
@@ -129,7 +127,6 @@ def roundrect(text: str, title: str, color: str) -> dict[str, Any]:
 @register.inclusion_tag("gentoo_build_publisher/machine/build_row.html")
 def machine_build_row(build: Build) -> dict[str, Any]:
     """Render a (Jenkins) build row"""
-    publisher = BuildPublisher.from_settings(Settings.from_environ())
     packages_built = publisher.storage.get_metadata(build).packages.built
     packages_built_str = "<br/>".join(p.cpv for p in packages_built)
 
