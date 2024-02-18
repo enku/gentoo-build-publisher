@@ -9,8 +9,8 @@ from typing import Any, TypeAlias
 from django.http import HttpRequest
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
 

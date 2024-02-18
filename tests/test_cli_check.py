@@ -10,7 +10,7 @@ from gbpcli import GBP
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
-from gentoo_build_publisher.common import Build, Content
+from gentoo_build_publisher.types import Build, Content
 
 from . import TestCase, string_console
 from .factories import BuildFactory

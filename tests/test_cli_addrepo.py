@@ -5,8 +5,8 @@ from argparse import ArgumentParser, Namespace
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addrepo
-from gentoo_build_publisher.common import EbuildRepo
 from gentoo_build_publisher.jenkins import ProjectPath
+from gentoo_build_publisher.types import EbuildRepo
 
 from . import TestCase, string_console, test_gbp
 

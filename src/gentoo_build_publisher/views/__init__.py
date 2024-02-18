@@ -13,8 +13,8 @@ from django.shortcuts import render
 from django.urls import URLPattern, path
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import TAG_SYM, Build
 from gentoo_build_publisher.graphql import schema
+from gentoo_build_publisher.types import TAG_SYM, Build
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.views.context import (
     MachineInputContext,

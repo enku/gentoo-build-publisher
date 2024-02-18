@@ -3,8 +3,8 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from unittest import TestCase
 
-from gentoo_build_publisher.common import EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.jenkins import xml
+from gentoo_build_publisher.types import EbuildRepo, MachineJob, Repo
 
 
 class JenkinsXMLTestCase(TestCase):

@@ -7,7 +7,6 @@ from pathlib import Path
 
 from django.test import TestCase
 
-from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import (
     BuildRecord,
     RecordDB,
@@ -17,6 +16,7 @@ from gentoo_build_publisher.records import (
 from gentoo_build_publisher.records.django_orm import RecordDB as DjangoDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import Build
 
 from . import parametrized
 from .factories import BuildRecordFactory

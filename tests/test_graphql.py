@@ -8,7 +8,6 @@ from unittest import mock
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Content, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.graphql import (
     load_schema,
     require_localhost,
@@ -17,6 +16,7 @@ from gentoo_build_publisher.graphql import (
 )
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Content, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.utils import get_version
 from gentoo_build_publisher.utils.time import utctime
 from gentoo_build_publisher.worker import tasks

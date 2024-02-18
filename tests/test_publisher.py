@@ -9,10 +9,10 @@ from zoneinfo import ZoneInfo
 from yarl import URL
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
+from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
 from . import BUILD_LOGS, TestCase, set_up_tmpdir_for_test

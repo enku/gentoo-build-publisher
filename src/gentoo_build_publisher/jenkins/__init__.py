@@ -13,9 +13,9 @@ from typing import Any, Self
 import requests
 from yarl import URL
 
-from gentoo_build_publisher.common import Build, EbuildRepo, MachineJob
 from gentoo_build_publisher.jenkins import xml
 from gentoo_build_publisher.settings import JENKINS_DEFAULT_CHUNK_SIZE, Settings
+from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob
 from gentoo_build_publisher.utils import dict_to_list_of_dicts, request_and_raise
 
 AuthTuple = tuple[str, str]

@@ -7,8 +7,8 @@ from typing import TypedDict
 from django.utils import timezone
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, CacheProtocol, Package
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 from gentoo_build_publisher.views.utils import (

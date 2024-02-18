@@ -13,11 +13,11 @@ from typing import Generator
 import factory
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, Content, Package
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.records import BuildRecord, Records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
+from gentoo_build_publisher.types import Build, Content, Package
 from gentoo_build_publisher.utils import cpv_to_path
 
 from . import MockJenkins

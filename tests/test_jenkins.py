@@ -12,7 +12,6 @@ from unittest import TestCase, mock
 import requests
 from yarl import URL
 
-from gentoo_build_publisher.common import Build, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.jenkins import (
     COPY_ARTIFACT_PLUGIN,
     Jenkins,
@@ -23,6 +22,7 @@ from gentoo_build_publisher.jenkins import (
     xml,
 )
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
 from . import JENKINS_CONFIG, MockJenkins, test_data
 

@@ -24,13 +24,13 @@ from requests.structures import CaseInsensitiveDict
 from yarl import URL
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
     JenkinsMetadata,
     ProjectPath,
 )
+from gentoo_build_publisher.types import Build
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 JENKINS_CONFIG = JenkinsConfig(

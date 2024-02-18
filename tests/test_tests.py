@@ -5,7 +5,7 @@ import datetime as dt
 import tarfile
 from unittest import TestCase, mock
 
-from gentoo_build_publisher.common import Content, Package
+from gentoo_build_publisher.types import Content, Package
 
 from . import MockJenkinsSession, Tree
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus

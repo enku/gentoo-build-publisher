@@ -5,8 +5,8 @@ import typing as t
 from collections.abc import Iterable
 from dataclasses import replace
 
-from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.types import Build
 
 BuildId = str
 Machine = str

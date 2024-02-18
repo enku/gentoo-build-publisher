@@ -14,7 +14,7 @@ bits like submitting to the task queue, retries, etc.
 def publish_build(build_id: str) -> bool:
     """Publish the build"""
     from gentoo_build_publisher import publisher
-    from gentoo_build_publisher.common import Build
+    from gentoo_build_publisher.types import Build
     from gentoo_build_publisher.worker import PUBLISH_FATAL_EXCEPTIONS, logger
     from gentoo_build_publisher.worker.tasks import pull_build
 
@@ -35,8 +35,8 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
     If `note` is given, then the build record will be saved with the given note.
     """
     from gentoo_build_publisher import publisher
-    from gentoo_build_publisher.common import Build
     from gentoo_build_publisher.settings import Settings
+    from gentoo_build_publisher.types import Build
     from gentoo_build_publisher.worker import logger
     from gentoo_build_publisher.worker.tasks import purge_machine
 
@@ -63,7 +63,7 @@ def purge_machine(machine: str) -> None:
 def delete_build(build_id: str) -> None:
     """Delete the given build from the db"""
     from gentoo_build_publisher import publisher
-    from gentoo_build_publisher.common import Build
+    from gentoo_build_publisher.types import Build
     from gentoo_build_publisher.worker import logger
 
     build = Build.from_id(build_id)

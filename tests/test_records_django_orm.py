@@ -4,10 +4,10 @@
 import datetime as dt
 from dataclasses import replace
 
-from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.records.django_orm import RecordDB
+from gentoo_build_publisher.types import Build
 
 from . import DjangoTestCase as TestCase
 from .factories import BuildModelFactory, BuildRecordFactory

@@ -9,7 +9,7 @@ from django import urls
 from django.http import Http404, HttpRequest, HttpResponse
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase

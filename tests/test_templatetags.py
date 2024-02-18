@@ -7,7 +7,7 @@ from unittest import TestCase, mock
 
 from django.template import Context, Template, TemplateSyntaxError
 
-from gentoo_build_publisher.common import Build
+from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils.time import localtime
 
 NOW = "gentoo_build_publisher.utils.time.now"

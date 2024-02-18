@@ -7,7 +7,7 @@ from unittest import mock
 from django.utils import timezone
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, Content
+from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.views.utils import (
     StatsCollector,

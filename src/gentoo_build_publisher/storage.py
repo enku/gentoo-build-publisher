@@ -13,7 +13,8 @@ from typing import IO
 import orjson
 
 from gentoo_build_publisher import fs, string, utils
-from gentoo_build_publisher.common import (
+from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
     Content,
@@ -21,7 +22,6 @@ from gentoo_build_publisher.common import (
     Package,
     PackageMetadata,
 )
-from gentoo_build_publisher.settings import Settings
 
 INVALID_TEST_PATH = "__testing__"
 logger = logging.getLogger(__name__)

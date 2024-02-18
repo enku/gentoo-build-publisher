@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
-from gentoo_build_publisher.common import MachineJob, Repo
+from gentoo_build_publisher.types import MachineJob, Repo
 
 from . import TestCase, string_console, test_gbp
 

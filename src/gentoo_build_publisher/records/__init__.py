@@ -8,8 +8,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from gentoo_build_publisher.common import Build
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.types import Build
 
 
 class RecordNotFound(LookupError):

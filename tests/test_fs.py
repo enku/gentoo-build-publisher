@@ -4,7 +4,7 @@ import os
 import shutil
 
 from gentoo_build_publisher import fs
-from gentoo_build_publisher.common import Content
+from gentoo_build_publisher.types import Content
 
 from . import TestCase
 from .factories import BuildFactory

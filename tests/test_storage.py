@@ -9,18 +9,18 @@ from pathlib import Path
 from unittest import mock
 
 from gentoo_build_publisher import publisher, utils
-from gentoo_build_publisher.common import (
-    Build,
-    Content,
-    GBPMetadata,
-    Package,
-    PackageMetadata,
-)
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     Storage,
     make_package_from_lines,
     make_packages,
+)
+from gentoo_build_publisher.types import (
+    Build,
+    Content,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
 )
 
 from . import MockJenkins, TestCase, data

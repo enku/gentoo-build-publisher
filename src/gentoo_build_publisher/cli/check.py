@@ -9,8 +9,8 @@ from gbpcli import GBP, Console
 
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.common import Build, Content
 from gentoo_build_publisher.records import RecordNotFound
+from gentoo_build_publisher.types import Build, Content
 
 CheckResult: TypeAlias = tuple[int, int]
 Check: TypeAlias = Callable[[Console], CheckResult]

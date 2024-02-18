@@ -26,7 +26,8 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, worker
-from gentoo_build_publisher.common import (
+from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
     ChangeState,
@@ -35,7 +36,6 @@ from gentoo_build_publisher.common import (
     Package,
     Repo,
 )
-from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.utils import get_version
 from gentoo_build_publisher.worker import tasks
 

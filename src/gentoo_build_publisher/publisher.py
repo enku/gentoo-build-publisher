@@ -26,14 +26,6 @@ from difflib import Differ
 from functools import cached_property
 from typing import Any
 
-from gentoo_build_publisher.common import (
-    Build,
-    Change,
-    ChangeState,
-    GBPMetadata,
-    Package,
-    PackageMetadata,
-)
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.records import (
@@ -45,6 +37,14 @@ from gentoo_build_publisher.records import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.storage import Storage
+from gentoo_build_publisher.types import (
+    Build,
+    Change,
+    ChangeState,
+    GBPMetadata,
+    Package,
+    PackageMetadata,
+)
 from gentoo_build_publisher.utils.time import utctime
 
 logger = logging.getLogger(__name__)

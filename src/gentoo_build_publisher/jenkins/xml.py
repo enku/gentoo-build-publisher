@@ -3,7 +3,7 @@
 import xml.etree.ElementTree as ET
 from typing import TypeGuard
 
-from gentoo_build_publisher.common import EbuildRepo, MachineJob
+from gentoo_build_publisher.types import EbuildRepo, MachineJob
 from gentoo_build_publisher.utils import read_package_file
 
 CREATE_BUILD = read_package_file("create_machine_job.xml")

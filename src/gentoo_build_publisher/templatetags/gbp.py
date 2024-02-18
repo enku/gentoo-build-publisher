@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from gentoo_build_publisher import publisher, views
-from gentoo_build_publisher.common import Build, Package
+from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils import time
 
 localtime = time.localtime
