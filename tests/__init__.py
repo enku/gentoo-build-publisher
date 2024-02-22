@@ -16,6 +16,7 @@ from unittest import mock
 
 import django.test
 import rich.console
+from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli import GBP, Console
 from requests import Response, Session
@@ -90,9 +91,10 @@ class TestCase(UnitTestTestCase):
         patch = mock.patch.dict(
             os.environ,
             {
-                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "root"),
+                "BUILD_PUBLISHER_API_KEY_KEY": Fernet.generate_key().decode("ascii"),
                 "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
                 "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
+                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "root"),
                 "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
                 "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
                 **local_environ,

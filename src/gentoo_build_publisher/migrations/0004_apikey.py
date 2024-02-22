@@ -12,9 +12,15 @@ class Migration(migrations.Migration):
             name="ApiKey",
             fields=[
                 (
-                    "apikey",
-                    models.CharField(max_length=256, primary_key=True, serialize=False),
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
                 ),
+                ("apikey", models.BinaryField()),
                 ("name", models.CharField(max_length=128, unique=True)),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("last_used", models.DateTimeField(default=None, null=True)),

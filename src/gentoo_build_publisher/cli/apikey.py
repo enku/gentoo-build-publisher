@@ -2,6 +2,7 @@
 
 import argparse
 import secrets
+from functools import partial
 
 from django.db import IntegrityError, transaction
 from gbpcli import GBP, Console
@@ -9,6 +10,7 @@ from gbpcli import GBP, Console
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey
 from gentoo_build_publisher.settings import Settings
+from gentoo_build_publisher.utils import encrypt
 
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
@@ -25,7 +27,7 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
 
     try:
         with transaction.atomic():
-            obj = save_api_key(key, args.name)
+            save_api_key(key, args.name)
     except IntegrityError:
         console.err.print("An API key with that name already exists.")
         return 1
@@ -33,7 +35,7 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
         console.err.print(str(error.args[0]))
         return 2
 
-    console.out.print(obj.apikey)
+    console.out.print(key)
     return 0
 
 
@@ -47,8 +49,13 @@ def create_api_key() -> str:
 def save_api_key(api_key: str, name: str) -> ApiKey:
     """Save the given api_key to the repository with the given name"""
     validate_key_name(name)
+    name = name.lower()
+    settings = Settings.from_environ()
+    encode = partial(str.encode, encoding="ascii")
 
-    return ApiKey.objects.create(name=name.lower(), apikey=api_key)
+    return ApiKey.objects.create(
+        name=name, apikey=encrypt(encode(api_key), encode(settings.API_KEY_KEY))
+    )
 
 
 class KeyNameError(ValueError):

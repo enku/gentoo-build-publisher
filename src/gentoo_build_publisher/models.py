@@ -142,7 +142,7 @@ class BuildLog(models.Model):
 class ApiKey(models.Model):
     """API keys"""
 
-    apikey = models.CharField(max_length=256, primary_key=True)
+    apikey = models.BinaryField()
     name = models.CharField(max_length=128, unique=True)
     created = models.DateTimeField(auto_now_add=True)
     last_used = models.DateTimeField(null=True, default=None)

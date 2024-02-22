@@ -10,6 +10,7 @@ from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, Self
 
 import requests
+from cryptography.fernet import Fernet
 from yarl import URL
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
@@ -115,6 +116,22 @@ def check_tag_name(tag_name: str) -> None:
 
     if not set(tag_name[1:]) <= VALID_TAG_CHARS:
         raise InvalidTagName(tag_name)
+
+
+def encrypt(data: bytes, key: bytes) -> bytes:
+    """Encrypt `data` given the symmetric `key`"""
+    cipher_suite = Fernet(key)
+    encrypted = cipher_suite.encrypt(data)
+
+    return encrypted
+
+
+def decrypt(data: bytes, key: bytes) -> bytes:
+    """Decrypt `data` given the symmetric `key`"""
+    cipher_suite = Fernet(key)
+    decrypted = cipher_suite.decrypt(data)
+
+    return decrypted
 
 
 def read_package_file(filename: str) -> str:

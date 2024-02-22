@@ -5,8 +5,9 @@
 from argparse import Namespace
 from unittest.mock import Mock
 
-from gentoo_build_publisher import models
+from gentoo_build_publisher import models, utils
 from gentoo_build_publisher.cli import apikey
+from gentoo_build_publisher.settings import Settings
 
 from . import DjangoTestCase, string_console
 
@@ -14,17 +15,24 @@ from . import DjangoTestCase, string_console
 class GBPCreateTests(DjangoTestCase):
     def test_create_api_key_with_given_name(self) -> None:
         console, stdout, *_ = string_console()
+        mock_gbp = Mock(name="gbp")
+        namespace = Namespace(action="create", name="test")
 
-        status = apikey.handler(
-            Namespace(action="create", name="test"), Mock(), console
-        )
+        status = apikey.handler(namespace, mock_gbp, console)
 
         self.assertEqual(status, 0)
         key = stdout.getvalue().strip()
 
-        obj = models.ApiKey.objects.get(apikey=key)
+        obj = models.ApiKey.objects.get(name="test")
+        settings = Settings.from_environ()
         self.assertEqual(obj.name, "test")
         self.assertEqual(obj.last_used, None)
+        self.assertEqual(
+            utils.decrypt(obj.apikey, settings.API_KEY_KEY.encode("ascii")).decode(
+                "ascii"
+            ),
+            key,
+        )
 
     def test_name_is_case_insensitive(self) -> None:
         apikey.handler(
