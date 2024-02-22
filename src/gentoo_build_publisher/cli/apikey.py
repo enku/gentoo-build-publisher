@@ -19,15 +19,6 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     return 0
 
 
-def parse_args(parser: argparse.ArgumentParser) -> None:
-    """Set up parser arguments"""
-    subparsers = parser.add_subparsers(dest="action", required=True)
-    subparser = subparsers.add_parser(
-        "create", description="Create an API key with the given name"
-    )
-    subparser.add_argument("name", type=str, help="Unique name for the key")
-
-
 def create_action(args: argparse.Namespace, console: Console) -> int:
     """handle the "create" action"""
     key = create_api_key()
