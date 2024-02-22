@@ -46,3 +46,35 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(
             stderr.getvalue(), "An API key with that name already exists.\n"
         )
+        self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
+        self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
+
+    def test_create_empty_name(self) -> None:
+        console, _, stderr = string_console()
+
+        status = apikey.handler(Namespace(action="create", name=""), Mock(), console)
+
+        self.assertEqual(status, 2)
+        self.assertEqual(stderr.getvalue(), "Key name must have at least 1 character\n")
+
+    def test_create_badchars_in_name(self) -> None:
+        console, _, stderr = string_console()
+
+        status = apikey.handler(
+            Namespace(action="create", name="b😈d"), Mock(), console
+        )
+
+        self.assertEqual(status, 2)
+        self.assertEqual(
+            stderr.getvalue(), "Key name must only contain alphanumeric characters\n"
+        )
+
+    def test_create_name_too_long(self) -> None:
+        console, _, stderr = string_console()
+
+        status = apikey.handler(
+            Namespace(action="create", name="x" * 256), Mock(), console
+        )
+
+        self.assertEqual(status, 2)
+        self.assertEqual(stderr.getvalue(), "Key name must not exceed 128 characters\n")
