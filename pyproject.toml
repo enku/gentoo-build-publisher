@@ -38,6 +38,7 @@ memory = "gentoo_build_publisher.records.memory:RecordDB"
 [project.entry-points."gbpcli.subcommands"]
 addmachine = "gentoo_build_publisher.cli.addmachine"
 addrepo = "gentoo_build_publisher.cli.addrepo"
+apikey = "gentoo_build_publisher.cli.apikey"
 check = "gentoo_build_publisher.cli.check"
 worker = "gentoo_build_publisher.cli.worker"
 

@@ -3,7 +3,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 
 import datetime as dt
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from unittest.mock import Mock, patch
 
 from django.conf import settings
@@ -11,7 +11,7 @@ from django.conf import settings
 from gentoo_build_publisher import models, utils
 from gentoo_build_publisher.cli import apikey
 
-from . import DjangoTestCase, string_console
+from . import DjangoTestCase, TestCase, string_console
 
 
 class GBPCreateTests(DjangoTestCase):
@@ -173,7 +173,7 @@ class GBPDeleteTests(DjangoTestCase):
         self.assertEqual(stderr.getvalue(), "No key exists with that name.\n")
 
 
-class GBPAPIKeyTests(DjangoTestCase):
+class GBPAPIKeyTests(TestCase):
     def test_unknown_action(self) -> None:
         console, _, stderr = string_console()
         namespace = Namespace(action="bogus")
@@ -182,3 +182,10 @@ class GBPAPIKeyTests(DjangoTestCase):
 
         self.assertEqual(status, 255)
         self.assertEqual(stderr.getvalue(), "Unknown action: bogus\n")
+
+
+class ParseArgs(TestCase):
+    def test(self) -> None:
+        parser = ArgumentParser()
+
+        apikey.parse_args(parser)

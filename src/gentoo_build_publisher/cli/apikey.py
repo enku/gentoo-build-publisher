@@ -90,6 +90,22 @@ def delete_action(args: argparse.Namespace, console: Console) -> int:
     return StatusCode.SUCCESS
 
 
+def parse_args(parser: argparse.ArgumentParser) -> None:
+    """Set up parser arguments"""
+    subparsers = parser.add_subparsers(dest="action", required=True)
+    subparser = subparsers.add_parser(
+        "create", description="Create an API key with the given name"
+    )
+    subparser.add_argument("name", type=str, help="Unique name for the key")
+
+    subparsers.add_parser("list", description="List registered API keys")
+
+    subparser = subparsers.add_parser(
+        "delete", description="Deliete the API key with the given name"
+    )
+    subparser.add_argument("name", type=str, help="Name of the key")
+
+
 def create_api_key() -> str:
     """Create an API key"""
     settings = Settings.from_environ()
