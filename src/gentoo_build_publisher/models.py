@@ -137,3 +137,10 @@ class BuildLog(models.Model):
             )
         else:
             cls.objects.filter(build_model=build_model).delete()
+
+
+class ApiKey(models.Model):
+    """API keys"""
+    apikey = models.CharField(max_length=256, primary_key=True)
+    name = models.CharField(max_length=128, unique=True)
+    last_used = models.DateTimeField(null=True, default=None)
