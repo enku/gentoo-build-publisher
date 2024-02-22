@@ -27,4 +27,4 @@ def create_api_key() -> str:
 
 def save_api_key(api_key: str, name: str) -> ApiKey:
     """Save the given api_key to the repository with the given name"""
-    return ApiKey.objects.create(name=name, apikey=api_key)
+    return ApiKey.objects.create(name=name.lower(), apikey=api_key)

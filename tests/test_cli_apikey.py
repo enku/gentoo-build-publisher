@@ -8,15 +8,16 @@ from unittest.mock import Mock
 from gentoo_build_publisher import models
 from gentoo_build_publisher.cli import apikey
 
-from . import TestCase, string_console
+from . import DjangoTestCase, string_console
 
 
-class GBPCreateTests(TestCase):
+class GBPCreateTests(DjangoTestCase):
     def test_create_api_key_with_given_name(self) -> None:
-        gbp = Mock()  # unused
         console, stdout, *_ = string_console()
 
-        status = apikey.handler(Namespace(action="create", name="test"), gbp, console)
+        status = apikey.handler(
+            Namespace(action="create", name="test"), Mock(), console
+        )
 
         self.assertEqual(status, 0)
         key = stdout.getvalue().strip()
@@ -24,3 +25,11 @@ class GBPCreateTests(TestCase):
         obj = models.ApiKey.objects.get(apikey=key)
         self.assertEqual(obj.name, "test")
         self.assertEqual(obj.last_used, None)
+
+    def test_name_is_case_insensitive(self) -> None:
+        apikey.handler(
+            Namespace(action="create", name="TEST"), Mock(), string_console()[0]
+        )
+
+        self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
+        self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
