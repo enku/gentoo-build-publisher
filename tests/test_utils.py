@@ -131,6 +131,12 @@ class RequestAndRaiseTests(TestCase):
         self.assertEqual(ctx.exception.response.status_code, 401)
 
 
+class CreateSecretKeyTests(TestCase):
+    def test(self) -> None:
+        key = utils.create_secret_key()
+        self.assertTrue(key)
+
+
 @contextmanager
 def returns_response(status_code: int) -> Generator[mock.MagicMock, None, None]:
     patch = mock.patch.object(requests.api, "request")

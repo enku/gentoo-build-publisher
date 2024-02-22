@@ -10,7 +10,9 @@ from gbpcli import GBP, Console
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.utils import encrypt
+from gentoo_build_publisher.utils import create_secret_key, encrypt
+
+ROOT_KEY_NAME = "root"
 
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
@@ -23,17 +25,20 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
 
 def create_action(args: argparse.Namespace, console: Console) -> int:
     """handle the "create" action"""
-    key = create_api_key()
+    if args.name == ROOT_KEY_NAME:
+        key = create_root_key()
+    else:
+        key = create_api_key()
 
-    try:
-        with transaction.atomic():
-            save_api_key(key, args.name)
-    except IntegrityError:
-        console.err.print("An API key with that name already exists.")
-        return 1
-    except KeyNameError as error:
-        console.err.print(str(error.args[0]))
-        return 2
+        try:
+            with transaction.atomic():
+                save_api_key(key, args.name)
+        except IntegrityError:
+            console.err.print("An API key with that name already exists.")
+            return 1
+        except KeyNameError as error:
+            console.err.print(str(error.args[0]))
+            return 2
 
     console.out.print(key)
     return 0
@@ -44,6 +49,11 @@ def create_api_key() -> str:
     settings = Settings.from_environ()
 
     return secrets.token_urlsafe(settings.API_KEY_LENGTH)
+
+
+def create_root_key() -> str:
+    """Create a key for encrypting API keys"""
+    return create_secret_key().decode("ascii")
 
 
 def save_api_key(api_key: str, name: str) -> ApiKey:

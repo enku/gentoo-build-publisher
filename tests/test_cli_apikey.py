@@ -3,7 +3,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 
 from argparse import Namespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from gentoo_build_publisher import models, utils
 from gentoo_build_publisher.cli import apikey
@@ -86,3 +86,15 @@ class GBPCreateTests(DjangoTestCase):
 
         self.assertEqual(status, 2)
         self.assertEqual(stderr.getvalue(), "Key name must not exceed 128 characters\n")
+
+    @patch("gentoo_build_publisher.cli.apikey.create_secret_key")
+    def test_root_key(self, create_secret_key) -> None:
+        console, stdout, *_ = string_console()
+        gbp = Mock()
+        create_secret_key.return_value = b"thisisatest"
+
+        status = apikey.handler(Namespace(action="create", name="root"), gbp, console)
+
+        self.assertEqual(status, 0)
+        self.assertFalse(models.ApiKey.objects.filter(name="root").exists())
+        self.assertEqual(stdout.getvalue(), "thisisatest\n")

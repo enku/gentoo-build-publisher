@@ -134,6 +134,11 @@ def decrypt(data: bytes, key: bytes) -> bytes:
     return decrypted
 
 
+def create_secret_key() -> bytes:
+    """Return a byte string useful as a secret key"""
+    return Fernet.generate_key()
+
+
 def read_package_file(filename: str) -> str:
     """Read the given filename from this package"""
     return importlib.resources.read_text(
