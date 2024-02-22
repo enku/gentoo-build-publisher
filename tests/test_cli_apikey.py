@@ -33,3 +33,16 @@ class GBPCreateTests(DjangoTestCase):
 
         self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
         self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
+
+    def test_name_already_exists(self) -> None:
+        console, _, stderr = string_console()
+        apikey.save_api_key(apikey.create_api_key(), "test")
+
+        status = apikey.handler(
+            Namespace(action="create", name="TEST"), Mock(), console
+        )
+
+        self.assertEqual(status, 1)
+        self.assertEqual(
+            stderr.getvalue(), "An API key with that name already exists.\n"
+        )
