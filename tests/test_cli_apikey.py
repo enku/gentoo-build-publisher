@@ -171,3 +171,14 @@ class GBPDeleteTests(DjangoTestCase):
 
         self.assertEqual(status, 3)
         self.assertEqual(stderr.getvalue(), "No key exists with that name.\n")
+
+
+class GBPAPIKeyTests(DjangoTestCase):
+    def test_unknown_action(self) -> None:
+        console, _, stderr = string_console()
+        namespace = Namespace(action="bogus")
+
+        status = apikey.handler(namespace, Mock(), console)
+
+        self.assertEqual(status, 255)
+        self.assertEqual(stderr.getvalue(), "Unknown action: bogus\n")
