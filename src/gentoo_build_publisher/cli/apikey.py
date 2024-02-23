@@ -61,9 +61,10 @@ def list_action(args: argparse.Namespace, console: Console) -> int:
     table.add_column("Name", header_style="header")
     table.add_column("Last Used", header_style="header")
 
-    for obj in keys_query:
+    for record in keys_query:
         table.add_row(
-            obj.name, format_timestamp(obj.last_used) if obj.last_used else "Never"
+            record.name,
+            format_timestamp(record.last_used) if record.last_used else "Never",
         )
 
     console.out.print(table)

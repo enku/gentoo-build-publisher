@@ -25,11 +25,11 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(status, 0)
         key = stdout.getvalue().strip()
 
-        obj = models.ApiKey.objects.get(name="test")
-        self.assertEqual(obj.name, "test")
-        self.assertEqual(obj.last_used, None)
+        record = models.ApiKey.objects.get(name="test")
+        self.assertEqual(record.name, "test")
+        self.assertEqual(record.last_used, None)
         self.assertEqual(
-            utils.decrypt(obj.apikey, settings.SECRET_KEY.encode("ascii")).decode(
+            utils.decrypt(record.apikey, settings.SECRET_KEY.encode("ascii")).decode(
                 "ascii"
             ),
             key,
@@ -105,9 +105,9 @@ class GBPListTests(DjangoTestCase):
     def test(self) -> None:
         console, stdout, *_ = string_console()
         for name in ["this", "that", "the", "other"]:
-            obj = apikey.save_api_key(apikey.create_api_key(), name)
-        obj.last_used = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
-        obj.save()
+            record = apikey.save_api_key(apikey.create_api_key(), name)
+        record.last_used = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
+        record.save()
 
         gbp = Mock()
 
