@@ -68,7 +68,6 @@ class Settings(BaseSettings):
     RECORDS_BACKEND: str = "django"
     WORKER_BACKEND: str = "celery"
     API_KEY_LENGTH: int = 24
-    API_KEY_KEY: str = ""
 
     # Celery worker backend config
     WORKER_CELERY_CONCURRENCY: int = 1

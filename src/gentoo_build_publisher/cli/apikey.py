@@ -58,13 +58,14 @@ def create_root_key() -> str:
 
 def save_api_key(api_key: str, name: str) -> ApiKey:
     """Save the given api_key to the repository with the given name"""
+    from django.conf import settings  # pylint: disable=import-outside-toplevel
+
     validate_key_name(name)
     name = name.lower()
-    settings = Settings.from_environ()
     encode = partial(str.encode, encoding="ascii")
 
     return ApiKey.objects.create(
-        name=name, apikey=encrypt(encode(api_key), encode(settings.API_KEY_KEY))
+        name=name, apikey=encrypt(encode(api_key), encode(settings.SECRET_KEY))
     )
 
 

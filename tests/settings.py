@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
+from gentoo_build_publisher.utils import create_secret_key
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "test"
+SECRET_KEY = create_secret_key().decode("ascii")
 
 USE_TZ = True
 

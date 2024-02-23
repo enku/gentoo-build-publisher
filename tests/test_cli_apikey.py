@@ -5,9 +5,10 @@
 from argparse import Namespace
 from unittest.mock import Mock, patch
 
+from django.conf import settings
+
 from gentoo_build_publisher import models, utils
 from gentoo_build_publisher.cli import apikey
-from gentoo_build_publisher.settings import Settings
 
 from . import DjangoTestCase, string_console
 
@@ -24,11 +25,10 @@ class GBPCreateTests(DjangoTestCase):
         key = stdout.getvalue().strip()
 
         obj = models.ApiKey.objects.get(name="test")
-        settings = Settings.from_environ()
         self.assertEqual(obj.name, "test")
         self.assertEqual(obj.last_used, None)
         self.assertEqual(
-            utils.decrypt(obj.apikey, settings.API_KEY_KEY.encode("ascii")).decode(
+            utils.decrypt(obj.apikey, settings.SECRET_KEY.encode("ascii")).decode(
                 "ascii"
             ),
             key,
