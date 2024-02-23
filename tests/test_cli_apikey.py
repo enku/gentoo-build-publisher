@@ -89,7 +89,7 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(stderr.getvalue(), "Key name must not exceed 128 characters\n")
 
     @patch("gentoo_build_publisher.cli.apikey.create_secret_key")
-    def test_root_key(self, create_secret_key) -> None:
+    def test_root_key(self, create_secret_key: Mock) -> None:
         console, stdout, *_ = string_console()
         gbp = Mock()
         create_secret_key.return_value = b"thisisatest"
