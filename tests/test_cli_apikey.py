@@ -134,3 +134,40 @@ class GBPListTests(DjangoTestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(stdout.getvalue(), "No API keys registered.\n")
+
+
+class GBPDeleteTests(DjangoTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        for name in ["this", "that", "the", "other"]:
+            apikey.save_api_key(apikey.create_api_key(), name)
+
+    def test_delete(self) -> None:
+        console, *_ = string_console()
+        namespace = Namespace(action="delete", name="that")
+
+        status = apikey.handler(namespace, Mock(), console)
+
+        self.assertEqual(status, 0)
+        key_query = models.ApiKey.objects.filter(name="that")
+        self.assertFalse(key_query.exists(), "key not deleted")
+
+    def test_delete_is_case_insensitive(self) -> None:
+        console, *_ = string_console()
+        namespace = Namespace(action="delete", name="THAT")
+
+        status = apikey.handler(namespace, Mock(), console)
+
+        self.assertEqual(status, 0)
+        key_query = models.ApiKey.objects.filter(name="that")
+        self.assertFalse(key_query.exists(), "key not deleted")
+
+    def test_delete_name_does_not_exist(self) -> None:
+        console, _, stderr = string_console()
+        namespace = Namespace(action="delete", name="bogus")
+
+        status = apikey.handler(namespace, Mock(), console)
+
+        self.assertEqual(status, 3)
+        self.assertEqual(stderr.getvalue(), "No key exists with that name.\n")

@@ -2,6 +2,7 @@
 
 import argparse
 import secrets
+from enum import IntEnum
 from functools import partial
 
 from django.db import IntegrityError, transaction
@@ -23,9 +24,13 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     match args.action:
         case "create":
             return create_action(args, console)
+        case "delete":
+            return delete_action(args, console)
         case "list":
             return list_action(args, console)
-    return 1
+
+    console.err.print(f"Unknown action: {args.action}")
+    return StatusCode.UNKNOWN
 
 
 def create_action(args: argparse.Namespace, console: Console) -> int:
@@ -40,13 +45,13 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
                 save_api_key(key, args.name)
         except IntegrityError:
             console.err.print("An API key with that name already exists.")
-            return 1
+            return StatusCode.NAME_EXISTS
         except KeyNameError as error:
             console.err.print(str(error.args[0]))
-            return 2
+            return StatusCode.INVALID_NAME
 
     console.out.print(key)
-    return 0
+    return StatusCode.SUCCESS
 
 
 def list_action(args: argparse.Namespace, console: Console) -> int:
@@ -55,7 +60,7 @@ def list_action(args: argparse.Namespace, console: Console) -> int:
 
     if not keys_query.exists():
         console.out.print("No API keys registered.")
-        return 0
+        return StatusCode.SUCCESS
 
     table = Table(box=box.ROUNDED, style="box")
     table.add_column("Name", header_style="header")
@@ -69,7 +74,20 @@ def list_action(args: argparse.Namespace, console: Console) -> int:
 
     console.out.print(table)
 
-    return 0
+    return StatusCode.SUCCESS
+
+
+def delete_action(args: argparse.Namespace, console: Console) -> int:
+    """handle the "delete" action"""
+    name = args.name.lower()
+
+    try:
+        ApiKey.objects.get(name=name).delete()
+    except ApiKey.DoesNotExist:
+        console.err.print("No key exists with that name.")
+        return StatusCode.NAME_DOES_NOT_EXIST
+
+    return StatusCode.SUCCESS
 
 
 def create_api_key() -> str:
@@ -117,3 +135,13 @@ def validate_key_name(name: str) -> None:
     for char in name:
         if not char.isalnum():
             raise KeyNameError("Key name must only contain alphanumeric characters")
+
+
+class StatusCode(IntEnum):
+    """Process exit codes"""
+
+    SUCCESS = 0
+    NAME_EXISTS = 1
+    INVALID_NAME = 2
+    NAME_DOES_NOT_EXIST = 3
+    UNKNOWN = 255
