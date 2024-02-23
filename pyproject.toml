@@ -16,6 +16,7 @@ dependencies = [
     "gbpcli>=2.0.0",
     "orjson>=3.9.1",
     "cryptography>=42.0.4",
+    "rich>=13.7.0",
 ]
 requires-python = ">=3.11"
 classifiers = [

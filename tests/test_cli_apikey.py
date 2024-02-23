@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 
+import datetime as dt
 from argparse import Namespace
 from unittest.mock import Mock, patch
 
@@ -98,3 +99,38 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(status, 0)
         self.assertFalse(models.ApiKey.objects.filter(name="root").exists())
         self.assertEqual(stdout.getvalue(), "thisisatest\n")
+
+
+class GBPListTests(DjangoTestCase):
+    def test(self) -> None:
+        console, stdout, *_ = string_console()
+        for name in ["this", "that", "the", "other"]:
+            obj = apikey.save_api_key(apikey.create_api_key(), name)
+        obj.last_used = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
+        obj.save()
+
+        gbp = Mock()
+
+        status = apikey.handler(Namespace(action="list"), gbp, console)
+
+        self.assertEqual(status, 0)
+        expected = """\
+╭───────┬───────────────────╮
+│ Name  │ Last Used         │
+├───────┼───────────────────┤
+│ this  │ Never             │
+│ that  │ Never             │
+│ the   │ Never             │
+│ other │ 02/22/24 22:00:00 │
+╰───────┴───────────────────╯
+"""
+        self.assertEqual(stdout.getvalue(), expected)
+
+    def test_with_no_keys(self) -> None:
+        console, stdout, *_ = string_console()
+        gbp = Mock()
+
+        status = apikey.handler(Namespace(action="list"), gbp, console)
+
+        self.assertEqual(status, 0)
+        self.assertEqual(stdout.getvalue(), "No API keys registered.\n")

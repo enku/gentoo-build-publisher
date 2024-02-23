@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:3b1541655b4a04326a35159c9757408fbb2de03503de5fa939cc573c0f7ecbf8"
+content_hash = "sha256:6531b7ec219121404d7d4da5c7abb951ade84e2d06b07c602ca4d6147ce72cce"
 
 [[package]]
 name = "amqp"

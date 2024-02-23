@@ -6,6 +6,9 @@ from functools import partial
 
 from django.db import IntegrityError, transaction
 from gbpcli import GBP, Console
+from gbpcli.render import format_timestamp
+from rich import box
+from rich.table import Table
 
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey
@@ -20,7 +23,9 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     match args.action:
         case "create":
             return create_action(args, console)
-    return 0
+        case "list":
+            return list_action(args, console)
+    return 1
 
 
 def create_action(args: argparse.Namespace, console: Console) -> int:
@@ -41,6 +46,28 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
             return 2
 
     console.out.print(key)
+    return 0
+
+
+def list_action(args: argparse.Namespace, console: Console) -> int:
+    """handle the "list" action"""
+    keys_query = ApiKey.objects.all()
+
+    if not keys_query.exists():
+        console.out.print("No API keys registered.")
+        return 0
+
+    table = Table(box=box.ROUNDED, style="box")
+    table.add_column("Name", header_style="header")
+    table.add_column("Last Used", header_style="header")
+
+    for obj in keys_query:
+        table.add_row(
+            obj.name, format_timestamp(obj.last_used) if obj.last_used else "Never"
+        )
+
+    console.out.print(table)
+
     return 0
 
 

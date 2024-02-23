@@ -19,9 +19,11 @@ import rich.console
 from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli import GBP, Console
+from gbpcli.theme import DEFAULT_THEME
 from requests import Response, Session
 from requests.adapters import BaseAdapter
 from requests.structures import CaseInsensitiveDict
+from rich.theme import Theme
 from yarl import URL
 
 from gentoo_build_publisher import publisher
@@ -362,7 +364,7 @@ def string_console() -> tuple[Console, io.StringIO, io.StringIO]:
 
     return (
         Console(
-            out=rich.console.Console(file=out),
+            out=rich.console.Console(file=out, theme=Theme(DEFAULT_THEME)),
             err=rich.console.Console(file=err),
         ),
         out,
