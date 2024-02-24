@@ -146,6 +146,24 @@ def read_package_file(filename: str) -> str:
     )
 
 
+def ensure_bytes(data: str | bytes, encoding: str = "ascii") -> bytes:
+    """Return data as bytes"""
+    if isinstance(data, bytes):
+        return bytes(data)
+    if isinstance(data, str):
+        return data.encode(encoding)
+    raise ValueError("Argument must be an instance of str or bytes")
+
+
+def ensure_str(data: str | bytes, encoding: str = "ascii") -> str:
+    """Return data as str"""
+    if isinstance(data, str):
+        return str(data)
+    if isinstance(data, bytes):
+        return data.decode(encoding)
+    raise ValueError("Argument must be an instance of str or bytes")
+
+
 def dict_to_list_of_dicts(
     data: dict[str, Any], key_key: str = "name", value_key: str = "value"
 ) -> list[dict[str, Any]]:

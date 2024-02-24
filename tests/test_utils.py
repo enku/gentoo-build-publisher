@@ -137,6 +137,60 @@ class CreateSecretKeyTests(TestCase):
         self.assertTrue(key)
 
 
+class EnsureBytesTests(TestCase):
+    def test_str(self) -> None:
+        self.assertEqual(utils.ensure_bytes("this is a test"), b"this is a test")
+
+    def test_bytes(self) -> None:
+        self.assertEqual(utils.ensure_bytes(b"this is a test"), b"this is a test")
+
+    def test_bytes_subclass(self) -> None:
+        class BytesSub(bytes):
+            pass
+
+        self.assertEqual(
+            utils.ensure_bytes(BytesSub(b"this is a test")), b"this is a test"
+        )
+
+    def test_str_subclass(self) -> None:
+        class StrSub(str):
+            pass
+
+        self.assertEqual(
+            utils.ensure_bytes(StrSub("this is a test")), b"this is a test"
+        )
+
+    def test_neither_str_nor_bytes(self) -> None:
+        with self.assertRaises(ValueError):
+            utils.ensure_bytes(None)
+
+
+class EnsureStrTests(TestCase):
+    def test_bytes(self) -> None:
+        self.assertEqual(utils.ensure_str(b"this is a test"), "this is a test")
+
+    def test_str(self) -> None:
+        self.assertEqual(utils.ensure_str("this is a test"), "this is a test")
+
+    def test_str_subclass(self) -> None:
+        class StrSub(str):
+            pass
+
+        self.assertEqual(utils.ensure_str(StrSub("this is a test")), "this is a test")
+
+    def test_bytes_subclass(self) -> None:
+        class BytesSub(bytes):
+            pass
+
+        self.assertEqual(
+            utils.ensure_str(BytesSub(b"this is a test")), "this is a test"
+        )
+
+    def test_neither_str_nor_bytes(self) -> None:
+        with self.assertRaises(ValueError):
+            utils.ensure_str(None)
+
+
 @contextmanager
 def returns_response(status_code: int) -> Generator[mock.MagicMock, None, None]:
     patch = mock.patch.object(requests.api, "request")
