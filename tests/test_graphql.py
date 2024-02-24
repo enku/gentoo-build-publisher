@@ -1,6 +1,7 @@
 """Tests for the GraphQL interface for Gentoo Build Publisher"""
 
 # pylint: disable=missing-docstring,too-many-lines
+import base64
 import datetime as dt
 from typing import Any
 from unittest import mock
@@ -8,8 +9,10 @@ from unittest import mock
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.graphql import (
     load_schema,
+    require_apikey,
     require_localhost,
     resolvers,
     type_defs,
@@ -21,7 +24,7 @@ from gentoo_build_publisher.utils import get_version
 from gentoo_build_publisher.utils.time import utctime
 from gentoo_build_publisher.worker import tasks
 
-from . import BUILD_LOGS, TestCase, graphql, parametrized
+from . import BUILD_LOGS, DjangoTestCase, TestCase, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
@@ -1219,6 +1222,77 @@ class RequireLocalhostTestCase(TestCase):
             dummy_resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
+
+
+@require_apikey
+def dummy_resolver2(
+    _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
+) -> str:
+    """Test resolver for RequireAPIKeyTestCase"""
+    return "permitted"
+
+
+class RequireAPIKeyTestCase(DjangoTestCase):
+    def test_good_apikey(self) -> None:
+        name = "test"
+        api_key = apikey.create_api_key()
+        apikey.save_api_key(api_key, name)
+        encoded = self.encode(name, api_key)
+        gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
+        info = Mock(context=gql_context)
+        info.path.key = "dummy_resolver2"
+
+        self.assertEqual(dummy_resolver2(None, info), "permitted")
+
+    def test_good_key_updates_records_last_use(self) -> None:
+        name = "test"
+        api_key = apikey.create_api_key()
+        record = apikey.save_api_key(api_key, name)
+        encoded = self.encode(name, api_key)
+        gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
+        info = Mock(context=gql_context)
+        info.path.key = "dummy_resolver2"
+
+        self.assertIs(record.last_used, None)
+
+        dummy_resolver2(None, info)
+
+        record.refresh_from_db()
+        self.assertIsNot(record.last_used, None, "The last_used field was not updated")
+
+    def test_no_apikey(self) -> None:
+        gql_context = {"request": Mock(headers={})}
+        info = Mock(context=gql_context)
+        info.path.key = "dummy_resolver2"
+
+        with self.assertRaises(GraphQLError) as context:
+            dummy_resolver2(None, info)
+
+        self.assertEqual(
+            str(context.exception), "Unauthorized to resolve dummy_resolver2"
+        )
+
+    def test_bad_apikey(self) -> None:
+        name = "test"
+        api_key = apikey.create_api_key()
+        apikey.save_api_key(api_key, name)
+        encoded = self.encode(name, "bogus")
+        gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
+        info = Mock(context=gql_context)
+        info.path.key = "dummy_resolver2"
+
+        with self.assertRaises(GraphQLError) as context:
+            dummy_resolver2(None, info)
+
+        self.assertEqual(
+            str(context.exception), "Unauthorized to resolve dummy_resolver2"
+        )
+
+    @staticmethod
+    def encode(user: str, key: str) -> str:
+        value = f"{user}:{key}".encode("ascii")
+
+        return base64.b64encode(value).decode("ascii")
 
 
 class LoadSchemaTests(TestCase):

@@ -23,9 +23,11 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne_django.scalars import datetime_scalar
+from django.conf import settings
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher import publisher, worker
+from gentoo_build_publisher import publisher, utils, worker
+from gentoo_build_publisher.models import ApiKey
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import (
     TAG_SYM,
@@ -36,7 +38,6 @@ from gentoo_build_publisher.types import (
     Package,
     Repo,
 )
-from gentoo_build_publisher.utils import get_version
 from gentoo_build_publisher.worker import tasks
 
 LOCALHOST = "127.0.0.1", "::1", "localhost"
@@ -105,6 +106,37 @@ def require_localhost(fn: Resolver) -> Resolver:
         if client_ip not in LOCALHOST:
             raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
         return fn(args[0], info, *args[2:], **kwargs)
+
+    return wrapper
+
+
+def require_apikey(fn: Resolver) -> Resolver:
+    """Require an API key in the HTTP request.
+
+    This decorator is to be used by GraphQL resolvers that require authentication. The
+    decorator checks that the HTTP request has a Basic Auth header and that the header's
+    name and secret matches an ApiKey record. If it does then the record's last_used
+    field is updated and the decorated resolver is called and returned. If not then a
+    GraphQL error is raised.
+    """
+    @wraps(fn)
+    def wrapper(obj: Any, info: Info, **kwargs: Any) -> Any:
+        """wrapper function"""
+        estr = utils.ensure_str
+        ebytes = utils.ensure_bytes
+
+        try:
+            auth = info.context["request"].headers["Authorization"]
+            name, key = utils.parse_basic_auth_header(auth)
+            record = ApiKey.objects.get(name=name.lower())
+            if estr(utils.decrypt(record.apikey, ebytes(settings.SECRET_KEY))) == key:
+                record.last_used = dt.datetime.now(tz=dt.UTC)
+                record.save()
+                return fn(obj, info, **kwargs)
+        except (KeyError, ValueError, ApiKey.DoesNotExist):
+            pass
+
+        raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
 
     return wrapper
 
@@ -268,7 +300,7 @@ def resolve_query_searchnotes(
 
 @query.field("version")
 def resolve_query_version(_obj: Any, _info: Info) -> str:
-    return get_version()
+    return utils.get_version()
 
 
 @query.field("working")
