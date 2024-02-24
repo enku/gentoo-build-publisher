@@ -110,7 +110,7 @@ def create_api_key() -> str:
     """Create an API key"""
     settings = Settings.from_environ()
 
-    return secrets.token_urlsafe(settings.API_KEY_LENGTH)
+    return secrets.token_hex(settings.API_KEY_LENGTH)
 
 
 def create_root_key() -> str:
