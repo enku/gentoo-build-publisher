@@ -1,6 +1,7 @@
 """Tests for the gentoo_build_publisher.utils module"""
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
+import base64
 from contextlib import contextmanager
 from typing import Generator
 from unittest import TestCase, mock
@@ -189,6 +190,37 @@ class EnsureStrTests(TestCase):
     def test_neither_str_nor_bytes(self) -> None:
         with self.assertRaises(ValueError):
             utils.ensure_str(None)
+
+
+class ParseBasicAuthHeaderTests(TestCase):
+    def test_proper_header(self) -> None:
+        encoded = utils.ensure_str(base64.b64encode(b"name:secret"))
+        value = f"Basic {encoded}"
+
+        auth = utils.parse_basic_auth_header(value)
+
+        self.assertEqual(auth, ("name", "secret"))
+
+    def test_not_basic_auth(self) -> None:
+        value = "Bearer RjjKJa5dh5QPKhfsP0Lt5FpERZ1PGUKIFMziw831ZU8="
+
+        with self.assertRaises(ValueError) as context:
+            utils.parse_basic_auth_header(value)
+
+        self.assertEqual(
+            context.exception.args[0], "Invalid Bearer Authentication value"
+        )
+
+    def test_no_colon_delimiter(self) -> None:
+        encoded = utils.ensure_str(base64.b64encode(b"name secret"))
+        value = f"Basic {encoded}"
+
+        with self.assertRaises(ValueError) as context:
+            utils.parse_basic_auth_header(value)
+
+        self.assertEqual(
+            context.exception.args[0], "Invalid Bearer Authentication value"
+        )
 
 
 @contextmanager

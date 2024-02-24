@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import importlib.resources
 import platform
 import re
@@ -194,3 +195,15 @@ def request_and_raise(
         response.raise_for_status()
 
     return response
+
+
+def parse_basic_auth_header(header_value: str) -> tuple[str, str]:
+    """Parse a Basic Auth header value and return the user and secret"""
+    if header_value.startswith("Basic "):
+        value_encoded = header_value[6:].strip()
+        value = ensure_str(base64.b64decode(ensure_bytes(value_encoded)))
+        user, colon, secret = value.partition(":")
+        if colon:
+            return user, secret
+
+    raise ValueError("Invalid Bearer Authentication value")
