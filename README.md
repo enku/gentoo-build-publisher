@@ -81,3 +81,4 @@ detail.
 - [Bisecting GBP Builds to Find a Bad Package](https://lunarcowboy.com/bisecting-gbp-builds-to-find-a-bad-package.html): April 2023
 - [Gentoo Build Publisher: Pro-Tip: Purging a Machine that is Disabled on Jenkins](https://lunarcowboy.com/gentoo-build-publisher-pro-tip-purging-a-machine-that-is-disabled-on-jenkins.html): August 2023
 - [Gentoo binary host, Gentoo Build Publisher version 2 & Plugins](https://lunarcowboy.com/gentoo-binary-host-gentoo-build-publisher-version-2-plugins.html): January 2024
+- [Running arbitrary commands in a machine's chroot](https://lunarcowboy.com/gentoo-build-publisher-running-arbitrary-commands-in-a-machines-chroot.html): February 2024
