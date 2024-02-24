@@ -6,10 +6,11 @@
 
 ## Introduction
 
-Gentoo Build Publisher (GBP) uses [continuous
-integration](https://en.wikipedia.org/wiki/Continuous_integration) and other
-tools to deliver successful, consistent "builds" for a single machine or
-multiple heterogeneous Gentoo machines.
+Gentoo Build Publisher (GBP) is a Gentoo build server, binary package host
+(binhost), ebuild repo server, and configuration manager in one which uses
+[continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
+and other tools to deliver successful, consistent "builds" for a single
+machine or multiple heterogeneous Gentoo machines.
 
 In case you didn't know, [Gentoo Linux](https://www.gentoo.org/) is a
 source-based rolling-release meta-distribution that you can twist and mold
