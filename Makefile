@@ -103,3 +103,8 @@ fmt: $(venv)
 	pdm run python -m isort --line-width=88 src tests
 	pdm run python -m black src tests
 .PHONY: fmt
+
+
+.PHONY: update
+update:
+	pdm update --update-eager
