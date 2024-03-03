@@ -176,63 +176,9 @@ As GBP is a [Django](https://www.djangoproject.com/) app, it requires a Django p
 to run.
 
 ```sh
-sudo -u gbp -H ./bin/django-admin startproject djangoproject .
-```
-
-Now make some changes to the project's settings file.
-
-```sh
-$EDITOR djangoproject/settings.py
-```
-
-For the `ALLOWED_HOST` setting, use either the virtual machine's (static) IP
-address or the hostname you'll be using to access the system from a web
-browser plus `'localhost'`.  For example:
-
-```python
-ALLOWED_HOSTS = ['10.10.100.12', 'localhost']
-```
-
-or
-
-```python
-ALLOWED_HOSTS = ['gbpbox', 'localhost']
-```
-
-If you are unsure yet how it will be accessed via HTTP(s), use the wildcard,
-`'*'` for now:
-
-```python
-ALLOWED_HOSTS = ['*']
-```
-
-Add the following to the list of `INSTALLED_APPS`:
-
-    * 'ariadne_django'
-    * 'gentoo_build_publisher'
-
-Change the value of `ROOT_URLCONF` to `'gentoo_build_publisher.urls'`.
-
-Change the `DATABASES` setting to the following:
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gbp',
-        'HOST': 'localhost',
-        'USER': 'gbp',
-        'CONN_MAX_AGE': None,
-    }
-}
-```
-
-Add the following to the end of the `settings.py` and save:
-
-```python
-CELERY_BROKER_URL = 'pyamqp://guest@127.0.0.1//'
-CELERY_BROKER_POOL_LIMIT = 0
-STATIC_ROOT = '/home/gbp/share/static_media'
+sudo -u gbp -H ./bin/django-admin startproject \
+    --template=./gentoo-build-publisher/contrib/deployment/project_template \
+    djangoproject .
 ```
 
 ### Create the configuration file
@@ -249,6 +195,15 @@ Open `/etc/gentoo-build-publisher.conf` with a text editor. Change
 `BUILD_PUBLISHER_JENKINS_USER` value to the username you created in Jenkins
 and the `BUILD_PUBLISHER_JENKINS_API_KEY` value to the API key you copied when
 configuring Jenkins.  You did remember to copy that API key, right?
+
+On the subject of keys, you'll also need a Gentoo Build Publisher "root" key.
+To do that, from the command line run the command:
+
+```
+echo BUILD_PUBLISHER_ROOT_KEY=$(gbp apikey create root) >> /etc/gentoo-build-publisher.conf
+```
+
+Make sure to use `>>` and not `>` in the above command.
 
 ### Install systemd unit files
 
