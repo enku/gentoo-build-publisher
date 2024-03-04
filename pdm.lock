@@ -449,7 +449,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "5.0.2"
+version = "5.0.3"
 requires_python = ">=3.10"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 dependencies = [
@@ -458,8 +458,8 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "Django-5.0.2-py3-none-any.whl", hash = "sha256:56ab63a105e8bb06ee67381d7b65fe6774f057e41a8bab06c8020c8882d8ecd4"},
-    {file = "Django-5.0.2.tar.gz", hash = "sha256:b5bb1d11b2518a5f91372a282f24662f58f66749666b0a286ab057029f728080"},
+    {file = "Django-5.0.3-py3-none-any.whl", hash = "sha256:5c7d748ad113a81b2d44750ccc41edc14e933f56581683db548c9257e078cc83"},
+    {file = "Django-5.0.3.tar.gz", hash = "sha256:5fb37580dcf4a262f9258c1f4373819aacca906431f505e4688e37f3a99195df"},
 ]
 
 [[package]]
@@ -508,15 +508,15 @@ files = [
 
 [[package]]
 name = "faker"
-version = "23.2.1"
+version = "23.3.0"
 requires_python = ">=3.8"
 summary = "Faker is a Python package that generates fake data for you."
 dependencies = [
     "python-dateutil>=2.4",
 ]
 files = [
-    {file = "Faker-23.2.1-py3-none-any.whl", hash = "sha256:0520a6b97e07c658b2798d7140971c1d5bc4bcd5013e7937fe075fd054aa320c"},
-    {file = "Faker-23.2.1.tar.gz", hash = "sha256:f07b64d27f67b62c7f0536a72f47813015b3b51cd4664918454011094321e464"},
+    {file = "Faker-23.3.0-py3-none-any.whl", hash = "sha256:117ce1a2805c1bc5ca753b3dc6f9d567732893b2294b827d3164261ee8f20267"},
+    {file = "Faker-23.3.0.tar.gz", hash = "sha256:458d93580de34403a8dec1e8d5e6be2fee96c4deca63b95d71df7a6a80a690de"},
 ]
 
 [[package]]
@@ -871,15 +871,15 @@ files = [
 
 [[package]]
 name = "python-dateutil"
-version = "2.8.2"
+version = "2.9.0.post0"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 summary = "Extensions to the standard Python datetime module"
 dependencies = [
     "six>=1.5",
 ]
 files = [
-    {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
-    {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
+    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
+    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
 ]
 
 [[package]]
@@ -893,15 +893,15 @@ files = [
 
 [[package]]
 name = "redis"
-version = "5.0.1"
+version = "5.0.2"
 requires_python = ">=3.7"
 summary = "Python client for Redis database and key-value store"
 dependencies = [
-    "async-timeout>=4.0.2; python_full_version <= \"3.11.2\"",
+    "async-timeout>=4.0.3",
 ]
 files = [
-    {file = "redis-5.0.1-py3-none-any.whl", hash = "sha256:ed4802971884ae19d640775ba3b03aa2e7bd5e8fb8dfaed2decce4d0fc48391f"},
-    {file = "redis-5.0.1.tar.gz", hash = "sha256:0dab495cd5753069d3bc650a0dde8a8f9edde16fc5691b689a566eda58100d0f"},
+    {file = "redis-5.0.2-py3-none-any.whl", hash = "sha256:4caa8e1fcb6f3c0ef28dba99535101d80934b7d4cd541bbb47f4a3826ee472d1"},
+    {file = "redis-5.0.2.tar.gz", hash = "sha256:3f82cc80d350e93042c8e6e7a5d0596e4dd68715babffba79492733e1f367037"},
 ]
 
 [[package]]
@@ -922,7 +922,7 @@ files = [
 
 [[package]]
 name = "rich"
-version = "13.7.0"
+version = "13.7.1"
 requires_python = ">=3.7.0"
 summary = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 dependencies = [
@@ -930,8 +930,8 @@ dependencies = [
     "pygments<3.0.0,>=2.13.0",
 ]
 files = [
-    {file = "rich-13.7.0-py3-none-any.whl", hash = "sha256:6da14c108c4866ee9520bbffa71f6fe3962e193b7da68720583850cd4548e235"},
-    {file = "rich-13.7.0.tar.gz", hash = "sha256:5cb5123b5cf9ee70584244246816e9114227e0b98ad9176eede6ad54bf5403fa"},
+    {file = "rich-13.7.1-py3-none-any.whl", hash = "sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222"},
+    {file = "rich-13.7.1.tar.gz", hash = "sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432"},
 ]
 
 [[package]]
@@ -1012,12 +1012,12 @@ files = [
 
 [[package]]
 name = "tomlkit"
-version = "0.12.3"
+version = "0.12.4"
 requires_python = ">=3.7"
 summary = "Style preserving TOML library"
 files = [
-    {file = "tomlkit-0.12.3-py3-none-any.whl", hash = "sha256:b0a645a9156dc7cb5d3a1f0d4bab66db287fcb8e0430bdd4664a095ea16414ba"},
-    {file = "tomlkit-0.12.3.tar.gz", hash = "sha256:75baf5012d06501f07bee5bf8e801b9f343e7aac5a92581f20f80ce632e6b5a4"},
+    {file = "tomlkit-0.12.4-py3-none-any.whl", hash = "sha256:5cd82d48a3dd89dee1f9d64420aa20ae65cfbd00668d6f094d7578a78efbb77b"},
+    {file = "tomlkit-0.12.4.tar.gz", hash = "sha256:7ca1cfc12232806517a8515047ba66a19369e71edf2439d0f5824f91032b6cc3"},
 ]
 
 [[package]]
@@ -1064,20 +1064,20 @@ files = [
 
 [[package]]
 name = "typos"
-version = "1.18.2"
+version = "1.19.0"
 requires_python = ">=3.7"
 summary = "Source Code Spelling Correction"
 files = [
-    {file = "typos-1.18.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:dbfa8637fcc530b57890a40ced904edba643cf07334e7cc7e34a4ceaeb2fd13a"},
-    {file = "typos-1.18.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:e442333b7d09002d4cc34946c120757f7af6ecda55270ce574f552dd8758b1eb"},
-    {file = "typos-1.18.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:190132183a1dce4c3a5990bf383c893bf95871f8feb122fccf9ef6b0dba3a422"},
-    {file = "typos-1.18.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:608d5d30c0fe9d1b2b007fc8924e791cf7be4750dc1ef0cd0a2d41688c849155"},
-    {file = "typos-1.18.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8241c6a5f6a77937badf23fe318d3dcdf36c46c97f1cf8b73a4158c7e3414d9a"},
-    {file = "typos-1.18.2-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:75e2097be128e73f465741e337b2a3fae7a8b5cddd7f30abaec7f9f92c9e8863"},
-    {file = "typos-1.18.2-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:32f42c035161810b3e279f23715408b5421e2fadc491fe32e5f4c7ee7ea8881a"},
-    {file = "typos-1.18.2-py3-none-win32.whl", hash = "sha256:b3efa4a9fe7e434df751355cb18bcee00dbacf75eb4608d99ceefe2ef9d0c5f4"},
-    {file = "typos-1.18.2-py3-none-win_amd64.whl", hash = "sha256:28a583aeb65031f74f0e6d139956930161e3c4b73510478898b251c808d82706"},
-    {file = "typos-1.18.2.tar.gz", hash = "sha256:5ac8fd37f892bb74de5acb44bde3338cbb2eca44b406f24cdecc76a81edd1676"},
+    {file = "typos-1.19.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c7d5eb8847905883f84f1ef9c268edc9b160b9fa58f58e1184f92761d8209835"},
+    {file = "typos-1.19.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:fd0cc8ba47ad1182bf5c91ec89ebe196833a753b0a50c8e2327c81a385a12693"},
+    {file = "typos-1.19.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:710b1ed145a310cf9a47de2105c1b72d2bc6e92f93337b0cd558d6798d4e187d"},
+    {file = "typos-1.19.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b2c4d92ab5dbe4e5c330e9e2bbe15d056aaba6e44a9a1c311552f15684b2f8f2"},
+    {file = "typos-1.19.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:28014a6d7b4069d9ed580b5731a0d6b255e29fd3bcca29c79a9de5dcde57c7ae"},
+    {file = "typos-1.19.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:54e360126e0f9dd52f1c46ccee2100ceadf898cfad3fddc5b676d3a97092d357"},
+    {file = "typos-1.19.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:1af999492ec569bafd968231069adaeaa826aea0e3d7d5db581e78e1713726f5"},
+    {file = "typos-1.19.0-py3-none-win32.whl", hash = "sha256:d0bd18b3f01546f61f9d87c35b89a59aec4e60831b7a5f121872b8993f14236a"},
+    {file = "typos-1.19.0-py3-none-win_amd64.whl", hash = "sha256:d61861926562a7028ddf059aeb3bcdee34d8f1cbe2363a53333ae5c53d074f9d"},
+    {file = "typos-1.19.0.tar.gz", hash = "sha256:d1f81a925fbeee975465154f83838673b2e6afbbda370a1bf74a7c6b69f2a6ec"},
 ]
 
 [[package]]
