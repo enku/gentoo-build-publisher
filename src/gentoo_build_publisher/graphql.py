@@ -119,6 +119,7 @@ def require_apikey(fn: Resolver) -> Resolver:
     field is updated and the decorated resolver is called and returned. If not then a
     GraphQL error is raised.
     """
+
     @wraps(fn)
     def wrapper(obj: Any, info: Info, **kwargs: Any) -> Any:
         """wrapper function"""

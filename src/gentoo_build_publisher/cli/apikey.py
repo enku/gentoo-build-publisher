@@ -6,8 +6,9 @@ from enum import IntEnum
 from functools import partial
 
 from django.db import IntegrityError, transaction
-from gbpcli import GBP, Console
+from gbpcli import GBP
 from gbpcli.render import format_timestamp
+from gbpcli.types import Console
 from rich import box
 from rich.table import Table
 
