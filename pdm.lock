@@ -508,15 +508,15 @@ files = [
 
 [[package]]
 name = "faker"
-version = "23.3.0"
+version = "24.0.0"
 requires_python = ">=3.8"
 summary = "Faker is a Python package that generates fake data for you."
 dependencies = [
     "python-dateutil>=2.4",
 ]
 files = [
-    {file = "Faker-23.3.0-py3-none-any.whl", hash = "sha256:117ce1a2805c1bc5ca753b3dc6f9d567732893b2294b827d3164261ee8f20267"},
-    {file = "Faker-23.3.0.tar.gz", hash = "sha256:458d93580de34403a8dec1e8d5e6be2fee96c4deca63b95d71df7a6a80a690de"},
+    {file = "Faker-24.0.0-py3-none-any.whl", hash = "sha256:2456d674f40bd51eb3acbf85221277027822e529a90cc826453d9a25dff932b1"},
+    {file = "Faker-24.0.0.tar.gz", hash = "sha256:ea6f784c40730de0f77067e49e78cdd590efb00bec3d33f577492262206c17fc"},
 ]
 
 [[package]]
@@ -535,18 +535,19 @@ files = [
 
 [[package]]
 name = "gbpcli"
-version = "2.0.0"
+version = "2.1.0"
 requires_python = ">=3.10"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
     "argcomplete>=3.2.1",
+    "platformdirs>=4.2.0",
     "requests",
     "rich>=12.5.1",
     "yarl",
 ]
 files = [
-    {file = "gbpcli-2.0.0-py3-none-any.whl", hash = "sha256:908f281b86b916bae1091e9ca30f517078c3fa1641e5be4dbf1ae1bdad7ac663"},
-    {file = "gbpcli-2.0.0.tar.gz", hash = "sha256:fe5335772d020d11f9a992ee7071e35a82ae4f6bb8a1419ccf539944d61d0c69"},
+    {file = "gbpcli-2.1.0-py3-none-any.whl", hash = "sha256:11f369684ea9b8301dbb15248b8d5b0bd81d7669208653eaddf3016d3a4add41"},
+    {file = "gbpcli-2.1.0.tar.gz", hash = "sha256:c64251729b1b7ccd7919195cd81252d830e3a90bb2fcaee4ac13652f63907e47"},
 ]
 
 [[package]]
@@ -989,15 +990,15 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.37.1"
+version = "0.37.2"
 requires_python = ">=3.8"
 summary = "The little ASGI library that shines."
 dependencies = [
     "anyio<5,>=3.4.0",
 ]
 files = [
-    {file = "starlette-0.37.1-py3-none-any.whl", hash = "sha256:92a816002d4e8c552477b089520e3085bb632e854eb32cef99acb6f6f7830b69"},
-    {file = "starlette-0.37.1.tar.gz", hash = "sha256:345cfd562236b557e76a045715ac66fdc355a1e7e617b087834a76a87dcc6533"},
+    {file = "starlette-0.37.2-py3-none-any.whl", hash = "sha256:6fe59f29268538e5d0d182f2791a479a0c64638e6935d1c6989e63fb2699c6ee"},
+    {file = "starlette-0.37.2.tar.gz", hash = "sha256:9af890290133b79fc3db55474ade20f6220a364a0402e0b556e7cd5e1e093823"},
 ]
 
 [[package]]
