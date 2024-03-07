@@ -8,6 +8,7 @@ from functools import partial
 from django.db import IntegrityError, transaction
 from gbpcli import GBP
 from gbpcli.render import format_timestamp
+from gbpcli.subcommands import completers as comp
 from gbpcli.types import Console
 from rich import box
 from rich.table import Table
@@ -104,7 +105,9 @@ def parse_args(parser: argparse.ArgumentParser) -> None:
     subparser = subparsers.add_parser(
         "delete", description="Deliete the API key with the given name"
     )
-    subparser.add_argument("name", type=str, help="Name of the key")
+    comp.set(
+        subparser.add_argument("name", type=str, help="Name of the key"), key_names
+    )
 
 
 def create_api_key() -> str:
@@ -162,3 +165,17 @@ class StatusCode(IntEnum):
     INVALID_NAME = 2
     NAME_DOES_NOT_EXIST = 3
     UNKNOWN = 255
+
+
+def key_names(
+    *,
+    prefix: str,
+    action: argparse.Action,
+    parser: argparse.ArgumentParser,
+    parsed_args: argparse.Namespace,
+) -> list[str]:
+    """Return list of existing key names"""
+    # pylint: disable=unused-argument
+    names = list(ApiKey.objects.values_list("name", flat=True))
+
+    return names
