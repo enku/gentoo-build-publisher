@@ -101,6 +101,12 @@ Give the Jenkins user subordinate uids and gids for using rootless containers.
 usermod --add-subuids 100000-165535 --add-subgids 100000-165535 jenkins
 ```
 
+Allow Jenkins to have lingering processes in systemd.
+
+```sh
+loginctl enable-linger jenkins
+```
+
 Start the Jenkins service.
 
 ```sh
