@@ -246,13 +246,6 @@ systemctl enable --now rabbitmq gentoo-build-publisher-wsgi gentoo-build-publish
 
 Let's go back to Jenkins.
 
-Configure [buildah](https://buildah.io/).
-
-```sh
-sudo -u jenkins -H mkdir -p /var/lib/jenkins/.config/containers
-sudo -u jenkins -H cp /home/gbp/gentoo-build-publisher/contrib/deployment/containers.conf /var/lib/jenkins/.config/containers/containers.conf
-```
-
 ### Create a job for the Gentoo repo
 
 Tell Gentoo Build Publisher to create a ebuild repo job from the official
