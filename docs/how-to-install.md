@@ -335,6 +335,7 @@ Now that we have a gbpbox build on gbpbox, we can use it to update itself.
 ```
 cd /etc/portage
 mv repos.conf repos.conf.bak
+[ -e binrepos.conf ] && mv binrepos.conf binrepos.conf.bak
 wget http://localhost/machines/gbpbox/repos.conf
 wget http://localhost/machines/gbpbox/binrepos.conf
 ```
