@@ -10,6 +10,8 @@ from django.template import Context, Template, TemplateSyntaxError
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils.time import localtime
 
+from . import LOCAL_TIMEZONE
+
 NOW = "gentoo_build_publisher.utils.time.now"
 
 
@@ -188,18 +190,19 @@ class MachineLinkTests(TemplateTagTests):
 
 
 @mock.patch(NOW, mock.Mock(return_value=dt.datetime(2024, 1, 11, 20, 54)))
+@mock.patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
 class DisplayTimeTests(TemplateTagTests):
     template = "{{ timestamp|display_time }}"
 
     def test_same_day(self) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 11, 8, 54))
 
-        self.assertEqual(self.render(timestamp=timestamp), "08:54:00")
+        self.assertEqual(self.render(timestamp=timestamp), "07:54:00")
 
     def test_previous_day(self) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 10, 8, 54))
 
-        self.assertEqual(self.render(timestamp=timestamp), "Jan 10 08:54")
+        self.assertEqual(self.render(timestamp=timestamp), "Jan 10 07:54")
 
     def test_previous_week(self) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 4, 8, 54))

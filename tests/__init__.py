@@ -43,6 +43,7 @@ JENKINS_CONFIG = JenkinsConfig(
     user="jenkins",
     artifact_name="build.tar.gz",
 )
+LOCAL_TIMEZONE = dt.timezone(dt.timedelta(days=-1, seconds=61200), "PDT")
 
 
 logging.basicConfig(handlers=[logging.NullHandler()])
