@@ -18,8 +18,9 @@ import django.test
 import rich.console
 from cryptography.fernet import Fernet
 from django.test.client import Client
-from gbpcli import GBP, Console
+from gbpcli import GBP
 from gbpcli.theme import DEFAULT_THEME
+from gbpcli.types import Console
 from requests import Response, Session
 from requests.adapters import BaseAdapter
 from requests.structures import CaseInsensitiveDict
