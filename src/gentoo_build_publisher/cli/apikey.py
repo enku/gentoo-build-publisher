@@ -17,6 +17,7 @@ import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.utils import create_secret_key, encrypt
+from gentoo_build_publisher.utils.time import localtime
 
 ROOT_KEY_NAME = "root"
 
@@ -71,7 +72,11 @@ def list_action(args: argparse.Namespace, console: Console) -> int:
     for record in keys_query:
         table.add_row(
             record.name,
-            format_timestamp(record.last_used) if record.last_used else "Never",
+            (
+                format_timestamp(localtime(record.last_used))
+                if record.last_used
+                else "Never"
+            ),
         )
 
     console.out.print(table)

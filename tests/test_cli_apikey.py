@@ -11,7 +11,7 @@ from django.conf import settings
 from gentoo_build_publisher import models, utils
 from gentoo_build_publisher.cli import apikey
 
-from . import DjangoTestCase, TestCase, string_console
+from . import LOCAL_TIMEZONE, DjangoTestCase, TestCase, string_console
 
 
 class GBPCreateTests(DjangoTestCase):
@@ -101,6 +101,7 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(stdout.getvalue(), "thisisatest\n")
 
 
+@patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
 class GBPListTests(DjangoTestCase):
     def test(self) -> None:
         console, stdout, *_ = string_console()
@@ -121,7 +122,7 @@ class GBPListTests(DjangoTestCase):
 │ this  │ Never             │
 │ that  │ Never             │
 │ the   │ Never             │
-│ other │ 02/22/24 22:00:00 │
+│ other │ 02/22/24 15:00:00 │
 ╰───────┴───────────────────╯
 """
         self.assertEqual(stdout.getvalue(), expected)
