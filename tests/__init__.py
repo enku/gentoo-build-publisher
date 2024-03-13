@@ -339,12 +339,11 @@ def test_gbp(url: str) -> GBP:
     return gbp
 
 
-def graphql(query: str, variables: dict[str, Any] | None = None) -> Any:
+def graphql(client: Client, query: str, variables: dict[str, Any] | None = None) -> Any:
     """Execute GraphQL query on the Django test client.
 
     Return the parsed JSON response
     """
-    client = Client()
     response = client.post(
         "/graphql",
         {"query": query, "variables": variables},
