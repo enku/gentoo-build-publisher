@@ -7,11 +7,12 @@ from typing import Any
 from unittest import mock
 
 from django.test.client import Client
-from graphql import GraphQLError, GraphQLResolveInfo
+from graphql import GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.graphql import (
+    UnauthorizedError,
     load_schema,
     require_apikey,
     require_localhost,
@@ -1227,7 +1228,7 @@ class RequireLocalhostTestCase(TestCase):
         remote_ip = "192.0.2.23"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
 
-        with self.assertRaises(GraphQLError) as context:
+        with self.assertRaises(UnauthorizedError) as context:
             dummy_resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith(""))
@@ -1235,7 +1236,7 @@ class RequireLocalhostTestCase(TestCase):
     def test_returns_error_when_no_remote_addr_in_request(self) -> None:
         info = Mock(context={"request": Mock(environ={})})
 
-        with self.assertRaises(GraphQLError) as context:
+        with self.assertRaises(UnauthorizedError) as context:
             dummy_resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
@@ -1250,7 +1251,7 @@ class RequireLocalhostTestCase(TestCase):
         }
         info = Mock(context={"request": Mock(environ=environ)})
 
-        with self.assertRaises(GraphQLError) as context:
+        with self.assertRaises(UnauthorizedError) as context:
             dummy_resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
@@ -1297,7 +1298,7 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver2"
 
-        with self.assertRaises(GraphQLError) as context:
+        with self.assertRaises(UnauthorizedError) as context:
             dummy_resolver2(None, info)
 
         self.assertEqual(
@@ -1313,7 +1314,7 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver2"
 
-        with self.assertRaises(GraphQLError) as context:
+        with self.assertRaises(UnauthorizedError) as context:
             dummy_resolver2(None, info)
 
         self.assertEqual(

@@ -104,7 +104,7 @@ def require_localhost(fn: Resolver) -> Resolver:
         )
 
         if client_ip not in LOCALHOST:
-            raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
+            raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
         return fn(args[0], info, *args[2:], **kwargs)
 
     return wrapper
@@ -137,7 +137,7 @@ def require_apikey(fn: Resolver) -> Resolver:
         except (KeyError, ValueError, ApiKey.DoesNotExist):
             pass
 
-        raise GraphQLError(f"Unauthorized to resolve {info.path.key}")
+        raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
 
     return wrapper
 
@@ -456,6 +456,10 @@ def resolve_mutation_create_machine(
         return Error.from_exception(error)
 
     return None
+
+
+class UnauthorizedError(GraphQLError):
+    """Raised when the request is not authorized to execute a query"""
 
 
 MERGED_TYPE_DEFS, MERGED_RESOLVERS = load_schema()
