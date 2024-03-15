@@ -1196,11 +1196,10 @@ class CreateMachineTestCase(TestCase):
         )
 
 
-@require_localhost
 def dummy_resolver(
     _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
 ) -> str:
-    """Test resolver for RequireLocalhostTestCase"""
+    """Test resolver"""
     return "permitted"
 
 
@@ -1208,36 +1207,41 @@ class RequireLocalhostTestCase(TestCase):
     def test_allows_ipv4_localhost(self) -> None:
         remote_ip = "127.0.0.1"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+        resolver = require_localhost(dummy_resolver)
 
-        self.assertEqual(dummy_resolver(None, info), "permitted")
+        self.assertEqual(resolver(None, info), "permitted")
 
     def test_allows_ipv6_localhost(self) -> None:
         remote_ip = "::1"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+        resolver = require_localhost(dummy_resolver)
 
-        self.assertEqual(dummy_resolver(None, info), "permitted")
+        self.assertEqual(resolver(None, info), "permitted")
 
     def test_allows_literal_localhost(self) -> None:
         # I'm not sure if this ever could happen, but...
         remote_ip = "localhost"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+        resolver = require_localhost(dummy_resolver)
 
-        self.assertEqual(dummy_resolver(None, info), "permitted")
+        self.assertEqual(resolver(None, info), "permitted")
 
     def test_returns_error_when_not_localhost(self) -> None:
         remote_ip = "192.0.2.23"
         info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
+        resolver = require_localhost(dummy_resolver)
 
         with self.assertRaises(UnauthorizedError) as context:
-            dummy_resolver(None, info)
+            resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith(""))
 
     def test_returns_error_when_no_remote_addr_in_request(self) -> None:
         info = Mock(context={"request": Mock(environ={})})
+        resolver = require_localhost(dummy_resolver)
 
         with self.assertRaises(UnauthorizedError) as context:
-            dummy_resolver(None, info)
+            resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
 
@@ -1250,19 +1254,12 @@ class RequireLocalhostTestCase(TestCase):
             "REMOTE_ADDR": "127.0.0.1",
         }
         info = Mock(context={"request": Mock(environ=environ)})
+        resolver = require_localhost(dummy_resolver)
 
         with self.assertRaises(UnauthorizedError) as context:
-            dummy_resolver(None, info)
+            resolver(None, info)
 
         self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
-
-
-@require_apikey
-def dummy_resolver2(
-    _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
-) -> str:
-    """Test resolver for RequireAPIKeyTestCase"""
-    return "permitted"
 
 
 class RequireAPIKeyTestCase(DjangoTestCase):
@@ -1273,9 +1270,10 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         encoded = self.encode(name, api_key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
-        info.path.key = "dummy_resolver2"
+        info.path.key = "dummy_resolver"
+        resolver = require_apikey(dummy_resolver)
 
-        self.assertEqual(dummy_resolver2(None, info), "permitted")
+        self.assertEqual(resolver(None, info), "permitted")
 
     def test_good_key_updates_records_last_use(self) -> None:
         name = "test"
@@ -1284,11 +1282,12 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         encoded = self.encode(name, api_key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
-        info.path.key = "dummy_resolver2"
+        info.path.key = "dummy_resolver"
+        resolver = require_apikey(dummy_resolver)
 
         self.assertIs(record.last_used, None)
 
-        dummy_resolver2(None, info)
+        resolver(None, info)
 
         record.refresh_from_db()
         self.assertIsNot(record.last_used, None, "The last_used field was not updated")
@@ -1296,13 +1295,14 @@ class RequireAPIKeyTestCase(DjangoTestCase):
     def test_no_apikey(self) -> None:
         gql_context = {"request": Mock(headers={})}
         info = Mock(context=gql_context)
-        info.path.key = "dummy_resolver2"
+        info.path.key = "dummy_resolver"
+        resolver = require_apikey(dummy_resolver)
 
         with self.assertRaises(UnauthorizedError) as context:
-            dummy_resolver2(None, info)
+            resolver(None, info)
 
         self.assertEqual(
-            str(context.exception), "Unauthorized to resolve dummy_resolver2"
+            str(context.exception), "Unauthorized to resolve dummy_resolver"
         )
 
     def test_bad_apikey(self) -> None:
@@ -1312,13 +1312,14 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         encoded = self.encode(name, "bogus")
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
-        info.path.key = "dummy_resolver2"
+        info.path.key = "dummy_resolver"
+        resolver = require_apikey(dummy_resolver)
 
         with self.assertRaises(UnauthorizedError) as context:
-            dummy_resolver2(None, info)
+            resolver(None, info)
 
         self.assertEqual(
-            str(context.exception), "Unauthorized to resolve dummy_resolver2"
+            str(context.exception), "Unauthorized to resolve dummy_resolver"
         )
 
     @staticmethod
