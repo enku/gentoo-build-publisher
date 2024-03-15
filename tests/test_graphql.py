@@ -1,7 +1,6 @@
 """Tests for the GraphQL interface for Gentoo Build Publisher"""
 
 # pylint: disable=missing-docstring,too-many-lines
-import base64
 import datetime as dt
 from typing import Any
 from unittest import mock
@@ -22,7 +21,7 @@ from gentoo_build_publisher.graphql import (
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Content, EbuildRepo, MachineJob, Repo
-from gentoo_build_publisher.utils import get_version
+from gentoo_build_publisher.utils import encode_basic_auth_data, get_version
 from gentoo_build_publisher.utils.time import utctime
 from gentoo_build_publisher.worker import tasks
 
@@ -1267,7 +1266,7 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         name = "test"
         api_key = apikey.create_api_key()
         apikey.save_api_key(api_key, name)
-        encoded = self.encode(name, api_key)
+        encoded = encode_basic_auth_data(name, api_key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver"
@@ -1279,7 +1278,7 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         name = "test"
         api_key = apikey.create_api_key()
         record = apikey.save_api_key(api_key, name)
-        encoded = self.encode(name, api_key)
+        encoded = encode_basic_auth_data(name, api_key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver"
@@ -1309,7 +1308,7 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         name = "test"
         api_key = apikey.create_api_key()
         apikey.save_api_key(api_key, name)
-        encoded = self.encode(name, "bogus")
+        encoded = encode_basic_auth_data(name, "bogus")
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver"
@@ -1321,12 +1320,6 @@ class RequireAPIKeyTestCase(DjangoTestCase):
         self.assertEqual(
             str(context.exception), "Unauthorized to resolve dummy_resolver"
         )
-
-    @staticmethod
-    def encode(user: str, key: str) -> str:
-        value = f"{user}:{key}".encode("ascii")
-
-        return base64.b64encode(value).decode("ascii")
 
 
 class LoadSchemaTests(TestCase):

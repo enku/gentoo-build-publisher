@@ -207,3 +207,13 @@ def parse_basic_auth_header(header_value: str) -> tuple[str, str]:
             return user, secret
 
     raise ValueError("Invalid Bearer Authentication value")
+
+
+def encode_basic_auth_data(username: str, secret: str) -> str:
+    """Encode username and secret for use in a Basic Auth header value
+
+    Does not include the "Basic " string.
+    """
+    value = f"{username}:{secret}".encode("ascii")
+
+    return base64.b64encode(value).decode("ascii")
