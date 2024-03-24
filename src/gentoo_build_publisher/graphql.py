@@ -85,31 +85,6 @@ def load_schema() -> tuple[list[str], list[ObjectType]]:
     return (all_type_defs, all_resolvers)
 
 
-def require_localhost(fn: Resolver) -> Resolver:
-    """require localhost on this resolver"""
-
-    @wraps(fn)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """type annotation"""
-        info: Info = args[1]
-        environ = info.context["request"].environ
-        client_ip = (
-            (
-                environ.get("HTTP_FORWARD", "")
-                or environ.get("HTTP_X_FORWARDED_FOR", "")
-                or environ.get("REMOTE_ADDR", "")
-            )
-            .split(",", 1)[0]
-            .strip()
-        )
-
-        if client_ip not in LOCALHOST:
-            raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
-        return fn(args[0], info, *args[2:], **kwargs)
-
-    return wrapper
-
-
 def require_apikey(fn: Resolver) -> Resolver:
     """Require an API key in the HTTP request.
 
@@ -417,7 +392,7 @@ def resolve_mutation_removebuildtag(
 
 
 @mutation.field("createRepo")
-@require_localhost
+@require_apikey
 def resolve_mutation_createrepo(
     _obj: Any, _info: Info, name: str, repo: str, branch: str
 ) -> Error | None:
@@ -434,7 +409,7 @@ def resolve_mutation_createrepo(
 
 
 @mutation.field("createMachine")
-@require_localhost
+@require_apikey
 def resolve_mutation_create_machine(
     _obj: Any,
     _info: Info,

@@ -252,6 +252,32 @@ systemctl enable --now rabbitmq gentoo-build-publisher-wsgi gentoo-build-publish
 
 Let's go back to Jenkins.
 
+
+### Create an api key
+
+Executing changes against the GraphQL backend requires an API key.  Let's
+create an API key for the local instance.
+
+```sh
+gbp apikey create gbp
+```
+
+This will generate and print an API key for the user `gbp`.  Copy the API key.
+Now create the file `~/.config/gbpcli.toml`
+
+
+```toml
+[gbpcli]
+url = "http://localhost/"
+auth = { user = "gbp", api_key = "your_API_key" }
+```
+
+Replace `your_API_key` with the API key that was generated above.
+
+You should generate an API key for each system you plan to use the CLI to make
+changes from.  Changes include adding repos and machines, creating tags,
+scheduling builds, etc.
+
 ### Create a job for the Gentoo repo
 
 Tell Gentoo Build Publisher to create a ebuild repo job from the official

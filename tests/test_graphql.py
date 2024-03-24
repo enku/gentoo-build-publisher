@@ -14,7 +14,6 @@ from gentoo_build_publisher.graphql import (
     UnauthorizedError,
     load_schema,
     require_apikey,
-    require_localhost,
     resolvers,
     type_defs,
 )
@@ -25,7 +24,14 @@ from gentoo_build_publisher.utils import encode_basic_auth_data, get_version
 from gentoo_build_publisher.utils.time import utctime
 from gentoo_build_publisher.worker import tasks
 
-from . import BUILD_LOGS, DjangoTestCase, TestCase, graphql, parametrized
+from . import (
+    BUILD_LOGS,
+    DjangoTestCase,
+    TestCase,
+    create_user_auth,
+    graphql,
+    parametrized,
+)
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
@@ -1093,7 +1099,7 @@ class VersionTestCase(TestCase):
         assert_data(self, result, {"version": version})
 
 
-class CreateRepoTestCase(TestCase):
+class CreateRepoTestCase(DjangoTestCase):
     """Tests for the createRepo mutation"""
 
     query = """
@@ -1104,9 +1110,16 @@ class CreateRepoTestCase(TestCase):
     }
     """
 
+    def setUp(self) -> None:
+        super().setUp()
+        user = "test"
+        self.client = Client(
+            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
+        )
+
     def test_creates_repo_when_does_not_exist(self) -> None:
         result = graphql(
-            client(),
+            self.client,
             self.query,
             variables={
                 "name": "gentoo",
@@ -1125,7 +1138,7 @@ class CreateRepoTestCase(TestCase):
         )
 
         result = graphql(
-            client(),
+            self.client,
             self.query,
             variables={
                 "name": "gentoo",
@@ -1139,7 +1152,7 @@ class CreateRepoTestCase(TestCase):
         )
 
 
-class CreateMachineTestCase(TestCase):
+class CreateMachineTestCase(DjangoTestCase):
     """Tests for the createMachine mutation"""
 
     query = """
@@ -1154,9 +1167,16 @@ class CreateMachineTestCase(TestCase):
     }
     """
 
+    def setUp(self) -> None:
+        super().setUp()
+        user = "test"
+        self.client = Client(
+            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
+        )
+
     def test_creates_machine_when_does_not_exist(self) -> None:
         result = graphql(
-            client(),
+            self.client,
             self.query,
             variables={
                 "name": "babette",
@@ -1178,7 +1198,7 @@ class CreateMachineTestCase(TestCase):
         publisher.jenkins.create_machine_job(job)
 
         result = graphql(
-            client(),
+            self.client,
             self.query,
             variables={
                 "name": "babette",
@@ -1200,65 +1220,6 @@ def dummy_resolver(
 ) -> str:
     """Test resolver"""
     return "permitted"
-
-
-class RequireLocalhostTestCase(TestCase):
-    def test_allows_ipv4_localhost(self) -> None:
-        remote_ip = "127.0.0.1"
-        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
-        resolver = require_localhost(dummy_resolver)
-
-        self.assertEqual(resolver(None, info), "permitted")
-
-    def test_allows_ipv6_localhost(self) -> None:
-        remote_ip = "::1"
-        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
-        resolver = require_localhost(dummy_resolver)
-
-        self.assertEqual(resolver(None, info), "permitted")
-
-    def test_allows_literal_localhost(self) -> None:
-        # I'm not sure if this ever could happen, but...
-        remote_ip = "localhost"
-        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
-        resolver = require_localhost(dummy_resolver)
-
-        self.assertEqual(resolver(None, info), "permitted")
-
-    def test_returns_error_when_not_localhost(self) -> None:
-        remote_ip = "192.0.2.23"
-        info = Mock(context={"request": Mock(environ={"REMOTE_ADDR": remote_ip})})
-        resolver = require_localhost(dummy_resolver)
-
-        with self.assertRaises(UnauthorizedError) as context:
-            resolver(None, info)
-
-        self.assertTrue(str(context.exception).startswith(""))
-
-    def test_returns_error_when_no_remote_addr_in_request(self) -> None:
-        info = Mock(context={"request": Mock(environ={})})
-        resolver = require_localhost(dummy_resolver)
-
-        with self.assertRaises(UnauthorizedError) as context:
-            resolver(None, info)
-
-        self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
-
-    def test_returns_error_when_going_through_reverse_proxy(self) -> None:
-        # Fix for gunicorn
-        environ = {
-            "CONTENT_TYPE": "application/json",
-            "HTTP_X_FORWARDED_FOR": "192.0.2.23",
-            "PATH_INFO": "/graphql",
-            "REMOTE_ADDR": "127.0.0.1",
-        }
-        info = Mock(context={"request": Mock(environ=environ)})
-        resolver = require_localhost(dummy_resolver)
-
-        with self.assertRaises(UnauthorizedError) as context:
-            resolver(None, info)
-
-        self.assertTrue(str(context.exception).startswith("Unauthorized to resolve "))
 
 
 class RequireAPIKeyTestCase(DjangoTestCase):
@@ -1331,3 +1292,7 @@ class LoadSchemaTests(TestCase):
 
 def client() -> Client:
     return Client()
+
+
+def get_auth_header(user: str, secret: str) -> str:
+    return f"Basic {encode_basic_auth_data(user, secret)}"

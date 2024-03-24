@@ -19,6 +19,7 @@ import rich.console
 from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli import GBP
+from gbpcli.config import AuthDict
 from gbpcli.theme import DEFAULT_THEME
 from gbpcli.types import Console
 from requests import Response, Session
@@ -28,6 +29,7 @@ from rich.theme import Theme
 from yarl import URL
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
@@ -311,7 +313,7 @@ class DjangoToRequestsAdapter(BaseAdapter):
             request.path_url,
             data=request.body,
             content_type=request.headers["Content-Type"],
-            **request.headers,
+            headers=request.headers,
         )
 
         requests_response = Response()
@@ -329,14 +331,21 @@ class DjangoToRequestsAdapter(BaseAdapter):
         return
 
 
-def test_gbp(url: str) -> GBP:
+def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:
     """Return a gbp instance capable of calling the /graphql view"""
-    gbp = GBP(url)
+    gbp = GBP(url, auth=auth)
     gbp.query._session.mount(  # pylint: disable=protected-access
         url, DjangoToRequestsAdapter()
     )
 
     return gbp
+
+
+def create_user_auth(user: str) -> str:
+    secret = apikey.create_api_key()
+    apikey.save_api_key(secret, user)
+
+    return secret
 
 
 def graphql(client: Client, query: str, variables: dict[str, Any] | None = None) -> Any:

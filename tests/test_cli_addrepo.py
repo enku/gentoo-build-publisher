@@ -8,14 +8,18 @@ from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
 
-from . import TestCase, string_console, test_gbp
+from . import DjangoTestCase as TestCase
+from . import create_user_auth, string_console, test_gbp
 
 
 class AddRepoTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.gbp = test_gbp("http://gbp.invalid/")
+        self.gbp = test_gbp(
+            "http://gbp.invalid/",
+            auth={"user": "addrepo", "api_key": create_user_auth("addrepo")},
+        )
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
