@@ -46,7 +46,7 @@ files = [
 
 [[package]]
 name = "ariadne"
-version = "0.22"
+version = "0.23.0"
 summary = "Ariadne is a Python library for implementing GraphQL servers."
 dependencies = [
     "graphql-core<3.3,>=3.2.0",
@@ -54,8 +54,8 @@ dependencies = [
     "typing-extensions>=3.6.0",
 ]
 files = [
-    {file = "ariadne-0.22-py2.py3-none-any.whl", hash = "sha256:22b0eaaa9a835610d1aa4b871489f3ea6a7b80c89aa0113adf72d1621ec17be8"},
-    {file = "ariadne-0.22.tar.gz", hash = "sha256:d7f003dd4f45bd9803ba3bb43e93de663e7e3c30f4d643916a1a2a95d0fc0649"},
+    {file = "ariadne-0.23.0-py2.py3-none-any.whl", hash = "sha256:594206e4fc20fa05d6872f0ccd6e3aafe0575b9da36945211762445126b28bcb"},
+    {file = "ariadne-0.23.0.tar.gz", hash = "sha256:84c46ae27fad98e1a6553c8930e6fc8e755f8dcd54a959d33caf04ecfe026a93"},
 ]
 
 [[package]]
@@ -73,12 +73,12 @@ files = [
 
 [[package]]
 name = "asgiref"
-version = "3.7.2"
-requires_python = ">=3.7"
+version = "3.8.1"
+requires_python = ">=3.8"
 summary = "ASGI specs, helper code, and adapters"
 files = [
-    {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
-    {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
 ]
 
 [[package]]
@@ -283,15 +283,15 @@ files = [
 
 [[package]]
 name = "click-didyoumean"
-version = "0.3.0"
-requires_python = ">=3.6.2,<4.0.0"
+version = "0.3.1"
+requires_python = ">=3.6.2"
 summary = "Enables git-like *did-you-mean* feature in click"
 dependencies = [
     "click>=7",
 ]
 files = [
-    {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
-    {file = "click_didyoumean-0.3.0-py3-none-any.whl", hash = "sha256:a0713dc7a1de3f06bc0df5a9567ad19ead2d3d5689b434768a6145bff77c0667"},
+    {file = "click_didyoumean-0.3.1-py3-none-any.whl", hash = "sha256:5c4bb6007cfea5f2fd6583a2fb6701a22a41eb98957e63d0fac41c10e7c3117c"},
+    {file = "click_didyoumean-0.3.1.tar.gz", hash = "sha256:4f82fdff0dbe64ef8ab2279bd6aa3f6a99c3b28c05aa09cbfc07c9d7fbb5a463"},
 ]
 
 [[package]]
@@ -508,15 +508,15 @@ files = [
 
 [[package]]
 name = "faker"
-version = "24.2.0"
+version = "24.3.0"
 requires_python = ">=3.8"
 summary = "Faker is a Python package that generates fake data for you."
 dependencies = [
     "python-dateutil>=2.4",
 ]
 files = [
-    {file = "Faker-24.2.0-py3-none-any.whl", hash = "sha256:dce4754921f9fa7e2003c26834093361b8f45072e0f46f172d6ca1234774ecd4"},
-    {file = "Faker-24.2.0.tar.gz", hash = "sha256:87d5e7730426e7b36817921679c4eaf3d810cedb8c81194f47adc3df2122ca18"},
+    {file = "Faker-24.3.0-py3-none-any.whl", hash = "sha256:9978025e765ba79f8bf6154c9630a9c2b7f9c9b0f175d4ad5e04b19a82a8d8d6"},
+    {file = "Faker-24.3.0.tar.gz", hash = "sha256:5fb5aa9749d09971e04a41281ae3ceda9414f683d4810a694f8a8eebb8f9edec"},
 ]
 
 [[package]]
