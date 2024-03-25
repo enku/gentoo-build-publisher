@@ -190,3 +190,20 @@ class ParseArgs(TestCase):
         parser = ArgumentParser()
 
         apikey.parse_args(parser)
+
+
+class ValidateKeyNameTests(TestCase):
+    def test(self) -> None:
+        apikey.validate_key_name("bob")
+
+    def test_empty_string(self) -> None:
+        with self.assertRaises(apikey.KeyNameError):
+            apikey.validate_key_name("")
+
+    def test_too_long(self) -> None:
+        with self.assertRaises(apikey.KeyNameError):
+            apikey.validate_key_name("x" * 256)
+
+    def test_non_alphanumeric(self) -> None:
+        with self.assertRaises(apikey.KeyNameError):
+            apikey.validate_key_name("bob.6")
