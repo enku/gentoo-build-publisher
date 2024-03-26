@@ -367,15 +367,15 @@ def set_up_tmpdir_for_test(test_case: UnitTestTestCase) -> Path:
     return Path(test_case.enterContext(tempfile.TemporaryDirectory()))
 
 
-def string_console() -> tuple[Console, io.StringIO, io.StringIO]:
+def string_console(**kwargs: Any) -> tuple[Console, io.StringIO, io.StringIO]:
     """StringIO Console"""
     out = io.StringIO()
     err = io.StringIO()
 
     return (
         Console(
-            out=rich.console.Console(file=out, theme=Theme(DEFAULT_THEME)),
-            err=rich.console.Console(file=err),
+            out=rich.console.Console(file=out, theme=Theme(DEFAULT_THEME), **kwargs),
+            err=rich.console.Console(file=err, **kwargs),
         ),
         out,
         err,
