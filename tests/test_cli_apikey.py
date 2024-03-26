@@ -64,7 +64,7 @@ class GBPCreateTests(DjangoTestCase):
         status = apikey.handler(Namespace(action="create", name=""), Mock(), console)
 
         self.assertEqual(status, 2)
-        self.assertEqual(stderr.getvalue(), "Key name must have at least 1 character\n")
+        self.assertEqual(stderr.getvalue(), "''\n")
 
     def test_create_badchars_in_name(self) -> None:
         console, _, stderr = string_console()
@@ -74,19 +74,16 @@ class GBPCreateTests(DjangoTestCase):
         )
 
         self.assertEqual(status, 2)
-        self.assertEqual(
-            stderr.getvalue(), "Key name must only contain alphanumeric characters\n"
-        )
+        self.assertEqual(stderr.getvalue(), "'b😈d'\n")
 
     def test_create_name_too_long(self) -> None:
-        console, _, stderr = string_console()
+        console, _, stderr = string_console(width=200)
+        name = "x" * 129
 
-        status = apikey.handler(
-            Namespace(action="create", name="x" * 256), Mock(), console
-        )
+        status = apikey.handler(Namespace(action="create", name=name), Mock(), console)
 
         self.assertEqual(status, 2)
-        self.assertEqual(stderr.getvalue(), "Key name must not exceed 128 characters\n")
+        self.assertEqual(stderr.getvalue(), f"{name!r}\n")
 
     @patch("gentoo_build_publisher.cli.apikey.create_secret_key")
     def test_root_key(self, create_secret_key: Mock) -> None:
@@ -190,20 +187,3 @@ class ParseArgs(TestCase):
         parser = ArgumentParser()
 
         apikey.parse_args(parser)
-
-
-class ValidateKeyNameTests(TestCase):
-    def test(self) -> None:
-        apikey.validate_key_name("bob")
-
-    def test_empty_string(self) -> None:
-        with self.assertRaises(apikey.KeyNameError):
-            apikey.validate_key_name("")
-
-    def test_too_long(self) -> None:
-        with self.assertRaises(apikey.KeyNameError):
-            apikey.validate_key_name("x" * 256)
-
-    def test_non_alphanumeric(self) -> None:
-        with self.assertRaises(apikey.KeyNameError):
-            apikey.validate_key_name("bob.6")

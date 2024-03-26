@@ -16,7 +16,12 @@ from rich.table import Table
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.utils import create_secret_key, encrypt
+from gentoo_build_publisher.utils import (
+    InvalidIdentifier,
+    create_secret_key,
+    encrypt,
+    validate_identifier,
+)
 from gentoo_build_publisher.utils.time import localtime
 
 ROOT_KEY_NAME = "root"
@@ -49,7 +54,7 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
         except IntegrityError:
             console.err.print("An API key with that name already exists.")
             return StatusCode.NAME_EXISTS
-        except KeyNameError as error:
+        except InvalidIdentifier as error:
             console.err.print(str(error.args[0]))
             return StatusCode.INVALID_NAME
 
@@ -131,35 +136,13 @@ def save_api_key(api_key: str, name: str) -> ApiKey:
     """Save the given api_key to the repository with the given name"""
     from django.conf import settings  # pylint: disable=import-outside-toplevel
 
-    validate_key_name(name)
+    validate_identifier(name)
     name = name.lower()
     encode = partial(str.encode, encoding="ascii")
 
     return ApiKey.objects.create(
         name=name, apikey=encrypt(encode(api_key), encode(settings.SECRET_KEY))
     )
-
-
-class KeyNameError(ValueError):
-    """The name for the key is invalid"""
-
-
-def validate_key_name(name: str) -> None:
-    """Validate the key name
-
-    Raise KeyNameError if the name is invalid
-    """
-    name_len = len(name)
-
-    if name_len > 128:
-        raise KeyNameError("Key name must not exceed 128 characters")
-
-    if name_len == 0:
-        raise KeyNameError("Key name must have at least 1 character")
-
-    for char in name:
-        if not char.isalnum():
-            raise KeyNameError("Key name must only contain alphanumeric characters")
 
 
 class StatusCode(IntEnum):
