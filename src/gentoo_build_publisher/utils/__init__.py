@@ -15,9 +15,9 @@ from cryptography.fernet import Fernet
 from yarl import URL
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
-INVALID_TAG_START = {".", "-"}
-VALID_TAG_CHARS = set([*string.ascii_letters, *string.digits, "_", ".", "-"])
-MAXIMUM_TAG_LENGTH = 128
+INVALID_IDENTIFIER_START = {".", "-"}
+VALID_IDENTIFIER_CHARS = set([*string.ascii_letters, *string.digits, "_", ".", "-"])
+MAXIMUM_IDENTIFIER_LENGTH = 128
 
 
 class Color(NamedTuple):
@@ -66,8 +66,8 @@ class Color(NamedTuple):
         return colors
 
 
-class InvalidTagName(ValueError):
-    """The given tag name is invalid"""
+class InvalidIdentifier(ValueError):
+    """The given identifier name is invalid"""
 
 
 def get_hostname() -> str:
@@ -90,10 +90,10 @@ def cpv_to_path(cpv: str, build_id: int = 1, extension: str = ".gpkg.tar") -> st
     return f"{cat}/{pkg}/{pkg}-{ver}-{build_id}{extension}"
 
 
-def check_tag_name(tag_name: str) -> None:
-    """Check if the given string is a valid tag name
+def validate_identifier(name: str) -> None:
+    """Check if the given string is a valid identifier
 
-    Raise InvalidTagName if not a valid tag name
+    Raise InvalidIdentifier if not a valid name
 
     Tag names have the following requirements:
 
@@ -102,21 +102,21 @@ def check_tag_name(tag_name: str) -> None:
           dashes
         * must not start with a period, or dash
         * Must be a maximum of 128 characters
-        * In addition the empty string is a valid tag
     """
     # This is based off of Docker's image tagging rules
     # https://docs.docker.com/engine/reference/commandline/tag/
-    if not tag_name:
-        return
+    error = InvalidIdentifier(repr(name))
+    if not name:
+        raise error
 
-    if len(tag_name) > MAXIMUM_TAG_LENGTH:
-        raise InvalidTagName(tag_name)
+    if len(name) > MAXIMUM_IDENTIFIER_LENGTH:
+        raise error
 
-    if tag_name[0] in INVALID_TAG_START:
-        raise InvalidTagName(tag_name)
+    if name[0] in INVALID_IDENTIFIER_START:
+        raise error
 
-    if not set(tag_name[1:]) <= VALID_TAG_CHARS:
-        raise InvalidTagName(tag_name)
+    if not set(name[1:]) <= VALID_IDENTIFIER_CHARS:
+        raise error
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:

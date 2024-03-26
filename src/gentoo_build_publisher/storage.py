@@ -141,7 +141,9 @@ class Storage:
         if not self.pulled(build):
             raise FileNotFoundError("The build has not been pulled")
 
-        utils.check_tag_name(tag_name)
+        if tag_name:
+            utils.validate_identifier(tag_name)
+
         name = f"{build.machine}{TAG_SYM}{tag_name}" if tag_name else build.machine
 
         for item in Content:
@@ -154,7 +156,8 @@ class Storage:
         If tag_name is the empty string, unpublishes the machine.
         Fail silently if the given tag does not exist.
         """
-        utils.check_tag_name(tag_name)
+        if tag_name:
+            utils.validate_identifier(tag_name)
         # We don't need to check for the existence of the target here.  In fact we don't
         # want to as this will allow us to remove dangling symlinks
         name = f"{machine}{TAG_SYM}{tag_name}" if tag_name else machine
@@ -191,11 +194,11 @@ class Storage:
         If tag doesn't exist or is broken, raise an exception.
         """
         machine, _, tag_name = tag.partition(TAG_SYM)
-        utils.check_tag_name(tag_name)
 
         if not tag_name:
             raise ValueError(f"Invalid tag: {tag}")
 
+        utils.validate_identifier(tag_name)
         # In order for this tag to resolve, all the content has to exist and point to
         # the same build and the build has to exist in storage
         target_builds = set()
