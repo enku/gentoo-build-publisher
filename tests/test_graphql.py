@@ -47,6 +47,16 @@ def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(data, expected)
 
 
+class AuthTestCase(DjangoTestCase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        user = "test"
+        self.client = Client(
+            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
+        )
+
+
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
@@ -1099,7 +1109,7 @@ class VersionTestCase(TestCase):
         assert_data(self, result, {"version": version})
 
 
-class CreateRepoTestCase(DjangoTestCase):
+class CreateRepoTestCase(AuthTestCase):
     """Tests for the createRepo mutation"""
 
     query = """
@@ -1109,13 +1119,6 @@ class CreateRepoTestCase(DjangoTestCase):
       }
     }
     """
-
-    def setUp(self) -> None:
-        super().setUp()
-        user = "test"
-        self.client = Client(
-            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
-        )
 
     def test_creates_repo_when_does_not_exist(self) -> None:
         result = graphql(
@@ -1152,7 +1155,7 @@ class CreateRepoTestCase(DjangoTestCase):
         )
 
 
-class CreateMachineTestCase(DjangoTestCase):
+class CreateMachineTestCase(AuthTestCase):
     """Tests for the createMachine mutation"""
 
     query = """
@@ -1166,13 +1169,6 @@ class CreateMachineTestCase(DjangoTestCase):
       }
     }
     """
-
-    def setUp(self) -> None:
-        super().setUp()
-        user = "test"
-        self.client = Client(
-            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
-        )
 
     def test_creates_machine_when_does_not_exist(self) -> None:
         result = graphql(
