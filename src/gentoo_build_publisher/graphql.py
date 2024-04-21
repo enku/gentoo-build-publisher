@@ -300,6 +300,7 @@ def resolve_query_resolvebuildtag(
 
 
 @mutation.field("publish")
+@require_apikey
 def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
     build = Build.from_id(id)
 
@@ -312,6 +313,7 @@ def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
 
 
 @mutation.field("pull")
+@require_apikey
 def resolve_mutation_pull(
     _obj: Any,
     _info: Info,
@@ -328,6 +330,7 @@ def resolve_mutation_pull(
 
 
 @mutation.field("scheduleBuild")
+@require_apikey
 def resolve_mutation_schedule_build(
     _obj: Any,
     _info: Info,
@@ -340,6 +343,7 @@ def resolve_mutation_schedule_build(
 
 
 @mutation.field("keepBuild")
+@require_apikey
 def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
 
@@ -350,6 +354,7 @@ def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord |
 
 
 @mutation.field("releaseBuild")
+@require_apikey
 def resolve_mutation_releasebuild(
     _obj: Any, _info: Info, id: str
 ) -> BuildRecord | None:
@@ -362,6 +367,7 @@ def resolve_mutation_releasebuild(
 
 
 @mutation.field("createNote")
+@require_apikey
 def resolve_mutation_createnote(
     _obj: Any, _info: Info, id: str, note: str | None = None
 ) -> BuildRecord | None:
@@ -374,6 +380,7 @@ def resolve_mutation_createnote(
 
 
 @mutation.field("createBuildTag")
+@require_apikey
 def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     build = Build.from_id(id)
 
@@ -383,6 +390,7 @@ def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -
 
 
 @mutation.field("removeBuildTag")
+@require_apikey
 def resolve_mutation_removebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
 ) -> MachineInfo:

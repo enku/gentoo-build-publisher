@@ -549,7 +549,7 @@ class MachinesQueryTestCase(TestCase):
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
 
-class PublishMutationTestCase(TestCase):
+class PublishMutationTestCase(AuthTestCase):
     """Tests for the publish mutation"""
 
     def test_publish_when_pulled(self) -> None:
@@ -566,7 +566,7 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        result = graphql(client(), query, variables={"id": build.id})
+        result = graphql(self.client, query, variables={"id": build.id})
 
         assert_data(self, result, {"publish": {"publishedBuild": {"id": build.id}}})
 
@@ -582,12 +582,12 @@ class PublishMutationTestCase(TestCase):
         }
         """
         with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
-            graphql(client(), query)
+            graphql(self.client, query)
 
         mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
-class PullMutationTestCase(TestCase):
+class PullMutationTestCase(AuthTestCase):
     """Tests for the pull mutation"""
 
     def test(self) -> None:
@@ -603,7 +603,7 @@ class PullMutationTestCase(TestCase):
           }
         }"""
         with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
-            result = graphql(client(), query, variables={"id": build.id})
+            result = graphql(self.client, query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
         mock_worker.run.assert_called_once_with(
@@ -621,13 +621,15 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        result = graphql(
-            client(), query, variables={"id": build.id, "note": "This is a test"}
-        )
+        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+            result = graphql(
+                self.client, query, variables={"id": build.id, "note": "This is a test"}
+            )
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        build_record = publisher.record(build)
-        self.assertEqual(build_record.note, "This is a test")
+        mock_worker.run.assert_called_once_with(
+            tasks.pull_build, build.id, note="This is a test", tags=None
+        )
 
     def test_pull_with_tag(self) -> None:
         build = BuildFactory()
@@ -640,17 +642,18 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        result = graphql(
-            client(), query, variables={"id": build.id, "tags": ["emptytree"]}
-        )
+        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+            result = graphql(
+                self.client, query, variables={"id": build.id, "tags": ["emptytree"]}
+            )
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        build_record = publisher.record(build)
-        tags = publisher.tags(build_record)
-        self.assertEqual(tags, ["emptytree"])
+        mock_worker.run.assert_called_once_with(
+            tasks.pull_build, build.id, note=None, tags=["emptytree"]
+        )
 
 
-class ScheduleBuildMutationTestCase(TestCase):
+class ScheduleBuildMutationTestCase(AuthTestCase):
     """Tests for the build mutation"""
 
     maxDiff = None
@@ -662,7 +665,7 @@ class ScheduleBuildMutationTestCase(TestCase):
             mock_schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
             )
-            result = graphql(client(), query)
+            result = graphql(self.client, query)
 
         self.assertEqual(
             result,
@@ -684,7 +687,7 @@ class ScheduleBuildMutationTestCase(TestCase):
             mock_schedule_build.return_value = (
                 "https://jenkins.invalid/queue/item/31528/"
             )
-            result = graphql(client(), query)
+            result = graphql(self.client, query)
 
         self.assertEqual(
             result,
@@ -697,7 +700,7 @@ class ScheduleBuildMutationTestCase(TestCase):
 
         with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
             mock_schedule_build.side_effect = Exception("The end is near")
-            result = graphql(client(), query)
+            result = graphql(self.client, query)
 
         expected = {
             "data": {"scheduleBuild": None},
@@ -713,14 +716,14 @@ class ScheduleBuildMutationTestCase(TestCase):
         mock_schedule_build.assert_called_once_with("babette")
 
 
-class KeepBuildMutationTestCase(TestCase):
+class KeepBuildMutationTestCase(AuthTestCase):
     """Tests for the keep mutation"""
 
     maxDiff = None
 
     def test_should_keep_existing_build(self) -> None:
-        record = BuildRecordFactory.build()
-        publisher.records.save(record)
+        build = BuildFactory()
+        publisher.pull(build)
         query = """
         mutation ($id: ID!) {
          keepBuild(id: $id) {
@@ -728,7 +731,7 @@ class KeepBuildMutationTestCase(TestCase):
           }
         }
         """
-        result = graphql(client(), query, variables={"id": str(record)})
+        result = graphql(self.client, query, variables={"id": str(build)})
 
         assert_data(self, result, {"keepBuild": {"keep": True}})
 
@@ -741,12 +744,12 @@ class KeepBuildMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": "bogus.309"})
+        result = graphql(self.client, query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"keepBuild": None})
 
 
-class ReleaseBuildMutationTestCase(TestCase):
+class ReleaseBuildMutationTestCase(AuthTestCase):
     """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self) -> None:
@@ -762,7 +765,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": build.id})
+        result = graphql(self.client, query, variables={"id": build.id})
 
         assert_data(self, result, {"releaseBuild": {"keep": False}})
 
@@ -775,17 +778,17 @@ class ReleaseBuildMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": "bogus.309"})
+        result = graphql(self.client, query, variables={"id": "bogus.309"})
 
         assert_data(self, result, {"releaseBuild": None})
 
 
-class CreateNoteMutationTestCase(TestCase):
+class CreateNoteMutationTestCase(AuthTestCase):
     """Tests for the createNote mutation"""
 
     def test_set_text(self) -> None:
-        record = BuildRecordFactory.build()
-        publisher.records.save(record)
+        build = BuildFactory()
+        publisher.pull(build)
         note_text = "Hello, world!"
         query = """
         mutation ($id: ID!, $note: String) {
@@ -796,11 +799,11 @@ class CreateNoteMutationTestCase(TestCase):
         """
 
         result = graphql(
-            client(), query, variables={"id": str(record), "note": note_text}
+            self.client, query, variables={"id": str(build), "note": note_text}
         )
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
-        record = publisher.records.get(record)
+        record = publisher.records.get(build)
         self.assertEqual(record.note, note_text)
 
     def test_set_none(self) -> None:
@@ -815,7 +818,7 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": build.id, "note": None})
+        result = graphql(self.client, query, variables={"id": build.id, "note": None})
 
         assert_data(self, result, {"createNote": {"notes": None}})
 
@@ -831,12 +834,14 @@ class CreateNoteMutationTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": "bogus.309", "note": None})
+        result = graphql(
+            self.client, query, variables={"id": "bogus.309", "note": None}
+        )
 
         assert_data(self, result, {"createNote": None})
 
 
-class TagsTestCase(TestCase):
+class TagsTestCase(AuthTestCase):
     def test_createbuildtag_mutation_tags_the_build(self) -> None:
         build = BuildFactory()
         publisher.pull(build)
@@ -848,7 +853,7 @@ class TagsTestCase(TestCase):
         }
         """
 
-        result = graphql(client(), query, variables={"id": build.id, "tag": "prod"})
+        result = graphql(self.client, query, variables={"id": build.id, "tag": "prod"})
 
         assert_data(self, result, {"createBuildTag": {"tags": ["prod"]}})
 
@@ -866,7 +871,7 @@ class TagsTestCase(TestCase):
         """
 
         result = graphql(
-            client(), query, variables={"machine": build.machine, "tag": "prod"}
+            self.client, query, variables={"machine": build.machine, "tag": "prod"}
         )
 
         assert_data(self, result, {"removeBuildTag": {"tags": []}})
