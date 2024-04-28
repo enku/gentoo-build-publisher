@@ -101,24 +101,20 @@ class RecordDB(Protocol):
         """
 
 
-class Records:  # pylint: disable=too-few-public-methods
-    """Just a wrapper to look like storage and jenkins modules"""
+def build_records(settings: Settings) -> RecordDB:
+    """Return instance of the the RecordDB class given in settings"""
+    try:
+        [module] = importlib.metadata.entry_points(
+            group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
+        )
+    except ValueError:
+        raise LookupError(
+            f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
+        ) from None
 
-    @staticmethod
-    def from_settings(settings: Settings) -> RecordDB:
-        """Return instance of the the RecordDB class given in settings"""
-        try:
-            [module] = importlib.metadata.entry_points(
-                group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
-            )
-        except ValueError:
-            raise LookupError(
-                f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
-            ) from None
+    record_db: type[RecordDB] = module.load().RecordDB
 
-        record_db: type[RecordDB] = module.load().RecordDB
-
-        return record_db()
+    return record_db()
 
 
 class ApiKeyDB(Protocol):
@@ -140,24 +136,20 @@ class ApiKeyDB(Protocol):
         """
 
 
-class ApiKeys:  # pylint: disable=too-few-public-methods
-    """Interface to instantiate an ApiKeyDB"""
+def api_keys(settings: Settings) -> ApiKeyDB:
+    """Return instance of the the ApiKeyDB class given in settings"""
+    try:
+        [module] = importlib.metadata.entry_points(
+            group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
+        )
+    except ValueError:
+        raise LookupError(
+            f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
+        ) from None
 
-    @staticmethod
-    def from_settings(settings: Settings) -> ApiKeyDB:
-        """Return instance of the the ApiKeyDB class given in settings"""
-        try:
-            [module] = importlib.metadata.entry_points(
-                group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
-            )
-        except ValueError:
-            raise LookupError(
-                f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
-            ) from None
+    apikey_db: type[ApiKeyDB] = module.load().ApiKeyDB
 
-        apikey_db: type[ApiKeyDB] = module.load().ApiKeyDB
-
-        return apikey_db()
+    return apikey_db()
 
 
 @dataclass(frozen=True)
@@ -171,6 +163,6 @@ class Repo:
     def from_settings(cls: type[Self], settings: Settings) -> Self:
         """Return instance of the the Repo class given in settings"""
         return cls(
-            api_keys=ApiKeys.from_settings(settings),
-            build_records=Records.from_settings(settings),
+            api_keys=api_keys(settings),
+            build_records=build_records(settings),
         )

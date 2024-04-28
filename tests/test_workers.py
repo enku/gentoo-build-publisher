@@ -13,7 +13,7 @@ from requests import HTTPError
 
 from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.records import Records
+from gentoo_build_publisher.records import build_records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.worker import (
@@ -126,7 +126,7 @@ class PullBuildTestCase(TestCase):
         self, worker: WorkerInterface
     ) -> None:
         settings = Settings.from_environ()
-        records = Records.from_settings(settings)
+        records = build_records(settings)
 
         with mock.patch(
             "gentoo_build_publisher.publisher.Jenkins.download_artifact"

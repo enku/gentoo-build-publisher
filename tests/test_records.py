@@ -9,12 +9,12 @@ from django.test import TestCase
 
 from gentoo_build_publisher.records import (
     ApiKeyDB,
-    ApiKeys,
     BuildRecord,
     RecordDB,
     RecordNotFound,
-    Records,
     Repo,
+    api_keys,
+    build_records,
 )
 from gentoo_build_publisher.records.django_orm import RecordDB as DjangoDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
@@ -34,7 +34,7 @@ class RecordDBTestCase(TestCase):
             STORAGE_PATH=Path("/dev/null"),
             JENKINS_BASE_URL="http://jenkins.invalid/",
         )
-        return Records.from_settings(settings)
+        return build_records(settings)
 
     @parametrized(BACKENDS)
     def test_save(self, backend: str) -> None:
@@ -280,25 +280,25 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.count("bogus"), 0)
 
 
-class RecordsTestCase(TestCase):
-    def test_from_settings_django(self) -> None:
+class BuildRecordsTestCase(TestCase):
+    def test_django(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             STORAGE_PATH=Path("/dev/null"),
             RECORDS_BACKEND="django",
         )
 
-        recorddb = Records.from_settings(settings)
+        recorddb = build_records(settings)
         self.assertIsInstance(recorddb, DjangoDB)
 
-    def test_from_settings_memory(self) -> None:
+    def test_memory(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="http://jenkins.invalid/",
             STORAGE_PATH=Path("/dev/null"),
             RECORDS_BACKEND="memory",
         )
 
-        recorddb = Records.from_settings(settings)
+        recorddb = build_records(settings)
         self.assertIsInstance(recorddb, MemoryDB)
 
     def test_unknown_records_backend(self) -> None:
@@ -309,7 +309,7 @@ class RecordsTestCase(TestCase):
         )
 
         with self.assertRaises(LookupError):
-            Records.from_settings(settings)
+            build_records(settings)
 
 
 class ApiKeyDBTests(TestCase):
@@ -319,7 +319,7 @@ class ApiKeyDBTests(TestCase):
             STORAGE_PATH=Path("/dev/null"),
             JENKINS_BASE_URL="http://jenkins.invalid/",
         )
-        return ApiKeys.from_settings(settings)
+        return api_keys(settings)
 
     @parametrized(BACKENDS)
     def test_list(self, backend: str) -> None:
