@@ -85,7 +85,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 @view("machines/<str:machine>/")
 def machines(request: HttpRequest, machine: str) -> HttpResponse:
     """Response for the machines page"""
-    if not next(iter(publisher.records.for_machine(machine)), None):
+    if not next(iter(publisher.repo.build_records.for_machine(machine)), None):
         raise Http404("No builds for this machine")
 
     input_context = MachineInputContext(

@@ -12,6 +12,7 @@ from gentoo_build_publisher.records import (
     RecordDB,
     RecordNotFound,
     Records,
+    Repo,
 )
 from gentoo_build_publisher.records.django_orm import RecordDB as DjangoDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
@@ -307,3 +308,17 @@ class RecordsTestCase(TestCase):
 
         with self.assertRaises(LookupError):
             Records.from_settings(settings)
+
+
+class RepoTests(TestCase):
+    @parametrized(BACKENDS)
+    def test_from_settings(self, backend: str) -> None:
+        settings = Settings(
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+            STORAGE_PATH=Path("/dev/null"),
+            RECORDS_BACKEND=backend,
+        )
+        repo = Repo.from_settings(settings)
+        build_records_type = type(repo.build_records)
+
+        self.assertIn(backend, build_records_type.__module__)

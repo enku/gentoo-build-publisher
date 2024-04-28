@@ -37,7 +37,7 @@ class BuildPublisherFromSettingsTestCase(unittest.TestCase):
             pub.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
         self.assertEqual(pub.storage.root, self.tmpdir / "test_from_settings")
-        self.assertIsInstance(pub.records, RecordDB)
+        self.assertIsInstance(pub.repo.build_records, RecordDB)
 
 
 class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
@@ -58,7 +58,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.publisher.pull(self.build)
 
         self.assertIs(self.publisher.storage.pulled(self.build), True)
-        self.assertIs(self.publisher.records.exists(self.build), True)
+        self.assertIs(self.publisher.repo.build_records.exists(self.build), True)
 
     def test_pull_stores_build_logs(self) -> None:
         """Should store the logs of the build"""
@@ -152,20 +152,20 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         old_build = self.build
         self.publisher.pull(old_build)
         record = self.publisher.record(old_build)
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             record, submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
         )
 
         new_build = BuildFactory()
         self.publisher.pull(new_build)
         record = self.publisher.record(new_build)
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             record, submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC)
         )
 
         self.publisher.purge(old_build.machine)
 
-        self.assertIs(self.publisher.records.exists(old_build), False)
+        self.assertIs(self.publisher.repo.build_records.exists(old_build), False)
 
         for item in Content:
             path = self.publisher.storage.get_path(old_build, item)
@@ -175,43 +175,43 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         """Should remove purgeable builds"""
 
         kept_build = BuildFactory(machine="lighthouse")
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             self.publisher.record(kept_build),
             submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
             keep=True,
         )
         tagged_build = BuildFactory(machine="lighthouse")
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             self.publisher.record(tagged_build),
             submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
         )
         self.publisher.pull(tagged_build)
         self.publisher.tag(tagged_build, "prod")
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             self.publisher.record(BuildFactory(machine="lighthouse")),
             submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC),
         )
 
         self.publisher.purge("lighthouse")
 
-        self.assertIs(self.publisher.records.exists(kept_build), True)
-        self.assertIs(self.publisher.records.exists(tagged_build), True)
+        self.assertIs(self.publisher.repo.build_records.exists(kept_build), True)
+        self.assertIs(self.publisher.repo.build_records.exists(tagged_build), True)
 
     def test_purge_doesnt_delete_old_published_build(self) -> None:
         """Should not delete old build if published"""
         self.publisher.publish(self.build)
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             self.publisher.record(self.build),
             submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC),
         )
-        self.publisher.records.save(
+        self.publisher.repo.build_records.save(
             self.publisher.record(BuildFactory()),
             submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC),
         )
 
         self.publisher.purge(self.build.machine)
 
-        self.assertIs(self.publisher.records.exists(self.build), True)
+        self.assertIs(self.publisher.repo.build_records.exists(self.build), True)
 
     def test_update_build_metadata(self) -> None:
         # pylint: disable=protected-access
@@ -427,12 +427,14 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
 
         publisher.publish(self.builds[2])
 
-        assert not any(build.built for build in publisher.records.for_machine(machine))
+        assert not any(
+            build.built for build in publisher.repo.build_records.for_machine(machine)
+        )
         self.machine_info = publisher.MachineInfo(self.builds[0].machine)
 
     def pull_build_with_no_built_timestamp(self, build: Build) -> None:
         publisher.pull(build)
-        publisher.records.save(publisher.record(build), built=None)
+        publisher.repo.build_records.save(publisher.record(build), built=None)
 
     def test_build_count(self) -> None:
         self.assertEqual(self.machine_info.build_count, 4)

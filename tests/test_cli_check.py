@@ -34,7 +34,7 @@ class GBPChkTestCase(TestCase):
         build = BuildFactory()
         publisher.pull(build)
 
-        publisher.records.delete(build)
+        publisher.repo.build_records.delete(build)
 
         return build
 
@@ -47,7 +47,7 @@ class GBPChkTestCase(TestCase):
     def test_uncompleted_builds_are_skipped(self) -> None:
         build = BuildFactory()
         record = publisher.record(build)
-        publisher.records.save(record, completed=None)
+        publisher.repo.build_records.save(record, completed=None)
 
         console = string_console()[0]
         exit_status = check.handler(Namespace(), self.gbp, console)

@@ -6,7 +6,7 @@ import datetime as dt
 import importlib.metadata
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
@@ -119,3 +119,15 @@ class Records:  # pylint: disable=too-few-public-methods
         record_db: type[RecordDB] = backend.load()
 
         return record_db()
+
+
+@dataclass(frozen=True)
+class Repo:
+    """Repository pattern"""
+
+    build_records: RecordDB
+
+    @classmethod
+    def from_settings(cls: type[Self], settings: Settings) -> Self:
+        """Return instance of the the Repo class given in settings"""
+        return cls(build_records=Records.from_settings(settings))

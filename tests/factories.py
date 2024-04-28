@@ -14,7 +14,7 @@ import factory
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.models import BuildModel
-from gentoo_build_publisher.records import BuildRecord, Records
+from gentoo_build_publisher.records import BuildRecord, Repo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import Build, Content, Package
@@ -71,7 +71,9 @@ class BuildFactory(factory.Factory):
                 builds = cls.create_batch(per_day, machine=machine)
 
                 for build in builds:
-                    publisher.records.save(publisher.record(build), submitted=day)
+                    publisher.repo.build_records.save(
+                        publisher.record(build), submitted=day
+                    )
 
                 buildmap[machine].extend(builds)
 
@@ -103,9 +105,7 @@ class BuildPublisherFactory(factory.Factory):
     storage = factory.LazyAttribute(
         lambda _: Storage.from_settings(Settings.from_environ())
     )
-    records = factory.LazyAttribute(
-        lambda _: Records.from_settings(Settings.from_environ())
-    )
+    repo = factory.LazyAttribute(lambda _: Repo.from_settings(Settings.from_environ()))
 
 
 # This is the default list of packages (in order) stored in the artifacts

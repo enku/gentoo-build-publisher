@@ -134,7 +134,7 @@ class BuildQueryTestCase(TestCase):
     def test_packages_when_not_pulled_returns_none(self) -> None:
         # given the unpulled package
         build = BuildFactory()
-        publisher.records.save(publisher.record(build))
+        publisher.repo.build_records.save(publisher.record(build))
 
         # when we query the build's packages
         query = """
@@ -209,7 +209,7 @@ class BuildsQueryTestCase(TestCase):
 
         for build in builds:
             record = publisher.record(build)
-            publisher.records.save(record, completed=now)
+            publisher.repo.build_records.save(record, completed=now)
 
         builds.sort(key=lambda build: build.build_id, reverse=True)
         query = """
@@ -271,14 +271,14 @@ class LatestQueryTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        publisher.records.save(
+        publisher.repo.build_records.save(
             BuildRecordFactory.build(
                 built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
                 submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.UTC),
                 completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.UTC),
             )
         )
-        publisher.records.save(
+        publisher.repo.build_records.save(
             latest := BuildRecordFactory.build(
                 built=dt.datetime(2022, 2, 25, 12, 8, tzinfo=dt.UTC),
                 submitted=dt.datetime(2022, 2, 25, 0, 15, tzinfo=dt.UTC),
@@ -286,7 +286,7 @@ class LatestQueryTestCase(TestCase):
             )
         )
         self.latest = latest
-        publisher.records.save(
+        publisher.repo.build_records.save(
             BuildRecordFactory.build(
                 submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.UTC),
             )
@@ -755,7 +755,7 @@ class ReleaseBuildMutationTestCase(AuthTestCase):
     def test_should_release_existing_build(self) -> None:
         build = BuildFactory()
         record = publisher.record(build)
-        publisher.records.save(record, keep=True)
+        publisher.repo.build_records.save(record, keep=True)
 
         query = """
         mutation ($id: ID!) {
@@ -803,7 +803,7 @@ class CreateNoteMutationTestCase(AuthTestCase):
         )
 
         assert_data(self, result, {"createNote": {"notes": note_text}})
-        record = publisher.records.get(build)
+        record = publisher.repo.build_records.get(build)
         self.assertEqual(record.note, note_text)
 
     def test_set_none(self) -> None:
@@ -934,10 +934,10 @@ class SearchQueryTestCase(TestCase):
         for _, field in SEARCH_PARAMS:
             build1 = BuildFactory()
             record = publisher.record(build1)
-            publisher.records.save(record, **{field: f"test foo {field}"})
+            publisher.repo.build_records.save(record, **{field: f"test foo {field}"})
             build2 = BuildFactory()
             record = publisher.record(build2)
-            publisher.records.save(record, **{field: f"test bar {field}"})
+            publisher.repo.build_records.save(record, **{field: f"test bar {field}"})
 
             self.builds.append(build1)
             self.builds.append(build2)
@@ -980,7 +980,7 @@ class SearchQueryTestCase(TestCase):
     def test_only_matches_given_machine(self, enum: str, field: str) -> None:
         build = BuildFactory(machine="lighthouse")
         record = publisher.record(build)
-        publisher.records.save(record, **{field: "test foo"})
+        publisher.repo.build_records.save(record, **{field: "test foo"})
 
         result = graphql(
             client(),
@@ -1028,10 +1028,10 @@ class SearchNotesQueryTestCase(TestCase):
 
         self.build1 = BuildFactory()
         record = publisher.record(self.build1)
-        publisher.records.save(record, note="test foo")
+        publisher.repo.build_records.save(record, note="test foo")
         self.build2 = BuildFactory()
         record = publisher.record(self.build2)
-        publisher.records.save(record, note="test bar")
+        publisher.repo.build_records.save(record, note="test bar")
 
     def test_single_match(self) -> None:
         result = graphql(
@@ -1062,7 +1062,7 @@ class SearchNotesQueryTestCase(TestCase):
         build = BuildFactory(machine="lighthouse")
         publisher.pull(build)
         record = publisher.record(build)
-        publisher.records.save(record, note="test foo")
+        publisher.repo.build_records.save(record, note="test foo")
 
         result = graphql(
             client(), self.query, variables={"machine": "lighthouse", "key": "test"}
@@ -1095,7 +1095,9 @@ class WorkingTestCase(TestCase):
         publisher.pull(BuildFactory())
         publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
-        publisher.records.save(BuildRecord(working.machine, working.build_id))
+        publisher.repo.build_records.save(
+            BuildRecord(working.machine, working.build_id)
+        )
 
         result = graphql(client(), self.query)
 

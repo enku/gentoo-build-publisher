@@ -226,7 +226,7 @@ def resolve_query_machines(_obj: Any, _info: Info) -> list[MachineInfo]:
 def resolve_query_build(_obj: Any, _info: Info, id: str) -> Build | None:
     build = Build.from_id(id)
 
-    return None if not publisher.records.exists(build) else build
+    return None if not publisher.repo.build_records.exists(build) else build
 
 
 @query.field("latest")
@@ -237,7 +237,9 @@ def resolve_query_latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | 
 @query.field("builds")
 def resolve_query_builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     return [
-        record for record in publisher.records.for_machine(machine) if record.completed
+        record
+        for record in publisher.repo.build_records.for_machine(machine)
+        if record.completed
     ]
 
 
@@ -245,12 +247,12 @@ def resolve_query_builds(_obj: Any, _info: Info, machine: str) -> list[BuildReco
 def resolve_query_diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     left_build = Build.from_id(left)
 
-    if not publisher.records.exists(left_build):
+    if not publisher.repo.build_records.exists(left_build):
         raise GraphQLError(f"Build does not exist: {left}")
 
     right_build = Build.from_id(right)
 
-    if not publisher.records.exists(right_build):
+    if not publisher.repo.build_records.exists(right_build):
         raise GraphQLError(f"Build does not exist: {right}")
 
     items = publisher.diff_binpkgs(left_build, right_build)
@@ -283,8 +285,8 @@ def resolve_query_version(_obj: Any, _info: Info) -> str:
 def resolve_query_working(_obj: Any, _info: Info) -> list[BuildRecord]:
     return [
         record
-        for machine in publisher.records.list_machines()
-        for record in publisher.records.for_machine(machine)
+        for machine in publisher.repo.build_records.list_machines()
+        for record in publisher.repo.build_records.for_machine(machine)
         if not record.completed
     ]
 
@@ -347,7 +349,7 @@ def resolve_mutation_schedule_build(
 def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
 
-    if not publisher.records.exists(build):
+    if not publisher.repo.build_records.exists(build):
         return None
 
     return publisher.save(publisher.record(build), keep=True)
@@ -360,7 +362,7 @@ def resolve_mutation_releasebuild(
 ) -> BuildRecord | None:
     build = Build.from_id(id)
 
-    if not publisher.records.exists(build):
+    if not publisher.repo.build_records.exists(build):
         return None
 
     return publisher.save(publisher.record(build), keep=False)
@@ -373,7 +375,7 @@ def resolve_mutation_createnote(
 ) -> BuildRecord | None:
     build = Build.from_id(id)
 
-    if not publisher.records.exists(build):
+    if not publisher.repo.build_records.exists(build):
         return None
 
     return publisher.save(publisher.record(build), note=note)

@@ -53,9 +53,9 @@ def check_build_content(console: Console) -> CheckResult:
     errors = 0
     warnings = 0
 
-    machines = publisher.records.list_machines()
+    machines = publisher.repo.build_records.list_machines()
     records = itertools.chain(
-        *(publisher.records.for_machine(machine) for machine in machines)
+        *(publisher.repo.build_records.for_machine(machine) for machine in machines)
     )
 
     for record in records:
@@ -90,7 +90,7 @@ def check_orphans(console: Console) -> CheckResult:
                 build = Build(*path.name.split(".", 1))
 
                 try:
-                    publisher.records.get(build)
+                    publisher.repo.build_records.get(build)
                 except RecordNotFound:
                     console.err.print(f"Record missing for {path}")
                     errors += 1

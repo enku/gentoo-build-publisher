@@ -6,7 +6,7 @@ when combined, represent the the build:
     * Jenkins: the connection to the Jenkins instance as well as the artifacts it hosts
     * Storage: the file system storage responsible where artifacts are pulled and
       extracted and eventually hosted by GBP.
-    * RecordDB: The database that holds various metadata not held in Storage
+    * Repo: Database repository holding various data not held in Storage
 
 The above all classes (or Protocols) that operate independently.  There exists a facade
 for these subsystems. This is the BuildPublisher.  For example, when a build is pulled,
@@ -28,12 +28,7 @@ from typing import Any
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger
-from gentoo_build_publisher.records import (
-    BuildRecord,
-    RecordDB,
-    RecordNotFound,
-    Records,
-)
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound, Repo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.storage import Storage
@@ -54,19 +49,19 @@ class BuildPublisher:
     """Pulls a build's db, jenkins and storage all together"""
 
     # pylint: disable=redefined-outer-name
-    def __init__(self, *, jenkins: Jenkins, storage: Storage, records: RecordDB):
+    def __init__(self, *, jenkins: Jenkins, storage: Storage, repo: Repo):
         self.jenkins = jenkins
         self.storage = storage
-        self.records = records
+        self.repo = repo
 
     @classmethod
     def from_settings(cls, settings: Settings) -> BuildPublisher:
         """Instantiate from settings"""
         jenkins = Jenkins.from_settings(settings)
         storage = Storage.from_settings(settings)
-        records = Records.from_settings(settings)
+        repo = Repo.from_settings(settings)
 
-        return cls(jenkins=jenkins, storage=storage, records=records)
+        return cls(jenkins=jenkins, storage=storage, repo=repo)
 
     def record(self, build: Build) -> BuildRecord:
         """Return BuildRecord for this build.
@@ -79,13 +74,13 @@ class BuildPublisher:
             return build
 
         try:
-            return self.records.get(build)
+            return self.repo.build_records.get(build)
         except RecordNotFound:
             return BuildRecord(build.machine, build.build_id)
 
     def save(self, record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save the build or record to the records repository"""
-        return self.records.save(record, **fields)
+        return self.repo.build_records.save(record, **fields)
 
     def publish(self, build: Build) -> None:
         """Publish the build"""
@@ -146,7 +141,9 @@ class BuildPublisher:
         dispatcher.emit("prepull", build=Build(build.machine, build.build_id))
 
         self.storage.extract_artifact(
-            build, self.jenkins.download_artifact(build), self.records.previous(record)
+            build,
+            self.jenkins.download_artifact(build),
+            self.repo.build_records.previous(record),
         )
 
         logger.info("Pulled build %s", build)
@@ -189,7 +186,7 @@ class BuildPublisher:
     def delete(self, build: Build) -> None:
         """Delete this build"""
         dispatcher.emit("predelete", build=build)
-        self.records.delete(build)
+        self.repo.build_records.delete(build)
         self.storage.delete(build)
         dispatcher.emit("postdelete", build=build)
 
@@ -204,7 +201,9 @@ class BuildPublisher:
     def purge(self, machine: str) -> None:
         """Purge old builds for machine"""
         logging.info("Purging builds for %s", machine)
-        purger = Purger(self.records.for_machine(machine), key=BuildRecord.purge_key)
+        purger = Purger(
+            self.repo.build_records.for_machine(machine), key=BuildRecord.purge_key
+        )
 
         for record in purger.purge():
             if not (record.keep or self.storage.get_tags(record)):
@@ -212,7 +211,7 @@ class BuildPublisher:
 
     def search(self, machine: str, field: str, key: str) -> list[BuildRecord]:
         """search the given field on the given machine"""
-        return list(self.records.search(machine, field, key))
+        return list(self.repo.build_records.search(machine, field, key))
 
     def diff_binpkgs(self, left: Build, right: Build) -> Iterable[Change]:
         """Compare two package's binpkgs and generate the differences"""
@@ -235,11 +234,11 @@ class BuildPublisher:
 
     def machines(self) -> list[MachineInfo]:
         """Return list of machines with metadata"""
-        return [MachineInfo(i) for i in self.records.list_machines()]
+        return [MachineInfo(i) for i in self.repo.build_records.list_machines()]
 
     def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
-        return self.records.latest(machine, completed)
+        return self.repo.build_records.latest(machine, completed)
 
     @staticmethod
     def gbp_metadata(
@@ -277,7 +276,7 @@ pull = _inst.pull
 pulled = _inst.pulled
 purge = _inst.purge
 record = _inst.record
-records = _inst.records
+repo = _inst.repo
 save = _inst.save
 schedule_build = _inst.schedule_build
 search = _inst.search
@@ -311,7 +310,7 @@ class MachineInfo:
     @cached_property
     def builds(self) -> list[BuildRecord]:
         """List of builds held for the machine"""
-        return [*records.for_machine(self.machine)]
+        return [*repo.build_records.for_machine(self.machine)]
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:

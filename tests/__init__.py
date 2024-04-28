@@ -61,7 +61,7 @@ class TestCase(UnitTestTestCase):
         self._mock_environment()
         mock_publisher = self._setup_publisher()
         self._patch_publisher("jenkins", mock_publisher)
-        self._patch_publisher("records", mock_publisher)
+        self._patch_publisher("repo", mock_publisher)
         self._patch_publisher("storage", mock_publisher)
         self.artifact_builder = mock_publisher.jenkins.artifact_builder
 

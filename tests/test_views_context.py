@@ -52,7 +52,7 @@ class CreateDashboardContextTests(TestCase):
         publisher.pull(polaris2)
 
         polaris3 = BuildRecordFactory(machine="polaris")
-        publisher.records.save(polaris3)
+        publisher.repo.build_records.save(polaris3)
 
         input_context = self.input_context()
         ctx = create_dashboard_context(input_context)
