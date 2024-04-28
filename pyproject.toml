@@ -32,8 +32,8 @@ homepage = "https://github.com/enku/gentoo-build-publisher"
 repository = "https://github.com/enku/gentoo-build-publisher"
 
 [project.entry-points."gentoo_build_publisher.records"]
-django = "gentoo_build_publisher.records.django_orm:RecordDB"
-memory = "gentoo_build_publisher.records.memory:RecordDB"
+django = "gentoo_build_publisher.records.django_orm"
+memory = "gentoo_build_publisher.records.memory"
 
 [project.entry-points."gbpcli.subcommands"]
 addmachine = "gentoo_build_publisher.cli.addmachine"
