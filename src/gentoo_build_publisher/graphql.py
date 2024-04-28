@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime as dt
 import importlib.metadata
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import resources
 from typing import Any, TypeAlias, TypedDict
@@ -23,12 +23,10 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne_django.scalars import datetime_scalar
-from django.conf import settings
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, utils, worker
-from gentoo_build_publisher.models import ApiKey
-from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
@@ -98,18 +96,15 @@ def require_apikey(fn: Resolver) -> Resolver:
     @wraps(fn)
     def wrapper(obj: Any, info: Info, **kwargs: Any) -> Any:
         """wrapper function"""
-        estr = utils.ensure_str
-        ebytes = utils.ensure_bytes
-
         try:
             auth = info.context["request"].headers["Authorization"]
             name, key = utils.parse_basic_auth_header(auth)
-            record = ApiKey.objects.get(name=name.lower())
-            if estr(utils.decrypt(record.apikey, ebytes(settings.SECRET_KEY))) == key:
-                record.last_used = dt.datetime.now(tz=dt.UTC)
-                record.save()
+            api_key = publisher.repo.api_keys.get(name=name.lower())
+            if api_key.key == key:
+                api_key = replace(api_key, last_used=dt.datetime.now(tz=dt.UTC))
+                publisher.repo.api_keys.save(api_key)
                 return fn(obj, info, **kwargs)
-        except (KeyError, ValueError, ApiKey.DoesNotExist):
+        except (KeyError, ValueError, RecordNotFound):
             pass
 
         raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")

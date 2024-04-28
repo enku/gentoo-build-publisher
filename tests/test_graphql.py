@@ -19,19 +19,11 @@ from gentoo_build_publisher.graphql import (
 )
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import Content, EbuildRepo, MachineJob, Repo
-from gentoo_build_publisher.utils import encode_basic_auth_data, get_version
-from gentoo_build_publisher.utils.time import utctime
+from gentoo_build_publisher.types import ApiKey, Content, EbuildRepo, MachineJob, Repo
+from gentoo_build_publisher.utils import encode_basic_auth_data, get_version, time
 from gentoo_build_publisher.worker import tasks
 
-from . import (
-    BUILD_LOGS,
-    DjangoTestCase,
-    TestCase,
-    create_user_auth,
-    graphql,
-    parametrized,
-)
+from . import BUILD_LOGS, TestCase, create_user_auth, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
@@ -47,7 +39,7 @@ def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(data, expected)
 
 
-class AuthTestCase(DjangoTestCase):
+class AuthTestCase(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
@@ -69,7 +61,7 @@ class BuildQueryTestCase(TestCase):
         self.artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
 
         with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_utctime:
-            mock_utctime.return_value = utctime(dt.datetime(2022, 3, 1, 6, 28, 44))
+            mock_utctime.return_value = time.utctime(dt.datetime(2022, 3, 1, 6, 28, 44))
             publisher.pull(build)
 
         publisher.tag(build, "prod")
@@ -1225,12 +1217,16 @@ def dummy_resolver(
     return "permitted"
 
 
-class RequireAPIKeyTestCase(DjangoTestCase):
+class RequireAPIKeyTestCase(TestCase):
     def test_good_apikey(self) -> None:
         name = "test"
-        api_key = apikey.create_api_key()
-        apikey.save_api_key(api_key, name)
-        encoded = encode_basic_auth_data(name, api_key)
+        api_key = ApiKey(
+            name=name,
+            key=apikey.create_api_key(),
+            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+        )
+        publisher.repo.api_keys.save(api_key)
+        encoded = encode_basic_auth_data(name, api_key.key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver"
@@ -1240,20 +1236,25 @@ class RequireAPIKeyTestCase(DjangoTestCase):
 
     def test_good_key_updates_records_last_use(self) -> None:
         name = "test"
-        api_key = apikey.create_api_key()
-        record = apikey.save_api_key(api_key, name)
-        encoded = encode_basic_auth_data(name, api_key)
+        api_key = ApiKey(
+            name=name,
+            key=apikey.create_api_key(),
+            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+        )
+        publisher.repo.api_keys.save(api_key)
+        encoded = encode_basic_auth_data(name, api_key.key)
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)
         info.path.key = "dummy_resolver"
         resolver = require_apikey(dummy_resolver)
 
-        self.assertIs(record.last_used, None)
+        api_key = publisher.repo.api_keys.get(name)
+        self.assertIs(api_key.last_used, None)
 
         resolver(None, info)
 
-        record.refresh_from_db()
-        self.assertIsNot(record.last_used, None, "The last_used field was not updated")
+        api_key = publisher.repo.api_keys.get(name)
+        self.assertIsNot(api_key.last_used, None, "The last_used field was not updated")
 
     def test_no_apikey(self) -> None:
         gql_context = {"request": Mock(headers={})}
@@ -1270,8 +1271,12 @@ class RequireAPIKeyTestCase(DjangoTestCase):
 
     def test_bad_apikey(self) -> None:
         name = "test"
-        api_key = apikey.create_api_key()
-        apikey.save_api_key(api_key, name)
+        api_key = ApiKey(
+            name=name,
+            key=apikey.create_api_key(),
+            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+        )
+        publisher.repo.api_keys.save(api_key)
         encoded = encode_basic_auth_data(name, "bogus")
         gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
         info = Mock(context=gql_context)

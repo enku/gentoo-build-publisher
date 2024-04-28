@@ -3,9 +3,7 @@
 import argparse
 import secrets
 from enum import IntEnum
-from functools import partial
 
-from django.db import IntegrityError, transaction
 from gbpcli import GBP
 from gbpcli.render import format_timestamp
 from gbpcli.subcommands import completers as comp
@@ -13,16 +11,11 @@ from gbpcli.types import Console
 from rich import box
 from rich.table import Table
 
-import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
-from gentoo_build_publisher.models import ApiKey
+from gentoo_build_publisher import publisher
+from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.utils import (
-    InvalidIdentifier,
-    create_secret_key,
-    encrypt,
-    validate_identifier,
-)
-from gentoo_build_publisher.utils.time import localtime
+from gentoo_build_publisher.types import ApiKey
+from gentoo_build_publisher.utils import InvalidIdentifier, create_secret_key, time
 
 ROOT_KEY_NAME = "root"
 
@@ -47,13 +40,14 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
         key = create_root_key()
     else:
         key = create_api_key()
+        name = args.name.lower()
 
-        try:
-            with transaction.atomic():
-                save_api_key(key, args.name)
-        except IntegrityError:
+        if name in [key.name for key in publisher.repo.api_keys.list()]:
             console.err.print("An API key with that name already exists.")
             return StatusCode.NAME_EXISTS
+
+        try:
+            save_api_key(ApiKey(name=name, key=key, created=time.localtime()))
         except InvalidIdentifier as error:
             console.err.print(str(error.args[0]))
             return StatusCode.INVALID_NAME
@@ -64,9 +58,9 @@ def create_action(args: argparse.Namespace, console: Console) -> int:
 
 def list_action(args: argparse.Namespace, console: Console) -> int:
     """handle the "list" action"""
-    keys_query = ApiKey.objects.all()
+    keys = publisher.repo.api_keys.list()
 
-    if not keys_query.exists():
+    if not keys:
         console.out.print("No API keys registered.")
         return StatusCode.SUCCESS
 
@@ -74,12 +68,12 @@ def list_action(args: argparse.Namespace, console: Console) -> int:
     table.add_column("Name", header_style="header")
     table.add_column("Last Used", header_style="header")
 
-    for record in keys_query:
+    for api_key in keys:
         table.add_row(
-            record.name,
+            api_key.name,
             (
-                format_timestamp(localtime(record.last_used))
-                if record.last_used
+                format_timestamp(time.localtime(api_key.last_used))
+                if api_key.last_used
                 else "Never"
             ),
         )
@@ -94,8 +88,8 @@ def delete_action(args: argparse.Namespace, console: Console) -> int:
     name = args.name.lower()
 
     try:
-        ApiKey.objects.get(name=name).delete()
-    except ApiKey.DoesNotExist:
+        publisher.repo.api_keys.delete(name)
+    except RecordNotFound:
         console.err.print("No key exists with that name.")
         return StatusCode.NAME_DOES_NOT_EXIST
 
@@ -132,17 +126,9 @@ def create_root_key() -> str:
     return create_secret_key().decode("ascii")
 
 
-def save_api_key(api_key: str, name: str) -> ApiKey:
+def save_api_key(api_key: ApiKey) -> None:
     """Save the given api_key to the repository with the given name"""
-    from django.conf import settings  # pylint: disable=import-outside-toplevel
-
-    validate_identifier(name)
-    name = name.lower()
-    encode = partial(str.encode, encoding="ascii")
-
-    return ApiKey.objects.create(
-        name=name, apikey=encrypt(encode(api_key), encode(settings.SECRET_KEY))
-    )
+    publisher.repo.api_keys.save(api_key)
 
 
 class StatusCode(IntEnum):
@@ -164,6 +150,4 @@ def key_names(
 ) -> list[str]:
     """Return list of existing key names"""
     # pylint: disable=unused-argument
-    names = list(ApiKey.objects.values_list("name", flat=True))
-
-    return names
+    return [api_key.name for api_key in publisher.repo.api_keys.list()]

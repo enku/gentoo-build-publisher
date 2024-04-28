@@ -36,7 +36,8 @@ from gentoo_build_publisher.jenkins import (
     JenkinsMetadata,
     ProjectPath,
 )
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.records import ApiKeyDB
+from gentoo_build_publisher.types import ApiKey, Build
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 JENKINS_CONFIG = JenkinsConfig(
@@ -343,7 +344,8 @@ def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:
 
 def create_user_auth(user: str) -> str:
     secret = apikey.create_api_key()
-    apikey.save_api_key(secret, user)
+    api_key = ApiKey(name=user, key=secret, created=dt.datetime.now(tz=dt.UTC))
+    publisher.repo.api_keys.save(api_key)
 
     return secret
 

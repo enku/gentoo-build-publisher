@@ -4,12 +4,15 @@
 
 import datetime as dt
 from argparse import ArgumentParser, Namespace
+from dataclasses import replace
 from unittest.mock import Mock, patch
 
 from django.conf import settings
 
-from gentoo_build_publisher import models, utils
+from gentoo_build_publisher import models, publisher, utils
 from gentoo_build_publisher.cli import apikey
+from gentoo_build_publisher.types import ApiKey
+from gentoo_build_publisher.utils import time
 
 from . import LOCAL_TIMEZONE, DjangoTestCase, TestCase, string_console
 
@@ -45,7 +48,10 @@ class GBPCreateTests(DjangoTestCase):
 
     def test_name_already_exists(self) -> None:
         console, _, stderr = string_console()
-        apikey.save_api_key(apikey.create_api_key(), "test")
+        api_key = ApiKey(
+            name="test", key=apikey.create_api_key(), created=time.localtime()
+        )
+        publisher.repo.api_keys.save(api_key)
 
         status = apikey.handler(
             Namespace(action="create", name="TEST"), Mock(), console
@@ -102,10 +108,12 @@ class GBPCreateTests(DjangoTestCase):
 class GBPListTests(DjangoTestCase):
     def test(self) -> None:
         console, stdout, *_ = string_console()
+        timestamp = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
         for name in ["this", "that", "the", "other"]:
-            record = apikey.save_api_key(apikey.create_api_key(), name)
-        record.last_used = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
-        record.save()
+            api_key = ApiKey(name=name, key=apikey.create_api_key(), created=timestamp)
+            publisher.repo.api_keys.save(api_key)
+
+        publisher.repo.api_keys.save(replace(api_key, last_used=timestamp))
 
         gbp = Mock()
 
@@ -116,10 +124,10 @@ class GBPListTests(DjangoTestCase):
 ╭───────┬───────────────────╮
 │ Name  │ Last Used         │
 ├───────┼───────────────────┤
-│ this  │ Never             │
+│ other │ 02/22/24 15:00:00 │
 │ that  │ Never             │
 │ the   │ Never             │
-│ other │ 02/22/24 15:00:00 │
+│ this  │ Never             │
 ╰───────┴───────────────────╯
 """
         self.assertEqual(stdout.getvalue(), expected)
@@ -139,7 +147,9 @@ class GBPDeleteTests(DjangoTestCase):
         super().setUp()
 
         for name in ["this", "that", "the", "other"]:
-            apikey.save_api_key(apikey.create_api_key(), name)
+            publisher.repo.api_keys.save(
+                ApiKey(name=name, key=apikey.create_api_key(), created=time.localtime())
+            )
 
     def test_delete(self) -> None:
         console, *_ = string_console()
