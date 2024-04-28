@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import datetime as dt
+from dataclasses import dataclass, field
 from enum import Enum, unique
 from typing import Any, Protocol
 
@@ -156,3 +157,16 @@ class MachineJob:
     name: str
     repo: Repo
     ebuild_repos: list[str]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ApiKey:
+    """A (HTTP) API key"""
+
+    name: str
+    key: str = field(repr=False)
+    created: dt.datetime
+    last_used: dt.datetime | None = None
+
+    def __post_init__(self) -> None:
+        utils.validate_identifier(self.name)

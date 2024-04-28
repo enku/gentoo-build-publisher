@@ -7,6 +7,7 @@ import importlib.resources
 import platform
 import re
 import string
+from functools import partial
 from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, Self
 
@@ -217,3 +218,7 @@ def encode_basic_auth_data(username: str, secret: str) -> str:
     value = f"{username}:{secret}".encode("ascii")
 
     return base64.b64encode(value).decode("ascii")
+
+
+encode = partial(str.encode, encoding="ascii")
+decode = partial(bytes.decode, encoding="ascii")

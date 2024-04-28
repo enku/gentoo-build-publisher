@@ -5,11 +5,14 @@ from collections.abc import Iterable
 from dataclasses import replace
 from typing import Any
 
+from django.conf import settings
 from django.db import models
 
+from gentoo_build_publisher.models import ApiKey as ApiKeyModel
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import ApiKey, Build
+from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 
@@ -211,3 +214,54 @@ class RecordDB:
         field_lookups: dict[str, Any] = {"machine": machine} if machine else {}
 
         return BuildModel.objects.filter(**field_lookups).count()
+
+
+class ApiKeyDB:
+    """Implements the ApiKeyDB Protocol using Django's ORM as a backing store"""
+
+    def list(self) -> list[ApiKey]:
+        """Return the list of ApiKeys"""
+        return [
+            ApiKey(
+                name=obj.name,
+                key=decode(decrypt(obj.apikey, encode(settings.SECRET_KEY))),
+                created=obj.created,
+                last_used=obj.last_used,
+            )
+            for obj in ApiKeyModel.objects.all().order_by("name")
+        ]
+
+    def get(self, name: str) -> ApiKey:
+        """Retrieve db record"""
+        model = self.get_model(name)
+
+        return ApiKey(
+            name=model.name,
+            key=decode(decrypt(model.apikey, encode(settings.SECRET_KEY))),
+            created=model.created,
+        )
+
+    def save(self, api_key: ApiKey) -> None:
+        """Save the given ApiKey to the db"""
+        obj = ApiKeyModel.objects.get_or_create(name=api_key.name)[0]
+        obj.apikey = encrypt(encode(api_key.key), encode(settings.SECRET_KEY))
+        obj.created = api_key.created
+        obj.last_used = api_key.last_used
+        obj.save()
+
+    def delete(self, name: str) -> None:
+        """Delete the ApiKey with the given name
+
+        Raise RecordNotFound if it doesn't exist in the db
+        """
+        self.get_model(name).delete()
+
+    def get_model(self, name: str) -> ApiKeyModel:
+        """Return the ApiKeyModel with the given name
+
+        Raise RecordNotFound if it doesn't exist in the db
+        """
+        try:
+            return ApiKeyModel.objects.get(name=name)
+        except ApiKeyModel.DoesNotExist:
+            raise RecordNotFound from None

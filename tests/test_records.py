@@ -8,6 +8,8 @@ from pathlib import Path
 from django.test import TestCase
 
 from gentoo_build_publisher.records import (
+    ApiKeyDB,
+    ApiKeys,
     BuildRecord,
     RecordDB,
     RecordNotFound,
@@ -17,7 +19,7 @@ from gentoo_build_publisher.records import (
 from gentoo_build_publisher.records.django_orm import RecordDB as DjangoDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import ApiKey, Build
 
 from . import parametrized
 from .factories import BuildRecordFactory
@@ -308,6 +310,70 @@ class RecordsTestCase(TestCase):
 
         with self.assertRaises(LookupError):
             Records.from_settings(settings)
+
+
+class ApiKeyDBTests(TestCase):
+    def backend(self, backend_name: str) -> ApiKeyDB:
+        settings = Settings(
+            RECORDS_BACKEND=backend_name,
+            STORAGE_PATH=Path("/dev/null"),
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+        )
+        return ApiKeys.from_settings(settings)
+
+    @parametrized(BACKENDS)
+    def test_list(self, backend: str) -> None:
+        records = self.backend(backend)
+        key1 = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
+        records.save(key1)
+        key2 = ApiKey(name="key2", key="bar", created=dt.datetime.now(tz=dt.UTC))
+        records.save(key2)
+
+        keys = records.list()
+
+        self.assertEqual(keys, [key1, key2])
+
+    @parametrized(BACKENDS)
+    def test_get(self, backend: str) -> None:
+        records = self.backend(backend)
+        key = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
+        records.save(key)
+
+        self.assertEqual(records.get("key1"), key)
+
+    @parametrized(BACKENDS)
+    def test_get_does_not_exist(self, backend: str) -> None:
+        records = self.backend(backend)
+
+        with self.assertRaises(RecordNotFound):
+            records.get("bogus")
+
+    @parametrized(BACKENDS)
+    def test_save(self, backend: str) -> None:
+        records = self.backend(backend)
+        key = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
+        records.save(key)
+
+        self.assertEqual(records.get("key1"), key)
+
+    @parametrized(BACKENDS)
+    def test_delete(self, backend: str) -> None:
+        records = self.backend(backend)
+        name = "key1"
+        key = ApiKey(name=name, key="foo", created=dt.datetime.now(tz=dt.UTC))
+        records.save(key)
+
+        records.delete(name)
+
+        with self.assertRaises(RecordNotFound):
+            records.get(name)
+
+    @parametrized(BACKENDS)
+    def test_delete_when_does_not_exist(self, backend: str) -> None:
+        records = self.backend(backend)
+
+        with self.assertRaises(RecordNotFound):
+            records.delete("bogus")
 
 
 class RepoTests(TestCase):

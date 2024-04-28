@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from dataclasses import replace
 
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import ApiKey, Build
 
 BuildId = str
 Machine = str
@@ -184,3 +184,38 @@ def record_key(record: BuildRecord) -> int | str:
         return int(record.build_id)
     except ValueError:
         return record.build_id
+
+
+class ApiKeyDB:
+    """Implements the ApiKeyDB Protocol using RAM as a backing store"""
+
+    def __init__(self) -> None:
+        self._records: dict[str, ApiKey] = {}
+
+    def list(self) -> list[ApiKey]:
+        """Return the list of ApiKeys"""
+        return sorted(
+            self._records.values(),
+            key=lambda apikey: apikey.name,
+        )
+
+    def get(self, name: str) -> ApiKey:
+        """Retrieve db record"""
+        try:
+            return self._records[name]
+        except KeyError:
+            raise RecordNotFound from None
+
+    def save(self, api_key: ApiKey) -> None:
+        """Save the given ApiKey to the db"""
+        self._records[api_key.name] = api_key
+
+    def delete(self, name: str) -> None:
+        """Delete the ApiKey with the given name
+
+        Raise RecordNotFound if it doesn't exist in the db
+        """
+        try:
+            del self._records[name]
+        except KeyError:
+            raise RecordNotFound from None

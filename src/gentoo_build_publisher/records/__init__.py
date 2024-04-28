@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol, Self
 
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import ApiKey, Build
 
 
 class RecordNotFound(LookupError):
@@ -121,13 +121,56 @@ class Records:  # pylint: disable=too-few-public-methods
         return record_db()
 
 
+class ApiKeyDB(Protocol):
+    """Repository for ApiKeys"""
+
+    def list(self) -> list[ApiKey]:
+        """Return the list of ApiKeys"""
+
+    def get(self, name: str) -> ApiKey:
+        """Retrieve db record"""
+
+    def save(self, api_key: ApiKey) -> None:
+        """Save the given ApiKey to the db"""
+
+    def delete(self, name: str) -> None:
+        """Delete the ApiKey with the given name
+
+        Raise RecordNotFound if it doesn't exist in the db
+        """
+
+
+class ApiKeys:  # pylint: disable=too-few-public-methods
+    """Interface to instantiate an ApiKeyDB"""
+
+    @staticmethod
+    def from_settings(settings: Settings) -> ApiKeyDB:
+        """Return instance of the the ApiKeyDB class given in settings"""
+        try:
+            [module] = importlib.metadata.entry_points(
+                group="gentoo_build_publisher.records", name=settings.RECORDS_BACKEND
+            )
+        except ValueError:
+            raise LookupError(
+                f"RECORDS_BACKEND not found: {settings.RECORDS_BACKEND}"
+            ) from None
+
+        apikey_db: type[ApiKeyDB] = module.load().ApiKeyDB
+
+        return apikey_db()
+
+
 @dataclass(frozen=True)
 class Repo:
     """Repository pattern"""
 
+    api_keys: ApiKeyDB
     build_records: RecordDB
 
     @classmethod
     def from_settings(cls: type[Self], settings: Settings) -> Self:
         """Return instance of the the Repo class given in settings"""
-        return cls(build_records=Records.from_settings(settings))
+        return cls(
+            api_keys=ApiKeys.from_settings(settings),
+            build_records=Records.from_settings(settings),
+        )
