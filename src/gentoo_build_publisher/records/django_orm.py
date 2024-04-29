@@ -8,6 +8,7 @@ from typing import Any
 from django.conf import settings
 from django.db import models
 
+import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey as ApiKeyModel
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
