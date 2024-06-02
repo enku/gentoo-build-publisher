@@ -59,7 +59,7 @@ class RecordDB:
             return build
 
         try:
-            build_model = BuildModel.objects.select_related(*RELATED).get(
+            build_model: BuildModel = BuildModel.objects.select_related(*RELATED).get(
                 machine=build.machine, build_id=build.build_id
             )
         except BuildModel.DoesNotExist:
@@ -125,7 +125,7 @@ class RecordDB:
         )
 
         try:
-            build_model = query[0]
+            build_model: BuildModel = query[0]
         except IndexError:
             return None
 
@@ -148,7 +148,7 @@ class RecordDB:
         )
 
         try:
-            build_model = query[0]
+            build_model: BuildModel = query[0]
         except IndexError:
             return None
 
@@ -173,7 +173,7 @@ class RecordDB:
             order_by = "-build_id"  # backwards compat
 
         try:
-            build_model = (
+            build_model: BuildModel = (
                 BuildModel.objects.filter(**field_lookups)
                 .order_by(order_by)
                 .select_related(*RELATED)
