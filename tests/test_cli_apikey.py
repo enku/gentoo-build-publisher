@@ -197,3 +197,20 @@ class ParseArgs(TestCase):
         parser = ArgumentParser()
 
         apikey.parse_args(parser)
+
+
+class KeyNamesTests(TestCase):
+    def test(self) -> None:
+        names = ["this", "that", "the", "other"]
+
+        for name in names:
+            api_key = ApiKey(
+                name=name, key=apikey.create_api_key(), created=time.localtime()
+            )
+            publisher.repo.api_keys.save(api_key)
+
+        response = apikey.key_names(
+            prefix="", action=Mock(), parser=Mock(), parsed_args=Mock()
+        )
+
+        self.assertEqual(response, sorted(names))
