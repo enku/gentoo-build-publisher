@@ -17,6 +17,7 @@ from gentoo_build_publisher.records import (
     build_records,
 )
 from gentoo_build_publisher.records.django_orm import RecordDB as DjangoDB
+from gentoo_build_publisher.records.memory import ApiKeyDB as MemoryApiKeyDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import ApiKey, Build
@@ -374,6 +375,28 @@ class ApiKeyDBTests(TestCase):
 
         with self.assertRaises(RecordNotFound):
             records.delete("bogus")
+
+
+class ApiKeysTests(TestCase):
+    def test_returns_requested_class(self) -> None:
+        settings = Settings(
+            RECORDS_BACKEND="memory",
+            STORAGE_PATH=Path("/dev/null"),
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+        )
+        obj = api_keys(settings)
+
+        self.assertIsInstance(obj, MemoryApiKeyDB)
+
+    def test_raises_lookuperror(self) -> None:
+        settings = Settings(
+            RECORDS_BACKEND="bogus",
+            STORAGE_PATH=Path("/dev/null"),
+            JENKINS_BASE_URL="http://jenkins.invalid/",
+        )
+
+        with self.assertRaises(LookupError):
+            api_keys(settings)
 
 
 class RepoTests(TestCase):
