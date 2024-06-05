@@ -31,7 +31,6 @@ def extract(infile: Path, outdir: Path) -> None:
     with tarfile.open(infile, mode="r") as tar_file:
         tar_file.extractall(outdir)
 
-    # logger.info("Extracted build: %s", build)
     logger.info("Extracted %s to %s", infile, outdir)
 
 
