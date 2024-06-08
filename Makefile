@@ -3,7 +3,6 @@
 name := $(shell pdm show --name)
 version := $(shell pdm show --version)
 sdist := dist/$(name)-$(version).tar.gz
-venv := .venv/pyvenv.cfg
 wheel := dist/$(subst -,_,$(name))-$(version)-py3-none-any.whl
 src := $(shell find src -type f -print)
 tests := $(shell find tests -type f -print)
@@ -13,7 +12,7 @@ PYTHONDONTWRITEBYTECODE=1
 export PYTHONDONTWRITEBYTECODE
 
 
-.coverage: $(venv) $(src) $(tests)
+.coverage: $(src) $(tests)
 	pdm run coverage run ./tests/runtests.py
 
 test: .coverage
@@ -34,23 +33,13 @@ sdist: $(sdist)
 .PHONY: sdist
 
 
-$(sdist): $(src) $(venv)
+$(sdist): $(src)
 	pdm build --no-wheel
 
-$(wheel): $(src) $(venv)
+$(wheel): $(src)
 	pdm build --no-sdist
 
-$(venv):
-	rm -rf .venv
-	pdm venv create
-	pdm sync --dev
-	touch $@
-
-venv: $(venv)
-.PHONY: venv
-
-
-clean: clean-build clean-venv
+clean: clean-build
 	rm -rf .coverage htmlcov .mypy_cache node_modules
 .PHONY: clean
 
@@ -60,12 +49,7 @@ clean-build:
 .PHONY: clean-build
 
 
-clean-venv:
-	rm -rf .venv
-.PHONY: clean-venv
-
-
-shell: $(venv)
+shell:
 	pdm run $(.SHELL) -l
 .PHONY: shell
 
@@ -99,7 +83,7 @@ lint: pylint mypy csslint eslint typos
 .PHONY: lint
 
 
-fmt: $(venv)
+fmt:
 	pdm run python -m isort --line-width=88 src tests
 	pdm run python -m black src tests
 .PHONY: fmt
