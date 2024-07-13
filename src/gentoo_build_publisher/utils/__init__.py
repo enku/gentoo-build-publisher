@@ -7,9 +7,9 @@ import importlib.resources
 import platform
 import re
 import string
-from functools import partial
+from functools import partial, wraps
 from importlib.metadata import version
-from typing import Any, Callable, Collection, NamedTuple, Self
+from typing import Any, Callable, Collection, NamedTuple, ParamSpec, Self, TypeVar
 
 import requests
 from cryptography.fernet import Fernet
@@ -176,6 +176,35 @@ def dict_to_list_of_dicts(
     [{"name": "first", "value": "albert"}, {"name": "last", "value": "hopkins"}]
     """
     return [{key_key: key, value_key: value} for key, value in data.items()]
+
+
+P = ParamSpec("P")
+F = TypeVar("F", bound=Callable[P, Any])
+
+
+def conditionally(
+    condition: bool | Callable[[], bool], decorator: Callable[[F], F]
+) -> Callable[[F], F | Callable[P, Any]]:
+    """Decorator to conditionally apply another decorator
+
+    If condition is a callable, it will be called without arguments and the value
+    returned sets the condition.
+    """
+
+    def dec(func: F) -> F | Callable[P, Any]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
+            mycondition: bool = condition() if callable(condition) else condition
+
+            return (
+                decorator(func)(*args, **kwargs)
+                if mycondition
+                else func(*args, **kwargs)
+            )
+
+        return wrapper
+
+    return dec
 
 
 def request_and_raise(

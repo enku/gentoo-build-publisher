@@ -3,7 +3,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import base64
 from contextlib import contextmanager
-from typing import Generator
+from typing import Callable, Generator
 from unittest import TestCase, mock
 
 import requests
@@ -218,6 +218,47 @@ class ParseBasicAuthHeaderTests(TestCase):
         self.assertEqual(
             context.exception.args[0], "Invalid Bearer Authentication value"
         )
+
+
+class ConditionallyDecoratorTests(TestCase):
+    def test_true_condition(self) -> None:
+        self.assertEqual(self.true_condition(), "💟test💟")
+
+    def test_false_condition(self) -> None:
+        self.assertEqual(self.false_condition(), "test")
+
+    def test_false_callable(self) -> None:
+        self.assertEqual(self.false_callable(), "test")
+
+    def test_true_callable(self) -> None:
+        self.assertEqual(self.true_callable(), "💟test💟")
+
+    @staticmethod
+    def decorate(func: Callable[[], str]) -> Callable[[], str]:
+        def dec() -> str:
+            return f"💟{func()}💟"
+
+        return dec
+
+    @staticmethod
+    @utils.conditionally(False, decorate)
+    def false_condition() -> str:
+        return "test"
+
+    @staticmethod
+    @utils.conditionally(True, decorate)
+    def true_condition() -> str:
+        return "test"
+
+    @staticmethod
+    @utils.conditionally(lambda: False, decorate)
+    def false_callable() -> str:
+        return "test"
+
+    @staticmethod
+    @utils.conditionally(lambda: True, decorate)
+    def true_callable() -> str:
+        return "test"
 
 
 @contextmanager
