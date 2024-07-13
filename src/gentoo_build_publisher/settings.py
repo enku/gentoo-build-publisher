@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     JENKINS_USER: str | None = None
     RECORDS_BACKEND: str = "django"
     WORKER_BACKEND: str = "celery"
+    API_KEY_ENABLE: bool = True
     API_KEY_LENGTH: int = 24
 
     # Celery worker backend config

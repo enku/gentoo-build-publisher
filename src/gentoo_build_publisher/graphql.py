@@ -27,6 +27,7 @@ from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, utils, worker
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
@@ -110,6 +111,11 @@ def require_apikey(fn: Resolver) -> Resolver:
         raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
 
     return wrapper
+
+
+maybe_require_apikey = utils.conditionally(
+    lambda: Settings.from_environ().API_KEY_ENABLE, require_apikey
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,7 +303,7 @@ def resolve_query_resolvebuildtag(
 
 
 @mutation.field("publish")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
     build = Build.from_id(id)
 
@@ -310,7 +316,7 @@ def resolve_mutation_publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
 
 
 @mutation.field("pull")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_pull(
     _obj: Any,
     _info: Info,
@@ -327,7 +333,7 @@ def resolve_mutation_pull(
 
 
 @mutation.field("scheduleBuild")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_schedule_build(
     _obj: Any,
     _info: Info,
@@ -340,7 +346,7 @@ def resolve_mutation_schedule_build(
 
 
 @mutation.field("keepBuild")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
 
@@ -351,7 +357,7 @@ def resolve_mutation_keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord |
 
 
 @mutation.field("releaseBuild")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_releasebuild(
     _obj: Any, _info: Info, id: str
 ) -> BuildRecord | None:
@@ -364,7 +370,7 @@ def resolve_mutation_releasebuild(
 
 
 @mutation.field("createNote")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_createnote(
     _obj: Any, _info: Info, id: str, note: str | None = None
 ) -> BuildRecord | None:
@@ -377,7 +383,7 @@ def resolve_mutation_createnote(
 
 
 @mutation.field("createBuildTag")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     build = Build.from_id(id)
 
@@ -387,7 +393,7 @@ def resolve_mutation_createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -
 
 
 @mutation.field("removeBuildTag")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_removebuildtag(
     _obj: Any, _info: Info, machine: str, tag: str
 ) -> MachineInfo:
@@ -397,7 +403,7 @@ def resolve_mutation_removebuildtag(
 
 
 @mutation.field("createRepo")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_createrepo(
     _obj: Any, _info: Info, name: str, repo: str, branch: str
 ) -> Error | None:
@@ -414,7 +420,7 @@ def resolve_mutation_createrepo(
 
 
 @mutation.field("createMachine")
-@require_apikey
+@maybe_require_apikey
 def resolve_mutation_create_machine(
     _obj: Any,
     _info: Info,

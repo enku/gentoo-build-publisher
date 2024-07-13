@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-docstring,too-many-lines
 import datetime as dt
+import os
 from typing import Any
 from unittest import mock
 
@@ -23,7 +24,7 @@ from gentoo_build_publisher.types import ApiKey, Content, EbuildRepo, MachineJob
 from gentoo_build_publisher.utils import encode_basic_auth_data, get_version, time
 from gentoo_build_publisher.worker import tasks
 
-from . import BUILD_LOGS, TestCase, create_user_auth, graphql, parametrized
+from . import BUILD_LOGS, TestCase, graphql, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 
 Mock = mock.Mock
@@ -39,14 +40,11 @@ def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(data, expected)
 
 
-class AuthTestCase(TestCase):
+class GraphQLTestCase(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        user = "test"
-        self.client = Client(
-            headers={"Authorization": get_auth_header(user, create_user_auth(user))}
-        )
+        self.client = Client()
 
 
 class BuildQueryTestCase(TestCase):
@@ -541,7 +539,7 @@ class MachinesQueryTestCase(TestCase):
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
 
-class PublishMutationTestCase(AuthTestCase):
+class PublishMutationTestCase(GraphQLTestCase):
     """Tests for the publish mutation"""
 
     def test_publish_when_pulled(self) -> None:
@@ -579,7 +577,7 @@ class PublishMutationTestCase(AuthTestCase):
         mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
-class PullMutationTestCase(AuthTestCase):
+class PullMutationTestCase(GraphQLTestCase):
     """Tests for the pull mutation"""
 
     def test(self) -> None:
@@ -645,7 +643,7 @@ class PullMutationTestCase(AuthTestCase):
         )
 
 
-class ScheduleBuildMutationTestCase(AuthTestCase):
+class ScheduleBuildMutationTestCase(GraphQLTestCase):
     """Tests for the build mutation"""
 
     maxDiff = None
@@ -708,7 +706,7 @@ class ScheduleBuildMutationTestCase(AuthTestCase):
         mock_schedule_build.assert_called_once_with("babette")
 
 
-class KeepBuildMutationTestCase(AuthTestCase):
+class KeepBuildMutationTestCase(GraphQLTestCase):
     """Tests for the keep mutation"""
 
     maxDiff = None
@@ -741,7 +739,7 @@ class KeepBuildMutationTestCase(AuthTestCase):
         assert_data(self, result, {"keepBuild": None})
 
 
-class ReleaseBuildMutationTestCase(AuthTestCase):
+class ReleaseBuildMutationTestCase(GraphQLTestCase):
     """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self) -> None:
@@ -775,7 +773,7 @@ class ReleaseBuildMutationTestCase(AuthTestCase):
         assert_data(self, result, {"releaseBuild": None})
 
 
-class CreateNoteMutationTestCase(AuthTestCase):
+class CreateNoteMutationTestCase(GraphQLTestCase):
     """Tests for the createNote mutation"""
 
     def test_set_text(self) -> None:
@@ -833,7 +831,7 @@ class CreateNoteMutationTestCase(AuthTestCase):
         assert_data(self, result, {"createNote": None})
 
 
-class TagsTestCase(AuthTestCase):
+class TagsTestCase(GraphQLTestCase):
     def test_createbuildtag_mutation_tags_the_build(self) -> None:
         build = BuildFactory()
         publisher.pull(build)
@@ -1108,7 +1106,7 @@ class VersionTestCase(TestCase):
         assert_data(self, result, {"version": version})
 
 
-class CreateRepoTestCase(AuthTestCase):
+class CreateRepoTestCase(GraphQLTestCase):
     """Tests for the createRepo mutation"""
 
     query = """
@@ -1154,7 +1152,7 @@ class CreateRepoTestCase(AuthTestCase):
         )
 
 
-class CreateMachineTestCase(AuthTestCase):
+class CreateMachineTestCase(GraphQLTestCase):
     """Tests for the createMachine mutation"""
 
     query = """
@@ -1208,6 +1206,22 @@ class CreateMachineTestCase(AuthTestCase):
             result,
             {"createMachine": {"message": "FileExistsError: babette"}},
         )
+
+
+class MaybeRequiresAPIKeyTests(GraphQLTestCase):
+    query = 'mutation { scheduleBuild(machine: "babette") }'
+
+    def test_enabled(self) -> None:
+        with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_API_KEY_ENABLE": "yes"}):
+            error = graphql(self.client, self.query)["errors"][0]["message"]
+
+        self.assertEqual(error, "Unauthorized to resolve scheduleBuild")
+
+    def test_disabled(self) -> None:
+        with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_API_KEY_ENABLE": "no"}):
+            response = graphql(self.client, self.query)
+
+        self.assertNotIn("errors", response)
 
 
 def dummy_resolver(
