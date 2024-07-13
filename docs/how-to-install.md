@@ -202,15 +202,6 @@ Open `/etc/gentoo-build-publisher.conf` with a text editor. Change
 and the `BUILD_PUBLISHER_JENKINS_API_KEY` value to the API key you copied when
 configuring Jenkins.  You did remember to copy that API key, right?
 
-On the subject of keys, you'll also need a Gentoo Build Publisher "root" key.
-To do that, from the command line run the command:
-
-```
-echo BUILD_PUBLISHER_ROOT_KEY=$(gbp apikey create root) >> /etc/gentoo-build-publisher.conf
-```
-
-Make sure to use `>>` and not `>` in the above command.
-
 ### Install systemd unit files
 
 The gbp service requires a web app service and worker service.  Systemd unit
