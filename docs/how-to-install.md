@@ -236,7 +236,7 @@ cp /home/gbp/gentoo-build-publisher/contrib/deployment/rsyncd.conf /etc/rsyncd.c
 Enable and start all the related services:
 
 ```sh
-systemctl enable --now rabbitmq gentoo-build-publisher-wsgi gentoo-build-publisher-worker rsyncd
+systemctl enable --now rabbitmq gentoo-build-publisher-wsgi gentoo-build-publisher-worker rsyncd nginx
 ```
 
 ## Create Jenkins jobs
