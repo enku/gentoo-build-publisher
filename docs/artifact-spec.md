@@ -1,7 +1,7 @@
 # Gentoo Build Publisher Artifact Specification
 
 The purpose of this document is to describe what goes into a Gentoo Build
-Publisher artifact. And artifact is the compressed `tar` archive built (by
+Publisher artifact. An artifact is the compressed `tar` archive built (by
 Jenkins) and pulled to Gentoo Build Publisher for publishing. The default name
 for a GBP artifact is `build.tar.gz`.
 
@@ -18,7 +18,7 @@ content type **must** exist in the artifact.  They are:
 * `etc-portage` is the copy of the `/etc/portage` directory used by the
   container to build the artifact.
 * `repos` The repos directory contains the contents of `PORTDIR` for the given
-  buile. The default location is `/var/db/repos`. In a default configuration
+  build. The default location is `/var/db/repos`. In a default configuration
   there will be a `gentoo` subdirectory containing a copy of the official
   Gentoo ebuild repo. There may be additional subdirectories if overlays are
   used.
