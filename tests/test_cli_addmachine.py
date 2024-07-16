@@ -1,6 +1,6 @@
 """Tests for the gbpcli "addmachine" subcommand"""
 
-# pylint: disable=missing-docstring,attribute-defined-outside-init
+# pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
 from gentoo_build_publisher import publisher

@@ -1,4 +1,4 @@
-# pylint: disable=missing-docstring,attribute-defined-outside-init
+# pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 from unittest import mock
 
