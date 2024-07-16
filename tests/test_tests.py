@@ -3,19 +3,22 @@
 # pylint: disable=missing-docstring
 import datetime as dt
 import tarfile
-from unittest import TestCase, mock
+from unittest import mock
 
 from gentoo_build_publisher.types import Content, Package
 
+from . import BaseTestCase as TestCase
 from . import MockJenkinsSession, Tree
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
+from .setup_types import Fixtures, SetupOptions
+
+
+def builder_fixture(_options: SetupOptions, _fixtures: Fixtures) -> ArtifactFactory:
+    return ArtifactFactory(initial_packages=[])
 
 
 class ArtifactFactoryTestCase(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.builder = ArtifactFactory(initial_packages=[])
+    requires = [builder_fixture]
 
     def test_timestamp(self) -> None:
         with mock.patch("tests.dt.datetime") as mock_datetime:
@@ -25,17 +28,17 @@ class ArtifactFactoryTestCase(TestCase):
         self.assertEqual(builder.timestamp, int(now.timestamp()))
 
     def test_advance(self) -> None:
-        timer = self.builder.timer
+        timer = self.fixtures.builder.timer
 
-        result = self.builder.advance(450)
+        result = self.fixtures.builder.advance(450)
 
         self.assertEqual(result, timer + 450)
-        self.assertEqual(self.builder.timer, result)
+        self.assertEqual(self.fixtures.builder.timer, result)
 
     def test_build_should_add_to_packages(self) -> None:
-        timer = self.builder.timer
+        timer = self.fixtures.builder.timer
         build = BuildFactory()
-        package = self.builder.build(
+        package = self.fixtures.builder.build(
             build, "app-vim/gentoo-syntax-1", repo="marduk", build_id=35
         )
 
@@ -48,7 +51,7 @@ class ArtifactFactoryTestCase(TestCase):
             timer + 10,
         )
         self.assertEqual(package, expected)
-        build_info = self.builder.build_info(build)
+        build_info = self.fixtures.builder.build_info(build)
         added = [i[0] for i in build_info.package_info if i[1] is PackageStatus.ADDED]
         self.assertEqual(added, [expected])
 
@@ -63,9 +66,9 @@ class ArtifactFactoryTestCase(TestCase):
 
     def test_get_artifact(self) -> None:
         build = BuildFactory()
-        self.builder.build(build, "app-vim/gentoo-syntax-1")
+        self.fixtures.builder.build(build, "app-vim/gentoo-syntax-1")
 
-        artifact = self.builder.get_artifact(build)
+        artifact = self.fixtures.builder.get_artifact(build)
 
         with tarfile.TarFile.open(
             "build.tar.gz", mode="r", fileobj=artifact
@@ -92,18 +95,20 @@ class ArtifactFactoryTestCase(TestCase):
 
     def test_build_info_with_new_build(self) -> None:
         build = BuildFactory()
-        build_info = self.builder.build_info(build)
+        build_info = self.fixtures.builder.build_info(build)
 
-        expected = BuildInfo(build_time=self.builder.timer * 1000, package_info=[])
+        expected = BuildInfo(
+            build_time=self.fixtures.builder.timer * 1000, package_info=[]
+        )
         self.assertEqual(expected, build_info)
 
     def test_build_info_with_existing_build(self) -> None:
         build = BuildFactory()
-        self.builder.build(build, "app-vim/gentoo-syntax-1")
-        build_info = self.builder.build_info(build)
+        self.fixtures.builder.build(build, "app-vim/gentoo-syntax-1")
+        build_info = self.fixtures.builder.build_info(build)
 
         expected = BuildInfo(
-            build_time=(self.builder.timer - 10) * 1000,
+            build_time=(self.fixtures.builder.timer - 10) * 1000,
             package_info=[
                 (
                     Package(
@@ -112,7 +117,7 @@ class ArtifactFactoryTestCase(TestCase):
                         "app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",
                         1,
                         529,
-                        self.builder.timer,
+                        self.fixtures.builder.timer,
                     ),
                     PackageStatus.ADDED,
                 )

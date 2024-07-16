@@ -38,7 +38,7 @@ def get_worker(name: str) -> WorkerInterface:
         STORAGE_PATH=Path("/dev/null"),
     )
     redis_path = "gentoo_build_publisher.worker.rq.Redis.from_url"
-    mock_redis = fakeredis.FakeRedis()  # type: ignore[no-untyped-call]
+    mock_redis = fakeredis.FakeRedis()
     with mock.patch(redis_path, return_value=mock_redis):
         return Worker(settings)
 
@@ -53,6 +53,8 @@ def params(*names) -> Callable:
 
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
+
+    requires = ["publisher"]
 
     @params("celery", "rq", "sync", "thread")
     def test_publishes_build(self, worker: WorkerInterface) -> None:
@@ -89,6 +91,8 @@ class PurgeBuildTestCase(TestCase):
 
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
+
+    requires = ["publisher"]
 
     @params("celery", "rq", "sync", "thread")
     def test_pulls_build(self, worker: WorkerInterface) -> None:
@@ -190,26 +194,26 @@ class JobsTests(TestCase):
 class WorkMethodTests(TestCase):
     """Tests for the WorkerInterface.work methods"""
 
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.settings = Settings(
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-            WORKER_BACKEND="rq",
-            WORKER_CELERY_CONCURRENCY=55,
-            WORKER_CELERY_EVENTS=True,
-            WORKER_CELERY_HOSTNAME="gbp.invalid",
-            WORKER_CELERY_LOGLEVEL="DEBUG",
-            WORKER_RQ_NAME="test-worker",
-            WORKER_RQ_QUEUE_NAME="test-queue",
-            WORKER_RQ_URL="redis://localhost.invalid:6379",
-            STORAGE_PATH=Path("/dev/null"),
-        )
+    requires = ["mock_environment", "settings"]
+    options = {
+        "environ": {
+            "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
+            "BUILD_PUBLISHER_WORKER_BACKEND": "rq",
+            "BUILD_PUBLISHER_WORKER_CELERY_CONCURRENCY": "55",
+            "BUILD_PUBLISHER_WORKER_CELERY_EVENTS": "True",
+            "BUILD_PUBLISHER_WORKER_CELERY_HOSTNAME": "gbp.invalid",
+            "BUILD_PUBLISHER_WORKER_CELERY_LOGLEVEL": "DEBUG",
+            "BUILD_PUBLISHER_WORKER_RQ_NAME": "test-worker",
+            "BUILD_PUBLISHER_WORKER_RQ_QUEUE_NAME": "test-queue",
+            "BUILD_PUBLISHER_WORKER_RQ_URL": "redis://localhost.invalid:6379",
+            "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
+        }
+    }
 
     def test_celery(self) -> None:
         path = "gentoo_build_publisher.worker.celery.Worker"
         with mock.patch(path) as mock_worker:
-            CeleryWorker.work(self.settings)
+            CeleryWorker.work(self.fixtures.settings)
 
         mock_worker.assert_called_with(
             app=celery_app,
@@ -226,7 +230,7 @@ class WorkMethodTests(TestCase):
             self.assertRaises(SystemExit) as context,
             mock.patch(stderr_path) as mock_stderr,
         ):
-            SyncWorker.work(self.settings)
+            SyncWorker.work(self.fixtures.settings)
 
         self.assertEqual(context.exception.args, (1,))
         mock_stderr.write.assert_called_once_with("SyncWorker has no worker\n")
@@ -239,7 +243,7 @@ class WorkMethodTests(TestCase):
             mock.patch(worker_path) as mock_worker,
             mock.patch(redis_path) as mock_redis,
         ):
-            RQWorker.work(self.settings)
+            RQWorker.work(self.fixtures.settings)
 
         mock_redis.from_url.assert_called_once_with("redis://localhost.invalid:6379")
         connection = mock_redis.from_url.return_value

@@ -1,22 +1,21 @@
 """Tests for gentoo build publisher"""
 
 # pylint: disable=missing-class-docstring,missing-function-docstring,invalid-name
+import copy
 import datetime as dt
 import io
 import logging
 import os
-import tempfile
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable, Sequence
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, Callable
 from unittest import TestCase as UnitTestTestCase
 from unittest import mock
 
 import django.test
 import rich.console
-from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli import GBP
 from gbpcli.config import AuthDict
@@ -36,8 +35,9 @@ from gentoo_build_publisher.jenkins import (
     JenkinsMetadata,
     ProjectPath,
 )
-from gentoo_build_publisher.records import ApiKeyDB
 from gentoo_build_publisher.types import ApiKey, Build
+
+from .setup_types import Fixtures, SetupFunction, SetupOptions, SetupSpec
 
 BASE_DIR = Path(__file__).resolve().parent / "data"
 JENKINS_CONFIG = JenkinsConfig(
@@ -52,36 +52,52 @@ LOCAL_TIMEZONE = dt.timezone(dt.timedelta(days=-1, seconds=61200), "PDT")
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
-class TestCase(UnitTestTestCase):
-    RECORDS_BACKEND = "memory"
+class BaseTestCase(UnitTestTestCase):
+    requires: Iterable[SetupSpec]
+    options: SetupOptions
+    _setups: dict[str, SetupFunction]
+    _setup_options: SetupOptions
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        from . import setup  # pylint: disable=import-outside-toplevel
+
+        super().setUpClass()
+
+        cls._setups = {}
+        cls._setup_options = {}
+
+        bases = reversed([base for base in cls.mro() if issubclass(base, BaseTestCase)])
+
+        for base in bases:
+            for item in getattr(base, "requires", []):
+                func = setup.load(item)
+                name = func.__name__.removesuffix("_fixture")
+                cls._setups[name] = func
+            cls._setup_options.update(getattr(base, "options", {}))
 
     def setUp(self) -> None:
         super().setUp()
 
-        self.tmpdir = set_up_tmpdir_for_test(self)
-        self._mock_environment()
-        mock_publisher = self._setup_publisher()
-        self._patch_publisher("jenkins", mock_publisher)
-        self._patch_publisher("repo", mock_publisher)
-        self._patch_publisher("storage", mock_publisher)
-        self.artifact_builder = mock_publisher.jenkins.artifact_builder
+        self.fixtures = Fixtures()
 
-    def _patch_publisher(
-        self, name: str, mock_publisher: publisher.BuildPublisher
-    ) -> None:
-        # pylint: disable=protected-access
-        self.enterContext(
-            mock.patch.object(publisher._inst, name, getattr(mock_publisher, name))
-        )
+        for name, func in self._setups.items():
+            result = func(self._setup_options, copy.copy(self.fixtures))
+            if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
+                result = self.enterContext(result)
 
-        self.enterContext(
-            mock.patch.object(publisher, name, getattr(mock_publisher, name))
-        )
+            setattr(self.fixtures, name, result)
+
+
+class TestCase(BaseTestCase):
+
+    requires = ["tmpdir"]
+    options = {"records_backend": "memory"}
 
     def create_file(
         self, name: str, content: bytes = b"", mtime: dt.datetime | None = None
     ) -> Path:
-        path = self.tmpdir / name
+        path: Path = self.fixtures.tmpdir / name
 
         with path.open("wb") as outfile:
             outfile.write(content)
@@ -92,29 +108,6 @@ class TestCase(UnitTestTestCase):
             os.utime(path, times=(atime, mtime.timestamp()))
 
         return path
-
-    def _mock_environment(self) -> None:
-        local_environ = getattr(self, "environ", {})
-        patch = mock.patch.dict(
-            os.environ,
-            {
-                "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
-                "BUILD_PUBLISHER_API_KEY_KEY": Fernet.generate_key().decode("ascii"),
-                "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
-                "BUILD_PUBLISHER_RECORDS_BACKEND": self.RECORDS_BACKEND,
-                "BUILD_PUBLISHER_STORAGE_PATH": str(self.tmpdir / "root"),
-                "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
-                "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
-                **local_environ,
-            },
-        )
-        self.enterContext(patch)
-
-    def _setup_publisher(self) -> publisher.BuildPublisher:
-        # pylint: disable=import-outside-toplevel,cyclic-import
-        from .factories import BuildPublisherFactory
-
-        return cast(publisher.BuildPublisher, BuildPublisherFactory())
 
 
 class QuickCache:
@@ -131,7 +124,7 @@ class QuickCache:
 
 
 class DjangoTestCase(TestCase, django.test.TestCase):
-    RECORDS_BACKEND = "django"
+    setup_options = {"records_backend": "django"}
 
 
 def parametrized(lists_of_args: Iterable[Iterable[Any]]) -> Callable:
@@ -363,11 +356,6 @@ def graphql(client: Client, query: str, variables: dict[str, Any] | None = None)
     )
 
     return response.json()
-
-
-def set_up_tmpdir_for_test(test_case: UnitTestTestCase) -> Path:
-    # pylint: disable=consider-using-with
-    return Path(test_case.enterContext(tempfile.TemporaryDirectory()))
 
 
 def string_console(**kwargs: Any) -> tuple[Console, io.StringIO, io.StringIO]:

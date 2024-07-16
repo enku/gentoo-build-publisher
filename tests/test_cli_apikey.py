@@ -143,13 +143,8 @@ class GBPListTests(DjangoTestCase):
 
 
 class GBPDeleteTests(DjangoTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        for name in ["this", "that", "the", "other"]:
-            publisher.repo.api_keys.save(
-                ApiKey(name=name, key=apikey.create_api_key(), created=time.localtime())
-            )
+    requires = ["publisher", "api_keys"]
+    options = {"api_key_names": ["this", "that", "the", "other"]}
 
     def test_delete(self) -> None:
         console, *_ = string_console()

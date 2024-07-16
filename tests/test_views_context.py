@@ -2,7 +2,7 @@
 
 # pylint: disable=missing-docstring
 import datetime as dt
-from typing import Any
+from typing import Any, Generator
 from unittest import mock
 from zoneinfo import ZoneInfo
 
@@ -18,17 +18,20 @@ from gentoo_build_publisher.views.context import (
     create_machine_context,
 )
 
-from . import QuickCache, TestCase
+from . import QuickCache, TestCase, setup
 from .factories import (
     ArtifactFactory,
     BuildFactory,
     BuildRecordFactory,
     package_factory,
 )
+from .setup_types import Fixtures, SetupOptions
 
 
 class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
+
+    requires = ["publisher"]
 
     def input_context(self, **kwargs: Any) -> ViewInputContext:
         defaults: dict[str, Any] = {
@@ -43,7 +46,7 @@ class CreateDashboardContextTests(TestCase):
     def test(self) -> None:
         lighthouse1 = BuildFactory(machine="lighthouse")
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
-            self.artifact_builder.build(lighthouse1, cpv)
+            self.fixtures.publisher.jenkins.artifact_builder.build(lighthouse1, cpv)
         publisher.pull(lighthouse1)
 
         polaris1 = BuildFactory(machine="polaris")
@@ -115,14 +118,21 @@ class CreateDashboardContextTests(TestCase):
         self.assertEqual(len(ctx["built_recently"]), 2)
 
 
-class CreateMachineContextTests(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
+@setup.depends(["publisher"])
+def pf_fixture(
+    _options: SetupOptions, fixtures: Fixtures
+) -> Generator[str, None, None]:
+    pf = package_factory()
+    ab: ArtifactFactory = fixtures.publisher.jenkins.artifact_builder
+    ab.initial_packages = []
+    ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
 
-        self.pf = package_factory()
-        ab: ArtifactFactory = self.artifact_builder
-        ab.initial_packages = []
-        ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
+    return pf
+
+
+class CreateMachineContextTests(TestCase):
+
+    requires = ["publisher", pf_fixture]
 
     def input_context(self, **kwargs: Any) -> MachineInputContext:
         defaults: dict[str, Any] = {
@@ -139,16 +149,20 @@ class CreateMachineContextTests(TestCase):
         build_size = 0
 
         for _ in range(3):
-            self.artifact_builder.advance(3600)
+            self.fixtures.publisher.jenkins.artifact_builder.advance(3600)
             build = BuildFactory()
             for _pkgs in range(3):
-                cpv = next(self.pf)
-                pkg = self.artifact_builder.build(build, cpv)
+                cpv = next(self.fixtures.pf)
+                pkg = self.fixtures.publisher.jenkins.artifact_builder.build(build, cpv)
                 build_size += pkg.size
             total_size += build_size
             publisher.pull(build)
 
-        now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
+        now = localtime(
+            dt.datetime.fromtimestamp(
+                self.fixtures.publisher.jenkins.artifact_builder.timer
+            )
+        )
         input_context = self.input_context(now=now, machine=build.machine)
         ctx = create_machine_context(input_context)
 
@@ -156,14 +170,20 @@ class CreateMachineContextTests(TestCase):
 
     def test_packages_built_today(self) -> None:
         for day in [1, 1, 1, 0]:
-            self.artifact_builder.advance(day * SECONDS_PER_DAY)
+            self.fixtures.publisher.jenkins.artifact_builder.advance(
+                day * SECONDS_PER_DAY
+            )
             build = BuildFactory()
             for _ in range(3):
-                cpv = next(self.pf)
-                self.artifact_builder.build(build, cpv)
+                cpv = next(self.fixtures.pf)
+                self.fixtures.publisher.jenkins.artifact_builder.build(build, cpv)
             publisher.pull(build)
 
-        now = localtime(dt.datetime.fromtimestamp(self.artifact_builder.timer))
+        now = localtime(
+            dt.datetime.fromtimestamp(
+                self.fixtures.publisher.jenkins.artifact_builder.timer
+            )
+        )
         input_context = self.input_context(now=now, machine=build.machine)
         ctx = create_machine_context(input_context)
 
@@ -176,8 +196,8 @@ class CreateMachineContextTests(TestCase):
         build = BuildFactory()
 
         cpv = "dev-build/autoconf-2.71-r6"
-        self.artifact_builder.timer = int(built.timestamp())
-        self.artifact_builder.build(build, cpv)
+        publisher.jenkins.artifact_builder.timer = int(built.timestamp())
+        publisher.jenkins.artifact_builder.build(build, cpv)
         publisher.pull(build)
 
         # In 2021 GBP didn't have a built field and in the database. They were

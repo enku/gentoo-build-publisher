@@ -6,8 +6,6 @@ import re
 import shutil
 from argparse import ArgumentParser, Namespace
 
-from gbpcli import GBP
-
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content
@@ -17,10 +15,7 @@ from .factories import BuildFactory
 
 
 class GBPChkTestCase(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.gbp = GBP("http://gbp.invalid/")
+    requires = ["publisher", "gbp"]
 
     def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()
@@ -40,7 +35,7 @@ class GBPChkTestCase(TestCase):
 
     def test_empty_system(self) -> None:
         console, stdout, *_ = string_console()
-        check.handler(Namespace(), self.gbp, console)
+        check.handler(Namespace(), self.fixtures.gbp, console)
 
         self.assertEqual(stdout.getvalue(), "0 errors, 0 warnings\n")
 
@@ -50,7 +45,7 @@ class GBPChkTestCase(TestCase):
         publisher.repo.build_records.save(record, completed=None)
 
         console = string_console()[0]
-        exit_status = check.handler(Namespace(), self.gbp, console)
+        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
@@ -60,7 +55,7 @@ class GBPChkTestCase(TestCase):
         publisher.tag(build, "go-1.21.5")
 
         console, _, stderr = string_console()
-        exit_status = check.handler(Namespace(), self.gbp, console)
+        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0, stderr.getvalue())
 
@@ -150,7 +145,7 @@ class GBPChkTestCase(TestCase):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
         console, _, err = string_console()
-        exit_status = check.handler(Namespace(), self.gbp, console)
+        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
         self.assertEqual(exit_status, len(Content) * 3 + 2)
 
         stderr_lines = err.getvalue().split("\n")

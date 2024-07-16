@@ -1,6 +1,6 @@
 """Tests for the gbpcli "addmachine" subcommand"""
 
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring,attribute-defined-outside-init
 from argparse import ArgumentParser, Namespace
 
 from gentoo_build_publisher import publisher
@@ -8,17 +8,12 @@ from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 from . import DjangoTestCase as TestCase
-from . import create_user_auth, string_console, test_gbp
+from . import string_console
 
 
 class AddMachineTestCase(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
 
-        self.gbp = test_gbp(
-            "http://gbp.invalid/",
-            auth={"user": "addmachine", "api_key": create_user_auth("addmachine")},
-        )
+    requires = ["publisher", "gbp"]
 
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
@@ -28,7 +23,7 @@ class AddMachineTestCase(TestCase):
             deps=["gentoo"],
         )
         console = string_console()[0]
-        exit_status = addmachine.handler(args, self.gbp, console)
+        exit_status = addmachine.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
@@ -47,7 +42,7 @@ class AddMachineTestCase(TestCase):
             deps=["gentoo"],
         )
         console, _, err = string_console()
-        exit_status = addmachine.handler(args, self.gbp, console)
+        exit_status = addmachine.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(err.getvalue(), "error: FileExistsError: base\n")

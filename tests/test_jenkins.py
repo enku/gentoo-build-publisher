@@ -1,13 +1,14 @@
 """Tests for the Jenkins interface"""
 
-# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=missing-class-docstring,missing-function-docstring,attribute-defined-outside-init
 import dataclasses as dc
 import io
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
-from unittest import TestCase, mock
+from unittest import mock
 
 import requests
 from yarl import URL
@@ -24,7 +25,10 @@ from gentoo_build_publisher.jenkins import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
-from . import JENKINS_CONFIG, MockJenkins, test_data
+from . import JENKINS_CONFIG
+from . import BaseTestCase as TestCase
+from . import MockJenkins, test_data
+from .setup_types import Fixtures, SetupContext, SetupOptions
 
 JOB_PARAMS = json.loads(test_data("job_parameters.json"))
 
@@ -556,22 +560,22 @@ class ProjectPathTestCase(TestCase):
         self.assertEqual(str(project_path), "Gentoo/repos/marduk")
 
 
+@contextmanager
+def mock_jenkins(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Jenkins]:
+    obj = Jenkins(JENKINS_CONFIG)
+    with mock.patch.object(
+        obj.session, "get", **{"return_value.json.return_value": JOB_PARAMS}
+    ):
+        yield obj
+
+
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.jenkins = Jenkins(JENKINS_CONFIG)
-        self.enterContext(
-            mock.patch.object(
-                self.jenkins.session,
-                "get",
-                **{"return_value.json.return_value": JOB_PARAMS},
-            )
-        )
+    requires = [mock_jenkins]
 
     def test(self) -> None:
-        jenkins = self.jenkins
+        jenkins = self.fixtures.mock_jenkins
 
         with mock.patch.object(jenkins.session, "post") as mock_post:
             mock_response = mock_post.return_value
@@ -598,7 +602,9 @@ class ScheduleBuildTestCase(TestCase):
 
     def test_schedule_build_with_bogus_build_params(self) -> None:
         with self.assertRaises(ValueError) as context:
-            self.jenkins.schedule_build("babette", BOGUS="idunno", FOO="bar")
+            self.fixtures.mock_jenkins.schedule_build(
+                "babette", BOGUS="idunno", FOO="bar"
+            )
 
         self.assertEqual(
             context.exception.args,
@@ -606,7 +612,7 @@ class ScheduleBuildTestCase(TestCase):
         )
 
     def test_should_raise_on_http_error(self) -> None:
-        jenkins = self.jenkins
+        jenkins = self.fixtures.mock_jenkins
 
         class MyException(Exception):
             pass
@@ -620,7 +626,7 @@ class ScheduleBuildTestCase(TestCase):
 
     def test_with_missing_location_header(self) -> None:
         # Sometimes the Jenkins response is missing the location header(?)
-        jenkins = self.jenkins
+        jenkins = self.fixtures.mock_jenkins
 
         with mock.patch.object(jenkins.session, "post") as mock_post:
             attrs = {"status_code": 301, "headers": {}}

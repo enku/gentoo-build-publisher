@@ -11,27 +11,33 @@ from .factories import BuildFactory
 
 
 class EnsureStorageRootTestCase(TestCase):
+    requires = ["tmpdir"]
+
     def test_creates_dir_if_not_exists(self) -> None:
-        shutil.rmtree(self.tmpdir)
+        shutil.rmtree(self.fixtures.tmpdir)
         subdirs = ["this", "that", "the other"]
 
-        fs.init_root(self.tmpdir, subdirs)
+        fs.init_root(self.fixtures.tmpdir, subdirs)
 
-        self.assertIs(self.tmpdir.is_dir(), True)
+        self.assertIs(self.fixtures.tmpdir.is_dir(), True)
         for subdir in subdirs:
-            self.assertIs(self.tmpdir.joinpath(subdir).is_dir(), True)
+            self.assertIs(self.fixtures.tmpdir.joinpath(subdir).is_dir(), True)
 
 
 class ExtractTestCase(TestCase):
+    requires = ["tmpdir", "publisher"]
+
     def test(self) -> None:
         build = BuildFactory()
-        byte_stream = self.artifact_builder.get_artifact(build)
+        byte_stream = self.fixtures.publisher.jenkins.artifact_builder.get_artifact(
+            build
+        )
 
-        path = self.tmpdir / "test.tar.gz"
+        path = self.fixtures.tmpdir / "test.tar.gz"
         with open(path, "wb") as outfile:
             fs.save_stream(byte_stream, outfile)
 
-        extracted = self.tmpdir / "extracted"
+        extracted = self.fixtures.tmpdir / "extracted"
         fs.extract(path, extracted)
 
         self.assertIs(extracted.is_dir(), True)
@@ -56,7 +62,7 @@ class QuickCheckTestCase(TestCase):
     def test_should_return_false_when_file_does_not_exist(self) -> None:
         timestamp = dt.datetime(2021, 10, 30, 7, 10, 39)
         file1 = str(self.create_file("foo", b"test", timestamp))
-        file2 = str(self.tmpdir / "bogus")
+        file2 = str(self.fixtures.tmpdir / "bogus")
 
         result = fs.quick_check(file1, file2)
 
@@ -99,23 +105,25 @@ class SymlinkTestCase(TestCase):
 
 
 class CheckSymlink(TestCase):
+    requires = ["tmpdir"]
+
     def test_good_symlink(self) -> None:
         target = self.create_file("target")
-        symlink = self.tmpdir / "symlink"
+        symlink = self.fixtures.tmpdir / "symlink"
         os.symlink(target, symlink)
 
         self.assertIs(fs.check_symlink(str(symlink), str(target)), True)
 
     def test_symlink_points_to_different_target(self) -> None:
         target = self.create_file("target")
-        symlink = self.tmpdir / "symlink"
+        symlink = self.fixtures.tmpdir / "symlink"
         os.symlink(target, symlink)
         other = self.create_file("other")
 
         self.assertIs(fs.check_symlink(str(symlink), str(other)), False)
 
     def test_dangling_symlink(self) -> None:
-        name = self.tmpdir / "symlink"
+        name = self.fixtures.tmpdir / "symlink"
         os.symlink("bogus", name)
 
         self.assertIs(fs.check_symlink(str(name), "bogus"), False)

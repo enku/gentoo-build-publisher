@@ -27,6 +27,8 @@ from .factories import (
 class GetMetadataTestCase(TestCase):
     """This is just cached Storage.get_metadata()"""
 
+    requires = ["publisher"]
+
     def test(self) -> None:
         build = BuildFactory()
         cache = QuickCache()
@@ -68,6 +70,8 @@ class GetQueryValueFromRequestTests(TestCase):
 
 
 class StatsCollectorTests(TestCase):
+    requires = ["publisher"]
+
     def stats_collector(self) -> StatsCollector:
         return StatsCollector(QuickCache())
 
@@ -80,8 +84,12 @@ class StatsCollectorTests(TestCase):
 
     def test_package_count(self) -> None:
         for build in [
-            *create_builds_and_packages("babette", 5, 2, self.artifact_builder),
-            *create_builds_and_packages("lighthouse", 3, 4, self.artifact_builder),
+            *create_builds_and_packages(
+                "babette", 5, 2, publisher.jenkins.artifact_builder
+            ),
+            *create_builds_and_packages(
+                "lighthouse", 3, 4, publisher.jenkins.artifact_builder
+            ),
         ]:
             publisher.pull(build)
 
@@ -94,7 +102,9 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.package_count("lighthouse"), 36)
 
     def test_build_packages(self) -> None:
-        [build] = create_builds_and_packages("lighthouse", 1, 4, self.artifact_builder)
+        [build] = create_builds_and_packages(
+            "lighthouse", 1, 4, publisher.jenkins.artifact_builder
+        )
         publisher.pull(build)
 
         sc = self.stats_collector()
@@ -110,9 +120,15 @@ class StatsCollectorTests(TestCase):
     def test_latest_published(self) -> None:
         build = None
         for build in [
-            *create_builds_and_packages("babette", 5, 2, self.artifact_builder),
-            *create_builds_and_packages("lighthouse", 3, 4, self.artifact_builder),
-            *create_builds_and_packages("polaris", 3, 1, self.artifact_builder),
+            *create_builds_and_packages(
+                "babette", 5, 2, publisher.jenkins.artifact_builder
+            ),
+            *create_builds_and_packages(
+                "lighthouse", 3, 4, publisher.jenkins.artifact_builder
+            ),
+            *create_builds_and_packages(
+                "polaris", 3, 1, publisher.jenkins.artifact_builder
+            ),
         ]:
             publisher.pull(build)
         assert build
@@ -126,7 +142,9 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.latest_published("lighthouse"), None)
 
     def test_recent_packages(self) -> None:
-        for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
+        for build in create_builds_and_packages(
+            "babette", 3, 4, publisher.jenkins.artifact_builder
+        ):
             publisher.pull(build)
 
         sc = self.stats_collector()
@@ -140,7 +158,9 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(recent_packages, pkgs_sorted)
 
     def test_total_package_size(self) -> None:
-        for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
+        for build in create_builds_and_packages(
+            "babette", 3, 4, publisher.jenkins.artifact_builder
+        ):
             publisher.pull(build)
 
         sc = self.stats_collector()
@@ -150,7 +170,9 @@ class StatsCollectorTests(TestCase):
 
     def test_latest_build(self) -> None:
         build = None
-        for build in create_builds_and_packages("babette", 3, 4, self.artifact_builder):
+        for build in create_builds_and_packages(
+            "babette", 3, 4, publisher.jenkins.artifact_builder
+        ):
             publisher.pull(build)
         assert build
 
@@ -203,15 +225,19 @@ class StatsCollectorTests(TestCase):
 
     def test_packages_by_day(self) -> None:
         d1 = dt.datetime(2021, 4, 13, 9, 5)
-        self.artifact_builder.timer = int(d1.timestamp())
-        [build] = create_builds_and_packages("babette", 1, 3, self.artifact_builder)
+        publisher.jenkins.artifact_builder.timer = int(d1.timestamp())
+        [build] = create_builds_and_packages(
+            "babette", 1, 3, publisher.jenkins.artifact_builder
+        )
         publisher.pull(build)
         gbp_json_path = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
         gbp_json_path.unlink()
 
         d2 = dt.datetime(2024, 1, 14, 9, 5)
-        self.artifact_builder.timer = int(d2.timestamp())
-        for build in create_builds_and_packages("babette", 2, 3, self.artifact_builder):
+        publisher.jenkins.artifact_builder.timer = int(d2.timestamp())
+        for build in create_builds_and_packages(
+            "babette", 2, 3, publisher.jenkins.artifact_builder
+        ):
             publisher.pull(build)
 
         pbd = self.stats_collector().packages_by_day("babette")
