@@ -10,7 +10,7 @@ from django.template import Context, Template, TemplateSyntaxError
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils.time import localtime
 
-from . import LOCAL_TIMEZONE
+from .helpers import LOCAL_TIMEZONE
 
 NOW = "gentoo_build_publisher.utils.time.now"
 

@@ -1,13 +1,14 @@
 """Fixtures"""
 
-# pylint: disable=missing-docstring,cyclic-import
+# pylint: disable=missing-docstring,protected-access
+import copy
 import datetime as dt
 import importlib.metadata
 import os
 import tempfile
 from contextlib import contextmanager
 from dataclasses import replace
-from functools import partial, wraps
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Iterable
 from unittest import mock
@@ -26,10 +27,10 @@ from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
-from . import MockJenkins, create_user_auth, string_console, test_gbp
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
+from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 from .setup_types import (
-    FixtureRequired,
+    BaseTestCase,
     Fixtures,
     SetupContext,
     SetupFunction,
@@ -37,31 +38,23 @@ from .setup_types import (
     SetupSpec,
 )
 
+_REQUIREMENTS = {}
 BuildPublisher = publisher_mod.BuildPublisher
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-def depends(deps: Iterable[SetupSpec]) -> Callable[[SetupFunction], SetupFunction]:
-    def dec(fn: SetupFunction) -> SetupFunction:
-        @wraps(fn)
-        def wrapper(options: SetupOptions, fixtures: Fixtures) -> Any:
-            for dep in deps:
-                if callable(dep):
-                    dep_name = dep.__name__.removesuffix("_fixture")
-                else:
-                    dep_name = dep
-                if not hasattr(fixtures, dep_name):
-                    raise FixtureRequired(f"{fn.__name__} -> {dep_name}")
-            return fn(options, fixtures)
+def load(spec: SetupSpec) -> SetupFunction:
+    func: SetupFunction = globals()[spec] if isinstance(spec, str) else spec
 
-        return wrapper
+    return func
+
+
+def depends(*deps: SetupSpec) -> Callable[[SetupFunction], SetupFunction]:
+    def dec(fn: SetupFunction) -> SetupFunction:
+        fn._deps = [load(dep) for dep in deps]  # type: ignore[attr-defined]
+        return fn
 
     return dec
-
-
-@depends(["mock_environment"])
-def settings(_options: SetupOptions, _fixtures: Fixtures) -> Settings:
-    return Settings.from_environ()
 
 
 @contextmanager
@@ -71,6 +64,32 @@ def tmpdir(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Path]:
 
 
 @contextmanager
+@depends("tmpdir")
+def mock_environment(
+    options: SetupOptions, fixtures: Fixtures
+) -> SetupContext[dict[str, str]]:
+    local_environ = options.get("environ", {})
+    mock_environ = {
+        "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
+        "BUILD_PUBLISHER_API_KEY_KEY": Fernet.generate_key().decode("ascii"),
+        "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
+        "BUILD_PUBLISHER_RECORDS_BACKEND": options["records_backend"],
+        "BUILD_PUBLISHER_STORAGE_PATH": str(fixtures.tmpdir / "root"),
+        "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
+        "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
+        **local_environ,
+    }
+    with mock.patch.dict(os.environ, mock_environ, clear=True):
+        yield mock_environ
+
+
+@depends("mock_environment")
+def settings(_options: SetupOptions, _fixtures: Fixtures) -> Settings:
+    return Settings.from_environ()
+
+
+@contextmanager
+@depends("tmpdir")
 def publisher(
     options: SetupOptions, fixtures: Fixtures
 ) -> SetupContext[BuildPublisher]:
@@ -82,7 +101,7 @@ def publisher(
                     yield mock_publisher
 
 
-@depends(["publisher"])
+@depends("publisher")
 def gbp(options: SetupOptions, _fixtures: Fixtures) -> GBP:
     user = options.get("user", "test_user")
 
@@ -98,7 +117,7 @@ def console(_options: SetupOptions, _fixtures: Fixtures) -> Fixtures:
     return Fixtures(console=sc[0], stdout=sc[1], stderr=sc[2])
 
 
-@depends(["publisher"])
+@depends("publisher")
 def api_keys(options: SetupOptions, fixtures: Fixtures) -> list[ApiKey]:
     names = options.get("api_key_names", ["test_api_key"])
     keys: list[ApiKey] = []
@@ -136,7 +155,7 @@ def build_model(options: SetupOptions, _fixtures: Fixtures) -> BuildModel:
     return bm
 
 
-@depends([records_db, build_model])
+@depends(records_db, build_model)
 def record(options: SetupOptions, fixtures: Fixtures) -> BuildRecord:
     record_options = options.get("record", {})
     bm: BuildModel = fixtures.build_model
@@ -153,7 +172,7 @@ def clock(options: SetupOptions, _fixtures: Fixtures) -> dt.datetime:
     return datetime or now()
 
 
-@depends(["publisher"])
+@depends("publisher")
 def client(_options: SetupOptions, _fixtures: Fixtures) -> Client:
     return Client()
 
@@ -162,38 +181,18 @@ def build(_options: SetupOptions, _fixtures: Fixtures) -> Build:
     return BuildFactory()
 
 
-@depends([tmpdir])
+@depends(tmpdir)
 def storage(_options: SetupOptions, fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
-@depends(["tmpdir", "settings"])
+@depends("tmpdir", "settings")
 def jenkins(_options: SetupOptions, fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     fixed_settings = replace(fixtures.settings, STORAGE_PATH=root)
 
     return MockJenkins.from_settings(fixed_settings)
-
-
-@contextmanager
-@depends([tmpdir])
-def mock_environment(
-    options: SetupOptions, fixtures: Fixtures
-) -> SetupContext[dict[str, str]]:
-    local_environ = options.get("environ", {})
-    mock_environ = {
-        "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
-        "BUILD_PUBLISHER_API_KEY_KEY": Fernet.generate_key().decode("ascii"),
-        "BUILD_PUBLISHER_JENKINS_BASE_URL": "https://jenkins.invalid/",
-        "BUILD_PUBLISHER_RECORDS_BACKEND": options["records_backend"],
-        "BUILD_PUBLISHER_STORAGE_PATH": str(fixtures.tmpdir / "root"),
-        "BUILD_PUBLISHER_WORKER_BACKEND": "sync",
-        "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
-        **local_environ,
-    }
-    with mock.patch.dict(os.environ, mock_environ, clear=True):
-        yield mock_environ
 
 
 @contextmanager
@@ -204,7 +203,45 @@ def _patch_publisher(name: str, mock_publisher: BuildPublisher) -> None:
             yield
 
 
-def load(spec: SetupSpec) -> SetupFunction:
-    func: SetupFunction = globals()[spec] if isinstance(spec, str) else spec
+def requires(
+    *requirements: SetupSpec,
+) -> Callable[[type[BaseTestCase]], type[BaseTestCase]]:
+    def decorator(test_case: type[BaseTestCase]) -> type[BaseTestCase]:
+        setups = {}
+        for requirement in requirements:
+            func = load(requirement)
+            name = func.__name__.removesuffix("_fixture")
+            setups[name] = func
+        _REQUIREMENTS[test_case] = setups
 
-    return func
+        def setup(self: BaseTestCase) -> None:
+            super(test_case, self).setUp()
+
+            self.fixtures = getattr(self, "fixtures", None) or Fixtures()
+            self._options = getattr(self, "_options", {})
+            self._options.update(getattr(test_case, "options", {}))
+
+            setups = _REQUIREMENTS.get(test_case, {})
+            add_funcs(self, setups.values())
+
+        setattr(test_case, "setUp", setup)
+        return test_case
+
+    return decorator
+
+
+def add_funcs(test: BaseTestCase, funcs: Iterable[SetupFunction]) -> None:
+    for func in funcs:
+        name = func.__name__.removesuffix("_fixture")
+        if deps := getattr(func, "_deps", []):
+            add_funcs(test, deps)
+        if not hasattr(test.fixtures, name):
+            setattr(test.fixtures, name, get_result(func, test))
+
+
+def get_result(func: SetupFunction, test: BaseTestCase) -> Any:
+    result = func(test._options, copy.copy(test.fixtures))
+    if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
+        result = test.enterContext(result)
+
+    return result

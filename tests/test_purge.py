@@ -83,15 +83,14 @@ def items_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Item]:
     return [Item(timestamp=str2dt(i)) for i in dates]
 
 
-@setup.depends([items_fixture])
+@setup.depends(items_fixture)
 def purger_fixture(_options: SetupOptions, fixtures: Fixtures) -> Purger[Item]:
 
     return Purger(fixtures.items, key=lambda i: i.timestamp, start=START, end=END)
 
 
+@setup.requires(items_fixture, purger_fixture)
 class PurgeTestCase(TestCase):
-    requires = [items_fixture, purger_fixture]
-
     def assertDates(self, items, expected) -> None:
         # pylint: disable=invalid-name
         item_dates = [

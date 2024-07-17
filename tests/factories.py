@@ -20,7 +20,7 @@ from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import Build, Content, Package
 from gentoo_build_publisher.utils import cpv_to_path
 
-from . import MockJenkins
+from .helpers import MockJenkins
 
 
 class PackageStatus(Enum):

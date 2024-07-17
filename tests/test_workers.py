@@ -26,7 +26,7 @@ from gentoo_build_publisher.worker.celery import CeleryWorker
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
 
-from . import TestCase, parametrized
+from . import TestCase, parametrized, setup
 
 
 def get_worker(name: str) -> WorkerInterface:
@@ -51,10 +51,9 @@ def params(*names) -> Callable:
     return parametrized(ifparams(*names))
 
 
+@setup.requires("publisher")
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
-
-    requires = ["publisher"]
 
     @params("celery", "rq", "sync", "thread")
     def test_publishes_build(self, worker: WorkerInterface) -> None:
@@ -89,10 +88,9 @@ class PurgeBuildTestCase(TestCase):
         purge_mock.assert_called_once_with("foo")
 
 
+@setup.requires("publisher")
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
-
-    requires = ["publisher"]
 
     @params("celery", "rq", "sync", "thread")
     def test_pulls_build(self, worker: WorkerInterface) -> None:
@@ -191,10 +189,10 @@ class JobsTests(TestCase):
             Worker(settings)
 
 
+@setup.requires("settings")
 class WorkMethodTests(TestCase):
     """Tests for the WorkerInterface.work methods"""
 
-    requires = ["mock_environment", "settings"]
     options = {
         "environ": {
             "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",

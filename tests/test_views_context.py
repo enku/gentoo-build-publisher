@@ -18,20 +18,20 @@ from gentoo_build_publisher.views.context import (
     create_machine_context,
 )
 
-from . import QuickCache, TestCase, setup
+from . import TestCase, setup
 from .factories import (
     ArtifactFactory,
     BuildFactory,
     BuildRecordFactory,
     package_factory,
 )
+from .helpers import QuickCache
 from .setup_types import Fixtures, SetupOptions
 
 
+@setup.requires("publisher")
 class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
-
-    requires = ["publisher"]
 
     def input_context(self, **kwargs: Any) -> ViewInputContext:
         defaults: dict[str, Any] = {
@@ -118,7 +118,7 @@ class CreateDashboardContextTests(TestCase):
         self.assertEqual(len(ctx["built_recently"]), 2)
 
 
-@setup.depends(["publisher"])
+@setup.depends("publisher")
 def pf_fixture(
     _options: SetupOptions, fixtures: Fixtures
 ) -> Generator[str, None, None]:
@@ -130,10 +130,8 @@ def pf_fixture(
     return pf
 
 
+@setup.requires("publisher", pf_fixture)
 class CreateMachineContextTests(TestCase):
-
-    requires = ["publisher", pf_fixture]
-
     def input_context(self, **kwargs: Any) -> MachineInputContext:
         defaults: dict[str, Any] = {
             "cache": QuickCache(),

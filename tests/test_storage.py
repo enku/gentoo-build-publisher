@@ -24,8 +24,9 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import MockJenkins, TestCase, data, setup
+from . import TestCase, data, setup
 from .factories import PACKAGE_INDEX, BuildFactory
+from .helpers import MockJenkins
 from .setup_types import Fixtures, SetupOptions
 
 TEST_SETTINGS = Settings(
@@ -33,6 +34,7 @@ TEST_SETTINGS = Settings(
 )
 
 
+@setup.requires("tmpdir")
 class StorageFromSettings(TestCase):
     @mock.patch.dict(os.environ, {}, clear=True)
     def test(self) -> None:
@@ -48,11 +50,13 @@ class StorageFromSettings(TestCase):
         self.assertEqual(storage.root, self.fixtures.tmpdir)
 
 
+@setup.depends("tmpdir")
 def storage_fixture(_options: SetupOptions, fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
+@setup.depends("tmpdir")
 def jenkins_fixture(_options: SetupOptions, fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
@@ -60,10 +64,9 @@ def jenkins_fixture(_options: SetupOptions, fixtures: Fixtures) -> Jenkins:
     return MockJenkins.from_settings(settings)
 
 
+@setup.requires("build", storage_fixture, jenkins_fixture)
 class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
-
-    requires = ["build", storage_fixture, jenkins_fixture]
 
     def has_content(self, build: Build, content: Content) -> bool:
         return self.fixtures.storage.get_path(build, content).is_dir()
@@ -107,6 +110,7 @@ class StorageDownloadArtifactTestCase(TestCase):
         self.assertIs(orphan.exists(), False, orphan)
 
 
+@setup.requires("tmpdir")
 class StoragePublishTestCase(TestCase):
     """Tests for Storage.publish"""
 
@@ -124,10 +128,9 @@ class StoragePublishTestCase(TestCase):
             storage.publish(build)
 
 
+@setup.requires("mock_environment", "storage", "build", "settings", "jenkins")
 class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
-
-    requires = ["mock_environment", "storage", "build", "settings", "jenkins"]
 
     def download_and_extract(self, build: Build) -> None:
         self.fixtures.storage.extract_artifact(
@@ -165,10 +168,9 @@ class StoragePublishedTestCase(TestCase):
         self.assertFalse(self.fixtures.storage.published(self.fixtures.build))
 
 
+@setup.requires("tmpdir")
 class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
-
-    requires = ["tmpdir"]
 
     def test_deletes_expected_directories(self) -> None:
         build = Build("babette", "19")
@@ -191,10 +193,9 @@ class StorageDeleteTestCase(TestCase):
                 self.assertIs(os.path.exists(directory), False)
 
 
+@setup.requires("build", "storage", jenkins_fixture)
 class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
-
-    requires = ["build", "storage", jenkins_fixture]
 
     def test_does_not_extract_already_pulled_build(self) -> None:
         self.fixtures.storage.extract_artifact(
@@ -247,10 +248,9 @@ class StorageExtractArtifactTestCase(TestCase):
         self.assertEqual(package_index.stat().st_nlink, 2)
 
 
+@setup.requires("publisher", "build")
 class StorageGetPackagesTestCase(TestCase):
     """tests for the Storage.get_packages() method"""
-
-    requires = ["publisher", "build"]
 
     def test_should_return_list_of_packages_from_index(self) -> None:
         publisher.pull(self.fixtures.build)
@@ -277,12 +277,12 @@ class StorageGetPackagesTestCase(TestCase):
             publisher.storage.get_packages(self.fixtures.build)
 
 
-@setup.depends(["publisher"])
+@setup.depends("publisher")
 def timestamp_fixture(_options: SetupOptions, fixtures: Fixtures) -> int:
     return int(fixtures.publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
-@setup.depends(["publisher"])
+@setup.depends("publisher")
 def artifacts(_options: SetupOptions, fixtures: Fixtures) -> list[Package]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
@@ -293,10 +293,9 @@ def artifacts(_options: SetupOptions, fixtures: Fixtures) -> list[Package]:
     return [a1, a2, a3]
 
 
+@setup.requires("build", "publisher", timestamp_fixture, artifacts)
 class StorageGetMetadataTestCase(TestCase):
     """tests for the Storage.get_metadata() method"""
-
-    requires = ["build", "publisher", timestamp_fixture, artifacts]
 
     def test_should_return_gbpmetadata_when_gbp_json_exists(self) -> None:
         metadata = publisher.storage.get_metadata(self.fixtures.build)
@@ -352,7 +351,7 @@ class StorageGetMetadataTestCase(TestCase):
         )
 
 
-@setup.depends(["publisher", "build"])
+@setup.depends("publisher", "build")
 def path_fixture(_options: SetupOptions, fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
@@ -363,10 +362,9 @@ def path_fixture(_options: SetupOptions, fixtures: Fixtures) -> Path:
     return metadata
 
 
+@setup.requires("publisher", "build", path_fixture)
 class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
-
-    requires = ["publisher", "build", path_fixture]
 
     def test(self) -> None:
         package_metadata = PackageMetadata(
@@ -411,9 +409,8 @@ class StorageSetMetadataTestCase(TestCase):
         self.assertEqual(result, expected)
 
 
+@setup.requires("publisher")
 class StorageReposTestCase(TestCase):
-    requires = ["publisher"]
-
     def test(self) -> None:
         build = BuildFactory()
         publisher.pull(build)
@@ -431,9 +428,8 @@ class StorageReposTestCase(TestCase):
         self.assertEqual(context.exception.args, ("The build has not been pulled",))
 
 
+@setup.requires("publisher")
 class StorageTaggingTestCase(TestCase):
-    requires = ["publisher"]
-
     def test_can_create_tagged_directory_symlinks(self) -> None:
         build = BuildFactory()
         publisher.pull(build)
@@ -536,10 +532,9 @@ class StorageTaggingTestCase(TestCase):
         self.assertEqual(tags, ["albert"])
 
 
+@setup.requires("publisher")
 class StorageResolveTagTestCase(TestCase):
     """Tests for the Storage.resolve_tag method"""
-
-    requires = ["publisher"]
 
     def test_resolve_tag_returns_the_build_that_it_belongs_to(self) -> None:
         build = BuildFactory()
@@ -613,10 +608,9 @@ class MakePackageFromLinesTestCase(TestCase):
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
 
+@setup.requires("publisher")
 class MakePackagesTestCase(TestCase):
     """Tests for the make_packages method"""
-
-    requires = ["publisher"]
 
     def test(self) -> None:
         build = BuildFactory()

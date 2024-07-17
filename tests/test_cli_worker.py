@@ -4,13 +4,12 @@ from unittest import mock
 
 from gentoo_build_publisher.cli import worker
 
-from . import TestCase
+from . import TestCase, setup
 
 
+@setup.requires("tmpdir", "publisher", "gbp", "console")
 class WorkerTests(TestCase):
     """Tests for the worker gbpcli subcommand"""
-
-    requires = ["publisher", "gbp", "console"]
 
     def test(self) -> None:
         worker_path = "gentoo_build_publisher.worker.rq.RQWorker.work"

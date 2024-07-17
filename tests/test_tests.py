@@ -7,9 +7,10 @@ from unittest import mock
 
 from gentoo_build_publisher.types import Content, Package
 
-from . import BaseTestCase as TestCase
-from . import MockJenkinsSession, Tree
+from . import setup
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
+from .helpers import MockJenkinsSession, Tree
+from .setup_types import BaseTestCase as TestCase
 from .setup_types import Fixtures, SetupOptions
 
 
@@ -17,11 +18,10 @@ def builder_fixture(_options: SetupOptions, _fixtures: Fixtures) -> ArtifactFact
     return ArtifactFactory(initial_packages=[])
 
 
+@setup.requires(builder_fixture)
 class ArtifactFactoryTestCase(TestCase):
-    requires = [builder_fixture]
-
     def test_timestamp(self) -> None:
-        with mock.patch("tests.dt.datetime") as mock_datetime:
+        with mock.patch("tests.helpers.dt.datetime") as mock_datetime:
             mock_datetime.utcnow.return_value = now = dt.datetime(2022, 9, 17, 18, 9)
             builder = ArtifactFactory()
 

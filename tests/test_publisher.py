@@ -15,15 +15,15 @@ from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
-from . import BUILD_LOGS, BaseTestCase, TestCase
+from . import TestCase
 from .factories import BuildFactory, BuildRecordFactory
-from .setup import depends
-from .setup_types import Fixtures, SetupContext, SetupOptions
+from .helpers import BUILD_LOGS
+from .setup import depends, requires
+from .setup_types import BaseTestCase, Fixtures, SetupContext, SetupOptions
 
 
+@requires("tmpdir")
 class BuildPublisherFromSettingsTestCase(BaseTestCase):
-    requires = ["tmpdir"]
-
     def test_from_settings_returns_publisher_with_given_settings(self) -> None:
         settings = Settings(
             JENKINS_BASE_URL="https://testserver.invalid/",
@@ -39,9 +39,8 @@ class BuildPublisherFromSettingsTestCase(BaseTestCase):
         self.assertIsInstance(pub.repo.build_records, RecordDB)
 
 
+@requires("build", "publisher")
 class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
-    requires = ["build", "publisher"]
-
     def test_publish(self) -> None:
         """.publish should publish the build artifact"""
         self.fixtures.publisher.publish(self.fixtures.build)
@@ -346,10 +345,9 @@ def publish_events(
     yield events
 
 
+@requires("publisher", prepull_events, postpull_events, publish_events)
 class DispatcherTestCase(TestCase):
     maxDiff = None
-
-    requires = ["publisher", prepull_events, postpull_events, publish_events]
 
     def test_pull_single(self) -> None:
         new_build = BuildFactory()
@@ -396,10 +394,9 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(self.fixtures.publish_events, [record])
 
 
+@requires("publisher")
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingie"""
-
-    requires = ["publisher"]
 
     def test(self) -> None:
         # Given the "foo" builds, one of which is published
@@ -467,7 +464,7 @@ def builds_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Build]:
     return builds
 
 
-@depends(["publisher", builds_fixture])
+@depends("publisher", builds_fixture)
 def machine_info_fixture(
     _options: SetupOptions, fixtures: Fixtures
 ) -> publisher.MachineInfo:
@@ -485,6 +482,7 @@ def machine_info_fixture(
     return publisher.MachineInfo(fixtures.builds[0].machine)
 
 
+@requires(builds_fixture, "publisher", machine_info_fixture)
 class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""
 
@@ -492,8 +490,6 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
     def pull_build_with_no_built_timestamp(build: Build) -> None:
         publisher.pull(build)
         publisher.repo.build_records.save(publisher.record(build), built=None)
-
-    requires = [builds_fixture, "publisher", machine_info_fixture]
 
     def test_build_count(self) -> None:
         self.assertEqual(self.fixtures.machine_info.build_count, 4)
@@ -526,10 +522,9 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         self.assertTrue(publisher.published(build3))
 
 
+@requires("publisher")
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
-
-    requires = ["publisher"]
 
     def test(self) -> None:
         response = publisher.schedule_build("babette")

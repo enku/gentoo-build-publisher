@@ -25,11 +25,17 @@ from gentoo_build_publisher.jenkins import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
-from . import JENKINS_CONFIG
-from . import BaseTestCase as TestCase
-from . import MockJenkins, test_data
+from . import setup
+from .helpers import MockJenkins, test_data
+from .setup_types import BaseTestCase as TestCase
 from .setup_types import Fixtures, SetupContext, SetupOptions
 
+JENKINS_CONFIG = JenkinsConfig(
+    base_url=URL("https://jenkins.invalid"),
+    api_key="foo",
+    user="jenkins",
+    artifact_name="build.tar.gz",
+)
 JOB_PARAMS = json.loads(test_data("job_parameters.json"))
 
 
@@ -569,10 +575,9 @@ def mock_jenkins(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Je
         yield obj
 
 
+@setup.requires(mock_jenkins)
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
-
-    requires = [mock_jenkins]
 
     def test(self) -> None:
         jenkins = self.fixtures.mock_jenkins

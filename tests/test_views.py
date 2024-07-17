@@ -20,20 +20,20 @@ from .setup_types import Fixtures, SetupOptions
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-@setup.depends(["client"])
+@setup.depends("client")
 def lighthouse(_options: SetupOptions, fixtures: Fixtures) -> HttpResponse:
     response: HttpResponse = fixtures.client.get("/machines/lighthouse/")
     return response
 
 
-@setup.depends(["clock", "publisher"])
+@setup.depends("clock", "publisher")
 def builds(_options: SetupOptions, fixtures: Fixtures) -> dict[str, list[Build]]:
     machines = ["babette", "lighthouse", "web"]
 
     return BuildFactory.buncha_builds(machines, fixtures.clock, 3, 2)
 
 
-@setup.depends(["publisher", builds])
+@setup.depends("publisher", builds)
 def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
@@ -49,8 +49,8 @@ def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     return {"published": published, "latest": latest}
 
 
+@setup.requires("tmpdir", "clock", "publisher", builds)
 class TestCase(BaseTestCase):
-    requires = ["clock", "publisher", builds]
     options = {"records_backend": "memory"}
 
 
@@ -147,10 +147,9 @@ class BinReposDotConfTestCase(TestCase):
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
 
 
+@setup.requires("publisher", "client", builds, artifacts, lighthouse)
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
-
-    requires = ["publisher", "client", builds, artifacts, lighthouse]
 
     def test_row1(self) -> None:
         latest_str = (

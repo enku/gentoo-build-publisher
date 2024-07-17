@@ -15,19 +15,19 @@ from gentoo_build_publisher.views.utils import (
     get_query_value_from_request,
 )
 
-from . import QuickCache, TestCase
+from . import TestCase, setup
 from .factories import (
     ArtifactFactory,
     BuildFactory,
     BuildRecordFactory,
     package_factory,
 )
+from .helpers import QuickCache
 
 
+@setup.requires("publisher")
 class GetMetadataTestCase(TestCase):
     """This is just cached Storage.get_metadata()"""
-
-    requires = ["publisher"]
 
     def test(self) -> None:
         build = BuildFactory()
@@ -69,9 +69,8 @@ class GetQueryValueFromRequestTests(TestCase):
         self.assertEqual(chart_days, 10)
 
 
+@setup.requires("publisher")
 class StatsCollectorTests(TestCase):
-    requires = ["publisher"]
-
     def stats_collector(self) -> StatsCollector:
         return StatsCollector(QuickCache())
 

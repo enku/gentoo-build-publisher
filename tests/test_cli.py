@@ -6,7 +6,8 @@ from gbpcli.graphql import Query
 
 from gentoo_build_publisher.cli import get_dist_query
 
-from . import TestCase, test_gbp
+from . import TestCase
+from .helpers import test_gbp
 
 CREATE_MACHINE_QUERY_STR = (
     importlib.resources.files("gentoo_build_publisher") / "queries/create_repo.graphql"
