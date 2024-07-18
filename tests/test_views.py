@@ -14,7 +14,6 @@ from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
 from . import setup
-from .factories import BuildFactory
 from .setup_types import Fixtures, SetupOptions
 
 now = partial(dt.datetime.now, tz=dt.UTC)
@@ -26,14 +25,7 @@ def lighthouse(_options: SetupOptions, fixtures: Fixtures) -> HttpResponse:
     return response
 
 
-@setup.depends("clock", "publisher")
-def builds(_options: SetupOptions, fixtures: Fixtures) -> dict[str, list[Build]]:
-    machines = ["babette", "lighthouse", "web"]
-
-    return BuildFactory.buncha_builds(machines, fixtures.clock, 3, 2)
-
-
-@setup.depends("publisher", builds)
+@setup.depends("publisher", "builds")
 def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
@@ -49,9 +41,16 @@ def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     return {"published": published, "latest": latest}
 
 
-@setup.requires("tmpdir", "clock", "publisher", builds)
+@setup.requires("publisher", "builds")
 class TestCase(BaseTestCase):
-    options = {"records_backend": "memory"}
+    options = {
+        "records_backend": "memory",
+        "builds": {
+            "machines": ["babette", "lighthouse", "web"],
+            "num_days": 3,
+            "per_day": 2,
+        },
+    }
 
 
 class DashboardTestCase(TestCase):
@@ -147,7 +146,7 @@ class BinReposDotConfTestCase(TestCase):
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
 
 
-@setup.requires("publisher", "client", builds, artifacts, lighthouse)
+@setup.requires("publisher", "client", "builds", artifacts, lighthouse)
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 

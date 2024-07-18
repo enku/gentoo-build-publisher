@@ -4,6 +4,7 @@
 import copy
 import datetime as dt
 import importlib.metadata
+import itertools
 import os
 import tempfile
 from contextlib import contextmanager
@@ -179,6 +180,32 @@ def client(_options: SetupOptions, _fixtures: Fixtures) -> Client:
 
 def build(_options: SetupOptions, _fixtures: Fixtures) -> Build:
     return BuildFactory()
+
+
+def builds(
+    options: SetupOptions, _fixtures: Fixtures
+) -> dict[str, list[Build]] | list[Build]:
+    builds_options = options.get("builds", {})
+    machines = builds_options.get("machines", ["babette"])
+    end_date = builds_options.get("end_time", now())
+    num_days = builds_options.get("num_days", 1)
+    per_day = builds_options.get("per_day", 1)
+    builds_map = BuildFactory.buncha_builds(machines, end_date, num_days, per_day)
+
+    if len(machines) == 1:
+        return builds_map[machines[0]]
+    return builds_map
+
+
+@depends(builds, publisher)
+def pulled_builds(_options: SetupOptions, fixtures: Fixtures) -> None:
+    if isinstance(fixtures.builds, dict):
+        builds_ = list(itertools.chain(*fixtures.builds.values()))
+    else:
+        builds_ = fixtures.builds
+
+    for build_ in builds_:
+        fixtures.publisher.pull(build_)
 
 
 @depends(tmpdir)
