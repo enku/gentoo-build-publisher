@@ -39,7 +39,6 @@ from gentoo_build_publisher.types import (
 )
 from gentoo_build_publisher.worker import tasks
 
-LOCALHOST = "127.0.0.1", "::1", "localhost"
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 Info: TypeAlias = GraphQLResolveInfo
