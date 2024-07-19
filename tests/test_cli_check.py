@@ -10,12 +10,12 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content
 
-from . import TestCase, setup
+from . import TestCase, fixture
 from .factories import BuildFactory
 from .helpers import string_console
 
 
-@setup.requires("tmpdir", "publisher", "gbp")
+@fixture.requires("tmpdir", "publisher", "gbp")
 class GBPChkTestCase(TestCase):
     def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()

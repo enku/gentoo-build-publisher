@@ -14,7 +14,7 @@ from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 
-from . import DjangoTestCase, TestCase, setup
+from . import DjangoTestCase, TestCase, fixture
 from .helpers import LOCAL_TIMEZONE, string_console
 
 
@@ -143,7 +143,7 @@ class GBPListTests(DjangoTestCase):
         self.assertEqual(stdout.getvalue(), "No API keys registered.\n")
 
 
-@setup.requires("tmpdir", "publisher", "api_keys")
+@fixture.requires("tmpdir", "publisher", "api_keys")
 class GBPDeleteTests(DjangoTestCase):
     options = {"api_key_names": ["this", "that", "the", "other"]}
 

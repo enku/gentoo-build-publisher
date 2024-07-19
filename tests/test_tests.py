@@ -7,18 +7,18 @@ from unittest import mock
 
 from gentoo_build_publisher.types import Content, Package
 
-from . import setup
+from . import fixture
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
+from .fixture_types import BaseTestCase as TestCase
+from .fixture_types import Fixtures, SetupOptions
 from .helpers import MockJenkinsSession, Tree
-from .setup_types import BaseTestCase as TestCase
-from .setup_types import Fixtures, SetupOptions
 
 
 def builder_fixture(_options: SetupOptions, _fixtures: Fixtures) -> ArtifactFactory:
     return ArtifactFactory(initial_packages=[])
 
 
-@setup.requires(builder_fixture)
+@fixture.requires(builder_fixture)
 class ArtifactFactoryTestCase(TestCase):
     def test_timestamp(self) -> None:
         with mock.patch("tests.helpers.dt.datetime") as mock_datetime:

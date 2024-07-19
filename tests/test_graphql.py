@@ -30,11 +30,10 @@ from gentoo_build_publisher.types import (
 from gentoo_build_publisher.utils import encode_basic_auth_data, get_version, time
 from gentoo_build_publisher.worker import tasks
 
-from . import TestCase, parametrized, setup
+from . import TestCase, fixture, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
+from .fixture_types import Fixtures, SetupOptions
 from .helpers import BUILD_LOGS, graphql
-from .setup import depends
-from .setup_types import Fixtures, SetupOptions
 
 Mock = mock.Mock
 
@@ -49,7 +48,7 @@ def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(data, expected)
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
@@ -192,7 +191,7 @@ class BuildQueryTestCase(TestCase):
         self.assertEqual(result["errors"][0]["path"], ["build", "packagesBuilt"])
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class BuildsQueryTestCase(TestCase):
     """Tests for the builds query"""
 
@@ -264,7 +263,7 @@ class BuildsQueryTestCase(TestCase):
         )
 
 
-@depends("publisher")
+@fixture.depends("publisher")
 def latest(_options: SetupOptions, _fixtures: Fixtures) -> Build:
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
@@ -289,7 +288,7 @@ def latest(_options: SetupOptions, _fixtures: Fixtures) -> Build:
     return latest_build
 
 
-@setup.requires("tmpdir", "publisher", latest, "client")
+@fixture.requires("tmpdir", "publisher", latest, "client")
 class LatestQueryTestCase(TestCase):
     """Tests for the latest query"""
 
@@ -318,7 +317,7 @@ class LatestQueryTestCase(TestCase):
         assert_data(self, result, {"latest": {"id": str(self.fixtures.latest)}})
 
 
-@depends("publisher")
+@fixture.depends("publisher")
 def diff_query_builds(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     # Given the first build with tar-1.34
     left = BuildFactory()
@@ -335,7 +334,7 @@ def diff_query_builds(_options: SetupOptions, fixtures: Fixtures) -> dict[str, B
     return {"left": left, "right": right}
 
 
-@setup.requires("tmpdir", "publisher", diff_query_builds, "client")
+@fixture.requires("tmpdir", "publisher", diff_query_builds, "client")
 class DiffQueryTestCase(TestCase):
     """Tests for the diff query"""
 
@@ -462,7 +461,7 @@ class DiffQueryTestCase(TestCase):
         )
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class MachinesQueryTestCase(TestCase):
     """Tests for the machines query"""
 
@@ -565,7 +564,7 @@ class MachinesQueryTestCase(TestCase):
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""
 
@@ -604,7 +603,7 @@ class PublishMutationTestCase(TestCase):
         mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class PullMutationTestCase(TestCase):
     """Tests for the pull mutation"""
 
@@ -675,7 +674,7 @@ class PullMutationTestCase(TestCase):
         )
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class ScheduleBuildMutationTestCase(TestCase):
     """Tests for the build mutation"""
 
@@ -739,7 +738,7 @@ class ScheduleBuildMutationTestCase(TestCase):
         mock_schedule_build.assert_called_once_with("babette")
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class KeepBuildMutationTestCase(TestCase):
     """Tests for the keep mutation"""
 
@@ -773,7 +772,7 @@ class KeepBuildMutationTestCase(TestCase):
         assert_data(self, result, {"keepBuild": None})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
@@ -808,7 +807,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         assert_data(self, result, {"releaseBuild": None})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class CreateNoteMutationTestCase(TestCase):
     """Tests for the createNote mutation"""
 
@@ -869,7 +868,7 @@ class CreateNoteMutationTestCase(TestCase):
         assert_data(self, result, {"createNote": None})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class TagsTestCase(TestCase):
     def test_createbuildtag_mutation_tags_the_build(self) -> None:
         build = BuildFactory()
@@ -963,7 +962,7 @@ def search_query_builds(_options: SetupOptions, _fixtures: Fixtures) -> list[Bui
     return [build1, build2]
 
 
-@setup.requires("tmpdir", "publisher", search_query_builds, "client")
+@fixture.requires("tmpdir", "publisher", search_query_builds, "client")
 class SearchQueryTestCase(TestCase):
     """Tests for the search query"""
 
@@ -1045,7 +1044,7 @@ class SearchQueryTestCase(TestCase):
         assert_data(self, result, {"search": []})
 
 
-@depends("publisher")
+@fixture.depends("publisher")
 def search_notes_query_builds(
     _options: SetupOptions, _fixtures: Fixtures
 ) -> list[Build]:
@@ -1059,7 +1058,7 @@ def search_notes_query_builds(
     return [build1, build2]
 
 
-@setup.requires("tmpdir", "publisher", search_notes_query_builds, "client")
+@fixture.requires("tmpdir", "publisher", search_notes_query_builds, "client")
 class SearchNotesQueryTestCase(TestCase):
     """tests for the searchNotes query"""
 
@@ -1133,7 +1132,7 @@ class SearchNotesQueryTestCase(TestCase):
         assert_data(self, result, {"searchNotes": []})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class WorkingTestCase(TestCase):
     query = """
     {
@@ -1156,7 +1155,7 @@ class WorkingTestCase(TestCase):
         assert_data(self, result, {"working": [{"id": working.id}]})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class VersionTestCase(TestCase):
     maxDiff = None
     query = """query { version }"""
@@ -1168,7 +1167,7 @@ class VersionTestCase(TestCase):
         assert_data(self, result, {"version": version})
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class CreateRepoTestCase(TestCase):
     """Tests for the createRepo mutation"""
 
@@ -1215,7 +1214,7 @@ class CreateRepoTestCase(TestCase):
         )
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class CreateMachineTestCase(TestCase):
     """Tests for the createMachine mutation"""
 
@@ -1272,7 +1271,7 @@ class CreateMachineTestCase(TestCase):
         )
 
 
-@setup.requires("tmpdir", "publisher", "client")
+@fixture.requires("tmpdir", "publisher", "client")
 class MaybeRequiresAPIKeyTests(TestCase):
     query = 'mutation { scheduleBuild(machine: "babette") }'
 
@@ -1296,7 +1295,7 @@ def dummy_resolver(
     return "permitted"
 
 
-@setup.requires("tmpdir", "publisher")
+@fixture.requires("tmpdir", "publisher")
 class RequireAPIKeyTestCase(TestCase):
     def test_good_apikey(self) -> None:
         name = "test"

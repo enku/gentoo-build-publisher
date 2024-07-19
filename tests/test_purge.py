@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from gentoo_build_publisher.purge import Purger
 
 from . import BaseTestCase as TestCase
-from . import setup
-from .setup_types import Fixtures, SetupOptions
+from . import fixture
+from .fixture_types import Fixtures, SetupOptions
 
 # Random dates for testing
 DATES = [
@@ -83,13 +83,13 @@ def items_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Item]:
     return [Item(timestamp=str2dt(i)) for i in dates]
 
 
-@setup.depends(items_fixture)
+@fixture.depends(items_fixture)
 def purger_fixture(_options: SetupOptions, fixtures: Fixtures) -> Purger[Item]:
 
     return Purger(fixtures.items, key=lambda i: i.timestamp, start=START, end=END)
 
 
-@setup.requires(items_fixture, purger_fixture)
+@fixture.requires(items_fixture, purger_fixture)
 class PurgeTestCase(TestCase):
     def assertDates(self, items, expected) -> None:
         # pylint: disable=invalid-name

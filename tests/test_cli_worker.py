@@ -4,10 +4,10 @@ from unittest import mock
 
 from gentoo_build_publisher.cli import worker
 
-from . import TestCase, setup
+from . import TestCase, fixture
 
 
-@setup.requires("tmpdir", "publisher", "gbp", "console")
+@fixture.requires("tmpdir", "publisher", "gbp", "console")
 class WorkerTests(TestCase):
     """Tests for the worker gbpcli subcommand"""
 

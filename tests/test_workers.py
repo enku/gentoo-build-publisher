@@ -26,7 +26,7 @@ from gentoo_build_publisher.worker.celery import CeleryWorker
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
 
-from . import TestCase, parametrized, setup
+from . import TestCase, fixture, parametrized
 
 
 def get_worker(name: str) -> WorkerInterface:
@@ -51,7 +51,7 @@ def params(*names) -> Callable:
     return parametrized(ifparams(*names))
 
 
-@setup.requires("publisher")
+@fixture.requires("publisher")
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
@@ -88,7 +88,7 @@ class PurgeBuildTestCase(TestCase):
         purge_mock.assert_called_once_with("foo")
 
 
-@setup.requires("publisher")
+@fixture.requires("publisher")
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
@@ -189,7 +189,7 @@ class JobsTests(TestCase):
             Worker(settings)
 
 
-@setup.requires("settings")
+@fixture.requires("settings")
 class WorkMethodTests(TestCase):
     """Tests for the WorkerInterface.work methods"""
 

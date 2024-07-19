@@ -6,18 +6,18 @@ from functools import wraps
 
 import django.test
 
-from . import setup
-from .setup_types import BaseTestCase
+from . import fixture
+from .fixture_types import BaseTestCase
 
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
-@setup.requires()
+@fixture.requires()
 class TestCase(BaseTestCase):
     options = {"records_backend": "memory"}
 
 
-@setup.requires()
+@fixture.requires()
 class DjangoTestCase(TestCase, django.test.TestCase):
     options = {"records_backend": "django"}
 
