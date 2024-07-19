@@ -26,8 +26,6 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
 from . import fixture
-from .fixture_types import BaseTestCase as TestCase
-from .fixture_types import FixtureContext, FixtureOptions, Fixtures
 from .helpers import MockJenkins, test_data
 
 JENKINS_CONFIG = JenkinsConfig(
@@ -39,7 +37,7 @@ JENKINS_CONFIG = JenkinsConfig(
 JOB_PARAMS = json.loads(test_data("job_parameters.json"))
 
 
-class JenkinsTestCase(TestCase):
+class JenkinsTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins api wrapper"""
 
     def test_download_artifact(self) -> None:
@@ -187,7 +185,7 @@ class JenkinsTestCase(TestCase):
         self.assertEqual(jenkins.project_root, ProjectPath("i/think/this/is/invalid"))
 
 
-class ProjectPathExistsTestCase(TestCase):
+class ProjectPathExistsTestCase(fixture.BaseTestCase):
     def test_should_return_false_when_does_not_exist(self) -> None:
         def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
             status_code = 404
@@ -240,7 +238,7 @@ class ProjectPathExistsTestCase(TestCase):
                 jenkins.project_exists(project_path)
 
 
-class CreateItemTestCase(TestCase):
+class CreateItemTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.create_item method"""
 
     def test_creates_item(self) -> None:
@@ -317,7 +315,7 @@ class CreateItemTestCase(TestCase):
         )
 
 
-class GetItemTestCase(TestCase):
+class GetItemTestCase(fixture.BaseTestCase):
     def test_gets_item(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
@@ -346,7 +344,7 @@ class GetItemTestCase(TestCase):
         )
 
 
-class MakeFolderTestCase(TestCase):
+class MakeFolderTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.make_folder method"""
 
     def test_when_folder_does_not_exist_creates_folder(self) -> None:
@@ -412,7 +410,7 @@ class MakeFolderTestCase(TestCase):
         jenkins.make_folder(project_path, exist_ok=True)
 
 
-class IsFolderTestCase(TestCase):
+class IsFolderTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.is_folder method"""
 
     def test_when_is_a_folder_returns_true(self) -> None:
@@ -440,7 +438,7 @@ class IsFolderTestCase(TestCase):
         self.assertEqual(jenkins.is_folder(ProjectPath()), True)
 
 
-class InstallPluginTestCase(TestCase):
+class InstallPluginTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.install_plugin method"""
 
     def test_installs_plugin(self) -> None:
@@ -455,7 +453,7 @@ class InstallPluginTestCase(TestCase):
         )
 
 
-class CreateRepoJobTestCase(TestCase):
+class CreateRepoJobTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.create_repo_job method"""
 
     def test_creates_given_repo(self) -> None:
@@ -502,7 +500,7 @@ class CreateRepoJobTestCase(TestCase):
         )
 
 
-class CreateMachineJobTestCase(TestCase):
+class CreateMachineJobTestCase(fixture.BaseTestCase):
     """Tests for the Jenkins.create_machine_job method"""
 
     def test_creates_given_machine(self) -> None:
@@ -537,7 +535,7 @@ class CreateMachineJobTestCase(TestCase):
         )
 
 
-class ProjectPathTestCase(TestCase):
+class ProjectPathTestCase(fixture.BaseTestCase):
     """Tests for the ProjectPath class"""
 
     def test_job_path_with_root(self) -> None:
@@ -568,8 +566,8 @@ class ProjectPathTestCase(TestCase):
 
 @contextmanager
 def mock_jenkins(
-    _options: FixtureOptions, _fixtures: Fixtures
-) -> FixtureContext[Jenkins]:
+    _options: fixture.FixtureOptions, _fixtures: fixture.Fixtures
+) -> fixture.FixtureContext[Jenkins]:
     obj = Jenkins(JENKINS_CONFIG)
     with mock.patch.object(
         obj.session, "get", **{"return_value.json.return_value": JOB_PARAMS}
@@ -578,7 +576,7 @@ def mock_jenkins(
 
 
 @fixture.requires(mock_jenkins)
-class ScheduleBuildTestCase(TestCase):
+class ScheduleBuildTestCase(fixture.BaseTestCase):
     """Tests for the schedule_build function"""
 
     def test(self) -> None:
@@ -643,7 +641,7 @@ class ScheduleBuildTestCase(TestCase):
         self.assertEqual(location, None)
 
 
-class GetJobParametersTests(TestCase):
+class GetJobParametersTests(fixture.BaseTestCase):
     # pylint: disable=no-member
     def test_gets_parameter_name_and_default_values(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -673,7 +671,7 @@ class GetJobParametersTests(TestCase):
         self.assertEqual(response, {})
 
 
-class URLBuilderTestCase(TestCase):
+class URLBuilderTestCase(fixture.BaseTestCase):
     """Tests for the URLBuilder"""
 
     config = JenkinsConfig(base_url=URL("https://jenkins.invalid"))

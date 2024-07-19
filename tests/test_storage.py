@@ -26,7 +26,7 @@ from gentoo_build_publisher.types import (
 
 from . import TestCase, data, fixture
 from .factories import PACKAGE_INDEX, BuildFactory
-from .fixture_types import FixtureOptions, Fixtures
+from .fixture import FixtureOptions, Fixtures
 from .helpers import MockJenkins
 
 TEST_SETTINGS = Settings(

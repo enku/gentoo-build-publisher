@@ -7,13 +7,12 @@ from functools import wraps
 import django.test
 
 from . import fixture
-from .fixture_types import BaseTestCase
 
 logging.basicConfig(handlers=[logging.NullHandler()])
 
 
 @fixture.requires()
-class TestCase(BaseTestCase):
+class TestCase(fixture.BaseTestCase):
     options = {"records_backend": "memory"}
 
 

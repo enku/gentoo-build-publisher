@@ -14,7 +14,7 @@ from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
 from . import fixture
-from .fixture_types import FixtureOptions, Fixtures
+from .fixture import FixtureOptions, Fixtures
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 

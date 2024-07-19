@@ -25,7 +25,7 @@ from .factories import (
     BuildRecordFactory,
     package_factory,
 )
-from .fixture_types import FixtureOptions, Fixtures
+from .fixture import FixtureOptions, Fixtures
 from .helpers import QuickCache
 
 
