@@ -8,9 +8,9 @@ from dataclasses import dataclass
 
 from gentoo_build_publisher.purge import Purger
 
-from . import BaseTestCase as TestCase
 from . import fixture
-from .fixture_types import FixtureOptions, Fixtures
+from .fixture import BaseTestCase as TestCase
+from .fixture import FixtureOptions, Fixtures
 
 # Random dates for testing
 DATES = [

@@ -17,8 +17,14 @@ from gentoo_build_publisher.utils.time import utctime
 
 from . import TestCase
 from .factories import BuildFactory, BuildRecordFactory
-from .fixture import depends, requires
-from .fixture_types import BaseTestCase, FixtureContext, FixtureOptions, Fixtures
+from .fixture import (
+    BaseTestCase,
+    FixtureContext,
+    FixtureOptions,
+    Fixtures,
+    depends,
+    requires,
+)
 from .helpers import BUILD_LOGS
 
 

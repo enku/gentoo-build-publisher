@@ -11,8 +11,9 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Iterable
-from unittest import mock
+from types import SimpleNamespace
+from typing import Any, Callable, Iterable, Iterator, TypeAlias
+from unittest import TestCase, mock
 
 from cryptography.fernet import Fernet
 from django.test.client import Client
@@ -29,19 +30,27 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .fixture_types import (
-    BaseTestCase,
-    FixtureContext,
-    FixtureFunction,
-    FixtureOptions,
-    Fixtures,
-    FixtureSpec,
-)
 from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 
 _REQUIREMENTS = {}
 BuildPublisher = publisher_mod.BuildPublisher
 now = partial(dt.datetime.now, tz=dt.UTC)
+
+
+class Fixtures(SimpleNamespace):
+    pass
+
+
+FixtureOptions: TypeAlias = dict[str, Any]
+FixtureContext: TypeAlias = Iterator
+FixtureFunction: TypeAlias = Callable[[FixtureOptions, Fixtures], Any]
+FixtureSpec: TypeAlias = str | FixtureFunction
+
+
+class BaseTestCase(TestCase):
+    _options: FixtureOptions
+    options: FixtureOptions = {}
+    fixtures: Fixtures
 
 
 def load(spec: FixtureSpec) -> FixtureFunction:
