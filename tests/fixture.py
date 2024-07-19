@@ -29,8 +29,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
-from .setup_types import (
+from .fixture_types import (
     BaseTestCase,
     Fixtures,
     SetupContext,
@@ -38,6 +37,7 @@ from .setup_types import (
     SetupOptions,
     SetupSpec,
 )
+from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 
 _REQUIREMENTS = {}
 BuildPublisher = publisher_mod.BuildPublisher

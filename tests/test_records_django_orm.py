@@ -9,12 +9,12 @@ from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build
 
 from . import DjangoTestCase as TestCase
-from . import setup
+from . import fixture
 from .factories import BuildModelFactory, BuildRecordFactory
 
 
 # pylint: disable=too-many-public-methods
-@setup.requires("build_model", "records_db", "record")
+@fixture.requires("build_model", "records_db", "record")
 class RecordDBTestCase(TestCase):
     options = {
         "records_backend": "django",

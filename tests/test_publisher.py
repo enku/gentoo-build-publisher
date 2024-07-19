@@ -17,9 +17,9 @@ from gentoo_build_publisher.utils.time import utctime
 
 from . import TestCase
 from .factories import BuildFactory, BuildRecordFactory
+from .fixture import depends, requires
+from .fixture_types import BaseTestCase, Fixtures, SetupContext, SetupOptions
 from .helpers import BUILD_LOGS
-from .setup import depends, requires
-from .setup_types import BaseTestCase, Fixtures, SetupContext, SetupOptions
 
 
 @requires("tmpdir")

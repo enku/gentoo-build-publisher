@@ -8,11 +8,11 @@ from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 from . import DjangoTestCase as TestCase
-from . import setup
+from . import fixture
 from .helpers import string_console
 
 
-@setup.requires("gbp")
+@fixture.requires("gbp")
 class AddMachineTestCase(TestCase):
     def test_calls_graphql_with_the_expected_args(self) -> None:
         args = Namespace(

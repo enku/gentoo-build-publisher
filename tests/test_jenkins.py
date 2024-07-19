@@ -25,10 +25,10 @@ from gentoo_build_publisher.jenkins import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
-from . import setup
+from . import fixture
+from .fixture_types import BaseTestCase as TestCase
+from .fixture_types import Fixtures, SetupContext, SetupOptions
 from .helpers import MockJenkins, test_data
-from .setup_types import BaseTestCase as TestCase
-from .setup_types import Fixtures, SetupContext, SetupOptions
 
 JENKINS_CONFIG = JenkinsConfig(
     base_url=URL("https://jenkins.invalid"),
@@ -575,7 +575,7 @@ def mock_jenkins(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Je
         yield obj
 
 
-@setup.requires(mock_jenkins)
+@fixture.requires(mock_jenkins)
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 

@@ -13,19 +13,19 @@ from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
-from . import setup
-from .setup_types import Fixtures, SetupOptions
+from . import fixture
+from .fixture_types import Fixtures, SetupOptions
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-@setup.depends("client")
+@fixture.depends("client")
 def lighthouse(_options: SetupOptions, fixtures: Fixtures) -> HttpResponse:
     response: HttpResponse = fixtures.client.get("/machines/lighthouse/")
     return response
 
 
-@setup.depends("publisher", "builds")
+@fixture.depends("publisher", "builds")
 def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
@@ -41,7 +41,7 @@ def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
     return {"published": published, "latest": latest}
 
 
-@setup.requires("publisher", "builds")
+@fixture.requires("publisher", "builds")
 class TestCase(BaseTestCase):
     options = {
         "records_backend": "memory",
@@ -146,7 +146,7 @@ class BinReposDotConfTestCase(TestCase):
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
 
 
-@setup.requires("publisher", "client", "builds", artifacts, lighthouse)
+@fixture.requires("publisher", "client", "builds", artifacts, lighthouse)
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 

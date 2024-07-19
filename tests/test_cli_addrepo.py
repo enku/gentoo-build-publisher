@@ -9,11 +9,11 @@ from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.types import EbuildRepo
 
 from . import DjangoTestCase as TestCase
-from . import setup
+from . import fixture
 from .helpers import string_console
 
 
-@setup.requires("publisher", "gbp")
+@fixture.requires("publisher", "gbp")
 class AddRepoTestCase(TestCase):
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
