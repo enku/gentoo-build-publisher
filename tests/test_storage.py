@@ -26,7 +26,7 @@ from gentoo_build_publisher.types import (
 
 from . import TestCase, data, fixture
 from .factories import PACKAGE_INDEX, BuildFactory
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 from .helpers import MockJenkins
 
 TEST_SETTINGS = Settings(
@@ -51,13 +51,13 @@ class StorageFromSettings(TestCase):
 
 
 @fixture.depends("tmpdir")
-def storage_fixture(_options: SetupOptions, fixtures: Fixtures) -> Storage:
+def storage_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
 @fixture.depends("tmpdir")
-def jenkins_fixture(_options: SetupOptions, fixtures: Fixtures) -> Jenkins:
+def jenkins_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
 
@@ -278,12 +278,12 @@ class StorageGetPackagesTestCase(TestCase):
 
 
 @fixture.depends("publisher")
-def timestamp_fixture(_options: SetupOptions, fixtures: Fixtures) -> int:
+def timestamp_fixture(_options: FixtureOptions, fixtures: Fixtures) -> int:
     return int(fixtures.publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
 @fixture.depends("publisher")
-def artifacts(_options: SetupOptions, fixtures: Fixtures) -> list[Package]:
+def artifacts(_options: FixtureOptions, fixtures: Fixtures) -> list[Package]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
     a2 = artifact_builder.build(fixtures.build, "net-libs/nghttp2-1.47.0")
@@ -352,7 +352,7 @@ class StorageGetMetadataTestCase(TestCase):
 
 
 @fixture.depends("publisher", "build")
-def path_fixture(_options: SetupOptions, fixtures: Fixtures) -> Path:
+def path_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
 

@@ -10,7 +10,7 @@ from gentoo_build_publisher.purge import Purger
 
 from . import BaseTestCase as TestCase
 from . import fixture
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 
 # Random dates for testing
 DATES = [
@@ -76,7 +76,7 @@ def str2dt(string: str) -> datetime.datetime:
     return datetime.datetime(year, month, day)
 
 
-def items_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Item]:
+def items_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Item]:
     dates = [*DATES]
     random.shuffle(dates)
 
@@ -84,7 +84,7 @@ def items_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Item]:
 
 
 @fixture.depends(items_fixture)
-def purger_fixture(_options: SetupOptions, fixtures: Fixtures) -> Purger[Item]:
+def purger_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Purger[Item]:
 
     return Purger(fixtures.items, key=lambda i: i.timestamp, start=START, end=END)
 

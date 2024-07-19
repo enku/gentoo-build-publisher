@@ -25,7 +25,7 @@ from .factories import (
     BuildRecordFactory,
     package_factory,
 )
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 from .helpers import QuickCache
 
 
@@ -120,7 +120,7 @@ class CreateDashboardContextTests(TestCase):
 
 @fixture.depends("publisher")
 def pf_fixture(
-    _options: SetupOptions, fixtures: Fixtures
+    _options: FixtureOptions, fixtures: Fixtures
 ) -> Generator[str, None, None]:
     pf = package_factory()
     ab: ArtifactFactory = fixtures.publisher.jenkins.artifact_builder
