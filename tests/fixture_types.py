@@ -8,13 +8,13 @@ class Fixtures(SimpleNamespace):
     pass
 
 
-SetupOptions: TypeAlias = dict[str, Any]
-SetupContext: TypeAlias = Iterator
-SetupFunction: TypeAlias = Callable[[SetupOptions, Fixtures], Any]
-SetupSpec: TypeAlias = str | SetupFunction
+FixtureOptions: TypeAlias = dict[str, Any]
+FixtureContext: TypeAlias = Iterator
+FixtureFunction: TypeAlias = Callable[[FixtureOptions, Fixtures], Any]
+FixtureSpec: TypeAlias = str | FixtureFunction
 
 
 class BaseTestCase(TestCase):
-    _options: SetupOptions
-    options: SetupOptions = {}
+    _options: FixtureOptions
+    options: FixtureOptions = {}
     fixtures: Fixtures

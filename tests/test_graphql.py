@@ -32,7 +32,7 @@ from gentoo_build_publisher.worker import tasks
 
 from . import TestCase, fixture, parametrized
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 from .helpers import BUILD_LOGS, graphql
 
 Mock = mock.Mock
@@ -264,7 +264,7 @@ class BuildsQueryTestCase(TestCase):
 
 
 @fixture.depends("publisher")
-def latest(_options: SetupOptions, _fixtures: Fixtures) -> Build:
+def latest(_options: FixtureOptions, _fixtures: Fixtures) -> Build:
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
             built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
@@ -318,7 +318,7 @@ class LatestQueryTestCase(TestCase):
 
 
 @fixture.depends("publisher")
-def diff_query_builds(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
+def diff_query_builds(_options: FixtureOptions, fixtures: Fixtures) -> dict[str, Build]:
     # Given the first build with tar-1.34
     left = BuildFactory()
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
@@ -950,7 +950,7 @@ class TagsTestCase(TestCase):
         assert_data(self, result, {"resolveBuildTag": None})
 
 
-def search_query_builds(_options: SetupOptions, _fixtures: Fixtures) -> list[Build]:
+def search_query_builds(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]:
     for _, field in SEARCH_PARAMS:
         build1 = BuildFactory()
         record = publisher.record(build1)
@@ -1046,7 +1046,7 @@ class SearchQueryTestCase(TestCase):
 
 @fixture.depends("publisher")
 def search_notes_query_builds(
-    _options: SetupOptions, _fixtures: Fixtures
+    _options: FixtureOptions, _fixtures: Fixtures
 ) -> list[Build]:
     build1 = BuildFactory()
     record = publisher.record(build1)

@@ -27,7 +27,7 @@ from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
 from . import fixture
 from .fixture_types import BaseTestCase as TestCase
-from .fixture_types import Fixtures, SetupContext, SetupOptions
+from .fixture_types import FixtureContext, FixtureOptions, Fixtures
 from .helpers import MockJenkins, test_data
 
 JENKINS_CONFIG = JenkinsConfig(
@@ -567,7 +567,9 @@ class ProjectPathTestCase(TestCase):
 
 
 @contextmanager
-def mock_jenkins(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Jenkins]:
+def mock_jenkins(
+    _options: FixtureOptions, _fixtures: Fixtures
+) -> FixtureContext[Jenkins]:
     obj = Jenkins(JENKINS_CONFIG)
     with mock.patch.object(
         obj.session, "get", **{"return_value.json.return_value": JOB_PARAMS}

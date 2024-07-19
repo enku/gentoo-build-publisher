@@ -10,11 +10,11 @@ from gentoo_build_publisher.types import Content, Package
 from . import fixture
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
 from .fixture_types import BaseTestCase as TestCase
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 from .helpers import MockJenkinsSession, Tree
 
 
-def builder_fixture(_options: SetupOptions, _fixtures: Fixtures) -> ArtifactFactory:
+def builder_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> ArtifactFactory:
     return ArtifactFactory(initial_packages=[])
 
 

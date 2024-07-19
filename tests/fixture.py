@@ -31,11 +31,11 @@ from gentoo_build_publisher.utils import time
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
 from .fixture_types import (
     BaseTestCase,
+    FixtureContext,
+    FixtureFunction,
+    FixtureOptions,
     Fixtures,
-    SetupContext,
-    SetupFunction,
-    SetupOptions,
-    SetupSpec,
+    FixtureSpec,
 )
 from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 
@@ -44,14 +44,14 @@ BuildPublisher = publisher_mod.BuildPublisher
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-def load(spec: SetupSpec) -> SetupFunction:
-    func: SetupFunction = globals()[spec] if isinstance(spec, str) else spec
+def load(spec: FixtureSpec) -> FixtureFunction:
+    func: FixtureFunction = globals()[spec] if isinstance(spec, str) else spec
 
     return func
 
 
-def depends(*deps: SetupSpec) -> Callable[[SetupFunction], SetupFunction]:
-    def dec(fn: SetupFunction) -> SetupFunction:
+def depends(*deps: FixtureSpec) -> Callable[[FixtureFunction], FixtureFunction]:
+    def dec(fn: FixtureFunction) -> FixtureFunction:
         fn._deps = [load(dep) for dep in deps]  # type: ignore[attr-defined]
         return fn
 
@@ -59,7 +59,7 @@ def depends(*deps: SetupSpec) -> Callable[[SetupFunction], SetupFunction]:
 
 
 @contextmanager
-def tmpdir(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Path]:
+def tmpdir(_options: FixtureOptions, _fixtures: Fixtures) -> FixtureContext[Path]:
     with tempfile.TemporaryDirectory() as tempdir:
         yield Path(tempdir)
 
@@ -67,8 +67,8 @@ def tmpdir(_options: SetupOptions, _fixtures: Fixtures) -> SetupContext[Path]:
 @contextmanager
 @depends("tmpdir")
 def mock_environment(
-    options: SetupOptions, fixtures: Fixtures
-) -> SetupContext[dict[str, str]]:
+    options: FixtureOptions, fixtures: Fixtures
+) -> FixtureContext[dict[str, str]]:
     local_environ = options.get("environ", {})
     mock_environ = {
         "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
@@ -85,15 +85,15 @@ def mock_environment(
 
 
 @depends("mock_environment")
-def settings(_options: SetupOptions, _fixtures: Fixtures) -> Settings:
+def settings(_options: FixtureOptions, _fixtures: Fixtures) -> Settings:
     return Settings.from_environ()
 
 
 @contextmanager
 @depends("tmpdir")
 def publisher(
-    options: SetupOptions, fixtures: Fixtures
-) -> SetupContext[BuildPublisher]:
+    options: FixtureOptions, fixtures: Fixtures
+) -> FixtureContext[BuildPublisher]:
     with mock_environment(options, fixtures):
         mock_publisher: BuildPublisher = BuildPublisherFactory()
         with _patch_publisher("jenkins", mock_publisher):
@@ -103,7 +103,7 @@ def publisher(
 
 
 @depends("publisher")
-def gbp(options: SetupOptions, _fixtures: Fixtures) -> GBP:
+def gbp(options: FixtureOptions, _fixtures: Fixtures) -> GBP:
     user = options.get("user", "test_user")
 
     return test_gbp(
@@ -112,14 +112,14 @@ def gbp(options: SetupOptions, _fixtures: Fixtures) -> GBP:
     )
 
 
-def console(_options: SetupOptions, _fixtures: Fixtures) -> Fixtures:
+def console(_options: FixtureOptions, _fixtures: Fixtures) -> Fixtures:
     sc = string_console()
 
     return Fixtures(console=sc[0], stdout=sc[1], stderr=sc[2])
 
 
 @depends("publisher")
-def api_keys(options: SetupOptions, fixtures: Fixtures) -> list[ApiKey]:
+def api_keys(options: FixtureOptions, fixtures: Fixtures) -> list[ApiKey]:
     names = options.get("api_key_names", ["test_api_key"])
     keys: list[ApiKey] = []
 
@@ -133,7 +133,7 @@ def api_keys(options: SetupOptions, fixtures: Fixtures) -> list[ApiKey]:
     return keys
 
 
-def records_db(options: SetupOptions, _fixtures: Fixtures) -> RecordDB:
+def records_db(options: FixtureOptions, _fixtures: Fixtures) -> RecordDB:
     [module] = importlib.metadata.entry_points(
         group="gentoo_build_publisher.records", name=options["records_backend"]
     )
@@ -142,7 +142,7 @@ def records_db(options: SetupOptions, _fixtures: Fixtures) -> RecordDB:
     return db
 
 
-def build_model(options: SetupOptions, _fixtures: Fixtures) -> BuildModel:
+def build_model(options: FixtureOptions, _fixtures: Fixtures) -> BuildModel:
     bm_options = options.get("build_model", {})
     built: dt.datetime = bm_options.get("built") or now()
     submitted: dt.datetime = bm_options.get("submitted") or now()
@@ -157,7 +157,7 @@ def build_model(options: SetupOptions, _fixtures: Fixtures) -> BuildModel:
 
 
 @depends(records_db, build_model)
-def record(options: SetupOptions, fixtures: Fixtures) -> BuildRecord:
+def record(options: FixtureOptions, fixtures: Fixtures) -> BuildRecord:
     record_options = options.get("record", {})
     bm: BuildModel = fixtures.build_model
     db: RecordDB = fixtures.records_db
@@ -168,22 +168,22 @@ def record(options: SetupOptions, fixtures: Fixtures) -> BuildRecord:
     return db.get(Build.from_id(str(fixtures.build_model)))
 
 
-def clock(options: SetupOptions, _fixtures: Fixtures) -> dt.datetime:
+def clock(options: FixtureOptions, _fixtures: Fixtures) -> dt.datetime:
     datetime: dt.datetime | None = options.get("clock")
     return datetime or now()
 
 
 @depends("publisher")
-def client(_options: SetupOptions, _fixtures: Fixtures) -> Client:
+def client(_options: FixtureOptions, _fixtures: Fixtures) -> Client:
     return Client()
 
 
-def build(_options: SetupOptions, _fixtures: Fixtures) -> Build:
+def build(_options: FixtureOptions, _fixtures: Fixtures) -> Build:
     return BuildFactory()
 
 
 def builds(
-    options: SetupOptions, _fixtures: Fixtures
+    options: FixtureOptions, _fixtures: Fixtures
 ) -> dict[str, list[Build]] | list[Build]:
     builds_options = options.get("builds", {})
     machines = builds_options.get("machines", ["babette"])
@@ -198,7 +198,7 @@ def builds(
 
 
 @depends(builds, publisher)
-def pulled_builds(_options: SetupOptions, fixtures: Fixtures) -> None:
+def pulled_builds(_options: FixtureOptions, fixtures: Fixtures) -> None:
     if isinstance(fixtures.builds, dict):
         builds_ = list(itertools.chain(*fixtures.builds.values()))
     else:
@@ -209,13 +209,13 @@ def pulled_builds(_options: SetupOptions, fixtures: Fixtures) -> None:
 
 
 @depends(tmpdir)
-def storage(_options: SetupOptions, fixtures: Fixtures) -> Storage:
+def storage(_options: FixtureOptions, fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
 @depends("tmpdir", "settings")
-def jenkins(_options: SetupOptions, fixtures: Fixtures) -> Jenkins:
+def jenkins(_options: FixtureOptions, fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     fixed_settings = replace(fixtures.settings, STORAGE_PATH=root)
 
@@ -231,7 +231,7 @@ def _patch_publisher(name: str, mock_publisher: BuildPublisher) -> None:
 
 
 def requires(
-    *requirements: SetupSpec,
+    *requirements: FixtureSpec,
 ) -> Callable[[type[BaseTestCase]], type[BaseTestCase]]:
     def decorator(test_case: type[BaseTestCase]) -> type[BaseTestCase]:
         setups = {}
@@ -257,7 +257,7 @@ def requires(
     return decorator
 
 
-def add_funcs(test: BaseTestCase, funcs: Iterable[SetupFunction]) -> None:
+def add_funcs(test: BaseTestCase, funcs: Iterable[FixtureFunction]) -> None:
     for func in funcs:
         name = func.__name__.removesuffix("_fixture")
         if deps := getattr(func, "_deps", []):
@@ -266,7 +266,7 @@ def add_funcs(test: BaseTestCase, funcs: Iterable[SetupFunction]) -> None:
             setattr(test.fixtures, name, get_result(func, test))
 
 
-def get_result(func: SetupFunction, test: BaseTestCase) -> Any:
+def get_result(func: FixtureFunction, test: BaseTestCase) -> Any:
     result = func(test._options, copy.copy(test.fixtures))
     if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
         result = test.enterContext(result)

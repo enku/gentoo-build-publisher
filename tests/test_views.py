@@ -14,19 +14,19 @@ from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
 from . import fixture
-from .fixture_types import Fixtures, SetupOptions
+from .fixture_types import FixtureOptions, Fixtures
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
 @fixture.depends("client")
-def lighthouse(_options: SetupOptions, fixtures: Fixtures) -> HttpResponse:
+def lighthouse(_options: FixtureOptions, fixtures: Fixtures) -> HttpResponse:
     response: HttpResponse = fixtures.client.get("/machines/lighthouse/")
     return response
 
 
 @fixture.depends("publisher", "builds")
-def artifacts(_options: SetupOptions, fixtures: Fixtures) -> dict[str, Build]:
+def artifacts(_options: FixtureOptions, fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
     artifact_builder.advance(-86400)

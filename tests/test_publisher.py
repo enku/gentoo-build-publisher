@@ -18,7 +18,7 @@ from gentoo_build_publisher.utils.time import utctime
 from . import TestCase
 from .factories import BuildFactory, BuildRecordFactory
 from .fixture import depends, requires
-from .fixture_types import BaseTestCase, Fixtures, SetupContext, SetupOptions
+from .fixture_types import BaseTestCase, FixtureContext, FixtureOptions, Fixtures
 from .helpers import BUILD_LOGS
 
 
@@ -303,8 +303,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
 @contextmanager
 def prepull_events(
-    _options: SetupOptions, _fixtures: Fixtures
-) -> SetupContext[list[Build]]:
+    _options: FixtureOptions, _fixtures: Fixtures
+) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def prepull(build: Build) -> None:
@@ -317,8 +317,8 @@ def prepull_events(
 
 @contextmanager
 def postpull_events(
-    _options: SetupOptions, _fixtures: Fixtures
-) -> SetupContext[list[tuple[Build, list[Package], GBPMetadata | None]]]:
+    _options: FixtureOptions, _fixtures: Fixtures
+) -> FixtureContext[list[tuple[Build, list[Package], GBPMetadata | None]]]:
     events: list[tuple[Build, list[Package], GBPMetadata | None]] = []
 
     def postpull(
@@ -333,8 +333,8 @@ def postpull_events(
 
 @contextmanager
 def publish_events(
-    _options: SetupOptions, _fixtures: Fixtures
-) -> SetupContext[list[Build]]:
+    _options: FixtureOptions, _fixtures: Fixtures
+) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def publish(build: Build) -> None:
@@ -456,7 +456,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.tags, ["stable", "testing"])
 
 
-def builds_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Build]:
+def builds_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]:
     # So for this case let's say we have 4 builds.  None have built timestamps.  The
     # 3rd one is published (but has no built timestamp) and the first 2 are pulled
     # but not published:
@@ -466,7 +466,7 @@ def builds_fixture(_options: SetupOptions, _fixtures: Fixtures) -> list[Build]:
 
 @depends("publisher", builds_fixture)
 def machine_info_fixture(
-    _options: SetupOptions, fixtures: Fixtures
+    _options: FixtureOptions, fixtures: Fixtures
 ) -> publisher.MachineInfo:
     machine = fixtures.builds[0].machine
 
