@@ -38,10 +38,7 @@ BuildPublisher = publisher_mod.BuildPublisher
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-class Fixtures(SimpleNamespace):
-    pass
-
-
+Fixtures: TypeAlias = SimpleNamespace
 FixtureOptions: TypeAlias = dict[str, Any]
 FixtureContext: TypeAlias = Iterator
 FixtureFunction: TypeAlias = Callable[[FixtureOptions, Fixtures], Any]
