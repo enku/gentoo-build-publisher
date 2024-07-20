@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
-from contextlib import contextmanager
 from unittest import mock
 from zoneinfo import ZoneInfo
 
@@ -307,7 +306,6 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(r2, r3)
 
 
-@contextmanager
 def prepull_events(
     _options: FixtureOptions, _fixtures: Fixtures
 ) -> FixtureContext[list[Build]]:
@@ -321,7 +319,6 @@ def prepull_events(
     yield events
 
 
-@contextmanager
 def postpull_events(
     _options: FixtureOptions, _fixtures: Fixtures
 ) -> FixtureContext[list[tuple[Build, list[Package], GBPMetadata | None]]]:
@@ -337,7 +334,6 @@ def postpull_events(
     yield events
 
 
-@contextmanager
 def publish_events(
     _options: FixtureOptions, _fixtures: Fixtures
 ) -> FixtureContext[list[Build]]:

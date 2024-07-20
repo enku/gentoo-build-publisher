@@ -4,6 +4,7 @@
 import copy
 import datetime as dt
 import importlib.metadata
+import inspect
 import itertools
 import os
 import tempfile
@@ -67,13 +68,11 @@ def depends(*deps: FixtureSpec) -> Callable[[FixtureFunction], FixtureFunction]:
     return dec
 
 
-@contextmanager
 def tmpdir(_options: FixtureOptions, _fixtures: Fixtures) -> FixtureContext[Path]:
     with tempfile.TemporaryDirectory() as tempdir:
         yield Path(tempdir)
 
 
-@contextmanager
 @depends("tmpdir")
 def mock_environment(
     options: FixtureOptions, fixtures: Fixtures
@@ -98,17 +97,12 @@ def settings(_options: FixtureOptions, _fixtures: Fixtures) -> Settings:
     return Settings.from_environ()
 
 
-@contextmanager
-@depends("tmpdir")
-def publisher(
-    options: FixtureOptions, fixtures: Fixtures
-) -> FixtureContext[BuildPublisher]:
-    with mock_environment(options, fixtures):
-        mock_publisher: BuildPublisher = BuildPublisherFactory()
-        with _patch_publisher("jenkins", mock_publisher):
-            with _patch_publisher("repo", mock_publisher):
-                with _patch_publisher("storage", mock_publisher):
-                    yield mock_publisher
+@depends("mock_environment")
+def publisher(_o: FixtureOptions, _f: Fixtures) -> FixtureContext[BuildPublisher]:
+    bp: BuildPublisher = BuildPublisherFactory()
+    pp = _patch_publisher
+    with pp("jenkins", bp), pp("repo", bp), pp("storage", bp):
+        yield bp
 
 
 @depends("publisher")
@@ -276,8 +270,9 @@ def add_funcs(test: BaseTestCase, funcs: Iterable[FixtureFunction]) -> None:
 
 
 def get_result(func: FixtureFunction, test: BaseTestCase) -> Any:
-    result = func(test._options, copy.copy(test.fixtures))
-    if hasattr(result, "__enter__") and hasattr(result, "__exit__"):
-        result = test.enterContext(result)
+    if inspect.isgeneratorfunction(func):
+        return test.enterContext(
+            contextmanager(func)(test._options, copy.copy(test.fixtures))
+        )
 
-    return result
+    return func(test._options, copy.copy(test.fixtures))

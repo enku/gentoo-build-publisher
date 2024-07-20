@@ -5,7 +5,6 @@ import dataclasses as dc
 import io
 import json
 import os
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from unittest import mock
@@ -564,7 +563,6 @@ class ProjectPathTestCase(fixture.BaseTestCase):
         self.assertEqual(str(project_path), "Gentoo/repos/marduk")
 
 
-@contextmanager
 def mock_jenkins(
     _options: fixture.FixtureOptions, _fixtures: fixture.Fixtures
 ) -> fixture.FixtureContext[Jenkins]:
