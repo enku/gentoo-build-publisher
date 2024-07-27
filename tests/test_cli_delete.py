@@ -7,27 +7,32 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build
 
-from . import TestCase, setup
-from .setup_types import Fixtures, SetupOptions
+from . import TestCase, fixture
 
 
-@setup.depends("builds")
-def build_fixture(_options: SetupOptions, fixtures: Fixtures) -> Build:
+@fixture.depends("builds")
+def build_fixture(
+    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
+) -> Build:
     builds: list[Build] = fixtures.builds
     return builds[0]
 
 
-@setup.depends(build_fixture)
-def args_fixture(_options: SetupOptions, fixtures: Fixtures) -> Namespace:
+@fixture.depends(build_fixture)
+def args_fixture(
+    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
+) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=False)
 
 
-@setup.depends(build_fixture)
-def force_args_fixture(_options: SetupOptions, fixtures: Fixtures) -> Namespace:
+@fixture.depends(build_fixture)
+def force_args_fixture(
+    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
+) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=True)
 
 
-@setup.requires(
+@fixture.requires(
     "pulled_builds", "console", "gbp", build_fixture, args_fixture, force_args_fixture
 )
 class GBPChkTestCase(TestCase):
@@ -82,7 +87,7 @@ class GBPChkTestCase(TestCase):
         self.assertFalse(publisher.pulled(build))
 
 
-@setup.requires("pulled_builds", "console", "gbp", build_fixture, args_fixture)
+@fixture.requires("pulled_builds", "console", "gbp", build_fixture, args_fixture)
 class DisabledDeletestTests(TestCase):
     options = {"environ": {"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "false"}}
 
