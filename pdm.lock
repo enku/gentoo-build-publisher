@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:bda41556897d3305454921bba2dd96278b83b4e8185210c16b9b28dea4fae16a"
+content_hash = "sha256:9ff512600e4db8aec5d8315931ee9585d2cd16d580c7580acf0aafa31f465935"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -1144,6 +1144,14 @@ files = [
     {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
     {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
 ]
+
+[[package]]
+name = "unittest-fixtures"
+version = "0.1.dev2"
+requires_python = ">=3.11"
+git = "https://github.com/enku/unittest-fixtures.git"
+revision = "2db2a1b362d882614f9a334c97692088fc41e3a6"
+summary = "A small library for loading unittest fixtures"
 
 [[package]]
 name = "urllib3"

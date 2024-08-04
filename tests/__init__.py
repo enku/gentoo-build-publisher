@@ -5,8 +5,7 @@ import logging
 from functools import wraps
 
 import django.test
-
-from . import fixture
+import unittest_fixtures as fixture
 
 logging.basicConfig(handlers=[logging.NullHandler()])
 

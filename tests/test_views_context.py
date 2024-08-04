@@ -6,6 +6,7 @@ from typing import Any, Generator
 from unittest import mock
 from zoneinfo import ZoneInfo
 
+import unittest_fixtures as fixture
 from django.utils import timezone
 
 from gentoo_build_publisher import publisher
@@ -18,15 +19,17 @@ from gentoo_build_publisher.views.context import (
     create_machine_context,
 )
 
-from . import TestCase, fixture
+from . import TestCase
 from .factories import (
     ArtifactFactory,
     BuildFactory,
     BuildRecordFactory,
     package_factory,
 )
-from .fixture import FixtureOptions, Fixtures
 from .helpers import QuickCache
+
+FixtureOptions = fixture.FixtureOptions
+Fixtures = fixture.Fixtures
 
 
 @fixture.requires("publisher")

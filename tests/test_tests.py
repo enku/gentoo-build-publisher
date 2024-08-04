@@ -5,13 +5,16 @@ import datetime as dt
 import tarfile
 from unittest import mock
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher.types import Content, Package
 
-from . import fixture
 from .factories import ArtifactFactory, BuildFactory, BuildInfo, PackageStatus
-from .fixture import BaseTestCase as TestCase
-from .fixture import FixtureOptions, Fixtures
 from .helpers import MockJenkinsSession, Tree
+
+FixtureOptions = fixture.FixtureOptions
+Fixtures = fixture.Fixtures
+TestCase = fixture.BaseTestCase
 
 
 def builder_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> ArtifactFactory:

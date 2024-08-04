@@ -6,11 +6,13 @@ import re
 import shutil
 from argparse import ArgumentParser, Namespace
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content
 
-from . import TestCase, fixture
+from . import TestCase
 from .factories import BuildFactory
 from .helpers import string_console
 

@@ -15,6 +15,7 @@ from unittest import mock
 from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli import GBP
+from unittest_fixtures import FixtureContext, FixtureOptions, Fixtures, depends
 
 from gentoo_build_publisher import publisher as publisher_mod
 from gentoo_build_publisher.cli import apikey
@@ -27,7 +28,6 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .fixture import FixtureContext, FixtureOptions, Fixtures, depends
 from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 
 BuildPublisher = publisher_mod.BuildPublisher

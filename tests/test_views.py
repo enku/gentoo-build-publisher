@@ -5,6 +5,7 @@ import datetime as dt
 from functools import partial
 from unittest import mock
 
+import unittest_fixtures as fixture
 from django import urls
 from django.http import Http404, HttpRequest, HttpResponse
 
@@ -13,10 +14,10 @@ from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.views import experimental
 
 from . import DjangoTestCase as BaseTestCase
-from . import fixture
-from .fixture import FixtureOptions, Fixtures
 
 now = partial(dt.datetime.now, tz=dt.UTC)
+FixtureOptions = fixture.FixtureOptions
+Fixtures = fixture.Fixtures
 
 
 @fixture.depends("client")

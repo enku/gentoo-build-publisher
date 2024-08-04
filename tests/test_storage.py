@@ -8,6 +8,8 @@ from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.settings import Settings
@@ -24,10 +26,12 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import TestCase, data, fixture
+from . import TestCase, data
 from .factories import PACKAGE_INDEX, BuildFactory
-from .fixture import FixtureOptions, Fixtures
 from .helpers import MockJenkins
+
+FixtureOptions = fixture.FixtureOptions
+Fixtures = fixture.Fixtures
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH=Path("/dev/null"), JENKINS_BASE_URL="https://jenkins.invalid/"
