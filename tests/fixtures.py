@@ -192,7 +192,7 @@ def jenkins(_options: FixtureOptions, fixtures: Fixtures) -> Jenkins:
 
 
 @contextmanager
-def _patch_publisher(name: str, mock_publisher: BuildPublisher) -> None:
+def _patch_publisher(name: str, mock_publisher: BuildPublisher) -> FixtureContext[None]:
     # pylint: disable=protected-access
     with mock.patch.object(publisher_mod._inst, name, getattr(mock_publisher, name)):
         with mock.patch.object(publisher_mod, name, getattr(mock_publisher, name)):
