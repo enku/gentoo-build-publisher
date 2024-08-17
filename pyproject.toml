@@ -56,6 +56,9 @@ thread = "gentoo_build_publisher.worker.thread:ThreadWorker"
 redis = [
     "rq>=1.15.1",
 ]
+test = [
+    "nox>=2024.4.15",
+]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
