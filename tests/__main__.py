@@ -30,7 +30,7 @@ def main() -> None:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments"""
-    default_settings = os.environ.get("DJANGO_SETTINGS_MODULE", "settings")
+    default_settings = os.environ.get("DJANGO_SETTINGS_MODULE", "tests.settings")
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--failfast", action="store_true", default=False)
     parser.add_argument("--settings", default=default_settings)
