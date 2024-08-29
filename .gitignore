@@ -1,5 +1,6 @@
 *.swp
 .coverage
+.fmt
 .ycm_extra_conf.py
 /.envrc
 /.pdm-python
