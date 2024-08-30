@@ -35,7 +35,7 @@ def parse_args(parser: argparse.ArgumentParser) -> None:
     repo_help = "(git) URL for the ebuild repo"
     parser.add_argument("repo", type=str, metavar="REPO", help=repo_help)
 
-    branch_help = "git branch to pull from (default: master)"
+    branch_help = "git branch to pull from (default: %(default)s)"
     parser.add_argument(
         "--branch", type=str, metavar="BRANCH", default="master", help=branch_help
     )

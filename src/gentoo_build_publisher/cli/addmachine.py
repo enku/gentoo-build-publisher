@@ -35,12 +35,12 @@ def parse_args(parser: argparse.ArgumentParser) -> None:
     repo_help = "(git) URL that contains the machine's pipeline script"
     parser.add_argument("repo", type=str, metavar="REPO", help=repo_help)
 
-    branch_help = "git branch to pull from (default: master)"
+    branch_help = "git branch to pull from (default: %(default)s)"
     parser.add_argument(
         "--branch", type=str, metavar="BRANCH", default="master", help=branch_help
     )
 
-    deps_help = "List of ebuild repos the machine depends on (default: gentoo)"
+    deps_help = "List of ebuild repos the machine depends on (default: %(default)s)"
     parser.add_argument(
         "--deps",
         "-d",
