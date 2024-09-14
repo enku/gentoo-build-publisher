@@ -31,11 +31,10 @@ GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 @render("gentoo_build_publisher/dashboard/main.html")
 def dashboard(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
-    input_context = ViewInputContext(
-        cache=cache,
-        color_range=color_range_from_settings(),
-        days=get_query_value_from_request(request, "chart_days", int, 7),
-    )
+    color_range = color_range_from_settings()
+    days = get_query_value_from_request(request, "chart_days", int, 7)
+    input_context = ViewInputContext(cache=cache, color_range=color_range, days=days)
+
     return create_dashboard_context(input_context)
 
 
@@ -47,8 +46,9 @@ def machines(request: HttpRequest, machine: str) -> ViewContext:
         raise Http404("No builds for this machine")
 
     days = get_query_value_from_request(request, "chart_days", int, 7)
+    color_range = color_range_from_settings()
     input_context = MachineInputContext(
-        cache=cache, color_range=color_range_from_settings(), days=days, machine=machine
+        cache=cache, color_range=color_range, days=days, machine=machine
     )
     return create_machine_context(input_context)
 
