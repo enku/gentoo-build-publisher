@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, Callable, TypeAlias
+from typing import Any, Callable, Mapping, TypeAlias
 
 from ariadne_django.views import GraphQLView
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render as _render
 from django.urls import URLPattern, path
 
 from gentoo_build_publisher import publisher
@@ -26,6 +26,8 @@ from gentoo_build_publisher.views.utils import get_query_value_from_request
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 View: TypeAlias = Callable[..., HttpResponse]
+ViewContext: TypeAlias = Mapping[str, Any]
+TemplateView: TypeAlias = Callable[..., ViewContext]
 
 
 def view(pattern: str, **kwargs: Any) -> Callable[[View], View]:
@@ -54,6 +56,25 @@ class ViewFinder:
         return cls.pattern_views
 
 
+def render(
+    template_name: str, content_type: str | None = None
+) -> Callable[[TemplateView], View]:
+    """Instruct a view to render the given template
+
+    The view should return a context mapping
+    """
+
+    def dec(view_func: TemplateView) -> View:
+        @wraps(view_func)
+        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+            context = view_func(request, *args, **kwargs)
+            return _render(request, template_name, context, content_type=content_type)
+
+        return wrapper
+
+    return dec
+
+
 def experimental(view_func: View) -> View:
     """Mark a view as experimental
 
@@ -70,61 +91,50 @@ def experimental(view_func: View) -> View:
 
 
 @view("", name="dashboard")
-def dashboard(request: HttpRequest) -> HttpResponse:
+@render("gentoo_build_publisher/dashboard/main.html")
+def dashboard(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
     input_context = ViewInputContext(
         cache=cache,
         color_range=color_range_from_settings(),
         days=get_query_value_from_request(request, "chart_days", int, 7),
     )
-    context = create_dashboard_context(input_context)
-
-    return render(request, "gentoo_build_publisher/dashboard/main.html", context)
+    return create_dashboard_context(input_context)
 
 
 @view("machines/<str:machine>/")
-def machines(request: HttpRequest, machine: str) -> HttpResponse:
+@render("gentoo_build_publisher/machine/main.html")
+def machines(request: HttpRequest, machine: str) -> ViewContext:
     """Response for the machines page"""
     if not next(iter(publisher.repo.build_records.for_machine(machine)), None):
         raise Http404("No builds for this machine")
 
+    days = get_query_value_from_request(request, "chart_days", int, 7)
     input_context = MachineInputContext(
-        cache=cache,
-        color_range=color_range_from_settings(),
-        days=get_query_value_from_request(request, "chart_days", int, 7),
-        machine=machine,
+        cache=cache, color_range=color_range_from_settings(), days=days, machine=machine
     )
-    context = create_machine_context(input_context)
-
-    return render(request, "gentoo_build_publisher/machine/main.html", context)
+    return create_machine_context(input_context)
 
 
 @view("machines/<str:machine>/repos.conf")
-def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
+@render("gentoo_build_publisher/repos.conf", content_type="text/plain")
+def repos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = parse_tag_or_raise_404(machine)
+    hostname = request.headers.get("Host", "localhost").partition(":")[0]
+    repos = publisher.storage.repos(build)
 
-    context = {
-        "dirname": dirname,
-        "hostname": request.headers.get("Host", "localhost").partition(":")[0],
-        "repos": publisher.storage.repos(build),
-    }
-    return render(
-        request, "gentoo_build_publisher/repos.conf", context, content_type="text/plain"
-    )
+    return {"dirname": dirname, "hostname": hostname, "repos": repos}
 
 
 @view("machines/<str:machine>/binrepos.conf")
-def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
+@render("gentoo_build_publisher/binrepos.conf", content_type="text/plain")
+def binrepos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
     """Create a binrepos.conf entry for the given machine"""
     dirname = parse_tag_or_raise_404(machine)[2]
+    uri = request.build_absolute_uri(f"/binpkgs/{dirname}/")
 
-    return render(
-        request,
-        "gentoo_build_publisher/binrepos.conf",
-        {"machine": machine, "uri": request.build_absolute_uri(f"/binpkgs/{dirname}/")},
-        content_type="text/plain",
-    )
+    return {"machine": machine, "uri": uri}
 
 
 graphql = view("graphql")(GraphQLView.as_view(schema=schema))
