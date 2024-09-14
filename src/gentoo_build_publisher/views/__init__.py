@@ -117,16 +117,12 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
 @view("machines/<str:machine>/binrepos.conf")
 def binrepos_dot_conf(request: HttpRequest, machine: str) -> HttpResponse:
     """Create a binrepos.conf entry for the given machine"""
-    [*_, dirname] = parse_tag_or_raise_404(machine)
+    dirname = parse_tag_or_raise_404(machine)[2]
 
-    context = {
-        "machine": machine,
-        "uri": request.build_absolute_uri(f"/binpkgs/{dirname}/"),
-    }
     return render(
         request,
         "gentoo_build_publisher/binrepos.conf",
-        context,
+        {"machine": machine, "uri": request.build_absolute_uri(f"/binpkgs/{dirname}/")},
         content_type="text/plain",
     )
 
