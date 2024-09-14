@@ -4,6 +4,8 @@
 import datetime as dt
 from unittest import mock
 
+import unittest_fixtures as fixture
+from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
 
 from gentoo_build_publisher import publisher
@@ -11,11 +13,12 @@ from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils.time import localtime
 from gentoo_build_publisher.views.utils import (
     StatsCollector,
+    experimental,
     get_metadata,
     get_query_value_from_request,
 )
 
-from . import TestCase, fixture
+from . import DjangoTestCase, TestCase
 from .factories import (
     ArtifactFactory,
     BuildFactory,
@@ -245,6 +248,34 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(list(pbd.keys()), [d2.date()])
 
         self.assertEqual(len(pbd[d2.date()]), 6)
+
+
+class ExperimentalMarkerTests(DjangoTestCase):
+    def test_debug_is_false(self) -> None:
+        request = mock.MagicMock(spec=HttpRequest)
+        experimental_view = experimental(dummy_view)
+
+        with self.settings(DEBUG=False):
+            response = dummy_view(request)
+            self.assertEqual(response.status_code, 200)
+
+            with self.assertRaises(Http404):
+                response = experimental_view(request)
+
+    def test_debug_is_true(self) -> None:
+        request = mock.MagicMock(spec=HttpRequest)
+        experimental_view = experimental(dummy_view)
+
+        with self.settings(DEBUG=True):
+            response = dummy_view(request)
+            self.assertEqual(response.status_code, 200)
+
+            response = experimental_view(request)
+            self.assertEqual(response.status_code, 200)
+
+
+def dummy_view(request: HttpRequest) -> HttpResponse:
+    return HttpResponse("Hi!")
 
 
 def create_builds_and_packages(

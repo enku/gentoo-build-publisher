@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import datetime as dt
-from functools import lru_cache
-from typing import Any, TypeAlias
+from functools import lru_cache, wraps
+from typing import Any, Callable, Mapping, TypeAlias
 
-from django.http import HttpRequest
+from django.conf import settings
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import render as _render
+from django.urls import URLPattern, path
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
@@ -18,9 +21,72 @@ BuildID: TypeAlias = str  # pylint: disable=invalid-name
 CPV: TypeAlias = str  # pylint: disable=invalid-name
 Gradient: TypeAlias = list[str]
 MachineName: TypeAlias = str
+View: TypeAlias = Callable[..., HttpResponse]
+ViewContext: TypeAlias = Mapping[str, Any]
+TemplateView: TypeAlias = Callable[..., ViewContext]
 
 
 _NOT_FOUND = object()
+
+
+def view(pattern: str, **kwargs: Any) -> Callable[[View], View]:
+    """Decorator to register a view"""
+
+    def dec(view_func: View) -> View:
+        ViewFinder.register(pattern, view_func, **kwargs)
+        return view_func
+
+    return dec
+
+
+class ViewFinder:
+    """Django view registry"""
+
+    pattern_views: list[URLPattern] = []
+
+    @classmethod
+    def register(cls, pattern: str, view_func: View, **kwargs: Any) -> None:
+        """Register the given view for the given pattern"""
+        cls.pattern_views.append(path(pattern, view_func, **kwargs))
+
+    @classmethod
+    def find(cls) -> list[URLPattern]:
+        """Return a list of url_path/view mappings for the Django url resolver"""
+        return cls.pattern_views
+
+
+def render(
+    template_name: str, content_type: str | None = None
+) -> Callable[[TemplateView], View]:
+    """Instruct a view to render the given template
+
+    The view should return a context mapping
+    """
+
+    def dec(view_func: TemplateView) -> View:
+        @wraps(view_func)
+        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+            context = view_func(request, *args, **kwargs)
+            return _render(request, template_name, context, content_type=content_type)
+
+        return wrapper
+
+    return dec
+
+
+def experimental(view_func: View) -> View:
+    """Mark a view as experimental
+
+    Experimental views return 404s when not in DEBUG mode.
+    """
+
+    @wraps(view_func)
+    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        if not settings.DEBUG:
+            raise Http404
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 class StatsCollector:

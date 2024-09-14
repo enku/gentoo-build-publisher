@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from functools import wraps
-from typing import Any, Callable, Mapping, TypeAlias
-
 from ariadne_django.views import GraphQLView
 from django.conf import settings
 from django.core.cache import cache
-from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import render as _render
-from django.urls import URLPattern, path
+from django.http import Http404, HttpRequest
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
@@ -22,72 +17,14 @@ from gentoo_build_publisher.views.context import (
     create_dashboard_context,
     create_machine_context,
 )
-from gentoo_build_publisher.views.utils import get_query_value_from_request
+from gentoo_build_publisher.views.utils import (
+    ViewContext,
+    get_query_value_from_request,
+    render,
+    view,
+)
 
 GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
-View: TypeAlias = Callable[..., HttpResponse]
-ViewContext: TypeAlias = Mapping[str, Any]
-TemplateView: TypeAlias = Callable[..., ViewContext]
-
-
-def view(pattern: str, **kwargs: Any) -> Callable[[View], View]:
-    """Decorator to register a view"""
-
-    def dec(view_func: View) -> View:
-        ViewFinder.register(pattern, view_func, **kwargs)
-        return view_func
-
-    return dec
-
-
-class ViewFinder:
-    """Django view registry"""
-
-    pattern_views: list[URLPattern] = []
-
-    @classmethod
-    def register(cls, pattern: str, view_func: View, **kwargs: Any) -> None:
-        """Register the given view for the given pattern"""
-        cls.pattern_views.append(path(pattern, view_func, **kwargs))
-
-    @classmethod
-    def find(cls) -> list[URLPattern]:
-        """Return a list of url_path/view mappings for the Django url resolver"""
-        return cls.pattern_views
-
-
-def render(
-    template_name: str, content_type: str | None = None
-) -> Callable[[TemplateView], View]:
-    """Instruct a view to render the given template
-
-    The view should return a context mapping
-    """
-
-    def dec(view_func: TemplateView) -> View:
-        @wraps(view_func)
-        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-            context = view_func(request, *args, **kwargs)
-            return _render(request, template_name, context, content_type=content_type)
-
-        return wrapper
-
-    return dec
-
-
-def experimental(view_func: View) -> View:
-    """Mark a view as experimental
-
-    Experimental views return 404s when not in DEBUG mode.
-    """
-
-    @wraps(view_func)
-    def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        if not settings.DEBUG:
-            raise Http404
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
 
 
 @view("", name="dashboard")
@@ -137,7 +74,7 @@ def binrepos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
     return {"machine": machine, "uri": uri}
 
 
-graphql = view("graphql")(GraphQLView.as_view(schema=schema))
+view("graphql")(GraphQLView.as_view(schema=schema))
 
 
 def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
