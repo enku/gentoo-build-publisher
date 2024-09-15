@@ -85,3 +85,6 @@ detail.
 - [Gentoo Build Publisher: Manually Running Repo
   Jobs](https://lunarcowboy.com/gentoo-build-publisher-manually-running-repo-jobs.html):
   September 2024
+- [Gentoo Build Publisher: Using Separate Machines for
+  Overlays](https://lunarcowboy.com/gentoo-build-publisher-using-separate-machines-for-overlays.html)
+  September 2024
