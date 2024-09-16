@@ -337,11 +337,13 @@ def resolve_mutation_schedule_build(
     _obj: Any,
     _info: Info,
     machine: str,
+    isRepo: bool = False,
     params: list[BuildParameterInput] | None = None,
 ) -> str | None:
     params = params or []
+    job = f"repos/job/{machine}" if isRepo else machine
 
-    return publisher.schedule_build(machine, **{p["name"]: p["value"] for p in params})
+    return publisher.schedule_build(job, **{p["name"]: p["value"] for p in params})
 
 
 @mutation.field("keepBuild")

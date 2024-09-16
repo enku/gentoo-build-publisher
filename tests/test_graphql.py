@@ -738,6 +738,21 @@ class ScheduleBuildMutationTestCase(TestCase):
         self.assertEqual(result, expected)
         mock_schedule_build.assert_called_once_with("babette")
 
+    def test_with_repos(self) -> None:
+        query = 'mutation { scheduleBuild(machine: "gentoo", isRepo: true) }'
+
+        with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
+            mock_schedule_build.return_value = (
+                "https://jenkins.invalid/queue/item/31528/"
+            )
+            result = graphql(self.fixtures.client, query)
+
+        self.assertEqual(
+            result,
+            {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
+        )
+        mock_schedule_build.assert_called_once_with("repos/job/gentoo")
+
 
 @fixture.requires("tmpdir", "publisher", "client")
 class KeepBuildMutationTestCase(TestCase):

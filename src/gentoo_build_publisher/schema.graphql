@@ -82,7 +82,7 @@ type Query {
 type Mutation {
   publish(id: ID!): MachineSummary
   pull(id: ID!, note: String, tags: [String!]): MachineSummary
-  scheduleBuild(machine: String!, params: [BuildParameter!]): String
+  scheduleBuild(machine: String!, isRepo: Boolean = false, params: [BuildParameter!]): String
   keepBuild(id: ID!): Build
   createBuildTag(id: ID!, tag: String!) : Build!
   removeBuildTag(machine: String!, tag: String!) : MachineSummary
