@@ -143,9 +143,10 @@ def create_secret_key() -> bytes:
 
 def read_package_file(filename: str) -> str:
     """Read the given filename from this package"""
-    return importlib.resources.read_text(
-        "gentoo_build_publisher", filename, encoding="UTF-8"
-    )
+    parts = filename.split("/")
+    package = ".".join(["gentoo_build_publisher", *parts[:-1]])
+    filename = parts[-1]
+    return importlib.resources.read_text(package, filename, encoding="UTF-8")
 
 
 def ensure_bytes(data: str | bytes, encoding: str = "ascii") -> bytes:

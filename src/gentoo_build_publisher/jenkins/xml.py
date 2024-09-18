@@ -6,9 +6,9 @@ from typing import TypeGuard
 from gentoo_build_publisher.types import EbuildRepo, MachineJob
 from gentoo_build_publisher.utils import read_package_file
 
-CREATE_BUILD = read_package_file("create_machine_job.xml")
-CREATE_REPO = read_package_file("create_repo_job.xml")
-FOLDER = read_package_file("folder.xml")
+CREATE_BUILD = read_package_file("jenkins/create_machine_job.xml")
+CREATE_REPO = read_package_file("jenkins/create_repo_job.xml")
+FOLDER = read_package_file("jenkins/folder.xml")
 PATH_SEPARATOR = "/"
 PATHS = {
     "BRANCH_NAME": "scm/branches/hudson.plugins.git.BranchSpec/name",
