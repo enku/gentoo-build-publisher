@@ -4,7 +4,7 @@ const gradientColors = JSON.parse(document.getElementById('gradientColors').text
 const machines = JSON.parse(document.getElementById('machines').textContent);
 
 function numberize(value) {
-  return (value < 1000000000) ? `${value / 1000000}M` : `${value / 1000000000}G`;
+  return (value < 2 ** 30) ? `${value / 2 ** 20}M` : `${value / 2 ** 30}G`;
 }
 
 function machineDistributionChart() {
@@ -77,7 +77,7 @@ function packageSizesChart() {
         y: {
           ticks: {
             max: 30,
-            stepSize: 5000000000,
+            stepSize: 5 * 2 ** 30,
             callback: numberize,
           },
         },
