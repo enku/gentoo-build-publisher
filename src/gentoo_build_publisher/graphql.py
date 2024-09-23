@@ -218,8 +218,10 @@ def resolve_machine_summary_published_build(
 
 
 @query.field("machines")
-def resolve_query_machines(_obj: Any, _info: Info) -> list[MachineInfo]:
-    return publisher.machines()
+def resolve_query_machines(
+    _obj: Any, _info: Info, names: list[str] | None = None
+) -> list[MachineInfo]:
+    return publisher.machines(names=names)
 
 
 @query.field("build")

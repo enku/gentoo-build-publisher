@@ -232,9 +232,16 @@ class BuildPublisher:
 
             yield Change(cpvb, ChangeState[code_map[code]])
 
-    def machines(self) -> list[MachineInfo]:
-        """Return list of machines with metadata"""
-        return [MachineInfo(i) for i in self.repo.build_records.list_machines()]
+    def machines(self, *, names: Iterable[str] | None = None) -> list[MachineInfo]:
+        """Return list of machines with metadata
+
+        If names is given, only return machines who's names are contained.
+        """
+        machine_names = self.repo.build_records.list_machines()
+        if names is not None:
+            machine_names = [name for name in machine_names if name in set(names)]
+
+        return [MachineInfo(i) for i in machine_names]
 
     def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""

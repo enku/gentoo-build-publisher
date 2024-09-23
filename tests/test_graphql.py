@@ -564,6 +564,26 @@ class MachinesQueryTestCase(TestCase):
         result = graphql(self.fixtures.client, query)
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
+    def test_with_names_filter(self) -> None:
+        builds = [
+            *BuildFactory.create_batch(3, machine="foo"),
+            *BuildFactory.create_batch(2, machine="bar"),
+            *BuildFactory.create_batch(1, machine="baz"),
+        ]
+        for build in builds:
+            publisher.pull(build)
+
+        query = """
+        {
+          machines(names: ["bar", "baz"]) {
+            machine
+          }
+        }
+        """
+        result = graphql(self.fixtures.client, query)
+
+        self.assertEqual(len(result["data"]["machines"]), 2)
+
 
 @fixture.requires("tmpdir", "publisher", "client")
 class PublishMutationTestCase(TestCase):

@@ -71,7 +71,7 @@ type Query {
   builds(machine: String!): [Build!]!
   diff(left: ID!, right: ID!): DiffStat
   latest(machine: String!): Build
-  machines: [MachineSummary!]!
+  machines(names: [String!]): [MachineSummary!]!
   search(machine: String!, field: SearchField!, key: String!): [Build!]!
   searchNotes(machine: String!, key: String!): [Build!]! @deprecated(reason: "Use `search()` instead")
   version: String!

@@ -305,6 +305,33 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         r3 = publisher.record(Build(r1.machine, r1.build_id))
         self.assertEqual(r2, r3)
 
+    def test_machines(self) -> None:
+        builds = [
+            *BuildFactory.create_batch(3, machine="foo"),
+            *BuildFactory.create_batch(2, machine="bar"),
+            *BuildFactory.create_batch(1, machine="baz"),
+        ]
+        publisher_ = self.fixtures.publisher
+        for build in builds:
+            publisher_.pull(build)
+
+        machines = publisher_.machines()
+
+        self.assertEqual(len(machines), 3)
+
+    def test_machines_with_filter(self) -> None:
+        builds = [
+            *BuildFactory.create_batch(3, machine="foo"),
+            *BuildFactory.create_batch(2, machine="bar"),
+            *BuildFactory.create_batch(1, machine="baz"),
+        ]
+        publisher_ = self.fixtures.publisher
+        for build in builds:
+            publisher_.pull(build)
+        machines = publisher_.machines(names={"bar", "baz", "bogus"})
+
+        self.assertEqual(len(machines), 2)
+
 
 def prepull_events(
     _options: FixtureOptions, _fixtures: Fixtures
