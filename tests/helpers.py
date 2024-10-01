@@ -174,7 +174,7 @@ class MockJenkinsSession(Session):
 class DjangoToRequestsAdapter(BaseAdapter):
     """Requests Adapter to call Django views"""
 
-    def send(  # pylint: disable=too-many-arguments
+    def send(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
     ) -> Response:
         django_response = Client().generic(

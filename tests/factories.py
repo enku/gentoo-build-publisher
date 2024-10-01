@@ -137,7 +137,7 @@ class ArtifactFactory:
 
         self._builds: dict[str, BuildInfo] = {}
 
-    def build(  # pylint: disable=too-many-arguments
+    def build(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         build: Build,
         cpv: str,
