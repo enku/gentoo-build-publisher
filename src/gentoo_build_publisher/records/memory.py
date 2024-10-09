@@ -2,7 +2,6 @@
 
 import datetime as dt
 import typing as t
-from collections.abc import Iterable
 from dataclasses import replace
 
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
@@ -149,7 +148,7 @@ class RecordDB:
 
         return records[-1]
 
-    def search(self, machine: str, field: str, key: str) -> Iterable[BuildRecord]:
+    def search(self, machine: str, field: str, key: str) -> t.Iterable[BuildRecord]:
         """search the given field for given machine
 
         field must be a BuildRecord field. Not all fields may be searchable, in which

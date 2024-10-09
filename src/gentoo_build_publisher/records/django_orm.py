@@ -1,9 +1,8 @@
 """Django ORM records implementation"""
 
 import datetime as dt
-from collections.abc import Iterable
 from dataclasses import replace
-from typing import Any
+from typing import Any, Iterable
 
 from django.conf import settings
 from django.db import models

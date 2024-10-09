@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import json as jsonlib
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from pathlib import PurePosixPath
-from typing import Any, Self
+from typing import Any, Iterable, Self
 
 import requests
 from yarl import URL

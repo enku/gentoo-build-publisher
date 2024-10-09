@@ -5,10 +5,9 @@ from __future__ import annotations
 import logging
 import shutil
 import tempfile
-from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
-from typing import IO
+from typing import IO, Iterable
 
 import orjson
 

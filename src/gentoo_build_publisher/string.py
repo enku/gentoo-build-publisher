@@ -1,7 +1,6 @@
 """Misc string operations"""
 
-from collections.abc import Iterator
-from typing import IO
+from typing import IO, Iterator
 
 FALSE_VALUES = {"0", "f", "false", "n", "no", "off"}
 TRUE_VALUES = {"1", "on", "t", "true", "y", "yes"}

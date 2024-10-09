@@ -20,11 +20,10 @@ from __future__ import annotations
 
 import logging
 import math
-from collections.abc import Iterable
 from datetime import datetime
 from difflib import Differ
 from functools import cached_property
-from typing import Any
+from typing import Any, Iterable
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.purge import Purger

@@ -9,11 +9,10 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.metadata
-from collections.abc import Callable
 from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import resources
-from typing import Any, TypeAlias, TypedDict
+from typing import Any, Callable, TypeAlias, TypedDict
 
 from ariadne import (
     EnumType,
