@@ -1,4 +1,4 @@
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring,comparison-with-callable
 import datetime as dt
 import io
 import os
