@@ -51,7 +51,7 @@ def copy_path(src: Path, dst: Path, link_dest: Path | None) -> None:
     If dst already exists, remove it before copying.
     """
     if dst.exists():
-        logger.warning("Extract destination already exists: %s. Removing", dst)
+        logger.warning("Destination already exists: %s. Removing", dst)
         shutil.rmtree(dst)
 
     if link_dest is not None:
