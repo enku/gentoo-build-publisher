@@ -69,7 +69,9 @@ of...  politics regarding systemd. But the truth of the matter is all of my
 systems are running on systemd, and I just don't have the time/interest to
 figure out how to get it working on OpenRC or other init systems. However if
 you know how to get GBP up and running with your favorite init system then
-feel free to add to this document via a pull request.
+feel free to add to this document via a pull request.  Note that Gentoo Build
+Publisher supports machine builds using any Gentoo-supported init system, not
+just systemd.
 
 ## Install required packages
 
