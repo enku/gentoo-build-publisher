@@ -182,9 +182,11 @@ class Jenkins:
         url = self.url.metadata(build)
         http_response = request_and_raise(self.session.get, url)
 
-        json = http_response.json()
+        metadata = http_response.json()
 
-        return JenkinsMetadata(duration=json["duration"], timestamp=json["timestamp"])
+        return JenkinsMetadata(
+            duration=metadata["duration"], timestamp=metadata["timestamp"]
+        )
 
     @classmethod
     def from_settings(cls: type[Jenkins], settings: Settings) -> Jenkins:
