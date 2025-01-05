@@ -70,8 +70,12 @@ class RecordDBTestCase(TestCase):
 
         self.assertEqual(records.get(Build("lighthouse", "8924")), build_record)
 
-        with self.assertRaises(RecordNotFound):
-            records.get(Build("anchor", "0"))
+        build = Build("anchor", "0")
+        with self.assertRaises(RecordNotFound) as context:
+            records.get(build)
+
+        exception = context.exception
+        self.assertEqual(exception.args, (build,))
 
     @parametrized(BACKENDS)
     def test_for_machine(self, backend: str) -> None:

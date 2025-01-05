@@ -56,7 +56,7 @@ class RecordDB:
         builds = self.builds.get(build.machine, {})
 
         if not (record_build := builds.get(build.build_id)):
-            raise RecordNotFound()
+            raise RecordNotFound(build)
 
         return record_build
 

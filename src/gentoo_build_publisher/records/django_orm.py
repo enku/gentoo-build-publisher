@@ -62,7 +62,7 @@ class RecordDB:
                 machine=build.machine, build_id=build.build_id
             )
         except BuildModel.DoesNotExist:
-            raise RecordNotFound from None
+            raise RecordNotFound(build) from None
 
         return build_model.record()
 
