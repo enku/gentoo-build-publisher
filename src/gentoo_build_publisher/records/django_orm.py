@@ -15,6 +15,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
+_manager = BuildModel.objects
 
 
 class RecordDB:
@@ -29,7 +30,7 @@ class RecordDB:
         build_record = replace(build_record, **fields)
 
         try:
-            model = BuildModel.objects.get(
+            model = _manager.get(
                 machine=build_record.machine, build_id=build_record.build_id
             )
         except BuildModel.DoesNotExist:
@@ -57,8 +58,9 @@ class RecordDB:
         if isinstance(build, BuildRecord):
             return build
 
+        query = _manager.select_related(*RELATED)
         try:
-            build_model: BuildModel = BuildModel.objects.select_related(*RELATED).get(
+            build_model: BuildModel = query.get(
                 machine=build.machine, build_id=build.build_id
             )
         except BuildModel.DoesNotExist:
@@ -69,38 +71,31 @@ class RecordDB:
     @staticmethod
     def for_machine(machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
-        build_models = (
-            BuildModel.objects.select_related(*RELATED)
-            .filter(machine=machine)
-            .order_by(models.F("built").desc(nulls_last=True), "-submitted")
-        )
+        built = models.F("built")
+        query = _manager.select_related(*RELATED)
+        query = query.filter(machine=machine)
+        query = query.order_by(built.desc(nulls_last=True), "-submitted")
 
-        return (build_model.record() for build_model in build_models)
+        return (build_model.record() for build_model in query)
 
     @staticmethod
     def delete(build: Build) -> None:
         """Delete this Build from the db"""
-        BuildModel.objects.filter(
-            machine=build.machine, build_id=build.build_id
-        ).delete()
+        _manager.filter(machine=build.machine, build_id=build.build_id).delete()
 
     @staticmethod
     def exists(build: Build) -> bool:
         """Return True iff a record of the build exists in the database"""
-        return BuildModel.objects.filter(
-            machine=build.machine, build_id=build.build_id
-        ).exists()
+        return _manager.filter(machine=build.machine, build_id=build.build_id).exists()
 
     @staticmethod
     def list_machines() -> list[str]:
         """Return a list of machine names"""
-        machines = (
-            BuildModel.objects.values_list("machine", flat=True)
-            .distinct()
-            .order_by("machine")
-        )
+        query = _manager.values_list("machine", flat=True)
+        query = query.distinct()
+        query = query.order_by("machine")
 
-        return list(machines)
+        return list(query)
 
     def previous(
         self, build: BuildRecord, completed: bool = True
@@ -118,9 +113,7 @@ class RecordDB:
             field_lookups["completed__isnull"] = False
 
         query = (
-            BuildModel.objects.filter(**field_lookups)
-            .select_related(*RELATED)
-            .order_by("-built")
+            _manager.filter(**field_lookups).select_related(*RELATED).order_by("-built")
         )
 
         try:
@@ -140,11 +133,8 @@ class RecordDB:
         if completed:
             field_lookups["completed__isnull"] = False
 
-        query = (
-            BuildModel.objects.filter(**field_lookups)
-            .select_related(*RELATED)
-            .order_by("built")
-        )
+        query = _manager.filter(**field_lookups)
+        query = query.select_related(*RELATED).order_by("built")
 
         try:
             build_model: BuildModel = query[0]
@@ -165,18 +155,17 @@ class RecordDB:
         if completed:
             field_lookups["completed__isnull"] = False
 
-        if BuildModel.objects.filter(**field_lookups, built__isnull=False).count():
+        if _manager.filter(**field_lookups, built__isnull=False).count():
             field_lookups["built__isnull"] = False
-            order_by = "-built"
+            built = "-built"
         else:
-            order_by = "-build_id"  # backwards compat
+            built = "-build_id"  # backwards compat
 
+        query = _manager.filter(**field_lookups)
+        query = query.order_by(built)
+        query = query.select_related(*RELATED)
         try:
-            build_model: BuildModel = (
-                BuildModel.objects.filter(**field_lookups)
-                .order_by(order_by)
-                .select_related(*RELATED)
-            )[0]
+            build_model: BuildModel = query[0]
         except IndexError:
             return None
 
@@ -197,13 +186,11 @@ class RecordDB:
             "note": "buildnote__note__icontains",
         }.get(field, f"{field}__icontains")
 
-        build_models = (
-            BuildModel.objects.select_related(*RELATED)
-            .filter(**{"machine": machine, field_filter: key})
-            .order_by("-submitted")
-        )
+        query = _manager.select_related(*RELATED)
+        query = query.filter(**{"machine": machine, field_filter: key})
+        query = query.order_by("-submitted")
 
-        return (build_model.record() for build_model in build_models)
+        return (build_model.record() for build_model in query)
 
     @staticmethod
     def count(machine: str | None = None) -> int:
@@ -213,7 +200,7 @@ class RecordDB:
         """
         field_lookups: dict[str, Any] = {"machine": machine} if machine else {}
 
-        return BuildModel.objects.filter(**field_lookups).count()
+        return _manager.filter(**field_lookups).count()
 
 
 class ApiKeyDB:
@@ -221,6 +208,8 @@ class ApiKeyDB:
 
     def list(self) -> list[ApiKey]:
         """Return the list of ApiKeys"""
+        model_manager = ApiKeyModel.objects
+        query = model_manager.order_by("name")
         return [
             ApiKey(
                 name=obj.name,
@@ -228,7 +217,7 @@ class ApiKeyDB:
                 created=obj.created,
                 last_used=obj.last_used,
             )
-            for obj in ApiKeyModel.objects.all().order_by("name")
+            for obj in query
         ]
 
     def get(self, name: str) -> ApiKey:
@@ -243,7 +232,8 @@ class ApiKeyDB:
 
     def save(self, api_key: ApiKey) -> None:
         """Save the given ApiKey to the db"""
-        obj = ApiKeyModel.objects.get_or_create(name=api_key.name)[0]
+        model_manager = ApiKeyModel.objects
+        obj, _ = model_manager.get_or_create(name=api_key.name)
         obj.apikey = encrypt(encode(api_key.key), encode(settings.SECRET_KEY))
         obj.created = api_key.created
         obj.last_used = api_key.last_used
