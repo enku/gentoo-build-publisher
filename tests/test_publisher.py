@@ -425,7 +425,7 @@ class DispatcherTestCase(TestCase):
 
 @requires("publisher")
 class MachineInfoTestCase(TestCase):
-    """Tests for the MachineInfo thingie"""
+    """Tests for the MachineInfo thingy"""
 
     def test(self) -> None:
         # Given the "foo" builds, one of which is published
