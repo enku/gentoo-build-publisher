@@ -64,6 +64,7 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.coverage.run]
+branch = true
 source = ["gentoo_build_publisher"]
 omit = ["src/gentoo_build_publisher/migrations/*"]
 
