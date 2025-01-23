@@ -25,6 +25,7 @@ from ariadne_django.scalars import datetime_scalar
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, utils, worker
+from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import (
@@ -41,7 +42,6 @@ from gentoo_build_publisher.worker import tasks
 SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 Info: TypeAlias = GraphQLResolveInfo
-MachineInfo = publisher.MachineInfo
 Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [

@@ -9,6 +9,7 @@ from django.http import Http404, HttpRequest
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
+from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.types import TAG_SYM, Build
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.views.context import (
@@ -93,7 +94,7 @@ def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
         except (ValueError, FileNotFoundError):
             build = None
     else:
-        build = publisher.MachineInfo(machine).published_build
+        build = MachineInfo(machine).published_build
 
     if build is None:
         raise Http404("Published build for that machine does not exist")

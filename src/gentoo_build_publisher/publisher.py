@@ -22,10 +22,10 @@ import logging
 import math
 from datetime import datetime
 from difflib import Differ
-from functools import cached_property
 from typing import Any, Iterable
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
+from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound, Repo
 from gentoo_build_publisher.settings import Settings
@@ -236,6 +236,7 @@ class BuildPublisher:
 
         If names is given, only return machines who's names are contained.
         """
+
         machine_names = self.repo.build_records.list_machines()
         if names is not None:
             machine_names = [name for name in machine_names if name in set(names)]
@@ -290,48 +291,3 @@ storage = _inst.storage
 tag = _inst.tag
 tags = _inst.tags
 untag = _inst.untag
-
-
-class MachineInfo:
-    """Data type for machine metadata
-
-    Has the following attributes:
-
-        machine: str
-        build_count: int
-        latest_build: BuildRecord | None
-        published_build: Build | None
-    """
-
-    # pylint: disable=missing-docstring
-
-    def __init__(self, machine: str):
-        self.machine = machine
-
-    @cached_property
-    def build_count(self) -> int:
-        """Number of builds held for the machine"""
-        return len(self.builds)
-
-    @cached_property
-    def builds(self) -> list[BuildRecord]:
-        """List of builds held for the machine"""
-        return [*repo.build_records.for_machine(self.machine)]
-
-    @cached_property
-    def latest_build(self) -> BuildRecord | None:
-        """The latest completed build, or None"""
-        return next((build for build in self.builds if build.completed), None)
-
-    @cached_property
-    def published_build(self) -> Build | None:
-        """The latest published build, or None"""
-        return next(
-            (Build.from_id(build.id) for build in self.builds if published(build)),
-            None,
-        )
-
-    @cached_property
-    def tags(self) -> list[str]:
-        """All the machines build tags"""
-        return sorted(tag for build in self.builds for tag in tags(build))

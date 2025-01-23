@@ -12,6 +12,7 @@ from django.shortcuts import render as _render
 from django.urls import URLPattern, path
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, CacheProtocol, GBPMetadata, Package
 from gentoo_build_publisher.utils import Color
@@ -96,9 +97,9 @@ class StatsCollector:
         self.cache = cache
 
     @lru_cache
-    def machine_info(self, machine: MachineName) -> publisher.MachineInfo:
+    def machine_info(self, machine: MachineName) -> MachineInfo:
         """Return the MachineInfo object for the given machine"""
-        return publisher.MachineInfo(machine)
+        return MachineInfo(machine)
 
     @property
     @lru_cache
