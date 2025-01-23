@@ -12,20 +12,20 @@ from gentoo_build_publisher.records import BuildRecord
 class BuildModel(models.Model):
     """Django persistence for Build objects"""
 
-    # The build's machine name
     machine = models.CharField(max_length=255, db_index=True)
+    """The build's machine name"""
 
-    # The Jenkins build number
     build_id = models.CharField(max_length=255)
+    """The Jenkins build number"""
 
-    # when this build was submitted to GBP
     submitted = models.DateTimeField()
+    """when this build was submitted to GBP"""
 
-    # When this build's publish task completed
     completed = models.DateTimeField(null=True)
+    """When this build's publish task completed"""
 
-    # When CI/CD build timestamp
     built = models.DateTimeField(null=True)
+    """When CI/CD build timestamp"""
 
     keptbuild: KeptBuild
     buildnote: BuildNote
