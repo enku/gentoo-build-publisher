@@ -82,6 +82,9 @@ ignore = ["/migrations/"]
 [tool.flake8]
 max-line-length = 88
 
+[tool.black]
+skip-magic-trailing-comma = true
+
 [tool.mypy]
 plugins =["mypy_django_plugin.main"]
 exclude = ["/migrations/"]

@@ -57,11 +57,7 @@ class BuildFactory(factory.Factory):
 
     @classmethod
     def buncha_builds(
-        cls,
-        machines: list[str],
-        end_date: dt.datetime,
-        num_days: int,
-        per_day: int,
+        cls, machines: list[str], end_date: dt.datetime, num_days: int, per_day: int
     ) -> defaultdict[str, list[Build]]:
         buildmap = defaultdict(list)
 

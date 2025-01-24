@@ -281,7 +281,7 @@ def latest(_options: fixture.FixtureOptions, _fixtures: fixture.Fixtures) -> Bui
     )
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
-            submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.UTC),
+            submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.UTC)
         )
     )
     return latest_build
@@ -358,10 +358,7 @@ class DiffQueryTestCase(TestCase):
         }
         """
         builds = self.fixtures.diff_query_builds
-        variables = {
-            "left": builds["left"].id,
-            "right": builds["right"].id,
-        }
+        variables = {"left": builds["left"].id, "right": builds["right"].id}
         result = graphql(self.fixtures.client, query, variables=variables)
 
         # Then the differences are given between the two builds
@@ -389,10 +386,7 @@ class DiffQueryTestCase(TestCase):
         }
         """
         builds = self.fixtures.diff_query_builds
-        variables = {
-            "left": builds["left"].id,
-            "right": builds["right"].id,
-        }
+        variables = {"left": builds["left"].id, "right": builds["right"].id}
 
         result = graphql(self.fixtures.client, query, variables=variables)
 
@@ -402,7 +396,7 @@ class DiffQueryTestCase(TestCase):
                 "items": [
                     {"item": "app-arch/tar-1.34-1", "status": "REMOVED"},
                     {"item": "app-arch/tar-1.35-1", "status": "ADDED"},
-                ],
+                ]
             }
         }
         assert_data(self, result, expected)
@@ -1118,9 +1112,7 @@ class SearchNotesQueryTestCase(TestCase):
 
         builds = self.fixtures.search_notes_query_builds
         assert_data(
-            self,
-            result,
-            {"searchNotes": [{"id": builds[0].id, "notes": "test foo"}]},
+            self, result, {"searchNotes": [{"id": builds[0].id, "notes": "test foo"}]}
         )
 
     def test_multiple_match(self) -> None:
@@ -1155,9 +1147,7 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
         assert_data(
-            self,
-            result,
-            {"searchNotes": [{"id": build.id, "notes": "test foo"}]},
+            self, result, {"searchNotes": [{"id": build.id, "notes": "test foo"}]}
         )
 
     def test_when_named_machine_does_not_exist(self) -> None:
@@ -1303,9 +1293,7 @@ class CreateMachineTestCase(TestCase):
         )
 
         assert_data(
-            self,
-            result,
-            {"createMachine": {"message": "FileExistsError: babette"}},
+            self, result, {"createMachine": {"message": "FileExistsError: babette"}}
         )
 
 

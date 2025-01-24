@@ -424,12 +424,7 @@ def resolve_mutation_createrepo(
 @mutation.field("createMachine")
 @maybe_require_apikey
 def resolve_mutation_create_machine(
-    _obj: Any,
-    _info: Info,
-    name: str,
-    repo: str,
-    branch: str,
-    ebuildRepos: list[str],
+    _obj: Any, _info: Info, name: str, repo: str, branch: str, ebuildRepos: list[str]
 ) -> Error | None:
     jenkins = publisher.jenkins
 

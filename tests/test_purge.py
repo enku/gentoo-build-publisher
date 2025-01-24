@@ -129,12 +129,7 @@ class PurgeTestCase(TestCase):
     def test_one_per_week_last_month(self) -> None:
         items = self.fixtures.purger.one_per_week_last_month()
 
-        expected = [
-            "2021-03-01",
-            "2021-03-09",
-            "2021-03-17",
-            "2021-03-27",
-        ]
+        expected = ["2021-03-01", "2021-03-09", "2021-03-17", "2021-03-27"]
 
         self.assertDates(items, expected)
 

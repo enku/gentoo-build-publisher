@@ -508,10 +508,7 @@ class CreateMachineJobTestCase(fixture.BaseTestCase):
 
         job = MachineJob(
             name="base",
-            repo=Repo(
-                url="https://github.com/enku/gbp-machines.git",
-                branch="master",
-            ),
+            repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="master"),
             ebuild_repos=["gentoo"],
         )
 

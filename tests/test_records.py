@@ -140,9 +140,7 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_next(self, backend: str) -> None:
         records = self.backend(backend)
-        build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
-        )
+        build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
         build2 = BuildRecordFactory(
             built=dt.datetime.fromtimestamp(1662315204, dt.UTC),
@@ -157,13 +155,10 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_next_excludes_unbuilt(self, backend: str) -> None:
         records = self.backend(backend)
-        build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
-        )
+        build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
         build2 = BuildRecordFactory(
-            built=None,
-            completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
+            built=None, completed=dt.datetime.fromtimestamp(1662311204, dt.UTC)
         )
         records.save(build2)
 
@@ -172,9 +167,7 @@ class RecordDBTestCase(TestCase):
     @parametrized(BACKENDS)
     def test_next_second_built_before_first(self, backend: str) -> None:
         records = self.backend(backend)
-        build1 = BuildRecordFactory(
-            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
-        )
+        build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
 
         build2 = BuildRecordFactory(
@@ -189,8 +182,7 @@ class RecordDBTestCase(TestCase):
     def test_latest_with_completed_true(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
+            machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
         )
         records.save(build1)
         build2 = BuildRecordFactory(
@@ -209,8 +201,7 @@ class RecordDBTestCase(TestCase):
     def test_latest_with_completed_false(self, backend: str) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
-            machine="lighthouse",
-            built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
+            machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
         )
         records.save(build1)
         build2 = BuildRecordFactory(
@@ -234,7 +225,7 @@ class RecordDBTestCase(TestCase):
                 "completed": dt.datetime.fromtimestamp(1662311204, dt.UTC),
                 "machine": "lighthouse",
                 field: "foo",
-            },
+            }
         )
         records.save(build1)
         build2 = BuildRecordFactory(
@@ -243,7 +234,7 @@ class RecordDBTestCase(TestCase):
                 "completed": dt.datetime.fromtimestamp(1662311204, dt.UTC),
                 "machine": "lighthouse",
                 field: "foobar",
-            },
+            }
         )
         records.save(build2)
 

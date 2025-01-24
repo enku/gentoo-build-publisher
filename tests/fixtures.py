@@ -76,8 +76,7 @@ def gbp(options: FixtureOptions, _fixtures: Fixtures) -> GBP:
     user = options.get("user", "test_user")
 
     return test_gbp(
-        "http://gbp.invalid/",
-        auth={"user": user, "api_key": create_user_auth(user)},
+        "http://gbp.invalid/", auth={"user": user, "api_key": create_user_auth(user)}
     )
 
 
@@ -118,9 +117,7 @@ def build_model(options: FixtureOptions, _fixtures: Fixtures) -> BuildModel:
     completed: dt.datetime = bm_options.get("completed") or now()
 
     bm: BuildModel = BuildModelFactory.create(
-        submitted=submitted,
-        completed=completed,
-        built=built,
+        submitted=submitted, completed=completed, built=built
     )
     return bm
 

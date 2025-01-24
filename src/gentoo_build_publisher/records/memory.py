@@ -193,10 +193,7 @@ class ApiKeyDB:
 
     def list(self) -> list[ApiKey]:
         """Return the list of ApiKeys"""
-        return sorted(
-            self._records.values(),
-            key=lambda apikey: apikey.name,
-        )
+        return sorted(self._records.values(), key=lambda apikey: apikey.name)
 
     def get(self, name: str) -> ApiKey:
         """Retrieve db record"""

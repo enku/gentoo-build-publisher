@@ -43,10 +43,7 @@ class Migration(migrations.Migration):
                 ("completed", models.DateTimeField(null=True)),
                 ("built", models.DateTimeField(null=True)),
             ],
-            options={
-                "verbose_name": "Build",
-                "verbose_name_plural": "Builds",
-            },
+            options={"verbose_name": "Build", "verbose_name_plural": "Builds"},
         ),
         migrations.CreateModel(
             name="KeptBuild",
@@ -60,7 +57,7 @@ class Migration(migrations.Migration):
                         serialize=False,
                         to="gentoo_build_publisher.buildmodel",
                     ),
-                ),
+                )
             ],
         ),
         migrations.CreateModel(

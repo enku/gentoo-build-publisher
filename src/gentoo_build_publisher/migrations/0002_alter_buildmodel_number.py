@@ -4,14 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("gentoo_build_publisher", "0001_initial"),
-    ]
+    dependencies = [("gentoo_build_publisher", "0001_initial")]
 
     operations = [
         migrations.AlterField(
             model_name="buildmodel",
             name="number",
             field=models.CharField(max_length=255),
-        ),
+        )
     ]

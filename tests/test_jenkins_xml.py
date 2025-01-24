@@ -13,10 +13,7 @@ class JenkinsXMLTestCase(TestCase):
     def test_xml_build_machine(self) -> None:
         job = MachineJob(
             name="test",
-            repo=Repo(
-                url="https://github.com/enku/gbp-machines.git",
-                branch="feature",
-            ),
+            repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="feature"),
             ebuild_repos=["gentoo", "marduk"],
         )
 

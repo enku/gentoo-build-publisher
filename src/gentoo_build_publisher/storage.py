@@ -81,10 +81,7 @@ class Storage:
         return self.root.joinpath(content.value, str(build))
 
     def extract_artifact(
-        self,
-        build: Build,
-        byte_stream: Iterable[bytes],
-        previous: Build | None = None,
+        self, build: Build, byte_stream: Iterable[bytes], previous: Build | None = None
     ) -> None:
         """Pull and unpack the artifact
 

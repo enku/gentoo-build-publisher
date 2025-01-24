@@ -35,9 +35,7 @@ class BuildModel(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["machine", "build_id"], name="unique_build")
         ]
-        indexes = [
-            models.Index(fields=["machine"]),
-        ]
+        indexes = [models.Index(fields=["machine"])]
         verbose_name = "Build"
         verbose_name_plural = "Builds"
 
@@ -84,10 +82,7 @@ class KeptBuild(models.Model):
     """BuildModels that we want to keep"""
 
     build_model = models.OneToOneField(
-        BuildModel,
-        on_delete=models.CASCADE,
-        primary_key=True,
-        db_column="id",
+        BuildModel, on_delete=models.CASCADE, primary_key=True, db_column="id"
     )
 
     @classmethod

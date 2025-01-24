@@ -161,7 +161,4 @@ class Repo:
     @classmethod
     def from_settings(cls: type[Self], settings: Settings) -> Self:
         """Return instance of the the Repo class given in settings"""
-        return cls(
-            api_keys=api_keys(settings),
-            build_records=build_records(settings),
-        )
+        return cls(api_keys=api_keys(settings), build_records=build_records(settings))

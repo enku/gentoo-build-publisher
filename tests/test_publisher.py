@@ -59,8 +59,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertIs(self.fixtures.publisher.storage.pulled(self.fixtures.build), True)
         self.assertIs(
-            self.fixtures.publisher.repo.build_records.exists(self.fixtures.build),
-            True,
+            self.fixtures.publisher.repo.build_records.exists(self.fixtures.build), True
         )
 
     def test_pull_stores_build_logs(self) -> None:
@@ -228,8 +227,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.fixtures.publisher.purge(self.fixtures.build.machine)
 
         self.assertIs(
-            self.fixtures.publisher.repo.build_records.exists(self.fixtures.build),
-            True,
+            self.fixtures.publisher.repo.build_records.exists(self.fixtures.build), True
         )
 
     def test_update_build_metadata(self) -> None:
@@ -261,8 +259,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.fixtures.publisher.storage.tag(self.fixtures.build, "prod")
 
         self.assertEqual(
-            self.fixtures.publisher.storage.get_tags(self.fixtures.build),
-            ["", "prod"],
+            self.fixtures.publisher.storage.get_tags(self.fixtures.build), ["", "prod"]
         )
         self.assertEqual(self.fixtures.publisher.tags(self.fixtures.build), ["prod"])
 
@@ -283,8 +280,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.fixtures.publisher.untag(self.fixtures.build.machine, "albert")
 
         self.assertEqual(
-            self.fixtures.publisher.storage.get_tags(self.fixtures.build),
-            ["prod"],
+            self.fixtures.publisher.storage.get_tags(self.fixtures.build), ["prod"]
         )
 
     def test_untag_with_empty_unpublishes_the_build(self) -> None:
