@@ -258,7 +258,7 @@ def resolve_query_diff(_obj: Any, _info: Info, left: str, right: str) -> Object 
 
     items = publisher.diff_binpkgs(left_build, right_build)
 
-    return {"left": left_build, "right": right_build, "items": [*items]}
+    return {"left": left_build, "right": right_build, "items": list(items)}
 
 
 @query.field("search")

@@ -44,7 +44,7 @@ def until_blank(fobject: IO[str]) -> Iterator[str]:
 
 def get_sections(fobject: IO[str]) -> Iterator[list[str]]:
     """Yield the set sections of fobject with non-blank lines"""
-    while section := [*until_blank(fobject)]:
+    while section := list(until_blank(fobject)):
         yield section
 
 

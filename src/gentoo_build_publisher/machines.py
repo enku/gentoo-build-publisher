@@ -36,7 +36,7 @@ class MachineInfo:
     @cached_property
     def builds(self) -> list[BuildRecord]:
         """List of builds held for the machine"""
-        return [*self.publisher.repo.build_records.for_machine(self.machine)]
+        return list(self.publisher.repo.build_records.for_machine(self.machine))
 
     @cached_property
     def latest_build(self) -> BuildRecord | None:

@@ -62,7 +62,7 @@ class RecordDB:
 
     def for_machine(self, machine: Machine) -> list[BuildRecord]:
         """Return BuildRecords for the given machine"""
-        records = [*self.builds.get(machine, {}).values()]
+        records = list(self.builds.get(machine, {}).values())
         records.sort(reverse=True, key=record_key)
 
         return records
@@ -80,7 +80,7 @@ class RecordDB:
 
     def list_machines(self) -> list[Machine]:
         """Return a list of machine names"""
-        machines = [*self.builds]
+        machines = list(self.builds)
         machines.sort()
 
         return machines

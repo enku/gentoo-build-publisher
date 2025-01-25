@@ -31,7 +31,7 @@ class Purger(Generic[T]):
         start: datetime.datetime | None = None,
         end: datetime.datetime | None = None,
     ):
-        self.items = [*items]
+        self.items = list(items)
         self.key = key
 
         self.start = start

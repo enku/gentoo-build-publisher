@@ -272,7 +272,7 @@ class Storage:
             while package_index_file.readline().rstrip():
                 pass
 
-            return [*make_packages(package_index_file)]
+            return list(make_packages(package_index_file))
 
     def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance

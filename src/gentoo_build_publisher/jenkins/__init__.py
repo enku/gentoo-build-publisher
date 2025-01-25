@@ -134,7 +134,7 @@ class URLBuilder:
 
         Not names like "Bob" but names like "logs"
         """
-        return [*self.formatters]
+        return list(self.formatters)
 
 
 class Jenkins:
