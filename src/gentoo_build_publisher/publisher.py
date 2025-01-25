@@ -254,19 +254,18 @@ class BuildPublisher:
         """Generate GBPMetadata given JenkinsMetadata and Packages"""
         built: list[Package] = []
         jenkins_built_time = math.floor(jenkins_metadata.timestamp / 1000)
-        size = 0
-        total = 0
+        total = len(packages)
 
+        size = 0
         for package in packages:
             if package.build_time >= jenkins_built_time:
                 built.append(package)
             size += package.size
-            total += 1
 
-        return GBPMetadata(
-            build_duration=jenkins_metadata.duration,
-            packages=PackageMetadata(total=total, size=size, built=built),
-        )
+        pkg_metadata = PackageMetadata(total=total, size=size, built=built)
+        duration = jenkins_metadata.duration
+
+        return GBPMetadata(build_duration=duration, packages=pkg_metadata)
 
 
 _inst = BuildPublisher.from_settings(Settings.from_environ())
