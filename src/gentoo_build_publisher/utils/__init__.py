@@ -17,7 +17,7 @@ from yarl import URL
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_IDENTIFIER_START = {".", "-"}
-VALID_IDENTIFIER_CHARS = {*string.ascii_letters, *string.digits, "_", ".", "-"}
+VALID_IDENTIFIER_CHARS = {*string.ascii_letters, *string.digits, *"_.-"}
 MAXIMUM_IDENTIFIER_LENGTH = 128
 
 
