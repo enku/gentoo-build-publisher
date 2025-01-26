@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:ccaf102d5247825062122501d8f951f76fe723ef59312baf3267975bbcef3274"
+content_hash = "sha256:e19503a8befc4ac93f6a0271f062e2bea4be39fce986ad1da2aa27602860cd6b"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -649,19 +649,20 @@ files = [
 
 [[package]]
 name = "gbpcli"
-version = "2.3.0"
+version = "2.4.0"
 requires_python = ">=3.11"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
     "argcomplete>=3.2.1",
+    "distutils-strtobool>=0.1.0",
     "platformdirs>=4.2.0",
     "requests",
     "rich>=12.5.1",
     "yarl",
 ]
 files = [
-    {file = "gbpcli-2.3.0-py3-none-any.whl", hash = "sha256:924bb1fe7ec19692412c3653c4d013277fa0def2d424af4db80c845732ec83ed"},
-    {file = "gbpcli-2.3.0.tar.gz", hash = "sha256:dbe7f07df79ef1fe1119f271c8ce2016164ffc563a12fb426058c1e1aa16062e"},
+    {file = "gbpcli-2.4.0-py3-none-any.whl", hash = "sha256:2a9a6b8343f13d1c2e66b6f6bc30468df0717d758ea4a35032d3e50e0648a782"},
+    {file = "gbpcli-2.4.0.tar.gz", hash = "sha256:3cadf082afce24d64f40a7586e61ebf6eb2894d86db32bf7a29038557e51f9ee"},
 ]
 
 [[package]]
