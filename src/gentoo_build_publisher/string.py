@@ -2,8 +2,6 @@
 
 from typing import IO, Iterator
 
-from strtobool import strtobool  # type: ignore
-
 
 def namevalue(string: str, delim: str) -> tuple[str, str]:
     """Split string into a name/value pair
@@ -45,14 +43,3 @@ def get_sections(fobject: IO[str]) -> Iterator[list[str]]:
     """Yield the set sections of fobject with non-blank lines"""
     while section := list(until_blank(fobject)):
         yield section
-
-
-def get_bool(value: str | bytes | bool) -> bool:
-    """Return the boolean value of the truthy/falsey string"""
-    if isinstance(value, bool):
-        return value
-
-    if isinstance(value, bytes):
-        value = value.decode("UTF-8")
-
-    return bool(strtobool(value))
