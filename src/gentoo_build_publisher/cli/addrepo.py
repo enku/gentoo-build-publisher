@@ -5,7 +5,7 @@ This adds an ebuild repo to Jenkins that can be used by machine builds.
 
 import argparse
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.graphql import check
 from gbpcli.types import Console
 

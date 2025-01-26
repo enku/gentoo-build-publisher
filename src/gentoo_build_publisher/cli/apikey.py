@@ -4,7 +4,7 @@ import argparse
 import secrets
 from enum import IntEnum
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.render import format_timestamp
 from gbpcli.subcommands import completers as comp
 from gbpcli.types import Console

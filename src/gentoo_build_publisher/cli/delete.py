@@ -2,7 +2,7 @@
 
 import argparse
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.subcommands import completers as comp
 from gbpcli.types import Console
 

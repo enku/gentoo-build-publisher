@@ -2,7 +2,7 @@
 
 from typing import cast
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.graphql import Query
 
 

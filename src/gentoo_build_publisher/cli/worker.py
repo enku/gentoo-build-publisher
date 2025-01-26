@@ -7,7 +7,7 @@ This is a simple wrapper that calls the appropriate worker according to
 import argparse
 from dataclasses import replace
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.types import Console
 
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import

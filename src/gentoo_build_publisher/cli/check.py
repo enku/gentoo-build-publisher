@@ -5,7 +5,7 @@ import itertools
 from pathlib import Path
 from typing import Callable, TypeAlias
 
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from gbpcli.types import Console
 
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
