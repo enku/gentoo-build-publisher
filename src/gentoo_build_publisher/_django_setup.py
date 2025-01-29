@@ -1,5 +1,8 @@
 """So we don't have to do import django; django.setup()"""
 
 import django
+from django.apps import apps
 
-django.setup()
+
+if not apps.ready:
+    django.setup()
