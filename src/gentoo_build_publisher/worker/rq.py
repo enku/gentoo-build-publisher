@@ -16,6 +16,7 @@ class RQWorker:
             name=settings.WORKER_RQ_QUEUE_NAME,
             connection=Redis.from_url(settings.WORKER_RQ_URL),
             is_async=settings.WORKER_RQ_ASYNC,
+            default_timeout=settings.WORKER_RQ_TASK_TIMEOUT,
         )
 
     def __repr__(self) -> str:

@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     WORKER_RQ_NAME: str = ""
     WORKER_RQ_QUEUE_NAME: str = "gbp"
     WORKER_RQ_URL: str = "redis://localhost.invalid:6379"
+    WORKER_RQ_TASK_TIMEOUT: int = 1800  # seconds
 
     # ThreadWorker backend config
     WORKER_THREAD_WAIT: bool = False  # Wait on the running thread (True for testing)
