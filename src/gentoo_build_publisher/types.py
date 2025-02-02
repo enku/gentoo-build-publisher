@@ -59,7 +59,7 @@ class Content(Enum):
     VAR_LIB_PORTAGE = "var-lib-portage"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Package:
     """A Gentoo binary package"""
 

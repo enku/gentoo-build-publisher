@@ -46,12 +46,12 @@ class ArtifactFactoryTestCase(TestCase):
         )
 
         expected = Package(
-            "app-vim/gentoo-syntax-1",
-            "marduk",
-            "app-vim/gentoo-syntax/gentoo-syntax-1-35.gpkg.tar",
-            35,
-            529,
-            timer + 10,
+            cpv="app-vim/gentoo-syntax-1",
+            repo="marduk",
+            path="app-vim/gentoo-syntax/gentoo-syntax-1-35.gpkg.tar",
+            build_id=35,
+            size=529,
+            build_time=timer + 10,
         )
         self.assertEqual(package, expected)
         build_info = self.fixtures.builder.build_info(build)
@@ -115,12 +115,12 @@ class ArtifactFactoryTestCase(TestCase):
             package_info=[
                 (
                     Package(
-                        "app-vim/gentoo-syntax-1",
-                        "gentoo",
-                        "app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",
-                        1,
-                        529,
-                        self.fixtures.builder.timer,
+                        cpv="app-vim/gentoo-syntax-1",
+                        repo="gentoo",
+                        path="app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",
+                        build_id=1,
+                        size=529,
+                        build_time=self.fixtures.builder.timer,
                     ),
                     PackageStatus.ADDED,
                 )

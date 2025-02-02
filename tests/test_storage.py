@@ -376,7 +376,7 @@ class StorageSetMetadataTestCase(TestCase):
             size=666,
             built=[
                 Package(
-                    "sys-foo/bar-1.0",
+                    cpv="sys-foo/bar-1.0",
                     repo="marduk",
                     path="",
                     build_id=1,

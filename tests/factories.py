@@ -149,7 +149,14 @@ class ArtifactFactory:
 
         path = cpv_to_path(cpv, build_id)
         size = len(cpv) ** 2
-        package = Package(cpv, repo, path, build_id, size, build_time)
+        package = Package(
+            cpv=cpv,
+            repo=repo,
+            path=path,
+            build_id=build_id,
+            size=size,
+            build_time=build_time,
+        )
         build_info.package_info.append((package, PackageStatus.ADDED))
 
         return package
@@ -206,7 +213,14 @@ class ArtifactFactory:
         # First construct the list from the initially installed packages and give them a
         # build time of 0
         packages = [
-            Package(i, "gentoo", cpv_to_path(i), 1, len(i) ** 2, 0)
+            Package(
+                cpv=i,
+                repo="gentoo",
+                path=cpv_to_path(i),
+                build_id=1,
+                size=len(i) ** 2,
+                build_time=0,
+            )
             for i in self.initial_packages
         ]
 

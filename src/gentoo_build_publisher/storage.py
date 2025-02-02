@@ -320,12 +320,12 @@ def make_package_from_lines(lines: Iterable[str]) -> Package:
 
     try:
         return Package(
-            package_info["cpv"],
-            package_info["repo"],
-            package_info["path"],
-            int(package_info["build_id"]),
-            int(package_info["size"]),
-            int(package_info["build_time"]),
+            cpv=package_info["cpv"],
+            repo=package_info["repo"],
+            path=package_info["path"],
+            build_id=int(package_info["build_id"]),
+            size=int(package_info["size"]),
+            build_time=int(package_info["build_time"]),
         )
     except KeyError as error:
         raise ValueError(
