@@ -12,11 +12,12 @@ import importlib.metadata
 from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import resources
-from typing import Any, Callable, TypeAlias, TypedDict
+from typing import Any, Callable, TypeAlias, TypedDict, cast
 
 from ariadne import (
     EnumType,
     ObjectType,
+    convert_kwargs_to_snake_case,
     gql,
     make_executable_schema,
     snake_case_fallback_resolvers,
@@ -46,10 +47,11 @@ Object: TypeAlias = dict[str, Any]
 type_defs = gql(resources.read_text("gentoo_build_publisher", "schema.graphql"))
 resolvers = [
     EnumType("ChangeStateEnum", ChangeState),
-    datetime_scalar,
     build_type := ObjectType("Build"),
+    datetime_scalar,
     machine_summary := ObjectType("MachineSummary"),
     mutation := ObjectType("Mutation"),
+    package := ObjectType("Package"),
     query := ObjectType("Query"),
 ]
 
@@ -300,6 +302,28 @@ def resolve_query_resolvebuildtag(
         return publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
     except FileNotFoundError:
         return None
+
+
+@query.field("package")
+@convert_kwargs_to_snake_case
+def resolve_query_package(_obj: Any, _info: Info, *, build_id: str, cpvb: str) -> Any:
+    build = Build.from_id(build_id)
+    cpv, b_str = cpvb.rsplit("-", 1)
+    packages = publisher.storage.get_packages(build)
+    [pkg] = [pkg for pkg in packages if pkg.cpv == cpv and pkg.build_id == int(b_str)]
+
+    return pkg
+
+
+@package.field("url")
+def resolve_package_url(pkg: Package, info: Info) -> str:
+    context = info.context
+    variables = info.variable_values
+    build_id = variables["buildId"]
+    request = context["request"]
+    url = request.build_absolute_uri(f"/binpkgs/{build_id}/{pkg.path}")
+
+    return cast(str, url)
 
 
 @mutation.field("publish")

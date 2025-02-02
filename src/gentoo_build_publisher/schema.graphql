@@ -5,6 +5,8 @@ type Package {
    repo: String!
    size: Int!
    buildTime: Int!
+   buildId: Int!
+   url: String!
 }
 
 type Build {
@@ -77,6 +79,7 @@ type Query {
   version: String!
   working: [Build!]!
   resolveBuildTag(machine: String!, tag: String!): Build
+  package(buildId: ID!, cpvb: String!): Package!
 }
 
 type Mutation {

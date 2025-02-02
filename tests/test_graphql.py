@@ -580,6 +580,49 @@ class MachinesQueryTestCase(TestCase):
 
 
 @fixture.requires("tmpdir", "publisher", "client")
+class PackageQueryTestCase(TestCase):
+    query = """
+    query ($buildId: ID!, $cpvb: String!) {
+      package(buildId: $buildId, cpvb: $cpvb) {
+        cpv
+        repo
+        size
+        buildTime
+        buildId
+        url
+      }
+    }
+    """
+
+    def test(self) -> None:
+        build = BuildFactory()
+        artifact_builder = publisher.jenkins.artifact_builder
+        artifact_builder.timer = 1646115094
+        artifact_builder.build(build, "x11-wm/mutter-41.3")
+        publisher.pull(build)
+
+        params = {"buildId": str(build), "cpvb": "x11-wm/mutter-41.3-1"}
+        result = graphql(self.fixtures.client, self.query, params)
+
+        self.assertTrue("errors" not in result, result.get("errors"))
+        expected = {
+            "buildId": 1,
+            "buildTime": 1646115104,
+            "cpv": "x11-wm/mutter-41.3",
+            "repo": "gentoo",
+            "size": 324,
+            "url": mock.ANY,
+        }
+        self.assertEqual(result["data"]["package"], expected)
+
+        url = result["data"]["package"]["url"]
+        self.assertTrue(
+            url.endswith("/binpkgs/babette.366/x11-wm/mutter/mutter-41.3-1.gpkg.tar"),
+            f"{url=}",
+        )
+
+
+@fixture.requires("tmpdir", "publisher", "client")
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""
 
