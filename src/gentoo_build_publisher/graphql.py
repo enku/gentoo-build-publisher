@@ -12,7 +12,7 @@ import importlib.metadata
 from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import resources
-from typing import Any, Callable, TypeAlias, TypedDict, cast
+from typing import Any, Callable, TypeAlias, TypedDict
 
 from ariadne import (
     EnumType,
@@ -23,6 +23,7 @@ from ariadne import (
     snake_case_fallback_resolvers,
 )
 from ariadne_django.scalars import datetime_scalar
+from django.http import HttpRequest
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, utils, worker
@@ -318,12 +319,9 @@ def resolve_query_package(_obj: Any, _info: Info, *, build_id: str, cpvb: str) -
 @package.field("url")
 def resolve_package_url(pkg: Package, info: Info) -> str:
     context = info.context
-    variables = info.variable_values
-    build_id = variables["buildId"]
-    request = context["request"]
-    url = request.build_absolute_uri(f"/binpkgs/{build_id}/{pkg.path}")
+    request: HttpRequest = context["request"]
 
-    return cast(str, url)
+    return request.build_absolute_uri(f"/binpkgs/{pkg.build}/{pkg.path}")
 
 
 @mutation.field("publish")
