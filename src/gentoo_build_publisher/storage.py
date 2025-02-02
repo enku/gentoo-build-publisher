@@ -23,6 +23,7 @@ from gentoo_build_publisher.types import (
 )
 
 INVALID_TEST_PATH = "__testing__"
+GBP_METADATA_FILENAME = "gbp.json"
 logger = logging.getLogger(__name__)
 
 
@@ -284,12 +285,14 @@ class Storage:
 
         If the file does not exist (e.g. not pulled), raise LookupError
         """
-        path = self.get_path(build, Content.BINPKGS) / "gbp.json"
+        path = self.get_path(build, Content.BINPKGS) / GBP_METADATA_FILENAME
 
         try:
             json = orjson.loads(path.read_bytes())  # pylint: disable=no-member
         except FileNotFoundError:
-            raise LookupError(f"gbp.json does not exist for {build}") from None
+            raise LookupError(
+                f"{GBP_METADATA_FILENAME} does not exist for {build}"
+            ) from None
 
         return GBPMetadata(
             build_duration=json["build_duration"],
@@ -313,7 +316,7 @@ class Storage:
 
     def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
-        path = self.get_path(build, Content.BINPKGS) / "gbp.json"
+        path = self.get_path(build, Content.BINPKGS) / GBP_METADATA_FILENAME
         path.write_bytes(orjson.dumps(metadata))  # pylint: disable=no-member
 
 
