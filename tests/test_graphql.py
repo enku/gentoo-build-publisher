@@ -617,7 +617,7 @@ class PackageQueryTestCase(TestCase):
 
         url = result["data"]["package"]["url"]
         self.assertTrue(
-            url.endswith("/binpkgs/babette.366/x11-wm/mutter/mutter-41.3-1.gpkg.tar"),
+            url.endswith(f"/binpkgs/{build}/x11-wm/mutter/mutter-41.3-1.gpkg.tar"),
             f"{url=}",
         )
 
