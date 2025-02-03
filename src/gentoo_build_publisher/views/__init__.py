@@ -5,12 +5,13 @@ from __future__ import annotations
 from ariadne_django.views import GraphQLView
 from django.conf import settings
 from django.core.cache import cache
-from django.http import Http404, HttpRequest
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import redirect
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.machines import MachineInfo
-from gentoo_build_publisher.types import TAG_SYM, Build
+from gentoo_build_publisher.types import TAG_SYM, Build, Package
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.views.context import (
     MachineInputContext,
@@ -21,6 +22,7 @@ from gentoo_build_publisher.views.context import (
 from gentoo_build_publisher.views.utils import (
     ViewContext,
     get_query_value_from_request,
+    get_url_for_package,
     render,
     view,
 )
@@ -52,6 +54,41 @@ def machines(request: HttpRequest, machine: str) -> ViewContext:
         cache=cache, color_range=color_range, days=days, machine=machine
     )
     return create_machine_context(input_context)
+
+
+@view(
+    "machines/<str:machine>/builds/<str:build_id>/packages/"
+    "<str:c>/<str:p>/<str:pv>-<int:b>"
+)
+def binpkg(  # pylint: disable=too-many-arguments
+    request: HttpRequest,
+    *,
+    machine: str,
+    build_id: str,
+    c: str,
+    p: str,
+    pv: str,
+    b: int,
+) -> HttpResponse:
+    """Redirect to the URL of the given build's given package"""
+    build = Build(machine=machine, build_id=build_id)
+    storage = publisher.storage
+
+    try:
+        packages = storage.get_packages(build)
+    except LookupError as error:
+        raise Http404 from error
+
+    cpv = f"{c}/{pv}"
+    try:
+        # This is wonky. We need to create an API for this
+        [package] = [p for p in packages if p.cpv == cpv and p.build_id == b]
+    except ValueError as error:
+        raise Http404 from error
+
+    url = get_url_for_package(build, package, request)
+
+    return redirect(url, permanent=True)
 
 
 @view("machines/<str:machine>/repos.conf")

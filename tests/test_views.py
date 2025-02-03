@@ -168,6 +168,46 @@ class MachineViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+@fixture.requires(artifacts)
+class BinPkgViewTests(TestCase):
+    def test(self) -> None:
+        fixtures = self.fixtures
+        package = fixtures.artifacts["latest"]
+        client = self.client
+        url = (
+            f"/machines/lighthouse/builds/{package.build_id}/"
+            "packages/sys-libs/pam/pam-1.5.3-1"
+        )
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 301, response.content)
+
+        request = response.request
+        expected = "/binpkgs/lighthouse.83/sys-libs/pam/pam-1.5.3-1.gpkg.tar"
+        self.assertTrue(response["Location"].endswith(expected), response["Location"])
+
+    def test_when_build_does_not_exist(self) -> None:
+        client = self.client
+        url = "/machines/bogus/builds/2/packages/x11-apps/xhost/xhost-1.0.10-1"
+
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 404, response.content)
+
+    def test_when_pkg_does_not_exist(self) -> None:
+        fixtures = self.fixtures
+        package = fixtures.artifacts["latest"]
+
+        client = self.client
+        url = (
+            f"/machines/lighthouse/builds/{package.build_id}/"
+            "packages/x11-apps/xhost/xhost-1.0.10-1"
+        )
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 404, response.content)
+
+
 def first_build(build_dict: dict[str, list[Build]], name: str) -> Build:
     return build_dict[name][0]
 
