@@ -258,3 +258,8 @@ def get_query_value_from_request(
         return type_(query_value)
     except ValueError:
         return fallback
+
+
+def get_url_for_package(build: Build, package: Package, request: HttpRequest) -> str:
+    """Return the URL for the given Package"""
+    return request.build_absolute_uri(f"/binpkgs/{build}/{package.path}")

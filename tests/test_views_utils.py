@@ -16,6 +16,7 @@ from gentoo_build_publisher.views.utils import (
     experimental,
     get_metadata,
     get_query_value_from_request,
+    get_url_for_package,
 )
 
 from . import DjangoTestCase, TestCase
@@ -272,6 +273,26 @@ class ExperimentalMarkerTests(DjangoTestCase):
 
             response = experimental_view(request)
             self.assertEqual(response.status_code, 200)
+
+
+@fixture.requires("publisher")
+class GetPackageURLTests(DjangoTestCase):
+    def test(self) -> None:
+        [build] = create_builds_and_packages(
+            "babette", 1, 1, publisher.jenkins.artifact_builder
+        )
+        publisher.pull(build)
+        package = publisher.get_packages(build)[-1]
+        request = HttpRequest()
+        request.META["SERVER_NAME"] = "testserver"
+        request.META["SERVER_PORT"] = 80
+
+        url = get_url_for_package(build, package, request)
+        cpvb = package.cpvb()
+        cat, rest = cpvb.split("/", 1)
+        pkg, vb = rest.split("-", 1)
+        expected = f"http://testserver/binpkgs/{build}/{cat}/{pkg}/{pkg}-{vb}.gpkg.tar"
+        self.assertEqual(url, expected)
 
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
