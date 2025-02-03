@@ -237,11 +237,10 @@ class StatsCollectorTests(TestCase):
 
         d2 = dt.datetime(2024, 1, 14, 9, 5)
         publisher.jenkins.artifact_builder.timer = int(d2.timestamp())
-        for _ in range(2):
-            for build in create_builds_and_packages(
-                "babette", 1, 3, publisher.jenkins.artifact_builder
-            ):
-                publisher.pull(build)
+        for build in create_builds_and_packages(
+            "babette", 2, 3, publisher.jenkins.artifact_builder
+        ):
+            publisher.pull(build)
 
         pbd = self.stats_collector().packages_by_day("babette")
 

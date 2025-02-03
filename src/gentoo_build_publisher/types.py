@@ -81,9 +81,6 @@ class Package:
     build_time: int
     """Unix time that the package was built"""
 
-    build: Build
-    """The GBP build that the Package belongs to"""
-
     def cpvb(self) -> str:
         """return cpv + build id"""
         return f"{self.cpv}-{self.build_id}"

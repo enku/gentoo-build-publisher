@@ -52,7 +52,6 @@ class ArtifactFactoryTestCase(TestCase):
             build_id=35,
             size=529,
             build_time=timer + 10,
-            build=build,
         )
         self.assertEqual(package, expected)
         build_info = self.fixtures.builder.build_info(build)
@@ -122,7 +121,6 @@ class ArtifactFactoryTestCase(TestCase):
                         build_id=1,
                         size=529,
                         build_time=self.fixtures.builder.timer,
-                        build=build,
                     ),
                     PackageStatus.ADDED,
                 )

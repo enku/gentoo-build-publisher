@@ -273,12 +273,7 @@ class Storage:
             while package_index_file.readline().rstrip():
                 pass
 
-            return list(
-                make_packages(
-                    package_index_file,
-                    Build(machine=build.machine, build_id=build.build_id),
-                )
-            )
+            return list(make_packages(package_index_file))
 
     def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
@@ -307,7 +302,6 @@ class Storage:
                         path=built["path"],
                         repo=built["repo"],
                         size=built["size"],
-                        build=build,
                     )
                     for built in json["packages"]["built"]
                 ],
@@ -320,7 +314,7 @@ class Storage:
         path.write_bytes(orjson.dumps(metadata))  # pylint: disable=no-member
 
 
-def make_package_from_lines(lines: Iterable[str], build: Build) -> Package:
+def make_package_from_lines(lines: Iterable[str]) -> Package:
     """Given the appropriate lines from Packages, return a Package object"""
     package_info = {
         name.lower(): value.rstrip()
@@ -335,7 +329,6 @@ def make_package_from_lines(lines: Iterable[str], build: Build) -> Package:
             build_id=int(package_info["build_id"]),
             size=int(package_info["size"]),
             build_time=int(package_info["build_time"]),
-            build=build,
         )
     except KeyError as error:
         raise ValueError(
@@ -343,10 +336,10 @@ def make_package_from_lines(lines: Iterable[str], build: Build) -> Package:
         ) from None
 
 
-def make_packages(package_index_file: IO[str], build: Build) -> Iterable[Package]:
+def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
     """Yield Packages from Package index file
 
     Assumes file pointer is after the preamble.
     """
     for section in string.get_sections(package_index_file):
-        yield make_package_from_lines(section, build)
+        yield make_package_from_lines(section)

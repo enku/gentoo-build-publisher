@@ -156,7 +156,6 @@ class ArtifactFactory:
             build_id=build_id,
             size=size,
             build_time=build_time,
-            build=build,
         )
         build_info.package_info.append((package, PackageStatus.ADDED))
 
@@ -213,7 +212,6 @@ class ArtifactFactory:
     def get_packages_for_build(self, build: Build) -> list[Package]:
         # First construct the list from the initially installed packages and give them a
         # build time of 0
-        initial_build = Build(machine=build.machine, build_id="0")
         packages = [
             Package(
                 cpv=i,
@@ -222,7 +220,6 @@ class ArtifactFactory:
                 build_id=1,
                 size=len(i) ** 2,
                 build_time=0,
-                build=initial_build,
             )
             for i in self.initial_packages
         ]
