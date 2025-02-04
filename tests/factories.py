@@ -12,7 +12,7 @@ from typing import Generator
 
 import factory
 
-from gentoo_build_publisher import publisher
+from gentoo_build_publisher import build_publisher, publisher
 from gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.records import BuildRecord, Repo
 from gentoo_build_publisher.settings import Settings
@@ -93,7 +93,7 @@ class BuildPublisherFactory(factory.Factory):
     """BuildPublisher factory"""
 
     class Meta:  # pylint: disable=too-few-public-methods,missing-class-docstring
-        model = publisher.BuildPublisher
+        model = build_publisher.BuildPublisher
 
     jenkins = factory.LazyAttribute(
         lambda _: MockJenkins.from_settings(Settings.from_environ())

@@ -3,17 +3,18 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
+from unittest_fixtures import requires
+
+from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
-from gentoo_build_publisher.publisher import BuildPublisher
 from gentoo_build_publisher.types import EbuildRepo
 
 from . import DjangoTestCase as TestCase
-from . import fixture
 from .helpers import string_console
 
 
-@fixture.requires("publisher", "gbp")
+@requires("publisher", "gbp")
 class AddRepoTestCase(TestCase):
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(

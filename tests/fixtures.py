@@ -17,7 +17,8 @@ from django.test.client import Client
 from gbpcli import GBP
 from unittest_fixtures import FixtureContext, FixtureOptions, Fixtures, depends
 
-from gentoo_build_publisher import publisher as publisher_mod
+import gentoo_build_publisher
+from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.models import BuildLog, BuildModel
@@ -30,7 +31,6 @@ from gentoo_build_publisher.utils import time
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
 from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
 
-BuildPublisher = publisher_mod.BuildPublisher
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
@@ -66,8 +66,15 @@ def settings(_options: FixtureOptions, _fixtures: Fixtures) -> Settings:
 @depends("mock_environment")
 def publisher(_o: FixtureOptions, _f: Fixtures) -> FixtureContext[BuildPublisher]:
     bp: BuildPublisher = BuildPublisherFactory()
-    pp = _patch_publisher
-    with pp("jenkins", bp), pp("repo", bp), pp("storage", bp):
+
+    @contextmanager
+    def pp(name: str) -> FixtureContext[None]:
+        with mock.patch.object(
+            gentoo_build_publisher.publisher, name, getattr(bp, name)
+        ):
+            yield
+
+    with pp("jenkins"), pp("repo"), pp("storage"):
         yield bp
 
 
@@ -186,11 +193,3 @@ def jenkins(_options: FixtureOptions, fixtures: Fixtures) -> Jenkins:
     fixed_settings = replace(fixtures.settings, STORAGE_PATH=root)
 
     return MockJenkins.from_settings(fixed_settings)
-
-
-@contextmanager
-def _patch_publisher(name: str, mock_publisher: BuildPublisher) -> FixtureContext[None]:
-    # pylint: disable=protected-access
-    with mock.patch.object(publisher_mod._inst, name, getattr(mock_publisher, name)):
-        with mock.patch.object(publisher_mod, name, getattr(mock_publisher, name)):
-            yield

@@ -32,10 +32,34 @@ client machines which point to their respective machine configurations.
 """
 
 # pylint: disable=invalid-name
+from __future__ import annotations
+
+import importlib
+from functools import cache
+from typing import TYPE_CHECKING, Any
+
 from celery import Celery
+
+if TYPE_CHECKING:
+    from gentoo_build_publisher.build_publisher import BuildPublisher
 
 default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
 
 celery = Celery("gentoo_build_publisher")
 celery.config_from_object("django.conf:settings", namespace="CELERY")
 celery.autodiscover_tasks()
+
+publisher: BuildPublisher
+
+
+@cache
+def __getattr__(name: str) -> Any:
+    if name == "publisher":
+        build_publisher = importlib.import_module(
+            "gentoo_build_publisher.build_publisher"
+        )
+        settings = importlib.import_module("gentoo_build_publisher.settings")
+        return build_publisher.BuildPublisher.from_settings(
+            settings.Settings.from_environ()
+        )
+    raise AttributeError(name)

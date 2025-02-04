@@ -131,7 +131,7 @@ class PullBuildTestCase(TestCase):
         records = build_records(settings)
 
         with mock.patch(
-            "gentoo_build_publisher.publisher.Jenkins.download_artifact"
+            "gentoo_build_publisher.build_publisher.Jenkins.download_artifact"
         ) as download_artifact_mock:
             download_artifact_mock.side_effect = RuntimeError("blah")
             with redirect_stderr(io.StringIO()):

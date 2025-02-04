@@ -60,7 +60,9 @@ class BuildQueryTestCase(TestCase):
         artifact_builder.build(build, "x11-wm/mutter-41.3")
         artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
 
-        with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_utctime:
+        with mock.patch(
+            "gentoo_build_publisher.build_publisher.utctime"
+        ) as mock_utctime:
             mock_utctime.return_value = time.utctime(dt.datetime(2022, 3, 1, 6, 28, 44))
             publisher.pull(build)
 

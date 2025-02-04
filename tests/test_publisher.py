@@ -15,6 +15,7 @@ from unittest_fixtures import (
 from yarl import URL
 
 from gentoo_build_publisher import publisher as gbp
+from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
@@ -34,7 +35,7 @@ class BuildPublisherFromSettingsTestCase(BaseTestCase):
             RECORDS_BACKEND="memory",
             STORAGE_PATH=self.fixtures.tmpdir / "test_from_settings",
         )
-        pub = gbp.BuildPublisher.from_settings(settings)
+        pub = BuildPublisher.from_settings(settings)
 
         self.assertEqual(
             pub.jenkins.config.base_url, URL("https://testserver.invalid/")
@@ -82,7 +83,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         publisher = fixtures.publisher
         now = utctime()
 
-        with mock.patch("gentoo_build_publisher.publisher.utctime") as mock_now:
+        with mock.patch("gentoo_build_publisher.build_publisher.utctime") as mock_now:
             mock_now.return_value = now
             publisher.pull(fixtures.build)
 
@@ -289,12 +290,11 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_tag_tags_the_build_at_the_storage_layer(self) -> None:
         fixtures = self.fixtures
-        publisher = fixtures.publisher
         build = fixtures.build
 
-        publisher.pull(build)
-        publisher.tag(build, "prod")
-        publisher.tag(build, "albert")
+        gbp.pull(build)
+        gbp.tag(build, "prod")
+        gbp.tag(build, "albert")
 
         self.assertEqual(gbp.storage.get_tags(build), ["albert", "prod"])
 

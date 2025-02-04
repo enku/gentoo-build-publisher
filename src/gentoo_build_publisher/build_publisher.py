@@ -266,27 +266,3 @@ class BuildPublisher:
         duration = jenkins_metadata.duration
 
         return GBPMetadata(build_duration=duration, packages=pkg_metadata)
-
-
-_inst = BuildPublisher.from_settings(Settings.from_environ())
-delete = _inst.delete
-diff_binpkgs = _inst.diff_binpkgs
-get_packages = _inst.get_packages
-gbp_metadata = _inst.gbp_metadata
-jenkins = _inst.jenkins
-latest_build = _inst.latest_build
-machines = _inst.machines
-publish = _inst.publish
-published = _inst.published
-pull = _inst.pull
-pulled = _inst.pulled
-purge = _inst.purge
-record = _inst.record
-repo = _inst.repo
-save = _inst.save
-schedule_build = _inst.schedule_build
-search = _inst.search
-storage = _inst.storage
-tag = _inst.tag
-tags = _inst.tags
-untag = _inst.untag
