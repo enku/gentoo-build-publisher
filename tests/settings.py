@@ -1,5 +1,6 @@
 """Settings for tests"""
 
+from importlib.metadata import entry_points
 from pathlib import Path
 
 from gentoo_build_publisher.utils import create_secret_key
@@ -17,6 +18,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "gentoo_build_publisher.apps.GentooBuildPublisherConfig",
 ]
+
+for entry_point in entry_points().select(group="gentoo_build_publisher.apps"):
+    app = entry_point.load()
+    if isinstance(app, str):
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS.append(app)
+    else:
+        raise ValueError(f"Entry point for {entry_point.name} is not a string")
+    del entry_point, app
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
