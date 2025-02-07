@@ -9,10 +9,9 @@ from gentoo_build_publisher.types import MachineJob, Repo
 
 from . import DjangoTestCase as TestCase
 from . import fixture
-from .helpers import string_console
 
 
-@fixture.requires("gbp")
+@fixture.requires("gbp", "console")
 class AddMachineTestCase(TestCase):
     def test_calls_graphql_with_the_expected_args(self) -> None:
         args = Namespace(
@@ -21,7 +20,7 @@ class AddMachineTestCase(TestCase):
             branch="master",
             deps=["gentoo"],
         )
-        console = string_console()[0]
+        console = self.fixtures.console
         exit_status = addmachine.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
@@ -40,11 +39,11 @@ class AddMachineTestCase(TestCase):
             branch="master",
             deps=["gentoo"],
         )
-        console, _, err = string_console()
+        console = self.fixtures.console
         exit_status = addmachine.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(err.getvalue(), "error: FileExistsError: base\n")
+        self.assertEqual(console.err.file.getvalue(), "error: FileExistsError: base\n")
 
 
 class CheckParseArgs(TestCase):

@@ -11,10 +11,9 @@ from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
 
 from . import DjangoTestCase as TestCase
-from .helpers import string_console
 
 
-@requires("publisher", "gbp")
+@requires("publisher", "gbp", "console")
 class AddRepoTestCase(TestCase):
     def test_calls_grapql_with_the_expected_args(self) -> None:
         args = Namespace(
@@ -22,7 +21,7 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        console = string_console()[0]
+        console = self.fixtures.console
         exit_status = addrepo.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
@@ -39,11 +38,13 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        console, _, err = string_console()
+        console = self.fixtures.console
         exit_status = addrepo.handler(args, self.fixtures.gbp, console)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(err.getvalue(), "error: FileExistsError: repos/gentoo\n")
+        self.assertEqual(
+            console.err.file.getvalue(), "error: FileExistsError: repos/gentoo\n"
+        )
 
 
 class CheckParseArgs(TestCase):

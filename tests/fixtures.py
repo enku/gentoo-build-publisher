@@ -3,6 +3,7 @@
 # pylint: disable=missing-docstring,cyclic-import
 import datetime as dt
 import importlib.metadata
+import io
 import itertools
 import os
 import tempfile
@@ -12,9 +13,13 @@ from functools import partial
 from pathlib import Path
 from unittest import mock
 
+import rich.console
 from cryptography.fernet import Fernet
 from django.test.client import Client
 from gbpcli.gbp import GBP
+from gbpcli.theme import DEFAULT_THEME
+from gbpcli.types import Console
+from rich.theme import Theme
 from unittest_fixtures import FixtureContext, FixtureOptions, Fixtures, depends
 
 import gentoo_build_publisher
@@ -29,8 +34,9 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .helpers import MockJenkins, create_user_auth, string_console, test_gbp
+from .helpers import MockJenkins, create_user_auth, test_gbp
 
+COUNTER = 0
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
@@ -54,7 +60,7 @@ def mock_environment(
         "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
         **local_environ,
     }
-    with mock.patch.dict(os.environ, mock_environ, clear=True):
+    with mock.patch.dict(os.environ, mock_environ):
         yield mock_environ
 
 
@@ -87,10 +93,26 @@ def gbp(options: FixtureOptions, _fixtures: Fixtures) -> GBP:
     )
 
 
-def console(_options: FixtureOptions, _fixtures: Fixtures) -> Fixtures:
-    sc = string_console()
+@depends()
+def console(_options: FixtureOptions, _fixtures: Fixtures) -> FixtureContext[Console]:
+    out = io.StringIO()
+    err = io.StringIO()
+    theme = Theme(DEFAULT_THEME)
 
-    return Fixtures(console=sc[0], stdout=sc[1], stderr=sc[2])
+    c = Console(
+        out=rich.console.Console(
+            file=out, width=88, theme=theme, highlight=False, record=True
+        ),
+        err=rich.console.Console(file=err, width=88, record=True),
+    )
+    yield c
+
+    if "SAVE_VIRTUAL_CONSOLE" in os.environ:
+        global COUNTER  # pylint: disable=global-statement
+
+        COUNTER += 1
+        filename = f"{COUNTER}.svg"
+        c.out.save_svg(filename, title="Gentoo Build Publisher")
 
 
 @depends("publisher")

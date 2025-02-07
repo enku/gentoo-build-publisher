@@ -15,12 +15,12 @@ class WorkerTests(TestCase):
         worker_path = "gentoo_build_publisher.worker.rq.RQWorker.work"
         with mock.patch(worker_path) as mock_work:
             status = worker.handler(
-                Namespace(type="rq"), self.fixtures.gbp, self.fixtures.console.console
+                Namespace(type="rq"), self.fixtures.gbp, self.fixtures.console
             )
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            self.fixtures.console.stdout.getvalue(),
+            self.fixtures.console.out.file.getvalue(),
             "Working for Gentoo Build Publisher!\n",
         )
         mock_work.assert_called_once()

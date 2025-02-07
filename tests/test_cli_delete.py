@@ -46,7 +46,7 @@ class GBPChkTestCase(TestCase):
         build: Build = fixtures.build
 
         self.assertTrue(publisher.pulled(build))
-        delete.handler(fixtures.args, fixtures.gbp, fixtures.console.console)
+        delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
 
         self.assertFalse(publisher.pulled(build))
 
@@ -55,16 +55,14 @@ class GBPChkTestCase(TestCase):
         build: Build = fixtures.build
         publisher.publish(build)
 
-        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console.console)
+        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
 
         self.assertEqual(status, 1)
-        stderr = self.fixtures.console.stderr.getvalue()
+        stderr = fixtures.console.err.file.getvalue()
         self.assertEqual(stderr, "Cannot delete a published build.\n")
         self.assertTrue(publisher.pulled(build))
 
-        status = delete.handler(
-            fixtures.force_args, fixtures.gbp, fixtures.console.console
-        )
+        status = delete.handler(fixtures.force_args, fixtures.gbp, fixtures.console)
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
 
@@ -73,16 +71,14 @@ class GBPChkTestCase(TestCase):
         build: Build = fixtures.build
         publisher.tag(build, "testing")
 
-        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console.console)
+        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
 
         self.assertEqual(status, 1)
-        stderr = self.fixtures.console.stderr.getvalue()
+        stderr = fixtures.console.err.file.getvalue()
         self.assertEqual(stderr, "Cannot delete a tagged build.\n")
         self.assertTrue(publisher.pulled(build))
 
-        status = delete.handler(
-            fixtures.force_args, fixtures.gbp, fixtures.console.console
-        )
+        status = delete.handler(fixtures.force_args, fixtures.gbp, fixtures.console)
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
 
@@ -94,11 +90,12 @@ class DisabledDeletestTests(TestCase):
     def test_deletes_disabled(self) -> None:
         fixtures = self.fixtures
         build: Build = fixtures.build
+        console = fixtures.console
 
-        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console.console)
+        status = delete.handler(fixtures.args, fixtures.gbp, console)
 
         self.assertEqual(status, 1)
-        stderr = self.fixtures.console.stderr.getvalue()
+        stderr = console.err.file.getvalue()
         self.assertEqual(
             stderr, "Cannot delete builds because this feature is disabled.\n"
         )

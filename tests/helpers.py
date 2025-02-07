@@ -7,16 +7,12 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 from unittest import mock
 
-import rich.console
 from django.test.client import Client
 from gbpcli.config import AuthDict
 from gbpcli.gbp import GBP
-from gbpcli.theme import DEFAULT_THEME
-from gbpcli.types import Console
 from requests import Response, Session
 from requests.adapters import BaseAdapter
 from requests.structures import CaseInsensitiveDict
-from rich.theme import Theme
 from yarl import URL
 
 from gentoo_build_publisher import publisher
@@ -267,21 +263,6 @@ def create_user_auth(user: str) -> str:
     publisher.repo.api_keys.save(api_key)
 
     return secret
-
-
-def string_console(**kwargs: Any) -> tuple[Console, io.StringIO, io.StringIO]:
-    """StringIO Console"""
-    out = io.StringIO()
-    err = io.StringIO()
-
-    return (
-        Console(
-            out=rich.console.Console(file=out, theme=Theme(DEFAULT_THEME), **kwargs),
-            err=rich.console.Console(file=err, **kwargs),
-        ),
-        out,
-        err,
-    )
 
 
 def test_data(filename: str) -> bytes:
