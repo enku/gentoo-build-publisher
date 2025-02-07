@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/enku/gentoo-build-publisher/master/docs/media/dashboard.png" alt="Gentoo Build Publisher dashboard" width="100%">
+<img src="https://raw.githubusercontent.com/enku/screenshots/master/gentoo-build-publisher/dashboard.png" alt="Gentoo Build Publisher dashboard" width="100%">
 </p>
 
 # Gentoo Build Publisher
@@ -56,7 +56,7 @@ machines sync from.
   `https://gbp/machines/base/binrepos.conf`.
 
 <p align="center">
-<img src="docs/media/gbp.svg" alt="Jenkins build" width="90%">
+<img src="https://raw.githubusercontent.com/enku/screenshots/refs/heads/master/gentoo-build-publisher/gbp.svg" alt="Jenkins build" width="90%">
 </p>
 
 # CLI
@@ -65,7 +65,7 @@ The [command-line interface](https://github.com/enku/gbpcli#readme) can
 inspect, publish, pull, schedule builds and more.
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/enku/gbp-ps/master/docs/screenshot.gif" alt="gbpcli screenshot" width="100%">
+<img src="https://raw.githubusercontent.com/enku/screenshots/refs/heads/master/gbp-ps/screenshot.gif" alt="gbpcli screenshot" width="100%">
 </p>
 
 # Articles
