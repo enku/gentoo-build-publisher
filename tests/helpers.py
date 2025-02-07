@@ -9,8 +9,8 @@ from unittest import mock
 
 import rich.console
 from django.test.client import Client
-from gbpcli import GBP
 from gbpcli.config import AuthDict
+from gbpcli.gbp import GBP
 from gbpcli.theme import DEFAULT_THEME
 from gbpcli.types import Console
 from requests import Response, Session

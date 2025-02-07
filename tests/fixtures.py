@@ -14,7 +14,7 @@ from unittest import mock
 
 from cryptography.fernet import Fernet
 from django.test.client import Client
-from gbpcli import GBP
+from gbpcli.gbp import GBP
 from unittest_fixtures import FixtureContext, FixtureOptions, Fixtures, depends
 
 import gentoo_build_publisher
