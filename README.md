@@ -88,3 +88,5 @@ detail.
 - [Gentoo Build Publisher: Using Separate Machines for
   Overlays](https://lunarcowboy.com/gentoo-build-publisher-using-separate-machines-for-overlays.html)
   September 2024
+- [Announce: gbp-fl](https://lunarcowboy.com/announce-gbp-fl.html): February
+  2025
