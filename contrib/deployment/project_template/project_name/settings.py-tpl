@@ -1,5 +1,6 @@
 import os
-from importlib.metadata import entry_points
+
+from gentoo_build_publisher import utils
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('BUILD_PUBLISHER_ROOT_KEY', '{{ secret_key }}')
@@ -18,15 +19,7 @@ INSTALLED_APPS = [
     'ariadne_django',
     'gentoo_build_publisher',
 ]
-
-for entry_point in entry_points().select(group="gentoo_build_publisher.apps"):
-    app = entry_point.load()
-    if isinstance(app, str):
-        if app not in INSTALLED_APPS:
-            INSTALLED_APPS.append(app)
-    else:
-        raise ValueError(f"Entry point for {entry_point.name} is not a string")
-    del entry_point, app
+utils.for_each_app(INSTALLED_APPS.append)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import importlib.metadata
 import importlib.resources
 import platform
 import re
@@ -252,3 +253,23 @@ def encode_basic_auth_data(username: str, secret: str) -> str:
 
 encode = partial(str.encode, encoding="ascii")
 decode = partial(bytes.decode, encoding="ascii")
+
+
+_T = TypeVar("_T")
+
+
+def for_each_app(do: Callable[[str], _T]) -> list[_T]:
+    """For each registered GBP app, run the given callable"""
+    return_values: list[_T] = []
+    apps: list[str] = []
+    eps = importlib.metadata.entry_points().select(group="gentoo_build_publisher.apps")
+
+    for entry_point in eps:
+        app = entry_point.load()
+        apps.append(app)
+        if isinstance(app, str):
+            return_values.append(do(app))
+        else:
+            raise ValueError(f"Entry point for {entry_point.name} is not a string")
+
+    return return_values

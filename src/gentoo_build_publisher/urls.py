@@ -1,20 +1,23 @@
 """Default urlconf for gentoo_build_publisher"""
 
 from importlib import import_module
-from importlib.metadata import entry_points
 
+from django.urls import URLPattern
+
+from gentoo_build_publisher import utils
 from gentoo_build_publisher.views.utils import ViewFinder
 
 urlpatterns = ViewFinder.find()
 
-for entry_point in entry_points().select(group="gentoo_build_publisher.apps"):
-    app = entry_point.load()
+
+def app_urlpatterns(app: str) -> list[URLPattern]:
+    """Return the urlpatterns defined in the given app"""
     try:
         module = import_module(f"{app}.urls")
     except ImportError:
-        pass
-    else:
-        urlpatterns.extend(getattr(module, "urlpatterns", []))
-        del module
+        return []
 
-    del entry_point, app
+    return getattr(module, "urlpatterns", [])
+
+
+utils.for_each_app(lambda app: urlpatterns.extend(app_urlpatterns(app)))
