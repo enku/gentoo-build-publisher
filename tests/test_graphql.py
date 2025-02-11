@@ -7,6 +7,7 @@ from typing import Any
 from unittest import mock
 
 from graphql import GraphQLResolveInfo
+from unittest_fixtures import parametrized
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
@@ -30,7 +31,7 @@ from gentoo_build_publisher.types import (
 from gentoo_build_publisher.utils import encode_basic_auth_data, get_version, time
 from gentoo_build_publisher.worker import tasks
 
-from . import TestCase, fixture, parametrized
+from . import TestCase, fixture
 from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from .helpers import BUILD_LOGS, graphql
 

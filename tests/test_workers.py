@@ -10,6 +10,7 @@ from unittest import mock
 
 import fakeredis
 from requests import HTTPError
+from unittest_fixtures import parametrized
 
 from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import publisher
@@ -26,7 +27,7 @@ from gentoo_build_publisher.worker.celery import CeleryWorker
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
 
-from . import TestCase, fixture, parametrized
+from . import TestCase, fixture
 
 
 def get_worker(name: str) -> WorkerInterface:
