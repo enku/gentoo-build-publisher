@@ -6,12 +6,11 @@ import random
 import typing as t
 from dataclasses import dataclass
 
+import unittest_fixtures as fixture
 from unittest_fixtures import BaseTestCase as TestCase
 from unittest_fixtures import FixtureOptions, Fixtures
 
 from gentoo_build_publisher.purge import Purger
-
-from . import fixture
 
 # Random dates for testing
 DATES = [

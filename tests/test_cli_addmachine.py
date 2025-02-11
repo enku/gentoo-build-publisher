@@ -3,12 +3,13 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 from . import DjangoTestCase as TestCase
-from . import fixture
 
 
 @fixture.requires("gbp", "console")

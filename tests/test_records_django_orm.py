@@ -4,12 +4,13 @@
 import datetime as dt
 from dataclasses import replace
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build
 
 from . import DjangoTestCase as TestCase
-from . import fixture
 from .factories import BuildModelFactory, BuildRecordFactory
 
 

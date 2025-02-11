@@ -7,6 +7,7 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import replace
 from unittest.mock import Mock, patch
 
+import unittest_fixtures as fixture
 from django.conf import settings
 from unittest_fixtures import requires
 
@@ -15,7 +16,7 @@ from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 
-from . import DjangoTestCase, TestCase, fixture
+from . import DjangoTestCase, TestCase
 from .helpers import LOCAL_TIMEZONE
 
 

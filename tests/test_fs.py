@@ -3,10 +3,12 @@ import datetime as dt
 import os
 import shutil
 
+import unittest_fixtures as fixture
+
 from gentoo_build_publisher import fs
 from gentoo_build_publisher.types import Content
 
-from . import TestCase, fixture
+from . import TestCase
 from .factories import BuildFactory
 from .helpers import create_file
 

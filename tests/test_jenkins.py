@@ -10,6 +10,7 @@ from typing import Any
 from unittest import mock
 
 import requests
+import unittest_fixtures as fixture
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
@@ -24,7 +25,6 @@ from gentoo_build_publisher.jenkins import (
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
 
-from . import fixture
 from .helpers import MockJenkins, test_data
 
 JENKINS_CONFIG = JenkinsConfig(
