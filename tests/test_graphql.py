@@ -12,13 +12,8 @@ from unittest_fixtures import parametrized
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
-from gentoo_build_publisher.graphql import (
-    UnauthorizedError,
-    load_schema,
-    require_apikey,
-    resolvers,
-    type_defs,
-)
+from gentoo_build_publisher.graphql import load_schema, resolvers, type_defs
+from gentoo_build_publisher.graphql.utils import UnauthorizedError, require_apikey
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import (
@@ -39,6 +34,7 @@ from .helpers import BUILD_LOGS, graphql
 Mock = mock.Mock
 
 SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
+WORKER = "gentoo_build_publisher.graphql.mutations.worker"
 
 
 def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
@@ -616,7 +612,7 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+        with mock.patch(WORKER) as mock_worker:
             graphql(self.fixtures.client, query)
 
         mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
@@ -638,7 +634,7 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+        with mock.patch(WORKER) as mock_worker:
             result = graphql(self.fixtures.client, query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
@@ -657,7 +653,7 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+        with mock.patch(WORKER) as mock_worker:
             result = graphql(
                 self.fixtures.client,
                 query,
@@ -680,7 +676,7 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch("gentoo_build_publisher.graphql.worker") as mock_worker:
+        with mock.patch(WORKER) as mock_worker:
             result = graphql(
                 self.fixtures.client,
                 query,
