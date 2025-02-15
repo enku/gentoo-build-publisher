@@ -2,6 +2,9 @@
 
 # pylint: disable=missing-docstring
 import datetime as dt
+import io
+import json
+import tarfile as tar
 from unittest import mock
 from zoneinfo import ZoneInfo
 
@@ -469,3 +472,36 @@ class ScheduleBuildTestCase(TestCase):
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)
         self.assertEqual(gbp.jenkins.scheduled_builds, ["babette"])
+
+
+@requires("publisher")
+class DumpTests(TestCase):
+    def test(self) -> None:
+        builds = [
+            *BuildFactory.create_batch(3, machine="foo"),
+            *BuildFactory.create_batch(2, machine="bar"),
+            *BuildFactory.create_batch(1, machine="baz"),
+        ]
+        for build in builds:
+            gbp.pull(build)
+
+        outfile = io.BytesIO()
+        gbp.dump(builds, outfile)
+        outfile.seek(0)
+
+        with tar.open(mode="r", fileobj=outfile) as tarfile:
+            names = tarfile.getnames()
+            self.assertEqual(names, ["storage.tar", "records.json"])
+
+            storage = tarfile.extractfile("storage.tar")
+            assert storage is not None
+            with storage:
+                with tar.open(mode="r", fileobj=storage) as storage_tarfile:
+                    names = storage_tarfile.getnames()
+                    self.assertEqual(120, len(names))
+
+            records = tarfile.extractfile("records.json")
+            assert records is not None
+            with records:
+                data = json.load(records)
+                self.assertEqual(6, len(data))

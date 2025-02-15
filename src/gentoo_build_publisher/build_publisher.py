@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import logging
 import math
+import tarfile as tar
+import tempfile
 from datetime import datetime
 from difflib import Differ
-from typing import Any, Iterable
+from typing import IO, Any, Iterable
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.machines import MachineInfo
@@ -242,6 +244,27 @@ class BuildPublisher:
     def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
         return self.repo.build_records.latest(machine, completed)
+
+    def dump(self, builds: Iterable[Build], outfile: IO[bytes]) -> None:
+        """Dump the given builds to the given outfile"""
+        builds = list(builds)
+        builds.sort(key=lambda build: (build.machine, build.build_id))
+
+        with tar.open(fileobj=outfile, mode="w") as tarfile:
+            # first dump storage
+            with tempfile.TemporaryFile(mode="w+b") as tmp:
+                self.storage.dump(builds, tmp)
+                tmp.seek(0)
+                tarinfo = tarfile.gettarinfo(arcname="storage.tar", fileobj=tmp)
+                tarfile.addfile(tarinfo, tmp)
+
+            # then dump records
+            with tempfile.SpooledTemporaryFile(mode="w+b") as tmp:
+                records = [self.repo.build_records.get(build) for build in builds]
+                self.repo.build_records.dump(records, tmp)
+                tmp.seek(0)
+                tarinfo = tarfile.gettarinfo(arcname="records.json", fileobj=tmp)
+                tarfile.addfile(tarinfo, tmp)
 
     @staticmethod
     def gbp_metadata(
