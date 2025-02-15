@@ -656,3 +656,41 @@ class MakePackagesTestCase(TestCase):
             packages = [*make_packages(opened_index_file)]
 
         self.assertEqual(len(packages), 4)
+
+
+@fixture.requires("tmpdir", "publisher", "build")
+class StorageDumpTestCase(TestCase):
+    """Tests for Storage.dump"""
+
+    def test(self) -> None:
+        """Should raise an exception if the build has not been pulled"""
+        pub = self.fixtures.publisher
+        storage = pub.storage
+
+        # Given the pulled build
+        build = self.fixtures.build
+        pub.pull(build)
+        pub.publish(build)
+        pub.tag(build, "mytag")
+
+        # Given the storage, and file object
+        path = self.fixtures.tmpdir / "dump.tar"
+        with open(path, "wb") as out:
+
+            # Then we can dump the builds to the file
+            start = out.tell()
+            storage.dump([build], out)
+
+            self.assertGreater(out.tell(), start)
+
+        with tarfile.open(path) as fp:
+            contents = fp.getnames()
+
+        # And the resulting tarfile has the contents we expect
+        bid = str(build)
+        self.assertIn(f"repos/{bid}", contents)
+        self.assertIn(f"binpkgs/{bid}", contents)
+        self.assertIn(f"etc-portage/{bid}", contents)
+        self.assertIn(f"var-lib-portage/{bid}", contents)
+        self.assertIn(f"var-lib-portage/{build.machine}", contents)
+        self.assertIn(f"var-lib-portage/{build.machine}@mytag", contents)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import tarfile as tar
 import tempfile
 from functools import lru_cache
 from pathlib import Path
@@ -282,6 +283,20 @@ class Storage:
                 pass
 
             return list(make_packages(package_index_file))
+
+    def dump(self, builds: Iterable[Build], fp: IO[bytes]) -> None:
+        """Dump the given builds' contents to the given file object
+
+        The bytes dumped will be a tar archive. This includes any tags associated with
+        the build.
+        """
+        with tar.open(fileobj=fp, mode="w") as tarfile, fs.cd(self.root):
+            for build in builds:
+                for content in Content:
+                    for tag in [None, *self.get_tags(build)]:
+                        path = self.get_path(build, content, tag=tag)
+                        path = path.relative_to(self.root)
+                        tarfile.add(path)
 
     def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
