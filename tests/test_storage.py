@@ -37,7 +37,7 @@ TEST_SETTINGS = Settings(
 )
 
 
-@fixture.requires("mock_environment", "tmpdir")
+@fixture.requires("environ", "tmpdir")
 class StorageFromSettings(TestCase):
     options = {"environ": {}, "environ_clear": False}
 
@@ -132,7 +132,7 @@ class StoragePublishTestCase(TestCase):
             storage.publish(build)
 
 
-@fixture.requires("mock_environment", "storage", "build", "settings", "jenkins")
+@fixture.requires("environ", "storage", "build", "settings", "jenkins")
 class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
 

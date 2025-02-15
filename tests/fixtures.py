@@ -46,7 +46,7 @@ def tmpdir(_options: FixtureOptions, _fixtures: Fixtures) -> FixtureContext[Path
 
 
 @depends("tmpdir")
-def mock_environment(
+def environ(
     options: FixtureOptions, fixtures: Fixtures
 ) -> FixtureContext[dict[str, str]]:
     local_environ = options.get("environ", {})
@@ -66,12 +66,12 @@ def mock_environment(
         yield mock_environ
 
 
-@depends("mock_environment")
+@depends("environ")
 def settings(_options: FixtureOptions, _fixtures: Fixtures) -> Settings:
     return Settings.from_environ()
 
 
-@depends("mock_environment")
+@depends("environ")
 def publisher(_o: FixtureOptions, _f: Fixtures) -> FixtureContext[BuildPublisher]:
     bp: BuildPublisher = BuildPublisherFactory()
 
