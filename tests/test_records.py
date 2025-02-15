@@ -2,11 +2,12 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
+import json
 from itertools import product
 from pathlib import Path
 
 from django.test import TestCase
-from unittest_fixtures import parametrized
+from unittest_fixtures import parametrized, requires
 
 from gentoo_build_publisher.records import (
     ApiKeyDB,
@@ -28,6 +29,7 @@ from .factories import BuildRecordFactory
 BACKENDS = [["django"], ["memory"]]
 
 
+@requires("tmpdir")
 class RecordDBTestCase(TestCase):
     def backend(self, backend_name: str) -> RecordDB:
         settings = Settings(
@@ -274,6 +276,21 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.count(), 16)
         self.assertEqual(records.count("blackwidow"), 8)
         self.assertEqual(records.count("bogus"), 0)
+
+    @parametrized(BACKENDS)
+    def test_dump(self, backend: str) -> None:
+        records = self.backend(backend)
+        build = BuildRecordFactory.create()
+
+        records.save(build)
+        path = self.fixtures.tmpdir / "records.json"
+        with open(path, "wb") as outfile:
+            records.dump([build], outfile)
+
+        with open(path, "rb") as infile:
+            dump = json.load(infile)
+
+        self.assertEqual([build], [BuildRecord(**item) for item in dump])
 
 
 class BuildRecordsTestCase(TestCase):

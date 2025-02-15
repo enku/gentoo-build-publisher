@@ -4,7 +4,11 @@ import datetime as dt
 import typing as t
 from dataclasses import replace
 
-from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.records import (
+    BuildRecord,
+    RecordNotFound,
+    dump_build_records,
+)
 from gentoo_build_publisher.types import ApiKey, Build
 
 BuildId = str
@@ -175,6 +179,14 @@ class RecordDB:
             return len(self.builds.get(machine, {}))
 
         return sum(len(builds) for builds in self.builds.values())
+
+    @staticmethod
+    def dump(builds: t.Iterable[BuildRecord], outfile: t.IO[bytes]) -> None:
+        """Dump the given BuildRecords as JSON to the given file
+
+        The JSON structure is an array of dataclasses.asdict(BuildRecord)
+        """
+        dump_build_records(builds, outfile)
 
 
 def record_key(record: BuildRecord) -> int | str:
