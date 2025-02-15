@@ -220,16 +220,12 @@ class BuildPublisher:
         left_packages = [f"{package.cpvb()}\n" for package in self.get_packages(left)]
         right_packages = [f"{package.cpvb()}\n" for package in self.get_packages(right)]
         code_map = {"-": "REMOVED", "+": "ADDED"}
-
-        differ = Differ()
-        diff = differ.compare(left_packages, right_packages)
+        diff = Differ().compare(left_packages, right_packages)
 
         for item in diff:
-            if (code := item[0]) not in code_map:
-                continue
-            cpvb = item[2:].rstrip()
-
-            yield Change(cpvb, ChangeState[code_map[code]])
+            if change_state := code_map.get(item[0]):
+                cpvb = item[2:].rstrip()
+                yield Change(cpvb, ChangeState[change_state])
 
     def machines(self, *, names: Iterable[str] | None = None) -> list[MachineInfo]:
         """Return list of machines with metadata
