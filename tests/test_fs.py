@@ -129,3 +129,16 @@ class CheckSymlink(TestCase):
         os.symlink("bogus", name)
 
         self.assertIs(fs.check_symlink(str(name), "bogus"), False)
+
+
+@fixture.requires("tmpdir")
+class CDTests(TestCase):
+    def test(self) -> None:
+        tmpdir = str(self.fixtures.tmpdir)
+
+        self.assertNotEqual(os.getcwd(), tmpdir)
+
+        with fs.cd(tmpdir):
+            self.assertEqual(os.getcwd(), tmpdir)
+
+        self.assertNotEqual(os.getcwd(), tmpdir)

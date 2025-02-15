@@ -4,8 +4,9 @@ import logging
 import os
 import shutil
 import tarfile
+from contextlib import contextmanager
 from pathlib import Path
-from typing import IO, Callable, Iterable, TypeVar
+from typing import IO, Callable, Generator, Iterable, TypeVar
 
 _T = TypeVar("_T", bytes, str)
 
@@ -108,3 +109,13 @@ def check_symlink(symlink_: str, target: str) -> bool:
         return False
 
     return os.path.realpath(symlink_) == target
+
+
+@contextmanager
+def cd(path: str | os.PathLike[str]) -> Generator[None, None, None]:
+    """Context manager to change to the given directory"""
+    orig_dir = os.getcwd()
+
+    os.chdir(path)
+    yield
+    os.chdir(orig_dir)
