@@ -183,7 +183,9 @@ class BinPkgViewTests(TestCase):
         self.assertEqual(response.status_code, 301, response.content)
 
         request = response.request
-        expected = "/binpkgs/lighthouse.83/sys-libs/pam/pam-1.5.3-1.gpkg.tar"
+        expected = (
+            f"/binpkgs/lighthouse.{package.build_id}/sys-libs/pam/pam-1.5.3-1.gpkg.tar"
+        )
         self.assertTrue(response["Location"].endswith(expected), response["Location"])
 
     def test_when_build_does_not_exist(self) -> None:
