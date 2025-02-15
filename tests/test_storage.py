@@ -73,7 +73,8 @@ class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
 
     def has_content(self, build: Build, content: Content) -> bool:
-        return self.fixtures.storage.get_path(build, content).is_dir()
+        storage: Storage = self.fixtures.storage
+        return storage.get_path(build, content).is_dir()
 
     def download_and_extract(self, build: Build) -> None:
         self.fixtures.storage.extract_artifact(
