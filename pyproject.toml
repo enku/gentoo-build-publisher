@@ -41,6 +41,7 @@ addrepo = "gentoo_build_publisher.cli.addrepo"
 apikey = "gentoo_build_publisher.cli.apikey"
 check = "gentoo_build_publisher.cli.check"
 delete = "gentoo_build_publisher.cli.delete"
+dump = "gentoo_build_publisher.cli.dump"
 worker = "gentoo_build_publisher.cli.worker"
 
 [project.entry-points."gentoo_build_publisher.graphql_schema"]

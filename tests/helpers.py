@@ -1,14 +1,17 @@
 # pylint: disable=missing-docstring,comparison-with-callable
+import argparse
 import datetime as dt
 import io
 import os
+import shlex
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 from unittest import mock
 
+import gbpcli
 from django.test.client import Client
-from gbpcli.config import AuthDict
+from gbpcli.config import AuthDict, Config
 from gbpcli.gbp import GBP
 from requests import Response, Session
 from requests.adapters import BaseAdapter
@@ -271,3 +274,11 @@ def test_data(filename: str) -> bytes:
 
 
 BUILD_LOGS = test_data("logs.txt").decode("UTF-8")
+
+
+def parse_args(cmdline: str) -> argparse.Namespace:
+    """Return cmdline as parsed arguments"""
+    args = shlex.split(cmdline)
+    parser = gbpcli.build_parser(Config(url="http://gbp.invalid/"))
+
+    return parser.parse_args(args[1:])
