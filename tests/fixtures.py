@@ -50,6 +50,8 @@ def mock_environment(
     options: FixtureOptions, fixtures: Fixtures
 ) -> FixtureContext[dict[str, str]]:
     local_environ = options.get("environ", {})
+    clear: bool = options.get("environ_clear", False)
+
     mock_environ = {
         "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
         "BUILD_PUBLISHER_API_KEY_KEY": Fernet.generate_key().decode("ascii"),
@@ -60,7 +62,7 @@ def mock_environment(
         "BUILD_PUBLISHER_WORKER_THREAD_WAIT": "yes",
         **local_environ,
     }
-    with mock.patch.dict(os.environ, mock_environ):
+    with mock.patch.dict(os.environ, mock_environ, clear=clear):
         yield mock_environ
 
 

@@ -6,7 +6,6 @@ import os
 import tarfile
 from dataclasses import replace
 from pathlib import Path
-from unittest import mock
 
 import unittest_fixtures as fixture
 
@@ -38,9 +37,10 @@ TEST_SETTINGS = Settings(
 )
 
 
-@fixture.requires("tmpdir")
+@fixture.requires("mock_environment", "tmpdir")
 class StorageFromSettings(TestCase):
-    @mock.patch.dict(os.environ, {}, clear=True)
+    options = {"environ": {}, "environ_clear": False}
+
     def test(self) -> None:
         """Should instantiate Storage from settings"""
         # Given the settings
