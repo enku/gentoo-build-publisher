@@ -536,6 +536,33 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, ["albert"])
 
+    def test_get_path(self) -> None:
+        build = BuildFactory()
+        storage = publisher.storage
+
+        path = storage.get_path(build, Content.BINPKGS)
+
+        expected = Path(storage.root, "binpkgs", str(build))
+        self.assertEqual(expected, path)
+
+    def test_get_path_with_tag(self) -> None:
+        build = BuildFactory()
+        storage = publisher.storage
+
+        path = storage.get_path(build, Content.BINPKGS, tag="prod")
+
+        expected = Path(storage.root, "binpkgs", f"{build.machine}@prod")
+        self.assertEqual(expected, path)
+
+    def test_get_path_with_published_tag(self) -> None:
+        build = BuildFactory()
+        storage = publisher.storage
+
+        path = storage.get_path(build, Content.BINPKGS, tag="")
+
+        expected = Path(storage.root, "binpkgs", build.machine)
+        self.assertEqual(expected, path)
+
 
 @fixture.requires("publisher")
 class StorageResolveTagTestCase(TestCase):

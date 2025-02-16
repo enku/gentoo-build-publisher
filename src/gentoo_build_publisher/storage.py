@@ -74,12 +74,20 @@ class Storage:
         return cls(settings.STORAGE_PATH)
 
     @lru_cache(maxsize=256 * len(Content))
-    def get_path(self, build: Build, content: Content) -> Path:
+    def get_path(
+        self, build: Build, content: Content, *, tag: str | None = None
+    ) -> Path:
         """Return the Path of the content type for build
 
         Were it to be downloaded.
+
+        If the optional tag is provided, returns the path of the given tag.
         """
-        return self.root.joinpath(content.value, str(build))
+        if tag is None:
+            return self.root.joinpath(content.value, str(build))
+
+        name = f"{build.machine}{TAG_SYM}{tag}" if tag else build.machine
+        return self.root.joinpath(content.value, name)
 
     def extract_artifact(
         self, build: Build, byte_stream: Iterable[bytes], previous: Build | None = None
