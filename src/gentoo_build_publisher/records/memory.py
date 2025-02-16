@@ -46,19 +46,19 @@ class RecordDB:
     def __init__(self) -> None:
         self.builds: dict[Machine, dict[BuildId, BuildRecord]] = {}
 
-    def save(self, record: BuildRecord, **fields: t.Any) -> BuildRecord:
+    def save(self, build_record: BuildRecord, **fields: t.Any) -> BuildRecord:
         """Save the given record to the db"""
-        record = replace(record, **fields)
+        build_record = replace(build_record, **fields)
 
-        if record.submitted is None:
-            record = replace(record, submitted=dt.datetime.now(tz=dt.UTC))
+        if build_record.submitted is None:
+            build_record = replace(build_record, submitted=dt.datetime.now(tz=dt.UTC))
 
-        if (machine := record.machine) not in self.builds:
-            self.builds[machine] = {record.build_id: record}
+        if (machine := build_record.machine) not in self.builds:
+            self.builds[machine] = {build_record.build_id: build_record}
         else:
-            self.builds[machine][record.build_id] = record
+            self.builds[machine][build_record.build_id] = build_record
 
-        return record
+        return build_record
 
     def get(self, build: Build) -> BuildRecord:
         """Retrieve db record"""
