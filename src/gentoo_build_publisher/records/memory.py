@@ -8,6 +8,7 @@ from gentoo_build_publisher.records import (
     BuildRecord,
     RecordNotFound,
     dump_build_records,
+    restore_build_records,
 )
 from gentoo_build_publisher.types import (
     ApiKey,
@@ -197,6 +198,15 @@ class RecordDB:
         The JSON structure is an array of dataclasses.asdict(BuildRecord)
         """
         dump_build_records(builds, outfile, callback=callback)
+
+    def restore(
+        self, infile: t.IO[bytes], *, callback: DumpCallback = default_dump_callback
+    ) -> list[BuildRecord]:
+        """Restore to the db the records given in the infile
+
+        The infile should be structured with the dump() method.
+        """
+        return restore_build_records(infile, self, callback=callback)
 
 
 def record_key(record: BuildRecord) -> int | str:

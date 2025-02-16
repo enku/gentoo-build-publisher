@@ -1,6 +1,7 @@
 """Tests for the storage type"""
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
+import io
 import json
 import os
 import tarfile
@@ -694,3 +695,32 @@ class StorageDumpTestCase(TestCase):
         self.assertIn(f"var-lib-portage/{bid}", contents)
         self.assertIn(f"var-lib-portage/{build.machine}", contents)
         self.assertIn(f"var-lib-portage/{build.machine}@mytag", contents)
+
+
+@fixture.requires("tmpdir", "publisher", "build")
+class StorageRestoreTests(TestCase):
+    """Tests for storage.restore"""
+
+    def test(self) -> None:
+        # Given the pulled build
+        build = self.fixtures.build
+        publisher.pull(build)
+        publisher.publish(build)
+        publisher.tag(build, "mytag")
+
+        # Given the dump of it
+        fp = io.BytesIO()
+        storage = publisher.storage
+        storage.dump([build], fp)
+
+        # When we run restore on it
+        storage.delete(build)
+        self.assertFalse(storage.pulled(build))
+        fp.seek(0)
+        restored = storage.restore(fp)
+
+        # Then we get the builds restored
+        self.assertEqual([build], restored)
+        self.assertTrue(storage.pulled(build))
+        tags = storage.get_tags(build)
+        self.assertEqual(["", "mytag"], tags)

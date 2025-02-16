@@ -307,6 +307,26 @@ class Storage:
                         path = path.relative_to(self.root)
                         tarfile.add(path)
 
+    def restore(
+        self, fp: IO[bytes], *, callback: DumpCallback = default_dump_callback
+    ) -> list[Build]:
+        """Restore builds from the given file object
+
+        This is the complement of dump()
+        Return the list of builds restored.
+        """
+        restore_list: list[Build] = []
+
+        with tar.open(fileobj=fp, mode="r|") as tarfile, fs.cd(self.root):
+            for member in tarfile:
+                if is_content_dir(member, Content.REPOS):
+                    build = Build.from_id(member.name.split("/", 1)[1])
+                    restore_list.append(build)
+                    callback("restore", "storage", build)
+                tarfile.extract(member)
+
+        return restore_list
+
     def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
 
@@ -375,3 +395,13 @@ def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
     """
     for section in string.get_sections(package_index_file):
         yield make_package_from_lines(section)
+
+
+def is_content_dir(member: tar.TarInfo, content_type: Content) -> bool:
+    """Return true if the given TarFile member is a repo directory"""
+    if not member.isdir():
+        return False
+
+    parts = member.name.split("/")
+
+    return len(parts) == 2 and parts[0] == content_type.value

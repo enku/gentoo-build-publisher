@@ -15,7 +15,7 @@ from gentoo_build_publisher.types import (
     DumpCallback,
     default_dump_callback,
 )
-from gentoo_build_publisher.utils import serializable
+from gentoo_build_publisher.utils import convert_to, decode_to, serializable
 
 
 class RecordNotFound(LookupError):
@@ -120,6 +120,16 @@ class RecordDB(Protocol):
         See also dump_build_records below which is a function that already does this.
         """
 
+    def restore(
+        self, infile: IO[bytes], *, callback: DumpCallback = default_dump_callback
+    ) -> list[BuildRecord]:
+        """Restore to the db the records given in the infile
+
+        The infile should be structured with the dump() method.
+
+        See also restore_build_records below which is a function that already does this.
+        """
+
 
 def build_records(settings: Settings) -> RecordDB:
     """Return instance of the the RecordDB class given in settings"""
@@ -199,3 +209,32 @@ def dump_build_records(
 
     serialized = json.dumps(build_list, default=serializable)
     outfile.write(serialized.encode("utf8"))
+
+
+@convert_to(BuildRecord, "built")
+@convert_to(BuildRecord, "completed")
+@convert_to(BuildRecord, "submitted")
+def _(value: str | None) -> dt.datetime | None:
+    return None if value is None else dt.datetime.fromisoformat(value)
+
+
+def restore_build_records(
+    infile: IO[bytes],
+    records: RecordDB,
+    *,
+    callback: DumpCallback = default_dump_callback,
+) -> list[BuildRecord]:
+    """Restore the JSON given in the infile to BuildRecords in the given RecordDB
+
+    Return the restored records
+    """
+    restore_list: list[BuildRecord] = []
+
+    items = json.load(infile)
+    for item in items:
+        record = decode_to(BuildRecord, item)
+        callback("restore", "records", record)
+        record = records.save(record)
+        restore_list.append(record)
+
+    return restore_list
