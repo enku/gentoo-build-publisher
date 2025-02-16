@@ -251,7 +251,7 @@ class BuildPublisher:
         builds.sort(key=lambda build: (build.machine, build.build_id))
 
         for build in builds:
-            dispatcher.emit("predump", build)
+            dispatcher.emit("predump", build=build)
 
         with tar.open(fileobj=outfile, mode="w") as tarfile:
             # first dump storage
@@ -270,7 +270,7 @@ class BuildPublisher:
                 tarfile.addfile(tarinfo, tmp)
 
         for build in builds:
-            dispatcher.emit("postdump", build)
+            dispatcher.emit("postdump", build=build)
 
     @staticmethod
     def gbp_metadata(
