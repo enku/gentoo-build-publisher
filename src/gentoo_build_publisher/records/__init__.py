@@ -111,7 +111,7 @@ class RecordDB(Protocol):
         builds: Iterable[BuildRecord],
         outfile: IO[bytes],
         *,
-        callback: DumpCallback | None = None,
+        callback: DumpCallback = default_dump_callback,
     ) -> None:
         """Dump the given BuildRecords as JSON to the given file
 
