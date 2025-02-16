@@ -6,7 +6,15 @@ from pydispatch import Dispatcher
 class PublisherDispatcher(Dispatcher):
     """GBP event dispatcher"""
 
-    _events_ = ["predelete", "postdelete", "published", "prepull", "postpull"]
+    _events_ = [
+        "predelete",
+        "postdelete",
+        "published",
+        "prepull",
+        "postpull",
+        "predump",
+        "postdump",
+    ]
 
 
 dispatcher = PublisherDispatcher()

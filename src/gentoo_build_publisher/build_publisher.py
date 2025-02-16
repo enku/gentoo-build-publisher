@@ -250,6 +250,9 @@ class BuildPublisher:
         builds = list(builds)
         builds.sort(key=lambda build: (build.machine, build.build_id))
 
+        for build in builds:
+            dispatcher.emit("predump", build)
+
         with tar.open(fileobj=outfile, mode="w") as tarfile:
             # first dump storage
             with tempfile.TemporaryFile(mode="w+b") as tmp:
@@ -265,6 +268,9 @@ class BuildPublisher:
                 tmp.seek(0)
                 tarinfo = tarfile.gettarinfo(arcname="records.json", fileobj=tmp)
                 tarfile.addfile(tarinfo, tmp)
+
+        for build in builds:
+            dispatcher.emit("postdump", build)
 
     @staticmethod
     def gbp_metadata(
