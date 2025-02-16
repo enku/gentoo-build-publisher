@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-docstring
 
+import io
 import json
 import tarfile as tar
 from pathlib import Path
@@ -72,6 +73,27 @@ class DumpTests(TestCase):
         self.assertTrue(path.exists())
 
         self.assertEqual(1, len(records(path)))
+
+    def test_dump_to_stdout(self) -> None:
+        create_builds()
+
+        cmdline = "gbp dump -"
+
+        args = parse_args(cmdline)
+        gbp = mock.Mock()
+        console = self.fixtures.console
+
+        with mock.patch("gentoo_build_publisher.cli.dump.sys.stdout") as stdout:
+            stdout.buffer = io.BytesIO()
+            status = dump(args, gbp, console)
+
+        self.assertEqual(0, status)
+        path = self.fixtures.tmpdir / "test.tar"
+
+        with open(path, "wb") as fp:
+            fp.write(stdout.buffer.getvalue())
+
+        self.assertEqual(6, len(records(path)))
 
     def test_build_id_not_found(self) -> None:
         create_builds()

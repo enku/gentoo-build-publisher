@@ -1,6 +1,7 @@
 """Dump builds to a file"""
 
 import argparse
+import sys
 
 from gbpcli.gbp import GBP
 from gbpcli.types import Console
@@ -23,15 +24,26 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
         console.err.print(f"{error.args[0]} not found.")
         return 1
 
-    with open(args.filename, "wb") as fp:
+    filename = args.filename
+    is_stdout = filename == "-"
+
+    try:
+        # I'm using try/finally. Leave me alone pylint!
+        # pylint: disable=consider-using-with
+        fp = sys.stdout.buffer if is_stdout else open(filename, "wb")
         publisher.dump(builds, fp)
+    finally:
+        if not is_stdout:
+            fp.close()
 
     return 0
 
 
 def parse_args(parser: argparse.ArgumentParser) -> None:
     """Set subcommand arguments"""
-    parser.add_argument("filename", help="Filename to dump builds to")
+    parser.add_argument(
+        "filename", help='Filename to dump builds to ("-" for standard out)'
+    )
     parser.add_argument("machines", nargs="*", help="machine(s) to dump")
 
 
