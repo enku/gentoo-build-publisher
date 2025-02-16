@@ -18,9 +18,11 @@ from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
     Content,
+    DumpCallback,
     GBPMetadata,
     Package,
     PackageMetadata,
+    default_dump_callback,
 )
 
 INVALID_TEST_PATH = "__testing__"
@@ -284,7 +286,13 @@ class Storage:
 
             return list(make_packages(package_index_file))
 
-    def dump(self, builds: Iterable[Build], fp: IO[bytes]) -> None:
+    def dump(
+        self,
+        builds: Iterable[Build],
+        fp: IO[bytes],
+        *,
+        callback: DumpCallback = default_dump_callback,
+    ) -> None:
         """Dump the given builds' contents to the given file object
 
         The bytes dumped will be a tar archive. This includes any tags associated with
@@ -292,6 +300,7 @@ class Storage:
         """
         with tar.open(fileobj=fp, mode="w") as tarfile, fs.cd(self.root):
             for build in builds:
+                callback("storage", build)
                 for content in Content:
                     for tag in [None, *self.get_tags(build)]:
                         path = self.get_path(build, content, tag=tag)

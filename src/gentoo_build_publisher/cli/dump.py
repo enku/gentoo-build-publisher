@@ -8,6 +8,7 @@ from gbpcli.types import Console
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.types import Build, DumpPhase
 
 HELP = "Dump builds to a file"
 
@@ -24,14 +25,18 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
         console.err.print(f"{error.args[0]} not found.")
         return 1
 
+    def verbose_callback(phase: DumpPhase, build: Build) -> None:
+        console.err.print(f"dumping {phase} for {build}")
+
     filename = args.filename
     is_stdout = filename == "-"
+    kwargs = {"callback": verbose_callback} if args.verbose else {}
 
     try:
         # I'm using try/finally. Leave me alone pylint!
         # pylint: disable=consider-using-with
         fp = sys.stdout.buffer if is_stdout else open(filename, "wb")
-        publisher.dump(builds, fp)
+        publisher.dump(builds, fp, **kwargs)
     finally:
         if not is_stdout:
             fp.close()
@@ -41,6 +46,13 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
 
 def parse_args(parser: argparse.ArgumentParser) -> None:
     """Set subcommand arguments"""
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        default=False,
+        help="verbose mode: list builds dumped",
+    )
     parser.add_argument(
         "filename", help='Filename to dump builds to ("-" for standard out)'
     )

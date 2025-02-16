@@ -9,7 +9,12 @@ from dataclasses import asdict, dataclass
 from typing import IO, Any, Iterable, Protocol, Self
 
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import ApiKey, Build
+from gentoo_build_publisher.types import (
+    ApiKey,
+    Build,
+    DumpCallback,
+    default_dump_callback,
+)
 from gentoo_build_publisher.utils import serializable
 
 
@@ -101,7 +106,13 @@ class RecordDB(Protocol):
         If `machine` is given, return the total number of builds for the given machine
         """
 
-    def dump(self, builds: Iterable[BuildRecord], outfile: IO[bytes]) -> None:
+    def dump(
+        self,
+        builds: Iterable[BuildRecord],
+        outfile: IO[bytes],
+        *,
+        callback: DumpCallback | None = None,
+    ) -> None:
         """Dump the given BuildRecords as JSON to the given file
 
         The JSON structure is an array of dataclasses.asdict(BuildRecord)
@@ -174,8 +185,16 @@ class Repo:
         return cls(api_keys=api_keys(settings), build_records=build_records(settings))
 
 
-def dump_build_records(builds: Iterable[BuildRecord], outfile: IO[bytes]) -> None:
+def dump_build_records(
+    builds: Iterable[BuildRecord],
+    outfile: IO[bytes],
+    *,
+    callback: DumpCallback = default_dump_callback,
+) -> None:
     """Dump the given builds as JSON to the given file"""
+    for build in (builds := list(builds)):
+        callback("records", build)
+
     build_list = [asdict(build) for build in builds]
 
     serialized = json.dumps(build_list, default=serializable)

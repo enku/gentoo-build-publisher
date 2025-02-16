@@ -37,9 +37,11 @@ from gentoo_build_publisher.types import (
     Build,
     Change,
     ChangeState,
+    DumpCallback,
     GBPMetadata,
     Package,
     PackageMetadata,
+    default_dump_callback,
 )
 from gentoo_build_publisher.utils.time import utctime
 
@@ -245,7 +247,13 @@ class BuildPublisher:
         """Return the latest completed build for the given machine name"""
         return self.repo.build_records.latest(machine, completed)
 
-    def dump(self, builds: Iterable[Build], outfile: IO[bytes]) -> None:
+    def dump(
+        self,
+        builds: Iterable[Build],
+        outfile: IO[bytes],
+        *,
+        callback: DumpCallback = default_dump_callback,
+    ) -> None:
         """Dump the given builds to the given outfile"""
         builds = list(builds)
         builds.sort(key=lambda build: (build.machine, build.build_id))
@@ -253,7 +261,7 @@ class BuildPublisher:
         with tar.open(fileobj=outfile, mode="w") as tarfile:
             # first dump storage
             with tempfile.TemporaryFile(mode="w+b") as tmp:
-                self.storage.dump(builds, tmp)
+                self.storage.dump(builds, tmp, callback=callback)
                 tmp.seek(0)
                 tarinfo = tarfile.gettarinfo(arcname="storage.tar", fileobj=tmp)
                 tarfile.addfile(tarinfo, tmp)
@@ -261,7 +269,7 @@ class BuildPublisher:
             # then dump records
             with tempfile.SpooledTemporaryFile(mode="w+b") as tmp:
                 records = [self.repo.build_records.get(build) for build in builds]
-                self.repo.build_records.dump(records, tmp)
+                self.repo.build_records.dump(records, tmp, callback=callback)
                 tmp.seek(0)
                 tarinfo = tarfile.gettarinfo(arcname="records.json", fileobj=tmp)
                 tarfile.addfile(tarinfo, tmp)

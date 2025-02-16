@@ -9,7 +9,12 @@ from gentoo_build_publisher.records import (
     RecordNotFound,
     dump_build_records,
 )
-from gentoo_build_publisher.types import ApiKey, Build
+from gentoo_build_publisher.types import (
+    ApiKey,
+    Build,
+    DumpCallback,
+    default_dump_callback,
+)
 
 BuildId = str
 Machine = str
@@ -181,12 +186,17 @@ class RecordDB:
         return sum(len(builds) for builds in self.builds.values())
 
     @staticmethod
-    def dump(builds: t.Iterable[BuildRecord], outfile: t.IO[bytes]) -> None:
+    def dump(
+        builds: t.Iterable[BuildRecord],
+        outfile: t.IO[bytes],
+        *,
+        callback: DumpCallback = default_dump_callback,
+    ) -> None:
         """Dump the given BuildRecords as JSON to the given file
 
         The JSON structure is an array of dataclasses.asdict(BuildRecord)
         """
-        dump_build_records(builds, outfile)
+        dump_build_records(builds, outfile, callback=callback)
 
 
 def record_key(record: BuildRecord) -> int | str:

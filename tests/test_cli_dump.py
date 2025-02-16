@@ -95,6 +95,30 @@ class DumpTests(TestCase):
 
         self.assertEqual(6, len(records(path)))
 
+    def test_verbose_flag(self) -> None:
+        builds = create_builds()
+        builds.sort(key=lambda build: (build.machine, build.build_id))
+
+        cmdline = "gbp dump -v -"
+
+        args = parse_args(cmdline)
+        gbp = mock.Mock()
+        console = self.fixtures.console
+
+        with mock.patch("gentoo_build_publisher.cli.dump.sys.stdout") as stdout:
+            stdout.buffer = io.BytesIO()
+            status = dump(args, gbp, console)
+
+        self.assertEqual(0, status)
+        expected = (
+            "\n".join(f"dumping storage for {build}" for build in builds)
+            + "\n"
+            + "\n".join(f"dumping records for {build}" for build in builds)
+            + "\n"
+        )
+
+        self.assertEqual(expected, console.err.file.getvalue())
+
     def test_build_id_not_found(self) -> None:
         create_builds()
 

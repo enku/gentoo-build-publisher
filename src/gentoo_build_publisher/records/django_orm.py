@@ -15,7 +15,12 @@ from gentoo_build_publisher.records import (
     RecordNotFound,
     dump_build_records,
 )
-from gentoo_build_publisher.types import ApiKey, Build
+from gentoo_build_publisher.types import (
+    ApiKey,
+    Build,
+    DumpCallback,
+    default_dump_callback,
+)
 from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
@@ -207,12 +212,17 @@ class RecordDB:
         return _manager.filter(**field_lookups).count()
 
     @staticmethod
-    def dump(builds: Iterable[BuildRecord], outfile: IO[bytes]) -> None:
+    def dump(
+        builds: Iterable[BuildRecord],
+        outfile: IO[bytes],
+        *,
+        callback: DumpCallback = default_dump_callback,
+    ) -> None:
         """Dump the given BuildRecords as JSON to the given file
 
         The JSON structure is an array of dataclasses.asdict(BuildRecord)
         """
-        dump_build_records(builds, outfile)
+        dump_build_records(builds, outfile, callback=callback)
 
 
 class ApiKeyDB:
