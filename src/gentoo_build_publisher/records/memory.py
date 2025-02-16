@@ -185,8 +185,8 @@ class RecordDB:
 
         return sum(len(builds) for builds in self.builds.values())
 
-    @staticmethod
     def dump(
+        self,
         builds: t.Iterable[BuildRecord],
         outfile: t.IO[bytes],
         *,
