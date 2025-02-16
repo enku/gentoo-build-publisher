@@ -2,7 +2,9 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import base64
+import datetime as dt
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Callable, Generator
 from unittest import TestCase, mock
 
@@ -300,6 +302,30 @@ class ForEachAppTests(TestCase):
         exception = exc_info.exception
         error_message = exception.args[0]
         self.assertTrue(error_message.endswith("is not a string"))
+
+
+class SerializableTests(TestCase):
+    def test_dataclass(self) -> None:
+        @dataclass
+        class Balance:
+            amount: int
+            currency: str
+
+        balance = Balance(5, "USD")
+
+        value = utils.serializable(balance)
+
+        self.assertEqual({"amount": 5, "currency": "USD"}, value)
+
+    def test_datetime(self) -> None:
+        timezone = dt.timezone(dt.timedelta(hours=-6), "CST")
+        datetime = dt.datetime(2025, 2, 15, 19, 59, tzinfo=timezone)
+        expected = "2025-02-15T19:59:00-06:00"
+
+        self.assertEqual(expected, utils.serializable(datetime))
+
+    def test_already_serializable(self) -> None:
+        self.assertEqual("hello world", "hello world")
 
 
 @contextmanager

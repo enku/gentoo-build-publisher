@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import base64
+import datetime as dt
 import importlib.metadata
 import importlib.resources
 import platform
 import re
 import string
-from functools import partial, wraps
+from dataclasses import asdict, is_dataclass
+from functools import partial, singledispatch, wraps
 from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, ParamSpec, Self, TypeVar
 
@@ -273,3 +275,18 @@ def for_each_app(do: Callable[[str], _T]) -> list[_T]:
             raise ValueError(f"Entry point for {entry_point.name} is not a string")
 
     return return_values
+
+
+@singledispatch
+def serializable(obj: Any) -> Any:
+    """Return obj as a (JSON) serializable value"""
+    if is_dataclass(obj):
+        return asdict(obj)
+
+    return obj
+
+
+@serializable.register(dt.datetime)
+@serializable.register(dt.date)
+def _(value: dt.date | dt.datetime) -> str:
+    return value.isoformat()
