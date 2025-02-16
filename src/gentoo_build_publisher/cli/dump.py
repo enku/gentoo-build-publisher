@@ -26,7 +26,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
         return 1
 
     def verbose_callback(phase: DumpPhase, build: Build) -> None:
-        console.err.print(f"dumping {phase} for {build}")
+        console.err.print(f"dumping {phase} for {build}", highlight=False)
 
     filename = args.filename
     is_stdout = filename == "-"
