@@ -8,7 +8,7 @@ from gbpcli.types import Console
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import Build, DumpPhase
+from gentoo_build_publisher.types import Build, DumpPhase, DumpType
 
 HELP = "Dump builds to a file"
 
@@ -25,7 +25,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
         console.err.print(f"{error.args[0]} not found.")
         return 1
 
-    def verbose_callback(phase: DumpPhase, build: Build) -> None:
+    def verbose_callback(_type: DumpType, phase: DumpPhase, build: Build) -> None:
         console.err.print(f"dumping {phase} for {build}", highlight=False)
 
     filename = args.filename

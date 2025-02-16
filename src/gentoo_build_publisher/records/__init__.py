@@ -193,7 +193,7 @@ def dump_build_records(
 ) -> None:
     """Dump the given builds as JSON to the given file"""
     for build in (builds := list(builds)):
-        callback("records", build)
+        callback("dump", "records", build)
 
     build_list = [asdict(build) for build in builds]
 

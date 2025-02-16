@@ -300,7 +300,7 @@ class Storage:
         """
         with tar.open(fileobj=fp, mode="w|") as tarfile, fs.cd(self.root):
             for build in builds:
-                callback("storage", build)
+                callback("dump", "storage", build)
                 for content in Content:
                     for tag in [None, *self.get_tags(build)]:
                         path = self.get_path(build, content, tag=tag)

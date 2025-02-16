@@ -172,9 +172,10 @@ class ApiKey:
         utils.validate_identifier(self.name)
 
 
+DumpType: TypeAlias = Literal["dump"] | Literal["restore"]
 DumpPhase: TypeAlias = Literal["storage"] | Literal["records"]
-DumpCallback: TypeAlias = Callable[[DumpPhase, Build], Any]
+DumpCallback: TypeAlias = Callable[[DumpType, DumpPhase, Build], Any]
 
 
-def default_dump_callback(_phase: DumpPhase, _build: Build) -> None:
+def default_dump_callback(_type: DumpType, _phase: DumpPhase, _build: Build) -> None:
     """Default DumpCallback. A noop"""
