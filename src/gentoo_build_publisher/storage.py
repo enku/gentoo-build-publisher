@@ -298,7 +298,7 @@ class Storage:
         The bytes dumped will be a tar archive. This includes any tags associated with
         the build.
         """
-        with tar.open(fileobj=fp, mode="w") as tarfile, fs.cd(self.root):
+        with tar.open(fileobj=fp, mode="w|") as tarfile, fs.cd(self.root):
             for build in builds:
                 callback("storage", build)
                 for content in Content:

@@ -258,7 +258,7 @@ class BuildPublisher:
         builds = list(builds)
         builds.sort(key=lambda build: (build.machine, build.build_id))
 
-        with tar.open(fileobj=outfile, mode="w") as tarfile:
+        with tar.open(fileobj=outfile, mode="w|") as tarfile:
             # first dump storage
             with tempfile.TemporaryFile(mode="w+b") as tmp:
                 self.storage.dump(builds, tmp, callback=callback)
