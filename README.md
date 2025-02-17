@@ -90,3 +90,6 @@ detail.
   September 2024
 - [Announce: gbp-fl](https://lunarcowboy.com/announce-gbp-fl.html): February
   2025
+- [Gentoo Build Publisher: dump &
+  restore](https://lunarcowboy.com/gentoo-build-publisher-dump-restore.html):
+  February 2025
