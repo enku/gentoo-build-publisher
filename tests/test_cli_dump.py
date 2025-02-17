@@ -111,9 +111,10 @@ class DumpTests(TestCase):
 
         self.assertEqual(0, status)
         expected = (
-            "\n".join(f"dumping storage for {build}" for build in builds)
-            + "\n"
+            ""
             + "\n".join(f"dumping records for {build}" for build in builds)
+            + "\n"
+            +"\n".join(f"dumping storage for {build}" for build in builds)
             + "\n"
         )
 

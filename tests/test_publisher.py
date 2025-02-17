@@ -491,7 +491,7 @@ class DumpTests(TestCase):
 
         with tar.open(mode="r", fileobj=outfile) as tarfile:
             names = tarfile.getnames()
-            self.assertEqual(names, ["storage.tar", "records.json"])
+            self.assertEqual(names, ["records.json", "storage.tar"])
 
             storage = tarfile.extractfile("storage.tar")
             assert storage is not None

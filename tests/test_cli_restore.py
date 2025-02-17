@@ -91,9 +91,10 @@ class RestoreTests(TestCase):
 
         self.assertEqual(0, status)
         expected = (
-            "\n".join(f"restoring storage for {build}" for build in builds)
-            + "\n"
+            ""
             + "\n".join(f"restoring records for {build}" for build in builds)
+            + "\n"
+            + "\n".join(f"restoring storage for {build}" for build in builds)
             + "\n"
         )
 

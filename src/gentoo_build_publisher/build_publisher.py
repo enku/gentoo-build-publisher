@@ -259,19 +259,19 @@ class BuildPublisher:  # pylint: disable=too-many-public-methods
         builds.sort(key=lambda build: (build.machine, build.build_id))
 
         with tar.open(fileobj=outfile, mode="w|") as tarfile:
-            # first dump storage
-            with tempfile.TemporaryFile(mode="w+b") as tmp:
-                self.storage.dump(builds, tmp, callback=callback)
-                tmp.seek(0)
-                tarinfo = tarfile.gettarinfo(arcname="storage.tar", fileobj=tmp)
-                tarfile.addfile(tarinfo, tmp)
-
-            # then dump records
+            # first dump records
             with tempfile.SpooledTemporaryFile(mode="w+b") as tmp:
                 records = [self.repo.build_records.get(build) for build in builds]
                 self.repo.build_records.dump(records, tmp, callback=callback)
                 tmp.seek(0)
                 tarinfo = tarfile.gettarinfo(arcname="records.json", fileobj=tmp)
+                tarfile.addfile(tarinfo, tmp)
+
+            # then dump storage
+            with tempfile.TemporaryFile(mode="w+b") as tmp:
+                self.storage.dump(builds, tmp, callback=callback)
+                tmp.seek(0)
+                tarinfo = tarfile.gettarinfo(arcname="storage.tar", fileobj=tmp)
                 tarfile.addfile(tarinfo, tmp)
 
     def restore(
@@ -280,17 +280,16 @@ class BuildPublisher:  # pylint: disable=too-many-public-methods
         """Restore builds from the given infile"""
         with tar.open(fileobj=infile, mode="r|") as tarfile:
             for member in tarfile:
-                if member.name == "storage.tar":
-                    storage_dump = tarfile.extractfile(member)
-                    assert storage_dump is not None
-                    self.storage.restore(storage_dump, callback=callback)
-                    continue
                 if member.name == "records.json":
                     records_dump = tarfile.extractfile(member)
                     assert records_dump is not None
                     self.repo.build_records.restore(records_dump, callback=callback)
                     continue
-
+                if member.name == "storage.tar":
+                    storage_dump = tarfile.extractfile(member)
+                    assert storage_dump is not None
+                    self.storage.restore(storage_dump, callback=callback)
+                    continue
 
     @staticmethod
     def gbp_metadata(
