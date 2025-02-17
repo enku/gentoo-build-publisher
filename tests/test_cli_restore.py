@@ -12,6 +12,7 @@ from unittest_fixtures import requires
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli.restore import handler as restore
 from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.utils import archive
 
 from . import TestCase
 from .factories import BuildFactory
@@ -51,7 +52,7 @@ class RestoreTests(TestCase):
     def test_restore_from_stdin(self) -> None:
         builds = create_builds()
         restore_image = io.BytesIO()
-        publisher.dump(builds, restore_image)
+        archive.dump(builds, restore_image)
         delete_builds(builds)
         restore_image.seek(0)
 
@@ -75,7 +76,7 @@ class RestoreTests(TestCase):
         builds = create_builds()
         builds.sort(key=lambda build: (build.machine, build.build_id))
         restore_image = io.BytesIO()
-        publisher.dump(builds, restore_image)
+        archive.dump(builds, restore_image)
         delete_builds(builds)
         restore_image.seek(0)
 
@@ -115,7 +116,7 @@ def create_builds() -> list[Build]:
 
 def dump_builds(builds: Iterable[Build], path: Path) -> None:
     with path.open("wb") as outfile:
-        publisher.dump(builds, outfile)
+        archive.dump(builds, outfile)
 
 
 def delete_builds(builds: Iterable[Build]) -> None:

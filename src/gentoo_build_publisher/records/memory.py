@@ -4,18 +4,8 @@ import datetime as dt
 import typing as t
 from dataclasses import replace
 
-from gentoo_build_publisher.records import (
-    BuildRecord,
-    RecordNotFound,
-    dump_build_records,
-    restore_build_records,
-)
-from gentoo_build_publisher.types import (
-    ApiKey,
-    Build,
-    DumpCallback,
-    default_dump_callback,
-)
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.types import ApiKey, Build
 
 BuildId = str
 Machine = str
@@ -185,28 +175,6 @@ class RecordDB:
             return len(self.builds.get(machine, {}))
 
         return sum(len(builds) for builds in self.builds.values())
-
-    def dump(
-        self,
-        builds: t.Iterable[BuildRecord],
-        outfile: t.IO[bytes],
-        *,
-        callback: DumpCallback = default_dump_callback,
-    ) -> None:
-        """Dump the given BuildRecords as JSON to the given file
-
-        The JSON structure is an array of dataclasses.asdict(BuildRecord)
-        """
-        dump_build_records(builds, outfile, callback=callback)
-
-    def restore(
-        self, infile: t.IO[bytes], *, callback: DumpCallback = default_dump_callback
-    ) -> list[BuildRecord]:
-        """Restore to the db the records given in the infile
-
-        The infile should be structured with the dump() method.
-        """
-        return restore_build_records(infile, self, callback=callback)
 
 
 def record_key(record: BuildRecord) -> int | str:

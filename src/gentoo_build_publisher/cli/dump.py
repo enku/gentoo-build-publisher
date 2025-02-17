@@ -9,6 +9,7 @@ from gbpcli.types import Console
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, DumpPhase, DumpType
+from gentoo_build_publisher.utils import archive
 
 HELP = "Dump builds to a file"
 
@@ -36,7 +37,7 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
         # I'm using try/finally. Leave me alone pylint!
         # pylint: disable=consider-using-with
         fp = sys.stdout.buffer if is_stdout else open(filename, "wb")
-        publisher.dump(builds, fp, **kwargs)
+        archive.dump(builds, fp, **kwargs)
     finally:
         if not is_stdout:
             fp.close()

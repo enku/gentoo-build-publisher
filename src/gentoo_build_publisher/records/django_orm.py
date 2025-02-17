@@ -2,7 +2,7 @@
 
 import datetime as dt
 from dataclasses import replace
-from typing import IO, Any, Iterable
+from typing import Any, Iterable
 
 from django.conf import settings
 from django.db import models
@@ -10,18 +10,8 @@ from django.db import models
 import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
 from gentoo_build_publisher.models import ApiKey as ApiKeyModel
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
-from gentoo_build_publisher.records import (
-    BuildRecord,
-    RecordNotFound,
-    dump_build_records,
-    restore_build_records,
-)
-from gentoo_build_publisher.types import (
-    ApiKey,
-    Build,
-    DumpCallback,
-    default_dump_callback,
-)
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
+from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
@@ -211,28 +201,6 @@ class RecordDB:
         field_lookups: dict[str, Any] = {"machine": machine} if machine else {}
 
         return _manager.filter(**field_lookups).count()
-
-    @staticmethod
-    def dump(
-        builds: Iterable[BuildRecord],
-        outfile: IO[bytes],
-        *,
-        callback: DumpCallback = default_dump_callback,
-    ) -> None:
-        """Dump the given BuildRecords as JSON to the given file
-
-        The JSON structure is an array of dataclasses.asdict(BuildRecord)
-        """
-        dump_build_records(builds, outfile, callback=callback)
-
-    def restore(
-        self, infile: IO[bytes], *, callback: DumpCallback = default_dump_callback
-    ) -> list[BuildRecord]:
-        """Restore to the db the records given in the infile
-
-        The infile should be structured with the dump() method.
-        """
-        return restore_build_records(infile, self, callback=callback)
 
 
 class ApiKeyDB:

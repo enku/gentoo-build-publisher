@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
-import json
 from itertools import product
 from pathlib import Path
 
@@ -276,41 +275,6 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.count(), 16)
         self.assertEqual(records.count("blackwidow"), 8)
         self.assertEqual(records.count("bogus"), 0)
-
-    @parametrized(BACKENDS)
-    def test_dump(self, backend: str) -> None:
-        records = self.backend(backend)
-        build = BuildRecordFactory.create()
-
-        records.save(build)
-        path = self.fixtures.tmpdir / "records.json"
-        with open(path, "wb") as outfile:
-            records.dump([build], outfile)
-
-        with open(path, "rb") as infile:
-            dump = json.load(infile)
-
-        self.assertEqual([build], [BuildRecord(**item) for item in dump])
-
-    @parametrized(BACKENDS)
-    def test_restore(self, backend: str) -> None:
-        records = self.backend(backend)
-        record = BuildRecordFactory.create()
-        record = records.save(record)
-        path = self.fixtures.tmpdir / "records.json"
-
-        with open(path, "wb") as outfile:
-            records.dump([record], outfile)
-
-        records.delete(record)
-
-        with open(path, "rb") as infile:
-            response = records.restore(infile)
-
-        self.assertEqual([record], response)
-        self.assertEqual(
-            record, records.get(Build(machine=record.machine, build_id=record.build_id))
-        )
 
 
 class BuildRecordsTestCase(TestCase):

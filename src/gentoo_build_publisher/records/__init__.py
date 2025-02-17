@@ -1,21 +1,12 @@
 """DB interface for Gentoo Build Publisher"""
 
-from __future__ import annotations
-
 import datetime as dt
 import importlib.metadata
-import json
-from dataclasses import asdict, dataclass
-from typing import IO, Any, Iterable, Protocol, Self
+from dataclasses import dataclass
+from typing import Any, Iterable, Protocol, Self
 
 from gentoo_build_publisher.settings import Settings
-from gentoo_build_publisher.types import (
-    ApiKey,
-    Build,
-    DumpCallback,
-    default_dump_callback,
-)
-from gentoo_build_publisher.utils import convert_to, decode_to, serializable
+from gentoo_build_publisher.types import ApiKey, Build
 
 
 class RecordNotFound(LookupError):
@@ -106,30 +97,6 @@ class RecordDB(Protocol):
         If `machine` is given, return the total number of builds for the given machine
         """
 
-    def dump(
-        self,
-        builds: Iterable[BuildRecord],
-        outfile: IO[bytes],
-        *,
-        callback: DumpCallback = default_dump_callback,
-    ) -> None:
-        """Dump the given BuildRecords as JSON to the given file
-
-        The JSON structure is an array of dataclasses.asdict(BuildRecord)
-
-        See also dump_build_records below which is a function that already does this.
-        """
-
-    def restore(
-        self, infile: IO[bytes], *, callback: DumpCallback = default_dump_callback
-    ) -> list[BuildRecord]:
-        """Restore to the db the records given in the infile
-
-        The infile should be structured with the dump() method.
-
-        See also restore_build_records below which is a function that already does this.
-        """
-
 
 def build_records(settings: Settings) -> RecordDB:
     """Return instance of the the RecordDB class given in settings"""
@@ -193,48 +160,3 @@ class Repo:
     def from_settings(cls: type[Self], settings: Settings) -> Self:
         """Return instance of the the Repo class given in settings"""
         return cls(api_keys=api_keys(settings), build_records=build_records(settings))
-
-
-def dump_build_records(
-    builds: Iterable[BuildRecord],
-    outfile: IO[bytes],
-    *,
-    callback: DumpCallback = default_dump_callback,
-) -> None:
-    """Dump the given builds as JSON to the given file"""
-    for build in (builds := list(builds)):
-        callback("dump", "records", build)
-
-    build_list = [asdict(build) for build in builds]
-
-    serialized = json.dumps(build_list, default=serializable)
-    outfile.write(serialized.encode("utf8"))
-
-
-@convert_to(BuildRecord, "built")
-@convert_to(BuildRecord, "completed")
-@convert_to(BuildRecord, "submitted")
-def _(value: str | None) -> dt.datetime | None:
-    return None if value is None else dt.datetime.fromisoformat(value)
-
-
-def restore_build_records(
-    infile: IO[bytes],
-    records: RecordDB,
-    *,
-    callback: DumpCallback = default_dump_callback,
-) -> list[BuildRecord]:
-    """Restore the JSON given in the infile to BuildRecords in the given RecordDB
-
-    Return the restored records
-    """
-    restore_list: list[BuildRecord] = []
-
-    items = json.load(infile)
-    for item in items:
-        record = decode_to(BuildRecord, item)
-        callback("restore", "records", record)
-        record = records.save(record)
-        restore_list.append(record)
-
-    return restore_list

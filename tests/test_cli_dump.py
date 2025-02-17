@@ -114,7 +114,7 @@ class DumpTests(TestCase):
             ""
             + "\n".join(f"dumping records for {build}" for build in builds)
             + "\n"
-            +"\n".join(f"dumping storage for {build}" for build in builds)
+            + "\n".join(f"dumping storage for {build}" for build in builds)
             + "\n"
         )
 
