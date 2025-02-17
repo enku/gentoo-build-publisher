@@ -48,7 +48,7 @@ from gentoo_build_publisher.utils.time import utctime
 logger = logging.getLogger(__name__)
 
 
-class BuildPublisher:
+class BuildPublisher:  # pylint: disable=too-many-public-methods
     """Pulls a build's db, jenkins and storage all together"""
 
     # pylint: disable=redefined-outer-name
@@ -273,6 +273,24 @@ class BuildPublisher:
                 tmp.seek(0)
                 tarinfo = tarfile.gettarinfo(arcname="records.json", fileobj=tmp)
                 tarfile.addfile(tarinfo, tmp)
+
+    def restore(
+        self, infile: IO[bytes], *, callback: DumpCallback = default_dump_callback
+    ) -> None:
+        """Restore builds from the given infile"""
+        with tar.open(fileobj=infile, mode="r|") as tarfile:
+            for member in tarfile:
+                if member.name == "storage.tar":
+                    storage_dump = tarfile.extractfile(member)
+                    assert storage_dump is not None
+                    self.storage.restore(storage_dump, callback=callback)
+                    continue
+                if member.name == "records.json":
+                    records_dump = tarfile.extractfile(member)
+                    assert records_dump is not None
+                    self.repo.build_records.restore(records_dump, callback=callback)
+                    continue
+
 
     @staticmethod
     def gbp_metadata(
