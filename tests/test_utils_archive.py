@@ -10,6 +10,7 @@ from unittest import mock
 import unittest_fixtures as fixture
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils import archive
 
 from . import TestCase
@@ -33,7 +34,14 @@ class DumpTests(TestCase):
 
         with tar.open(mode="r", fileobj=outfile) as tarfile:
             names = tarfile.getnames()
-            self.assertEqual(names, ["records.json", "storage.tar"])
+            self.assertEqual(names, ["gbp-archive", "records.json", "storage.tar"])
+
+            metadata_fp = tarfile.extractfile("gbp-archive")
+            assert metadata_fp is not None
+            with metadata_fp:
+                metadata = json.load(metadata_fp)
+            metadata_builds = {Build.from_id(i) for i in metadata["manifest"]}
+            self.assertEqual(set(builds), metadata_builds)
 
             storage = tarfile.extractfile("storage.tar")
             assert storage is not None
