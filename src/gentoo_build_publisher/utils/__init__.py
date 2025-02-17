@@ -293,33 +293,3 @@ def _(value: dt.date | dt.datetime) -> str:
 
 
 _RESOLVERS: dict[type, dict[str, Callable[[Any], Any]]] = {}
-
-
-def decode_to(type_: type[_T], data: dict[str, Any]) -> _T:
-    """Use the given data dict to initialize the given type
-
-    Converts a JSON-compatible dict into the given type based on the registered
-    converters for that type.
-    """
-    new_data = {}
-    for key, value in data.items():
-        if resolver := _RESOLVERS.get(type_, {}).get(key):
-            new_value = resolver(value)
-        else:
-            new_value = value
-        new_data[key] = new_value
-
-    if len(new_data) == 1:
-        return type_(*new_data.values())
-    return type_(**new_data)
-
-
-def convert_to(type_: type, field: str) -> Callable[[Any], Any]:
-    """Resolve the given datatype field of the given type"""
-
-    def decorate(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
-        resolvers_of_type = _RESOLVERS.setdefault(type_, {})
-        resolvers_of_type[field] = func
-        return func
-
-    return decorate

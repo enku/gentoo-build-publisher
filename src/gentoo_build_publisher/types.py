@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Callable, Literal, Protocol, TypeAlias
+from typing import Any, Protocol
 
 from gentoo_build_publisher import utils
 
@@ -170,12 +170,3 @@ class ApiKey:
 
     def __post_init__(self) -> None:
         utils.validate_identifier(self.name)
-
-
-DumpType: TypeAlias = Literal["dump"] | Literal["restore"]
-DumpPhase: TypeAlias = Literal["storage"] | Literal["records"]
-DumpCallback: TypeAlias = Callable[[DumpType, DumpPhase, Build], Any]
-
-
-def default_dump_callback(_type: DumpType, _phase: DumpPhase, _build: Build) -> None:
-    """Default DumpCallback. A noop"""
