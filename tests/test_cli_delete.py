@@ -4,12 +4,11 @@
 from argparse import ArgumentParser, Namespace
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build
-
-from . import TestCase
 
 
 @fixture.depends("builds")

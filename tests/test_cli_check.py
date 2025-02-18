@@ -7,13 +7,12 @@ import shutil
 from argparse import ArgumentParser, Namespace
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
+from gbp_testkit.factories import BuildFactory
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content
-
-from . import TestCase
-from .factories import BuildFactory
 
 
 @fixture.requires("tmpdir", "publisher", "gbp", "console")

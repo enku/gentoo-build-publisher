@@ -8,6 +8,9 @@ from dataclasses import replace
 from pathlib import Path
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
+from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
+from gbp_testkit.helpers import MockJenkins
 
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
@@ -25,9 +28,7 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import TestCase, data
-from .factories import PACKAGE_INDEX, BuildFactory
-from .helpers import MockJenkins
+from . import data
 
 FixtureOptions = fixture.FixtureOptions
 Fixtures = fixture.Fixtures

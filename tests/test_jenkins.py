@@ -11,6 +11,7 @@ from unittest import mock
 
 import requests
 import unittest_fixtures as fixture
+from gbp_testkit.helpers import MockJenkins, test_data
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
@@ -24,8 +25,6 @@ from gentoo_build_publisher.jenkins import (
 )
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build, EbuildRepo, MachineJob, Repo
-
-from .helpers import MockJenkins, test_data
 
 JENKINS_CONFIG = JenkinsConfig(
     base_url=URL("https://jenkins.invalid"),

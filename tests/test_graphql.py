@@ -7,6 +7,9 @@ from typing import Any
 from unittest import mock
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
+from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
+from gbp_testkit.helpers import BUILD_LOGS, graphql
 from graphql import GraphQLResolveInfo
 from unittest_fixtures import parametrized
 
@@ -26,10 +29,6 @@ from gentoo_build_publisher.types import (
 )
 from gentoo_build_publisher.utils import encode_basic_auth_data, get_version, time
 from gentoo_build_publisher.worker import tasks
-
-from . import TestCase
-from .factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
-from .helpers import BUILD_LOGS, graphql
 
 Mock = mock.Mock
 

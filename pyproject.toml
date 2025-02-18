@@ -123,7 +123,5 @@ dev = [
     "typos>=1.16.23",
     "fakeredis>=2.20.0",
     "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
+    "gbp-testkit @ git+https://github.com/enku/gbp-testkit.git",
 ]
-
-[tool.unittest-fixtures]
-fixtures-module = "tests.fixtures"

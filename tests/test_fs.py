@@ -4,13 +4,12 @@ import os
 import shutil
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
+from gbp_testkit.factories import BuildFactory
+from gbp_testkit.helpers import create_file
 
 from gentoo_build_publisher import fs
 from gentoo_build_publisher.types import Content
-
-from . import TestCase
-from .factories import BuildFactory
-from .helpers import create_file
 
 
 @fixture.requires("tmpdir")

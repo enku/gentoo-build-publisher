@@ -2,12 +2,11 @@
 import importlib.resources
 from unittest import mock
 
+from gbp_testkit import TestCase
+from gbp_testkit.helpers import test_gbp
 from gbpcli.graphql import Query
 
 from gentoo_build_publisher.cli import get_dist_query
-
-from . import TestCase
-from .helpers import test_gbp
 
 CREATE_MACHINE_QUERY_STR = (
     importlib.resources.files("gentoo_build_publisher") / "queries/create_repo.graphql"

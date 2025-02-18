@@ -10,6 +10,7 @@ from unittest import mock
 
 import fakeredis
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
 from requests import HTTPError
 from unittest_fixtures import parametrized
 
@@ -27,8 +28,6 @@ from gentoo_build_publisher.worker import (
 from gentoo_build_publisher.worker.celery import CeleryWorker
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
-
-from . import TestCase
 
 
 def get_worker(name: str) -> WorkerInterface:

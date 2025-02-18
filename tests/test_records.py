@@ -6,6 +6,7 @@ from itertools import product
 from pathlib import Path
 
 from django.test import TestCase
+from gbp_testkit.factories import BuildRecordFactory
 from unittest_fixtures import parametrized, requires
 
 from gentoo_build_publisher.records import (
@@ -22,8 +23,6 @@ from gentoo_build_publisher.records.memory import ApiKeyDB as MemoryApiKeyDB
 from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import ApiKey, Build
-
-from .factories import BuildRecordFactory
 
 BACKENDS = [["django"], ["memory"]]
 

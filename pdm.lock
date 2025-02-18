@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:f03c0f6d27bbd1be648bb6dab231209d74284099a99b2e12734e0af8d1504b1b"
+content_hash = "sha256:f0f01bb2cc64530b366ba876ca9c57c30b6de75c0757e2d257f3a916cdf80b71"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -549,7 +549,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "5.1.5"
+version = "5.1.6"
 requires_python = ">=3.10"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 dependencies = [
@@ -558,8 +558,8 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "Django-5.1.5-py3-none-any.whl", hash = "sha256:c46eb936111fffe6ec4bc9930035524a8be98ec2f74d8a0ff351226a3e52f459"},
-    {file = "Django-5.1.5.tar.gz", hash = "sha256:19bbca786df50b9eca23cee79d495facf55c8f5c54c529d9bf1fe7b5ea086af3"},
+    {file = "Django-5.1.6-py3-none-any.whl", hash = "sha256:8d203400bc2952fbfb287c2bbda630297d654920c72a73cc82a9ad7926feaad5"},
+    {file = "Django-5.1.6.tar.gz", hash = "sha256:1e39eafdd1b185e761d9fab7a9f0b9fa00af1b37b25ad980a8aa0dac13535690"},
 ]
 
 [[package]]
@@ -596,15 +596,15 @@ files = [
 
 [[package]]
 name = "factory-boy"
-version = "3.3.1"
+version = "3.3.3"
 requires_python = ">=3.8"
 summary = "A versatile test fixtures replacement based on thoughtbot's factory_bot for Ruby."
 dependencies = [
     "Faker>=0.7.0",
 ]
 files = [
-    {file = "factory_boy-3.3.1-py2.py3-none-any.whl", hash = "sha256:7b1113c49736e1e9995bc2a18f4dbf2c52cf0f841103517010b1d825712ce3ca"},
-    {file = "factory_boy-3.3.1.tar.gz", hash = "sha256:8317aa5289cdfc45f9cae570feb07a6177316c82e34d14df3c2e1f22f26abef0"},
+    {file = "factory_boy-3.3.3-py2.py3-none-any.whl", hash = "sha256:1c39e3289f7e667c4285433f305f8d506efc2fe9c73aaea4151ebd5cdea394fc"},
+    {file = "factory_boy-3.3.3.tar.gz", hash = "sha256:866862d226128dfac7f2b4160287e899daf54f2612778327dd03d0e2cb1e3d03"},
 ]
 
 [[package]]
@@ -645,6 +645,19 @@ summary = "A platform independent file lock."
 files = [
     {file = "filelock-3.17.0-py3-none-any.whl", hash = "sha256:533dc2f7ba78dc2f0f531fc6c4940addf7b70a481e269a5a3b93be94ffbe8338"},
     {file = "filelock-3.17.0.tar.gz", hash = "sha256:ee4e77401ef576ebb38cd7f13b9b28893194acc20a8e68e18730ba9c0e54660e"},
+]
+
+[[package]]
+name = "gbp-testkit"
+version = "0.1.dev2"
+requires_python = ">=3.11"
+git = "https://github.com/enku/gbp-testkit.git"
+revision = "c6c748583dfef80d1ee22e8f1232b206c2f52241"
+summary = "Gentoo Build Publisher testing tools"
+dependencies = [
+    "django>=5.1.6",
+    "factory-boy>=3.3.3",
+    "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
 ]
 
 [[package]]

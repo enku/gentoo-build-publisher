@@ -3,10 +3,9 @@ from argparse import ArgumentParser, Namespace
 from unittest import mock
 
 import unittest_fixtures as fixture
+from gbp_testkit import TestCase
 
 from gentoo_build_publisher.cli import worker
-
-from . import TestCase
 
 
 @fixture.requires("tmpdir", "publisher", "gbp", "console")

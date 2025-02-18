@@ -7,11 +7,10 @@ from functools import partial
 import unittest_fixtures as fixture
 from django import urls
 from django.http import HttpResponse
+from gbp_testkit import DjangoTestCase as BaseTestCase
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build
-
-from . import DjangoTestCase as BaseTestCase
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 FixtureOptions = fixture.FixtureOptions

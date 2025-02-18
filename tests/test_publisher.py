@@ -5,6 +5,9 @@ import datetime as dt
 from unittest import mock
 from zoneinfo import ZoneInfo
 
+from gbp_testkit import TestCase
+from gbp_testkit.factories import BuildFactory, BuildRecordFactory
+from gbp_testkit.helpers import BUILD_LOGS
 from unittest_fixtures import (
     BaseTestCase,
     FixtureContext,
@@ -21,10 +24,6 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
-
-from . import TestCase
-from .factories import BuildFactory, BuildRecordFactory
-from .helpers import BUILD_LOGS
 
 
 @requires("tmpdir")

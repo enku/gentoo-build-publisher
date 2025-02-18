@@ -8,6 +8,14 @@ from zoneinfo import ZoneInfo
 
 import unittest_fixtures as fixture
 from django.utils import timezone
+from gbp_testkit import TestCase
+from gbp_testkit.factories import (
+    ArtifactFactory,
+    BuildFactory,
+    BuildRecordFactory,
+    package_factory,
+)
+from gbp_testkit.helpers import QuickCache
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.utils import Color
@@ -18,15 +26,6 @@ from gentoo_build_publisher.views.context import (
     create_dashboard_context,
     create_machine_context,
 )
-
-from . import TestCase
-from .factories import (
-    ArtifactFactory,
-    BuildFactory,
-    BuildRecordFactory,
-    package_factory,
-)
-from .helpers import QuickCache
 
 FixtureOptions = fixture.FixtureOptions
 Fixtures = fixture.Fixtures

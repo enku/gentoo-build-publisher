@@ -1,14 +1,13 @@
 """Tests for the machines module"""
 
 # pylint: disable=missing-docstring
+from gbp_testkit import TestCase
+from gbp_testkit.factories import BuildFactory
 from unittest_fixtures import FixtureOptions, Fixtures, depends, requires
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.types import Build
-
-from . import TestCase
-from .factories import BuildFactory
 
 
 @requires("publisher")

@@ -5,13 +5,12 @@ import datetime as dt
 from dataclasses import replace
 
 import unittest_fixtures as fixture
+from gbp_testkit import DjangoTestCase as TestCase
+from gbp_testkit.factories import BuildModelFactory, BuildRecordFactory
 
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build
-
-from . import DjangoTestCase as TestCase
-from .factories import BuildModelFactory, BuildRecordFactory
 
 
 # pylint: disable=too-many-public-methods
