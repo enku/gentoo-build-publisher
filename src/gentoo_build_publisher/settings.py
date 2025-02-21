@@ -11,7 +11,7 @@ from gbpcli.settings import BaseSettings
 JENKINS_DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(kw_only=True, frozen=True, slots=True)
 class Settings(BaseSettings):
     """GBP Settings"""
 
