@@ -59,9 +59,6 @@ def check_build_content(console: Console) -> CheckResult:
     )
 
     for record in records:
-        if not record.completed:
-            continue
-
         missing: list[Path] = []
         for path in [
             publisher.storage.get_path(record, content) for content in Content
@@ -71,7 +68,10 @@ def check_build_content(console: Console) -> CheckResult:
 
         if missing:
             console.err.print(f"Path missing for {record}: {missing}")
-            errors += 1
+            if record.completed:
+                errors += 1
+            else:
+                warnings += 1
 
     return errors, warnings
 

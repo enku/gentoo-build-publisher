@@ -41,7 +41,7 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(console.out.file.getvalue(), "0 errors, 0 warnings\n")
 
-    def test_uncompleted_builds_are_skipped(self, fixtures: Fixtures) -> None:
+    def test_uncompleted_builds_are_warnings(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         record = publisher.record(build)
         publisher.repo.build_records.save(record, completed=None)
@@ -50,6 +50,7 @@ class GBPChkTestCase(TestCase):
         exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
+        self.assertEqual(console.out.file.getvalue(), "0 errors, 1 warnings\n")
 
     def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
