@@ -35,6 +35,7 @@ client machines which point to their respective machine configurations.
 from __future__ import annotations
 
 import importlib
+import os
 from functools import cache
 from typing import TYPE_CHECKING, Any
 
@@ -50,6 +51,9 @@ celery.config_from_object("django.conf:settings", namespace="CELERY")
 celery.autodiscover_tasks()
 
 publisher: BuildPublisher
+
+os.environ.setdefault("BUILD_PUBLISHER_JENKINS_BASE_URL", "http://jenkins.invalid/")
+os.environ.setdefault("BUILD_PUBLISHER_STORAGE_PATH", "__testing__")
 
 
 @cache
