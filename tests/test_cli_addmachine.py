@@ -3,29 +3,29 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
-import unittest_fixtures as fixture
 from gbp_testkit import DjangoTestCase as TestCase
+from unittest_fixtures import Fixtures, given
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 
-@fixture.requires("gbp", "console")
+@given("gbp", "console")
 class AddMachineTestCase(TestCase):
-    def test_calls_graphql_with_the_expected_args(self) -> None:
+    def test_calls_graphql_with_the_expected_args(self, fixtures: Fixtures) -> None:
         args = Namespace(
             name="base",
             repo="https://github.com/enku/gbp-machines.git",
             branch="master",
             deps=["gentoo"],
         )
-        console = self.fixtures.console
-        exit_status = addmachine.handler(args, self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = addmachine.handler(args, fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
-    def test_when_item_already_exists(self) -> None:
+    def test_when_item_already_exists(self, fixtures: Fixtures) -> None:
         job = MachineJob(
             name="base",
             repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="master"),
@@ -39,8 +39,8 @@ class AddMachineTestCase(TestCase):
             branch="master",
             deps=["gentoo"],
         )
-        console = self.fixtures.console
-        exit_status = addmachine.handler(args, self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = addmachine.handler(args, fixtures.gbp, console)
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(console.err.file.getvalue(), "error: FileExistsError: base\n")

@@ -7,11 +7,10 @@ from argparse import ArgumentParser, Namespace
 from dataclasses import replace
 from unittest.mock import Mock, patch
 
-import unittest_fixtures as fixture
 from django.conf import settings
 from gbp_testkit import DjangoTestCase, TestCase
 from gbp_testkit.helpers import LOCAL_TIMEZONE
-from unittest_fixtures import requires
+from unittest_fixtures import Fixtures, given, where
 
 from gentoo_build_publisher import models, publisher, utils
 from gentoo_build_publisher.cli import apikey
@@ -19,10 +18,10 @@ from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 
 
-@requires("console")
+@given("console")
 class GBPCreateTests(DjangoTestCase):
-    def test_create_api_key_with_given_name(self) -> None:
-        console = self.fixtures.console
+    def test_create_api_key_with_given_name(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         mock_gbp = Mock(name="gbp")
         namespace = Namespace(action="create", name="test")
 
@@ -41,15 +40,15 @@ class GBPCreateTests(DjangoTestCase):
             key,
         )
 
-    def test_name_is_case_insensitive(self) -> None:
-        console = self.fixtures.console
+    def test_name_is_case_insensitive(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         apikey.handler(Namespace(action="create", name="TEST"), Mock(), console)
 
         self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
         self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
 
-    def test_name_already_exists(self) -> None:
-        console = self.fixtures.console
+    def test_name_already_exists(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         api_key = ApiKey(
             name="test", key=apikey.create_api_key(), created=time.localtime()
         )
@@ -66,16 +65,16 @@ class GBPCreateTests(DjangoTestCase):
         self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
         self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
 
-    def test_create_empty_name(self) -> None:
-        console = self.fixtures.console
+    def test_create_empty_name(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
 
         status = apikey.handler(Namespace(action="create", name=""), Mock(), console)
 
         self.assertEqual(status, 2)
         self.assertEqual(console.err.file.getvalue(), "''\n")
 
-    def test_create_badchars_in_name(self) -> None:
-        console = self.fixtures.console
+    def test_create_badchars_in_name(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
 
         status = apikey.handler(
             Namespace(action="create", name="b😈d"), Mock(), console
@@ -84,8 +83,8 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(status, 2)
         self.assertEqual(console.err.file.getvalue(), "'b😈d'\n")
 
-    def test_create_name_too_long(self) -> None:
-        console = self.fixtures.console
+    def test_create_name_too_long(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         name = "x" * 129
 
         status = apikey.handler(Namespace(action="create", name=name), Mock(), console)
@@ -98,8 +97,8 @@ class GBPCreateTests(DjangoTestCase):
         )
 
     @patch("gentoo_build_publisher.cli.apikey.create_secret_key")
-    def test_root_key(self, create_secret_key: Mock) -> None:
-        console = self.fixtures.console
+    def test_root_key(self, create_secret_key: Mock, fixtures: Fixtures) -> None:
+        console = fixtures.console
         gbp = Mock()
         create_secret_key.return_value = b"thisisatest"
 
@@ -110,11 +109,11 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(console.out.file.getvalue(), "thisisatest\n")
 
 
-@requires("console")
+@given("console")
 @patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
 class GBPListTests(DjangoTestCase):
-    def test(self) -> None:
-        console = self.fixtures.console
+    def test(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         timestamp = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
         for name in ["this", "that", "the", "other"]:
             api_key = ApiKey(name=name, key=apikey.create_api_key(), created=timestamp)
@@ -139,8 +138,8 @@ class GBPListTests(DjangoTestCase):
 """
         self.assertEqual(console.out.file.getvalue(), expected)
 
-    def test_with_no_keys(self) -> None:
-        console = self.fixtures.console
+    def test_with_no_keys(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         gbp = Mock()
 
         status = apikey.handler(Namespace(action="list"), gbp, console)
@@ -149,12 +148,11 @@ class GBPListTests(DjangoTestCase):
         self.assertEqual(console.out.file.getvalue(), "No API keys registered.\n")
 
 
-@fixture.requires("tmpdir", "publisher", "api_keys", "console")
+@given("tmpdir", "publisher", "api_keys", "console")
+@where(api_keys={"api_key_names": ["this", "that", "the", "other"]})
 class GBPDeleteTests(DjangoTestCase):
-    options = {"api_key_names": ["this", "that", "the", "other"]}
-
-    def test_delete(self) -> None:
-        console = self.fixtures.console
+    def test_delete(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         namespace = Namespace(action="delete", name="that")
 
         status = apikey.handler(namespace, Mock(), console)
@@ -163,8 +161,8 @@ class GBPDeleteTests(DjangoTestCase):
         key_query = models.ApiKey.objects.filter(name="that")
         self.assertFalse(key_query.exists(), "key not deleted")
 
-    def test_delete_is_case_insensitive(self) -> None:
-        console = self.fixtures.console
+    def test_delete_is_case_insensitive(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         namespace = Namespace(action="delete", name="THAT")
 
         status = apikey.handler(namespace, Mock(), console)
@@ -173,8 +171,8 @@ class GBPDeleteTests(DjangoTestCase):
         key_query = models.ApiKey.objects.filter(name="that")
         self.assertFalse(key_query.exists(), "key not deleted")
 
-    def test_delete_name_does_not_exist(self) -> None:
-        console = self.fixtures.console
+    def test_delete_name_does_not_exist(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         namespace = Namespace(action="delete", name="bogus")
 
         status = apikey.handler(namespace, Mock(), console)
@@ -183,10 +181,10 @@ class GBPDeleteTests(DjangoTestCase):
         self.assertEqual(console.err.file.getvalue(), "No key exists with that name.\n")
 
 
-@requires("console")
+@given("console")
 class GBPAPIKeyTests(TestCase):
-    def test_unknown_action(self) -> None:
-        console = self.fixtures.console
+    def test_unknown_action(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
         namespace = Namespace(action="bogus")
 
         status = apikey.handler(namespace, Mock(), console)

@@ -1,13 +1,13 @@
 """Tests for the db module"""
 
-# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=missing-class-docstring,missing-function-docstring,unused-argument
 import datetime as dt
 from itertools import product
 from pathlib import Path
 
 from django.test import TestCase
 from gbp_testkit.factories import BuildRecordFactory
-from unittest_fixtures import parametrized, requires
+from unittest_fixtures import Fixtures, given, parametrized
 
 from gentoo_build_publisher.records import (
     ApiKeyDB,
@@ -27,7 +27,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 BACKENDS = [["django"], ["memory"]]
 
 
-@requires("tmpdir")
+@given("tmpdir")
 class RecordDBTestCase(TestCase):
     def backend(self, backend_name: str) -> RecordDB:
         settings = Settings(
@@ -38,7 +38,7 @@ class RecordDBTestCase(TestCase):
         return build_records(settings)
 
     @parametrized(BACKENDS)
-    def test_save(self, backend: str) -> None:
+    def test_save(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
@@ -50,7 +50,9 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).completed, timestamp)
 
     @parametrized(BACKENDS)
-    def test_save_with_given_fields_updates_fields(self, backend: str) -> None:
+    def test_save_with_given_fields_updates_fields(
+        self, backend: str, fixtures: Fixtures
+    ) -> None:
         records = self.backend(backend)
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
@@ -64,7 +66,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).keep, True)
 
     @parametrized(BACKENDS)
-    def test_get(self, backend: str) -> None:
+    def test_get(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build_record = records.save(BuildRecord("lighthouse", "8924"))
 
@@ -78,7 +80,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(exception.args, (build,))
 
     @parametrized(BACKENDS)
-    def test_for_machine(self, backend: str) -> None:
+    def test_for_machine(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         builds: list[BuildRecord] = [
             records.save(BuildRecord("lighthouse", "8923")),
@@ -89,7 +91,7 @@ class RecordDBTestCase(TestCase):
         self.assertListEqual([*records.for_machine("anchor")], [])
 
     @parametrized(BACKENDS)
-    def test_delete(self, backend: str) -> None:
+    def test_delete(self, backend: str, fixtures: Fixtures) -> None:
         build_record = BuildRecordFactory()
         records = self.backend(backend)
         records.save(build_record)
@@ -100,7 +102,7 @@ class RecordDBTestCase(TestCase):
         self.assertFalse(records.exists(build_record))
 
     @parametrized(BACKENDS)
-    def test_exists(self, backend: str) -> None:
+    def test_exists(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build_record = BuildRecord("lighthouse", "8924")
         records.save(build_record)
@@ -110,7 +112,7 @@ class RecordDBTestCase(TestCase):
         self.assertIs(records.exists(bogus_build), False)
 
     @parametrized(BACKENDS)
-    def test_list_machines(self, backend: str) -> None:
+    def test_list_machines(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         self.assertEqual(records.list_machines(), [])
 
@@ -123,7 +125,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(machines, ["anchor", "lighthouse"])
 
     @parametrized(BACKENDS)
-    def test_previous(self, backend: str) -> None:
+    def test_previous(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
@@ -138,7 +140,7 @@ class RecordDBTestCase(TestCase):
         self.assertIsNone(records.previous(BuildRecordFactory(machine="bogus")))
 
     @parametrized(BACKENDS)
-    def test_next(self, backend: str) -> None:
+    def test_next(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
@@ -153,7 +155,7 @@ class RecordDBTestCase(TestCase):
         self.assertIsNone(records.next(BuildRecordFactory(machine="bogus")))
 
     @parametrized(BACKENDS)
-    def test_next_excludes_unbuilt(self, backend: str) -> None:
+    def test_next_excludes_unbuilt(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
@@ -165,7 +167,9 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.next(build1), None)
 
     @parametrized(BACKENDS)
-    def test_next_second_built_before_first(self, backend: str) -> None:
+    def test_next_second_built_before_first(
+        self, backend: str, fixtures: Fixtures
+    ) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
@@ -179,7 +183,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.next(build1), None)
 
     @parametrized(BACKENDS)
-    def test_latest_with_completed_true(self, backend: str) -> None:
+    def test_latest_with_completed_true(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
@@ -198,7 +202,9 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.latest("lighthouse", completed=True), None)
 
     @parametrized(BACKENDS)
-    def test_latest_with_completed_false(self, backend: str) -> None:
+    def test_latest_with_completed_false(
+        self, backend: str, fixtures: Fixtures
+    ) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
@@ -217,7 +223,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.latest("lighthouse", completed=False).id, build1.id)
 
     @parametrized(product(BACKENDS[0], ["logs", "note"]))
-    def test_search(self, backend: str, field: str) -> None:
+    def test_search(self, backend: str, field: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         build1 = BuildRecordFactory(
             **{
@@ -248,7 +254,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual([build.id for build in builds], [])
 
     @parametrized(BACKENDS)
-    def test_search_unsearchable_field(self, backend: str) -> None:
+    def test_search_unsearchable_field(self, backend: str, fixtures: Fixtures) -> None:
         # Assume "machine" is an unsearchable field
         unsearchable = "machine"
 
@@ -259,7 +265,7 @@ class RecordDBTestCase(TestCase):
             [*records.search("lighthouse", unsearchable, "foo")]
 
     @parametrized(BACKENDS)
-    def test_count(self, backend: str) -> None:
+    def test_count(self, backend: str, fixtures: Fixtures) -> None:
         records = self.backend(backend)
         today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=dt.UTC)
 

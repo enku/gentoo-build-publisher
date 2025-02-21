@@ -1,18 +1,16 @@
 """Unit tests for the worker module"""
 
-# pylint: disable=missing-docstring,no-value-for-parameter
+# pylint: disable=missing-docstring,no-value-for-parameter,unused-argument
 import io
 import os
 from contextlib import redirect_stderr
 from pathlib import Path
 from typing import Callable, cast
-from unittest import mock
+from unittest import TestCase, mock
 
 import fakeredis
-import unittest_fixtures as fixture
-from gbp_testkit import TestCase
 from requests import HTTPError
-from unittest_fixtures import parametrized
+from unittest_fixtures import Fixtures, given, parametrized, where
 
 from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import publisher
@@ -52,12 +50,12 @@ def params(*names) -> Callable:
     return parametrized(ifparams(*names))
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
     @params("celery", "rq", "sync", "thread")
-    def test_publishes_build(self, worker: WorkerInterface) -> None:
+    def test_publishes_build(self, worker: WorkerInterface, fixtures: Fixtures) -> None:
         """Should actually publish the build"""
         worker.run(tasks.publish_build, "babette.193")
 
@@ -67,7 +65,7 @@ class PublishBuildTestCase(TestCase):
     @params("celery", "rq", "sync", "thread")
     @mock.patch("gentoo_build_publisher.worker.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
-        self, worker: WorkerInterface, log_error_mock: mock.Mock
+        self, worker: WorkerInterface, log_error_mock: mock.Mock, fixtures: Fixtures
     ) -> None:
         with mock.patch("gentoo_build_publisher.worker.tasks.pull_build") as apply_mock:
             apply_mock.side_effect = HTTPError
@@ -89,12 +87,12 @@ class PurgeBuildTestCase(TestCase):
         purge_mock.assert_called_once_with("foo")
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
     @params("celery", "rq", "sync", "thread")
-    def test_pulls_build(self, worker: WorkerInterface) -> None:
+    def test_pulls_build(self, worker: WorkerInterface, fixtures: Fixtures) -> None:
         """Should actually pull the build"""
         worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
 
@@ -102,7 +100,9 @@ class PullBuildTestCase(TestCase):
         self.assertIs(publisher.pulled(build), True)
 
     @params("celery", "rq", "sync", "thread")
-    def test_calls_purge_machine(self, worker: WorkerInterface) -> None:
+    def test_calls_purge_machine(
+        self, worker: WorkerInterface, fixtures: Fixtures
+    ) -> None:
         """Should issue the purge_machine task when setting is true"""
         with mock.patch(
             "gentoo_build_publisher.worker.tasks.purge_machine"
@@ -113,7 +113,9 @@ class PullBuildTestCase(TestCase):
         mock_purge_machine.assert_called_with("charlie")
 
     @params("celery", "rq", "sync", "thread")
-    def test_does_not_call_purge_machine(self, worker: WorkerInterface) -> None:
+    def test_does_not_call_purge_machine(
+        self, worker: WorkerInterface, fixtures: Fixtures
+    ) -> None:
         """Should not issue the purge_machine task when setting is false"""
         with mock.patch(
             "gentoo_build_publisher.worker.tasks.purge_machine"
@@ -126,7 +128,7 @@ class PullBuildTestCase(TestCase):
     @params("celery", "rq", "sync", "thread")
     @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(
-        self, worker: WorkerInterface
+        self, worker: WorkerInterface, fixtures: Fixtures
     ) -> None:
         settings = Settings.from_environ()
         records = build_records(settings)
@@ -190,29 +192,28 @@ class JobsTests(TestCase):
             Worker(settings)
 
 
-@fixture.requires("settings")
+@given("settings")
+@where(
+    environ={
+        "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
+        "BUILD_PUBLISHER_WORKER_BACKEND": "rq",
+        "BUILD_PUBLISHER_WORKER_CELERY_CONCURRENCY": "55",
+        "BUILD_PUBLISHER_WORKER_CELERY_EVENTS": "True",
+        "BUILD_PUBLISHER_WORKER_CELERY_HOSTNAME": "gbp.invalid",
+        "BUILD_PUBLISHER_WORKER_CELERY_LOGLEVEL": "DEBUG",
+        "BUILD_PUBLISHER_WORKER_RQ_NAME": "test-worker",
+        "BUILD_PUBLISHER_WORKER_RQ_QUEUE_NAME": "test-queue",
+        "BUILD_PUBLISHER_WORKER_RQ_URL": "redis://localhost.invalid:6379",
+        "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
+    }
+)
 class WorkMethodTests(TestCase):
     """Tests for the WorkerInterface.work methods"""
 
-    options = {
-        "environ": {
-            "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
-            "BUILD_PUBLISHER_WORKER_BACKEND": "rq",
-            "BUILD_PUBLISHER_WORKER_CELERY_CONCURRENCY": "55",
-            "BUILD_PUBLISHER_WORKER_CELERY_EVENTS": "True",
-            "BUILD_PUBLISHER_WORKER_CELERY_HOSTNAME": "gbp.invalid",
-            "BUILD_PUBLISHER_WORKER_CELERY_LOGLEVEL": "DEBUG",
-            "BUILD_PUBLISHER_WORKER_RQ_NAME": "test-worker",
-            "BUILD_PUBLISHER_WORKER_RQ_QUEUE_NAME": "test-queue",
-            "BUILD_PUBLISHER_WORKER_RQ_URL": "redis://localhost.invalid:6379",
-            "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
-        }
-    }
-
-    def test_celery(self) -> None:
+    def test_celery(self, fixtures: Fixtures) -> None:
         path = "gentoo_build_publisher.worker.celery.Worker"
         with mock.patch(path) as mock_worker:
-            CeleryWorker.work(self.fixtures.settings)
+            CeleryWorker.work(fixtures.settings)
 
         mock_worker.assert_called_with(
             app=celery_app,
@@ -223,18 +224,18 @@ class WorkMethodTests(TestCase):
         )
         mock_worker.return_value.start.assert_called_once_with()
 
-    def test_sync(self) -> None:
+    def test_sync(self, fixtures: Fixtures) -> None:
         stderr_path = "gentoo_build_publisher.worker.sync.sys.stderr"
         with (
             self.assertRaises(SystemExit) as context,
             mock.patch(stderr_path) as mock_stderr,
         ):
-            SyncWorker.work(self.fixtures.settings)
+            SyncWorker.work(fixtures.settings)
 
         self.assertEqual(context.exception.args, (1,))
         mock_stderr.write.assert_called_once_with("SyncWorker has no worker\n")
 
-    def test_rq(self) -> None:
+    def test_rq(self, fixtures: Fixtures) -> None:
         worker_path = "gentoo_build_publisher.worker.rq.Worker"
         redis_path = "gentoo_build_publisher.worker.rq.Redis"
 
@@ -242,7 +243,7 @@ class WorkMethodTests(TestCase):
             mock.patch(worker_path) as mock_worker,
             mock.patch(redis_path) as mock_redis,
         ):
-            RQWorker.work(self.fixtures.settings)
+            RQWorker.work(fixtures.settings)
 
         mock_redis.from_url.assert_called_once_with("redis://localhost.invalid:6379")
         connection = mock_redis.from_url.return_value

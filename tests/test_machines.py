@@ -1,20 +1,23 @@
 """Tests for the machines module"""
 
 # pylint: disable=missing-docstring
+from typing import Any
+
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
-from unittest_fixtures import FixtureOptions, Fixtures, depends, requires
+from unittest_fixtures import Fixtures, fixture, given
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.types import Build
 
 
-@requires("publisher")
+# pylint: disable=unused-argument
+@given("publisher")
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingy"""
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         # Given the "foo" builds, one of which is published
         first_build = BuildFactory(machine="foo")
         publisher.publish(first_build)
@@ -34,7 +37,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.latest_build, publisher.record(latest_build))
         self.assertEqual(machine_info.published_build, first_build)
 
-    def test_empty_db(self) -> None:
+    def test_empty_db(self, fixtures: Fixtures) -> None:
         # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
 
@@ -44,7 +47,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.latest_build, None)
         self.assertEqual(machine_info.published_build, None)
 
-    def test_builds_property(self) -> None:
+    def test_builds_property(self, fixtures: Fixtures) -> None:
         # Given the "foo" builds
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
@@ -59,7 +62,9 @@ class MachineInfoTestCase(TestCase):
         # Then we get the list of builds in reverse chronological order
         self.assertEqual(result, [publisher.record(i) for i in reversed(builds)])
 
-    def test_tags_property_shows_tags_across_machines_builds(self) -> None:
+    def test_tags_property_shows_tags_across_machines_builds(
+        self, fixtures: Fixtures
+    ) -> None:
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
             publisher.pull(build)
@@ -72,7 +77,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.tags, ["stable", "testing"])
 
 
-def builds_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]:
+def builds_fixture(_options: Any, _fixtures: Fixtures) -> list[Build]:
     # So for this case let's say we have 4 builds.  None have built timestamps.  The
     # 3rd one is published (but has no built timestamp) and the first 2 are pulled
     # but not published:
@@ -80,8 +85,8 @@ def builds_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]
     return builds
 
 
-@depends("publisher", builds_fixture)
-def machine_info_fixture(_options: FixtureOptions, fixtures: Fixtures) -> MachineInfo:
+@fixture("publisher", builds_fixture)
+def machine_info_fixture(_options: Any, fixtures: Fixtures) -> MachineInfo:
     machine = fixtures.builds[0].machine
 
     for build in fixtures.builds:
@@ -96,7 +101,7 @@ def machine_info_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Machin
     return MachineInfo(fixtures.builds[0].machine)
 
 
-@requires(builds_fixture, "publisher", machine_info_fixture)
+@given(builds_fixture, "publisher", machine_info_fixture)
 class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""
 
@@ -105,32 +110,34 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         publisher.pull(build)
         publisher.repo.build_records.save(publisher.record(build), built=None)
 
-    def test_build_count(self) -> None:
-        self.assertEqual(self.fixtures.machine_info.build_count, 4)
+    def test_build_count(self, fixtures: Fixtures) -> None:
+        self.assertEqual(fixtures.machine_info.build_count, 4)
 
-    def test_builds(self) -> None:
-        builds = self.fixtures.machine_info.builds
+    def test_builds(self, fixtures: Fixtures) -> None:
+        builds = fixtures.machine_info.builds
 
-        expected = list(reversed([publisher.record(i) for i in self.fixtures.builds]))
+        expected = list(reversed([publisher.record(i) for i in fixtures.builds]))
         self.assertEqual(expected, builds)
 
-    def test_latest_build(self) -> None:
-        build4 = self.fixtures.builds[3]
-        latest_build = self.fixtures.machine_info.latest_build
+    def test_latest_build(self, fixtures: Fixtures) -> None:
+        build4 = fixtures.builds[3]
+        latest_build = fixtures.machine_info.latest_build
 
         self.assertEqual(publisher.record(build4), latest_build)
 
-    def test_latest_with_latest_having_built_timestamp(self) -> None:
+    def test_latest_with_latest_having_built_timestamp(
+        self, fixtures: Fixtures
+    ) -> None:
         build5 = BuildFactory()
         publisher.pull(build5)
 
-        latest_build = self.fixtures.machine_info.latest_build
+        latest_build = fixtures.machine_info.latest_build
 
         self.assertEqual(publisher.record(build5), latest_build)
 
-    def test_published_build(self) -> None:
-        build3 = self.fixtures.builds[2]
-        published_build = self.fixtures.machine_info.published_build
+    def test_published_build(self, fixtures: Fixtures) -> None:
+        build3 = fixtures.builds[2]
+        published_build = fixtures.machine_info.published_build
 
         self.assertEqual(build3, published_build)
         self.assertTrue(publisher.published(build3))

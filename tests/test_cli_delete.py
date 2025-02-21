@@ -2,48 +2,38 @@
 
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
+from typing import Any
 
-import unittest_fixtures as fixture
 from gbp_testkit import TestCase
+from unittest_fixtures import Fixtures, fixture, given, where
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build
 
 
-@fixture.depends("builds")
-def build_fixture(
-    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
-) -> Build:
+@fixture("builds")
+def build_fixture(_options: Any, fixtures: Fixtures) -> Build:
     builds: list[Build] = fixtures.builds
     return builds[0]
 
 
-@fixture.depends(build_fixture)
-def args_fixture(
-    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
-) -> Namespace:
+@fixture(build_fixture)
+def args_fixture(_options: Any, fixtures: Fixtures) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=False)
 
 
-@fixture.depends(build_fixture)
-def force_args_fixture(
-    _options: fixture.FixtureOptions, fixtures: fixture.Fixtures
-) -> Namespace:
+@fixture(build_fixture)
+def force_args_fixture(_options: Any, fixtures: Fixtures) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=True)
 
 
-@fixture.requires(
+@given(
     "pulled_builds", "console", "gbp", build_fixture, args_fixture, force_args_fixture
 )
+@where(builds={"per_day": 5}, environ={"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "true"})
 class GBPChkTestCase(TestCase):
-    options = {
-        "builds": {"per_day": 6},
-        "environ": {"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "true"},
-    }
-
-    def test_deletes_build(self) -> None:
-        fixtures = self.fixtures
+    def test_deletes_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
 
         self.assertTrue(publisher.pulled(build))
@@ -51,8 +41,7 @@ class GBPChkTestCase(TestCase):
 
         self.assertFalse(publisher.pulled(build))
 
-    def test_published_build(self) -> None:
-        fixtures = self.fixtures
+    def test_published_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
         publisher.publish(build)
 
@@ -67,8 +56,7 @@ class GBPChkTestCase(TestCase):
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
 
-    def test_tagged_build(self) -> None:
-        fixtures = self.fixtures
+    def test_tagged_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
         publisher.tag(build, "testing")
 
@@ -84,12 +72,11 @@ class GBPChkTestCase(TestCase):
         self.assertFalse(publisher.pulled(build))
 
 
-@fixture.requires("pulled_builds", "console", "gbp", build_fixture, args_fixture)
+@given("pulled_builds", "console", "gbp", build_fixture, args_fixture)
 class DisabledDeletestTests(TestCase):
     options = {"environ": {"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "false"}}
 
-    def test_deletes_disabled(self) -> None:
-        fixtures = self.fixtures
+    def test_deletes_disabled(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
         console = fixtures.console
 

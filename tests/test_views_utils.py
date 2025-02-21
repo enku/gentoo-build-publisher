@@ -1,10 +1,9 @@
 """Tests for the dashboard utils"""
 
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring,unused-argument
 import datetime as dt
 from unittest import mock
 
-import unittest_fixtures as fixture
 from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
 from gbp_testkit import DjangoTestCase, TestCase
@@ -15,6 +14,7 @@ from gbp_testkit.factories import (
     package_factory,
 )
 from gbp_testkit.helpers import QuickCache
+from unittest_fixtures import Fixtures, given
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Content
@@ -28,11 +28,11 @@ from gentoo_build_publisher.views.utils import (
 )
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class GetMetadataTestCase(TestCase):
     """This is just cached Storage.get_metadata()"""
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         cache = QuickCache()
         publisher.pull(build)
@@ -42,7 +42,7 @@ class GetMetadataTestCase(TestCase):
         self.assertEqual(metadata, publisher.storage.get_metadata(build))
         self.assertEqual(cache.cache, {f"metadata-{build}": metadata})
 
-    def test_when_cached_return_cache(self) -> None:
+    def test_when_cached_return_cache(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         cache = QuickCache()
         cache.set(f"metadata-{build}", [1, 2, 3])  # not real metadata
@@ -72,19 +72,19 @@ class GetQueryValueFromRequestTests(TestCase):
         self.assertEqual(chart_days, 10)
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class StatsCollectorTests(TestCase):
     def stats_collector(self) -> StatsCollector:
         return StatsCollector(QuickCache())
 
-    def test_init(self) -> None:
+    def test_init(self, fixtures: Fixtures) -> None:
         publisher.pull(BuildFactory(machine="lighthouse"))
         publisher.pull(BuildFactory(machine="babette"))
         sc = self.stats_collector()
 
         self.assertEqual(sc.machines, ["babette", "lighthouse"])
 
-    def test_package_count(self) -> None:
+    def test_package_count(self, fixtures: Fixtures) -> None:
         for build in [
             *create_builds_and_packages(
                 "babette", 5, 2, publisher.jenkins.artifact_builder
@@ -103,7 +103,7 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.package_count("babette"), 50)
         self.assertEqual(sc.package_count("lighthouse"), 36)
 
-    def test_build_packages(self) -> None:
+    def test_build_packages(self, fixtures: Fixtures) -> None:
         [build] = create_builds_and_packages(
             "lighthouse", 1, 4, publisher.jenkins.artifact_builder
         )
@@ -119,7 +119,7 @@ class StatsCollectorTests(TestCase):
         ]
         self.assertEqual(sc.build_packages(build), expected)
 
-    def test_latest_published(self) -> None:
+    def test_latest_published(self, fixtures: Fixtures) -> None:
         build = None
         for build in [
             *create_builds_and_packages(
@@ -143,7 +143,7 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.latest_published("babette"), None)
         self.assertEqual(sc.latest_published("lighthouse"), None)
 
-    def test_recent_packages(self) -> None:
+    def test_recent_packages(self, fixtures: Fixtures) -> None:
         for build in create_builds_and_packages(
             "babette", 3, 4, publisher.jenkins.artifact_builder
         ):
@@ -159,7 +159,7 @@ class StatsCollectorTests(TestCase):
         )
         self.assertEqual(recent_packages, pkgs_sorted)
 
-    def test_total_package_size(self) -> None:
+    def test_total_package_size(self, fixtures: Fixtures) -> None:
         for build in create_builds_and_packages(
             "babette", 3, 4, publisher.jenkins.artifact_builder
         ):
@@ -170,7 +170,7 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.total_package_size("babette"), 15941)
         self.assertEqual(sc.total_package_size("bogus"), 0)
 
-    def test_latest_build(self) -> None:
+    def test_latest_build(self, fixtures: Fixtures) -> None:
         build = None
         for build in create_builds_and_packages(
             "babette", 3, 4, publisher.jenkins.artifact_builder
@@ -183,7 +183,7 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.latest_build("babette"), publisher.record(build))
         self.assertEqual(sc.latest_build("bogus"), None)
 
-    def test_built_recently(self) -> None:
+    def test_built_recently(self, fixtures: Fixtures) -> None:
         day = dt.timedelta(days=1)
         now = timezone.localtime()
         b1 = publisher.save(BuildRecordFactory(machine="babette"))
@@ -197,7 +197,7 @@ class StatsCollectorTests(TestCase):
         self.assertFalse(sc.built_recently(b2, now))
         self.assertTrue(sc.built_recently(b3, now))
 
-    def test_builds_by_day(self) -> None:
+    def test_builds_by_day(self, fixtures: Fixtures) -> None:
         for hour in range(2):
             publisher.save(
                 BuildRecordFactory(machine="babette"),
@@ -225,7 +225,7 @@ class StatsCollectorTests(TestCase):
         }
         self.assertEqual(bbd, expected)
 
-    def test_packages_by_day(self) -> None:
+    def test_packages_by_day(self, fixtures: Fixtures) -> None:
         d1 = dt.datetime(2021, 4, 13, 9, 5)
         publisher.jenkins.artifact_builder.timer = int(d1.timestamp())
         [build] = create_builds_and_packages(
@@ -274,9 +274,9 @@ class ExperimentalMarkerTests(DjangoTestCase):
             self.assertEqual(response.status_code, 200)
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class GetPackageURLTests(DjangoTestCase):
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         [build] = create_builds_and_packages(
             "babette", 1, 1, publisher.jenkins.artifact_builder
         )

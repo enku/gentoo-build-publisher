@@ -1,20 +1,14 @@
 """Tests for the GBP publisher"""
 
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring,unused-argument
 import datetime as dt
-from unittest import mock
+from typing import Any
+from unittest import TestCase, mock
 from zoneinfo import ZoneInfo
 
-from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS
-from unittest_fixtures import (
-    BaseTestCase,
-    FixtureContext,
-    FixtureOptions,
-    Fixtures,
-    requires,
-)
+from unittest_fixtures import FixtureContext, Fixtures, given
 from yarl import URL
 
 from gentoo_build_publisher import publisher as gbp
@@ -26,37 +20,37 @@ from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
 
-@requires("tmpdir")
-class BuildPublisherFromSettingsTestCase(BaseTestCase):
-    def test_from_settings_returns_publisher_with_given_settings(self) -> None:
+@given("tmpdir")
+class BuildPublisherFromSettingsTestCase(TestCase):
+    def test_from_settings_returns_publisher_with_given_settings(
+        self, fixtures: Fixtures
+    ) -> None:
         settings = Settings(
             JENKINS_BASE_URL="https://testserver.invalid/",
             RECORDS_BACKEND="memory",
-            STORAGE_PATH=self.fixtures.tmpdir / "test_from_settings",
+            STORAGE_PATH=fixtures.tmpdir / "test_from_settings",
         )
         pub = BuildPublisher.from_settings(settings)
 
         self.assertEqual(
             pub.jenkins.config.base_url, URL("https://testserver.invalid/")
         )
-        self.assertEqual(pub.storage.root, self.fixtures.tmpdir / "test_from_settings")
+        self.assertEqual(pub.storage.root, fixtures.tmpdir / "test_from_settings")
         self.assertIsInstance(pub.repo.build_records, RecordDB)
 
 
-@requires("build", "publisher")
+@given("build", "publisher")
 class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
-    def test_publish(self) -> None:
+    def test_publish(self, fixtures: Fixtures) -> None:
         """.publish should publish the build artifact"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
 
         publisher.publish(fixtures.build)
 
         self.assertIs(publisher.storage.published(fixtures.build), True)
 
-    def test_pull_without_db(self) -> None:
+    def test_pull_without_db(self, fixtures: Fixtures) -> None:
         """pull creates db record and pulls from jenkins"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
 
         publisher.pull(fixtures.build)
@@ -64,9 +58,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertIs(publisher.storage.pulled(fixtures.build), True)
         self.assertIs(publisher.repo.build_records.exists(fixtures.build), True)
 
-    def test_pull_stores_build_logs(self) -> None:
+    def test_pull_stores_build_logs(self, fixtures: Fixtures) -> None:
         """Should store the logs of the build"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         publisher.pull(fixtures.build)
 
@@ -76,9 +69,10 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         record = publisher.record(fixtures.build)
         self.assertEqual(record.logs, BUILD_LOGS)
 
-    def test_pull_updates_build_models_completed_field(self) -> None:
+    def test_pull_updates_build_models_completed_field(
+        self, fixtures: Fixtures
+    ) -> None:
         """Should update the completed field with the current timestamp"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         now = utctime()
 
@@ -89,8 +83,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         record = publisher.record(fixtures.build)
         self.assertEqual(record.completed, now)
 
-    def test_pull_updates_build_models_built_field(self) -> None:
-        fixtures = self.fixtures
+    def test_pull_updates_build_models_built_field(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         build = fixtures.build
 
@@ -103,22 +96,22 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         ).replace(tzinfo=dt.UTC)
         self.assertEqual(record.built, jenkins_timestamp)
 
-    def test_pull_does_not_download_when_already_pulled(self) -> None:
-        fixtures = self.fixtures
+    def test_pull_does_not_download_when_already_pulled(
+        self, fixtures: Fixtures
+    ) -> None:
         build = fixtures.build
 
-        self.fixtures.publisher.pull(build)
-        assert self.fixtures.publisher.pulled(build)
+        fixtures.publisher.pull(build)
+        assert fixtures.publisher.pulled(build)
 
-        pulled = self.fixtures.publisher.pull(build)
+        pulled = fixtures.publisher.pull(build)
 
         self.assertFalse(pulled)
 
-    def test_pulled_when_storage_is_ok_but_db_is_not(self) -> None:
+    def test_pulled_when_storage_is_ok_but_db_is_not(self, fixtures: Fixtures) -> None:
         # On rare occasion (server crash) the build appears to be extracted but the
         # record.completed field is None.  In this case Publisher.pulled(build) should
         # be False
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         build = fixtures.build
 
@@ -131,8 +124,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertFalse(publisher.pulled(build))
 
-    def test_build_timestamps(self) -> None:
-        fixtures = self.fixtures
+    def test_build_timestamps(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         datetime = dt.datetime
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
@@ -153,8 +145,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(record.submitted, datetime(2024, 1, 19, 5, 5, 49, tzinfo=ct))
         self.assertEqual(record.completed, datetime(2024, 1, 19, 5, 5, 49, tzinfo=ct))
 
-    def test_pull_with_note(self) -> None:
-        fixtures = self.fixtures
+    def test_pull_with_note(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
 
         publisher.pull(fixtures.build, note="This is a test")
@@ -163,8 +154,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         build_record = publisher.record(fixtures.build)
         self.assertEqual(build_record.note, "This is a test")
 
-    def test_pull_with_tags(self) -> None:
-        fixtures = self.fixtures
+    def test_pull_with_tags(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         build = fixtures.build
         tags = {"this", "is", "a", "test"}
@@ -174,9 +164,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertIs(publisher.storage.pulled(build), True)
         self.assertEqual(set(publisher.tags(build)), tags)
 
-    def test_purge_deletes_old_build(self) -> None:
+    def test_purge_deletes_old_build(self, fixtures: Fixtures) -> None:
         """Should remove purgeable builds"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         old_build = fixtures.build
         publisher.pull(old_build)
@@ -200,10 +189,9 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
             path = publisher.storage.get_path(old_build, item)
             self.assertIs(path.exists(), False, path)
 
-    def test_purge_does_not_delete_old_tagged_builds(self) -> None:
+    def test_purge_does_not_delete_old_tagged_builds(self, fixtures: Fixtures) -> None:
         """Should remove purgeable builds"""
 
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         repo = publisher.repo
         datetime = dt.datetime
@@ -230,9 +218,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertIs(repo.build_records.exists(kept_build), True)
         self.assertIs(repo.build_records.exists(tagged_build), True)
 
-    def test_purge_doesnt_delete_old_published_build(self) -> None:
+    def test_purge_doesnt_delete_old_published_build(self, fixtures: Fixtures) -> None:
         """Should not delete old build if published"""
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         build = fixtures.build
         repo = publisher.repo
@@ -250,9 +237,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertIs(repo.build_records.exists(build), True)
 
-    def test_update_build_metadata(self) -> None:
+    def test_update_build_metadata(self, fixtures: Fixtures) -> None:
         # pylint: disable=protected-access
-        fixtures = self.fixtures
         publisher = fixtures.publisher
         record = publisher.record(fixtures.build)
 
@@ -262,8 +248,9 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(record.logs, BUILD_LOGS)
         self.assertIsNot(record.completed, None)
 
-    def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(self) -> None:
-        fixtures = self.fixtures
+    def test_diff_binpkgs_should_be_empty_if_left_and_right_are_equal(
+        self, fixtures: Fixtures
+    ) -> None:
         left = fixtures.build
         publisher = fixtures.publisher
         publisher.get_packages = mock.Mock(wraps=publisher.get_packages)
@@ -276,8 +263,9 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(diff, [])
         self.assertEqual(publisher.get_packages.call_count, 0)
 
-    def test_tags_returns_the_list_of_tags_except_empty_tag(self) -> None:
-        fixtures = self.fixtures
+    def test_tags_returns_the_list_of_tags_except_empty_tag(
+        self, fixtures: Fixtures
+    ) -> None:
         publisher = fixtures.publisher
         build = fixtures.build
 
@@ -287,8 +275,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(publisher.storage.get_tags(build), ["", "prod"])
         self.assertEqual(publisher.tags(build), ["prod"])
 
-    def test_tag_tags_the_build_at_the_storage_layer(self) -> None:
-        fixtures = self.fixtures
+    def test_tag_tags_the_build_at_the_storage_layer(self, fixtures: Fixtures) -> None:
         build = fixtures.build
 
         gbp.pull(build)
@@ -297,8 +284,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertEqual(gbp.storage.get_tags(build), ["albert", "prod"])
 
-    def test_untag_removes_tag_from_the_build(self) -> None:
-        fixtures = self.fixtures
+    def test_untag_removes_tag_from_the_build(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         build = fixtures.build
 
@@ -310,8 +296,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertEqual(publisher.storage.get_tags(build), ["prod"])
 
-    def test_untag_with_empty_unpublishes_the_build(self) -> None:
-        fixtures = self.fixtures
+    def test_untag_with_empty_unpublishes_the_build(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         build = fixtures.build
 
@@ -322,7 +307,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertFalse(publisher.published(build))
 
-    def test_save(self) -> None:
+    def test_save(self, fixtures: Fixtures) -> None:
         r1 = BuildRecordFactory()
         r2 = gbp.save(r1, note="This is a test")
 
@@ -331,13 +316,13 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         r3 = gbp.record(Build(r1.machine, r1.build_id))
         self.assertEqual(r2, r3)
 
-    def test_machines(self) -> None:
+    def test_machines(self, fixtures: Fixtures) -> None:
         builds = [
             *BuildFactory.create_batch(3, machine="foo"),
             *BuildFactory.create_batch(2, machine="bar"),
             *BuildFactory.create_batch(1, machine="baz"),
         ]
-        publisher = self.fixtures.publisher
+        publisher = fixtures.publisher
         for build in builds:
             publisher.pull(build)
 
@@ -345,13 +330,13 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertEqual(len(machines), 3)
 
-    def test_machines_with_filter(self) -> None:
+    def test_machines_with_filter(self, fixtures: Fixtures) -> None:
         builds = [
             *BuildFactory.create_batch(3, machine="foo"),
             *BuildFactory.create_batch(2, machine="bar"),
             *BuildFactory.create_batch(1, machine="baz"),
         ]
-        publisher = self.fixtures.publisher
+        publisher = fixtures.publisher
         for build in builds:
             publisher.pull(build)
         machines = publisher.machines(names={"bar", "baz", "bogus"})
@@ -359,9 +344,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(len(machines), 2)
 
 
-def prepull_events(
-    _options: FixtureOptions, _fixtures: Fixtures
-) -> FixtureContext[list[Build]]:
+def prepull_events(_options: Any, _fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def prepull(build: Build) -> None:
@@ -373,7 +356,7 @@ def prepull_events(
 
 
 def postpull_events(
-    _options: FixtureOptions, _fixtures: Fixtures
+    _options: Any, _fixtures: Fixtures
 ) -> FixtureContext[list[tuple[Build, list[Package], GBPMetadata | None]]]:
     events: list[tuple[Build, list[Package], GBPMetadata | None]] = []
 
@@ -387,9 +370,7 @@ def postpull_events(
     yield events
 
 
-def publish_events(
-    _options: FixtureOptions, _fixtures: Fixtures
-) -> FixtureContext[list[Build]]:
+def publish_events(_options: Any, _fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def publish(build: Build) -> None:
@@ -400,11 +381,11 @@ def publish_events(
     yield events
 
 
-@requires("publisher", prepull_events, postpull_events, publish_events)
+@given("publisher", prepull_events, postpull_events, publish_events)
 class DispatcherTestCase(TestCase):
     maxDiff = None
 
-    def test_pull_single(self) -> None:
+    def test_pull_single(self, fixtures: Fixtures) -> None:
         new_build = BuildFactory()
         gbp.pull(new_build)
 
@@ -414,11 +395,10 @@ class DispatcherTestCase(TestCase):
             packages,
             gbp.gbp_metadata(gbp.jenkins.get_metadata(new_build), packages),
         )
-        self.assertEqual(self.fixtures.postpull_events, [expected])
-        self.assertEqual(self.fixtures.prepull_events, [new_build])
+        self.assertEqual(fixtures.postpull_events, [expected])
+        self.assertEqual(fixtures.prepull_events, [new_build])
 
-    def test_pull_multi(self) -> None:
-        fixtures = self.fixtures
+    def test_pull_multi(self, fixtures: Fixtures) -> None:
         build1 = BuildFactory()
         build2 = BuildFactory(machine="fileserver")
         gbp.pull(build1)
@@ -442,8 +422,7 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(fixtures.prepull_events, [build1, build2])
         self.assertEqual(fixtures.postpull_events, [event1, event2])
 
-    def test_publish(self) -> None:
-        fixtures = self.fixtures
+    def test_publish(self, fixtures: Fixtures) -> None:
         new_build = BuildFactory()
         gbp.publish(new_build)
 
@@ -451,7 +430,7 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(fixtures.publish_events, [record])
 
 
-def builds_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]:
+def builds_fixture(_options: Any, _fixtures: Fixtures) -> list[Build]:
     # So for this case let's say we have 4 builds.  None have built timestamps.  The
     # 3rd one is published (but has no built timestamp) and the first 2 are pulled
     # but not published:
@@ -459,11 +438,11 @@ def builds_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Build]
     return builds
 
 
-@requires("publisher")
+@given("publisher")
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         response = gbp.schedule_build("babette")
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)

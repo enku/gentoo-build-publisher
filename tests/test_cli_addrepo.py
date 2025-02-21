@@ -4,7 +4,7 @@
 from argparse import ArgumentParser, Namespace
 
 from gbp_testkit import DjangoTestCase as TestCase
-from unittest_fixtures import requires
+from unittest_fixtures import Fixtures, given
 
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import addrepo
@@ -12,21 +12,21 @@ from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
 
 
-@requires("publisher", "gbp", "console")
+@given("publisher", "gbp", "console")
 class AddRepoTestCase(TestCase):
-    def test_calls_grapql_with_the_expected_args(self) -> None:
+    def test_calls_graphql_with_the_expected_args(self, fixtures: Fixtures) -> None:
         args = Namespace(
             name="gentoo",
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        console = self.fixtures.console
-        exit_status = addrepo.handler(args, self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = addrepo.handler(args, fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
-    def test_when_item_already_exists(self) -> None:
-        publisher: BuildPublisher = self.fixtures.publisher
+    def test_when_item_already_exists(self, fixtures: Fixtures) -> None:
+        publisher: BuildPublisher = fixtures.publisher
         publisher.jenkins.make_folder(ProjectPath("repos"))
         publisher.jenkins.create_repo_job(
             EbuildRepo(name="gentoo", url="foo", branch="master")
@@ -37,8 +37,8 @@ class AddRepoTestCase(TestCase):
             repo="https://anongit.gentoo.org/git/repo/gentoo.git",
             branch="master",
         )
-        console = self.fixtures.console
-        exit_status = addrepo.handler(args, self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = addrepo.handler(args, fixtures.gbp, console)
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(

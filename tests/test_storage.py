@@ -6,11 +6,12 @@ import os
 import tarfile
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 
-import unittest_fixtures as fixture
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
 from gbp_testkit.helpers import MockJenkins
+from unittest_fixtures import Fixtures, fixture, given
 
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
@@ -30,103 +31,114 @@ from gentoo_build_publisher.types import (
 
 from . import data
 
-FixtureOptions = fixture.FixtureOptions
-Fixtures = fixture.Fixtures
-
 TEST_SETTINGS = Settings(
     STORAGE_PATH=Path("/dev/null"), JENKINS_BASE_URL="https://jenkins.invalid/"
 )
 
 
-@fixture.requires("environ", "tmpdir")
+# pylint: disable=unused-argument
+@given("environ", "tmpdir")
 class StorageFromSettings(TestCase):
     options = {"environ": {}, "environ_clear": False}
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         """Should instantiate Storage from settings"""
         # Given the settings
-        settings = replace(TEST_SETTINGS, STORAGE_PATH=self.fixtures.tmpdir)
+        settings = replace(TEST_SETTINGS, STORAGE_PATH=fixtures.tmpdir)
 
         # When we instantiate Storage.from_settings
         storage = Storage.from_settings(settings)
 
         # Then we get a Storage instance with attributes from settings
         self.assertIsInstance(storage, Storage)
-        self.assertEqual(storage.root, self.fixtures.tmpdir)
+        self.assertEqual(storage.root, fixtures.tmpdir)
 
 
-@fixture.depends("tmpdir")
-def storage_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Storage:
+@fixture("tmpdir")
+def storage_fixture(_options: Any, fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
-@fixture.depends("tmpdir")
-def jenkins_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Jenkins:
+@fixture("tmpdir")
+def jenkins_fixture(_options: Any, fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
 
     return MockJenkins.from_settings(settings)
 
 
-@fixture.requires("build", storage_fixture, jenkins_fixture)
+@given("build", storage_fixture, jenkins_fixture)
 class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
 
-    def has_content(self, build: Build, content: Content) -> bool:
-        storage: Storage = self.fixtures.storage
+    def has_content(self, build: Build, content: Content, storage: Storage) -> bool:
         return storage.get_path(build, content).is_dir()
 
-    def download_and_extract(self, build: Build) -> None:
-        self.fixtures.storage.extract_artifact(
-            build, self.fixtures.jenkins.download_artifact(build)
+    def download_and_extract(
+        self, build: Build, storage: Storage, jenkins: Jenkins
+    ) -> None:
+        storage.extract_artifact(build, jenkins.download_artifact(build))
+
+    def test_extract_artifact_moves_repos_and_binpkgs(self, fixtures: Fixtures) -> None:
+        """Should extract artifacts and move to repos/ and binpkgs/"""
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
+
+        self.assertTrue(
+            self.has_content(fixtures.build, Content.REPOS, fixtures.storage)
+        )
+        self.assertTrue(
+            self.has_content(fixtures.build, Content.BINPKGS, fixtures.storage)
         )
 
-    def test_extract_artifact_moves_repos_and_binpkgs(self) -> None:
-        """Should extract artifacts and move to repos/ and binpkgs/"""
-        self.download_and_extract(self.fixtures.build)
-
-        self.assertTrue(self.has_content(self.fixtures.build, Content.REPOS))
-        self.assertTrue(self.has_content(self.fixtures.build, Content.BINPKGS))
-
-    def test_extract_artifact_creates_etc_portage_dir(self) -> None:
+    def test_extract_artifact_creates_etc_portage_dir(self, fixtures: Fixtures) -> None:
         """Should extract artifacts and move to etc-portage/"""
-        self.download_and_extract(self.fixtures.build)
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
 
-        self.assertTrue(self.has_content(self.fixtures.build, Content.ETC_PORTAGE))
+        self.assertTrue(
+            self.has_content(fixtures.build, Content.ETC_PORTAGE, fixtures.storage)
+        )
 
-    def test_extract_artifact_creates_var_lib_portage_dir(self) -> None:
+    def test_extract_artifact_creates_var_lib_portage_dir(
+        self, fixtures: Fixtures
+    ) -> None:
         """Should extract artifacts and move to var-lib-portage/"""
-        self.download_and_extract(self.fixtures.build)
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
 
-        self.assertTrue(self.has_content(self.fixtures.build, Content.VAR_LIB_PORTAGE))
+        self.assertTrue(
+            self.has_content(fixtures.build, Content.VAR_LIB_PORTAGE, fixtures.storage)
+        )
 
-    def test_extract_artifact_should_remove_dst_if_it_already_exists(self) -> None:
+    def test_extract_artifact_should_remove_dst_if_it_already_exists(
+        self, fixtures: Fixtures
+    ) -> None:
         # When when one of the target paths already exist
-        path = self.fixtures.storage.get_path(self.fixtures.build, Content.BINPKGS)
+        path = fixtures.storage.get_path(fixtures.build, Content.BINPKGS)
         path.mkdir(parents=True)
         orphan = path / "this should not be here"
         orphan.touch()
 
         # And we extract the build
-        self.download_and_extract(self.fixtures.build)
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
 
         # Then the orphaned path is removed
         self.assertIs(path.exists(), True)
         self.assertIs(orphan.exists(), False, orphan)
 
 
-@fixture.requires("tmpdir")
+@given("tmpdir")
 class StoragePublishTestCase(TestCase):
     """Tests for Storage.publish"""
 
-    def test_publish_raises_exception_repos_dir_does_not_exist(self) -> None:
+    def test_publish_raises_exception_repos_dir_does_not_exist(
+        self, fixtures: Fixtures
+    ) -> None:
         """Should raise an exception if the build has not been pulled"""
         # Given the build
         build = Build("babette", "193")
 
         # Given the storage
-        storage = Storage(self.fixtures.tmpdir)
+        storage = Storage(fixtures.tmpdir)
 
         # Then an exception is raised
         with self.assertRaises(FileNotFoundError):
@@ -134,53 +146,53 @@ class StoragePublishTestCase(TestCase):
             storage.publish(build)
 
 
-@fixture.requires("environ", "storage", "build", "settings", "jenkins")
+@given("environ", "storage", "build", "settings", "jenkins")
 class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
 
-    def download_and_extract(self, build: Build) -> None:
-        self.fixtures.storage.extract_artifact(
-            build, self.fixtures.jenkins.download_artifact(build)
-        )
+    def download_and_extract(
+        self, build: Build, storage: Storage, jenkins: Jenkins
+    ) -> None:
+        storage.extract_artifact(build, jenkins.download_artifact(build))
 
-    def test_published_true(self) -> None:
+    def test_published_true(self, fixtures: Fixtures) -> None:
         """.published should return True when published"""
-        self.download_and_extract(self.fixtures.build)
-        self.fixtures.storage.publish(self.fixtures.build)
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
+        fixtures.storage.publish(fixtures.build)
 
-        published = self.fixtures.storage.published(self.fixtures.build)
+        published = fixtures.storage.published(fixtures.build)
 
         self.assertTrue(published)
 
-    def test_published_false(self) -> None:
+    def test_published_false(self, fixtures: Fixtures) -> None:
         """.published should return False when not published"""
-        published = self.fixtures.storage.published(self.fixtures.build)
+        published = fixtures.storage.published(fixtures.build)
 
         self.assertFalse(published)
 
-    def test_other_published(self) -> None:
-        self.download_and_extract(self.fixtures.build)
-        self.fixtures.storage.publish(self.fixtures.build)
+    def test_other_published(self, fixtures: Fixtures) -> None:
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
+        fixtures.storage.publish(fixtures.build)
 
         # Given the second build published
         build2 = Build("babette", "194")
-        self.download_and_extract(build2)
-        self.fixtures.storage.publish(build2)
+        self.download_and_extract(build2, fixtures.storage, fixtures.jenkins)
+        fixtures.storage.publish(build2)
 
         # Then published returns True on the second build
-        self.assertTrue(self.fixtures.storage.published(build2))
+        self.assertTrue(fixtures.storage.published(build2))
 
         # And False on the first build
-        self.assertFalse(self.fixtures.storage.published(self.fixtures.build))
+        self.assertFalse(fixtures.storage.published(fixtures.build))
 
 
-@fixture.requires("tmpdir")
+@given("tmpdir")
 class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
 
-    def test_deletes_expected_directories(self) -> None:
+    def test_deletes_expected_directories(self, fixtures: Fixtures) -> None:
         build = Build("babette", "19")
-        root = self.fixtures.tmpdir / "root"
+        root = fixtures.tmpdir / "root"
         storage = Storage(root)
         settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
         jenkins = MockJenkins.from_settings(settings)
@@ -199,68 +211,66 @@ class StorageDeleteTestCase(TestCase):
                 self.assertIs(os.path.exists(directory), False)
 
 
-@fixture.requires("build", "storage", jenkins_fixture)
+@given("build", "storage", jenkins_fixture)
 class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
 
-    def test_does_not_extract_already_pulled_build(self) -> None:
-        self.fixtures.storage.extract_artifact(
-            self.fixtures.build,
-            self.fixtures.jenkins.download_artifact(self.fixtures.build),
+    def test_does_not_extract_already_pulled_build(self, fixtures: Fixtures) -> None:
+        fixtures.storage.extract_artifact(
+            fixtures.build, fixtures.jenkins.download_artifact(fixtures.build)
         )
-        assert self.fixtures.storage.pulled(self.fixtures.build)
+        assert fixtures.storage.pulled(fixtures.build)
 
         # extract won't be able to extract this
         byte_stream_mock = iter([b""])
 
         try:
-            self.fixtures.storage.extract_artifact(
-                self.fixtures.build, byte_stream_mock
-            )
+            fixtures.storage.extract_artifact(fixtures.build, byte_stream_mock)
         except tarfile.ReadError:
             self.fail("extract_artifact() should not have attempted to extract")
 
-    def test_extracts_bytesteam_and_content(self) -> None:
-        self.fixtures.storage.extract_artifact(
-            self.fixtures.build,
-            self.fixtures.jenkins.download_artifact(self.fixtures.build),
+    def test_extracts_bytesteam_and_content(self, fixtures: Fixtures) -> None:
+        fixtures.storage.extract_artifact(
+            fixtures.build, fixtures.jenkins.download_artifact(fixtures.build)
         )
-        self.assertIs(self.fixtures.storage.pulled(self.fixtures.build), True)
+        self.assertIs(fixtures.storage.pulled(fixtures.build), True)
 
-    def test_uses_hard_link_if_previous_build_exists(self) -> None:
+    def test_uses_hard_link_if_previous_build_exists(self, fixtures: Fixtures) -> None:
         previous_build = Build("babette", "19")
-        timestamp = self.fixtures.jenkins.artifact_builder.timer
-        self.fixtures.storage.extract_artifact(
-            previous_build, self.fixtures.jenkins.download_artifact(previous_build)
+        timestamp = fixtures.jenkins.artifact_builder.timer
+        fixtures.storage.extract_artifact(
+            previous_build, fixtures.jenkins.download_artifact(previous_build)
         )
 
         current_build = Build("babette", "20")
 
         # Reverse time so we have duplicate mtimes
-        self.fixtures.jenkins.artifact_builder.timer = timestamp
-        self.fixtures.storage.extract_artifact(
+        fixtures.jenkins.artifact_builder.timer = timestamp
+        fixtures.storage.extract_artifact(
             current_build,
-            self.fixtures.jenkins.download_artifact(current_build),
+            fixtures.jenkins.download_artifact(current_build),
             previous=previous_build,
         )
 
         for item in Content:
-            dst_path = self.fixtures.storage.get_path(current_build, item)
+            dst_path = fixtures.storage.get_path(current_build, item)
             self.assertIs(dst_path.exists(), True)
 
         package_index = (
-            self.fixtures.storage.get_path(current_build, Content.BINPKGS) / "Packages"
+            fixtures.storage.get_path(current_build, Content.BINPKGS) / "Packages"
         )
         self.assertEqual(package_index.stat().st_nlink, 2)
 
 
-@fixture.requires("publisher", "build")
+@given("publisher", "build")
 class StorageGetPackagesTestCase(TestCase):
     """tests for the Storage.get_packages() method"""
 
-    def test_should_return_list_of_packages_from_index(self) -> None:
-        publisher.pull(self.fixtures.build)
-        packages = publisher.storage.get_packages(self.fixtures.build)
+    def test_should_return_list_of_packages_from_index(
+        self, fixtures: Fixtures
+    ) -> None:
+        publisher.pull(fixtures.build)
+        packages = publisher.storage.get_packages(fixtures.build)
 
         self.assertEqual(len(packages), len(PACKAGE_INDEX))
         package = packages[3]
@@ -271,25 +281,26 @@ class StorageGetPackagesTestCase(TestCase):
         self.assertEqual(package.size, 484)
         self.assertEqual(package.build_time, 0)
 
-    def test_should_raise_lookuperror_when_index_file_missing(self) -> None:
-        publisher.pull(self.fixtures.build)
+    def test_should_raise_lookuperror_when_index_file_missing(
+        self, fixtures: Fixtures
+    ) -> None:
+        publisher.pull(fixtures.build)
         index_file = (
-            publisher.storage.get_path(self.fixtures.build, Content.BINPKGS)
-            / "Packages"
+            publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "Packages"
         )
         index_file.unlink()
 
         with self.assertRaises(LookupError):
-            publisher.storage.get_packages(self.fixtures.build)
+            publisher.storage.get_packages(fixtures.build)
 
 
-@fixture.depends("publisher")
-def timestamp_fixture(_options: FixtureOptions, fixtures: Fixtures) -> int:
+@fixture("publisher")
+def timestamp_fixture(_options: Any, fixtures: Fixtures) -> int:
     return int(fixtures.publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
-@fixture.depends("publisher")
-def artifacts(_options: FixtureOptions, fixtures: Fixtures) -> list[Package]:
+@fixture("publisher")
+def artifacts(_options: Any, fixtures: Fixtures) -> list[Package]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
     a2 = artifact_builder.build(fixtures.build, "net-libs/nghttp2-1.47.0")
@@ -299,12 +310,14 @@ def artifacts(_options: FixtureOptions, fixtures: Fixtures) -> list[Package]:
     return [a1, a2, a3]
 
 
-@fixture.requires("build", "publisher", timestamp_fixture, artifacts)
+@given("build", "publisher", timestamp_fixture, artifacts)
 class StorageGetMetadataTestCase(TestCase):
     """tests for the Storage.get_metadata() method"""
 
-    def test_should_return_gbpmetadata_when_gbp_json_exists(self) -> None:
-        metadata = publisher.storage.get_metadata(self.fixtures.build)
+    def test_should_return_gbpmetadata_when_gbp_json_exists(
+        self, fixtures: Fixtures
+    ) -> None:
+        metadata = publisher.storage.get_metadata(fixtures.build)
 
         expected = GBPMetadata(
             build_duration=124,
@@ -318,7 +331,7 @@ class StorageGetMetadataTestCase(TestCase):
                         path="dev-libs/cyrus-sasl/cyrus-sasl-2.1.28-r1-1.gpkg.tar",
                         build_id=1,
                         size=841,
-                        build_time=self.fixtures.timestamp + 10,
+                        build_time=fixtures.timestamp + 10,
                     ),
                     Package(
                         cpv="net-libs/nghttp2-1.47.0",
@@ -326,7 +339,7 @@ class StorageGetMetadataTestCase(TestCase):
                         path="net-libs/nghttp2/nghttp2-1.47.0-1.gpkg.tar",
                         build_id=1,
                         size=529,
-                        build_time=self.fixtures.timestamp + 20,
+                        build_time=fixtures.timestamp + 20,
                     ),
                     Package(
                         cpv="sys-libs/glibc-2.34-r9",
@@ -334,31 +347,30 @@ class StorageGetMetadataTestCase(TestCase):
                         path="sys-libs/glibc/glibc-2.34-r9-1.gpkg.tar",
                         build_id=1,
                         size=484,
-                        build_time=self.fixtures.timestamp + 30,
+                        build_time=fixtures.timestamp + 30,
                     ),
                 ],
             ),
         )
         self.assertEqual(metadata, expected)
 
-    def test_should_raise_lookuperror_when_file_does_not_exist(self) -> None:
-        path = (
-            publisher.storage.get_path(self.fixtures.build, Content.BINPKGS)
-            / "gbp.json"
-        )
+    def test_should_raise_lookuperror_when_file_does_not_exist(
+        self, fixtures: Fixtures
+    ) -> None:
+        path = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
         with self.assertRaises(LookupError) as context:
-            publisher.storage.get_metadata(self.fixtures.build)
+            publisher.storage.get_metadata(fixtures.build)
 
         exception = context.exception
         self.assertEqual(
-            exception.args, (f"gbp.json does not exist for {self.fixtures.build}",)
+            exception.args, (f"gbp.json does not exist for {fixtures.build}",)
         )
 
 
-@fixture.depends("publisher", "build")
-def path_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Path:
+@fixture("publisher", "build")
+def path_fixture(_options: Any, fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
 
@@ -368,11 +380,11 @@ def path_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Path:
     return metadata
 
 
-@fixture.requires("publisher", "build", path_fixture)
+@given("publisher", "build", path_fixture)
 class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         package_metadata = PackageMetadata(
             total=666,
             size=666,
@@ -388,9 +400,9 @@ class StorageSetMetadataTestCase(TestCase):
             ],
         )
         gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
-        publisher.storage.set_metadata(self.fixtures.build, gbp_metadata)
+        publisher.storage.set_metadata(fixtures.build, gbp_metadata)
 
-        with self.fixtures.path.open("r") as json_file:
+        with fixtures.path.open("r") as json_file:
             result = json.load(json_file)
 
         expected = {
@@ -415,9 +427,9 @@ class StorageSetMetadataTestCase(TestCase):
         self.assertEqual(result, expected)
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class StorageReposTestCase(TestCase):
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
 
@@ -425,7 +437,7 @@ class StorageReposTestCase(TestCase):
 
         self.assertEqual(repos, {"gentoo", "marduk"})
 
-    def test_raise_exception_when_not_pulled(self) -> None:
+    def test_raise_exception_when_not_pulled(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
 
         with self.assertRaises(FileNotFoundError) as context:
@@ -434,9 +446,9 @@ class StorageReposTestCase(TestCase):
         self.assertEqual(context.exception.args, ("The build has not been pulled",))
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class StorageTaggingTestCase(TestCase):
-    def test_can_create_tagged_directory_symlinks(self) -> None:
+    def test_can_create_tagged_directory_symlinks(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
 
@@ -449,7 +461,7 @@ class StorageTaggingTestCase(TestCase):
             self.assertTrue(source_path.is_symlink())
             self.assertEqual(source_path.resolve(), target_path)
 
-    def test_can_retag(self) -> None:
+    def test_can_retag(self, fixtures: Fixtures) -> None:
         build1 = BuildFactory()
         publisher.pull(build1)
         publisher.storage.tag(build1, "prod")
@@ -465,7 +477,7 @@ class StorageTaggingTestCase(TestCase):
             self.assertTrue(source_path.is_symlink())
             self.assertEqual(source_path.resolve(), target_path)
 
-    def test_can_untag(self) -> None:
+    def test_can_untag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -479,13 +491,13 @@ class StorageTaggingTestCase(TestCase):
             self.assertFalse(source_path.exists())
             self.assertTrue(target_path.exists())
 
-    def test_can_untag_if_no_such_tag_exists(self) -> None:
+    def test_can_untag_if_no_such_tag_exists(self, fixtures: Fixtures) -> None:
         """Removing a non-existent tag should fail silently"""
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.untag(build, "prod")
 
-    def test_non_published_builds_have_no_tags(self) -> None:
+    def test_non_published_builds_have_no_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
 
@@ -493,7 +505,7 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, [])
 
-    def test_builds_can_have_multiple_tags(self) -> None:
+    def test_builds_can_have_multiple_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -508,7 +520,7 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, ["", "albert", "prod"])
 
-    def test_published_builds_have_the_empty_tag(self) -> None:
+    def test_published_builds_have_the_empty_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.publish(build)
 
@@ -516,14 +528,16 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, [""])
 
-    def test_unpulled_builds_have_no_tags(self) -> None:
+    def test_unpulled_builds_have_no_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
 
         tags = publisher.storage.get_tags(build)
 
         self.assertEqual(tags, [])
 
-    def test_partially_tagged_directories_are_not_tagged(self) -> None:
+    def test_partially_tagged_directories_are_not_tagged(
+        self, fixtures: Fixtures
+    ) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -537,7 +551,7 @@ class StorageTaggingTestCase(TestCase):
 
         self.assertEqual(tags, ["albert"])
 
-    def test_get_path(self) -> None:
+    def test_get_path(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         storage = publisher.storage
 
@@ -546,7 +560,7 @@ class StorageTaggingTestCase(TestCase):
         expected = Path(storage.root, "binpkgs", str(build))
         self.assertEqual(expected, path)
 
-    def test_get_path_with_tag(self) -> None:
+    def test_get_path_with_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         storage = publisher.storage
 
@@ -555,7 +569,7 @@ class StorageTaggingTestCase(TestCase):
         expected = Path(storage.root, "binpkgs", f"{build.machine}@prod")
         self.assertEqual(expected, path)
 
-    def test_get_path_with_published_tag(self) -> None:
+    def test_get_path_with_published_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         storage = publisher.storage
 
@@ -565,11 +579,13 @@ class StorageTaggingTestCase(TestCase):
         self.assertEqual(expected, path)
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class StorageResolveTagTestCase(TestCase):
     """Tests for the Storage.resolve_tag method"""
 
-    def test_resolve_tag_returns_the_build_that_it_belongs_to(self) -> None:
+    def test_resolve_tag_returns_the_build_that_it_belongs_to(
+        self, fixtures: Fixtures
+    ) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -579,13 +595,17 @@ class StorageResolveTagTestCase(TestCase):
 
         self.assertEqual(target, build)
 
-    def test_resolve_tag_raises_exception_when_given_invalid_tag(self) -> None:
+    def test_resolve_tag_raises_exception_when_given_invalid_tag(
+        self, fixtures: Fixtures
+    ) -> None:
         with self.assertRaises(ValueError) as context:
             publisher.storage.resolve_tag("notatag")
 
         self.assertEqual(context.exception.args[0], "Invalid tag: notatag")
 
-    def test_resolve_tag_raises_exception_when_build_doesnt_exist(self) -> None:
+    def test_resolve_tag_raises_exception_when_build_doesnt_exist(
+        self, fixtures: Fixtures
+    ) -> None:
         build = BuildFactory(machine="lighthouse")
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -599,7 +619,9 @@ class StorageResolveTagTestCase(TestCase):
             "Tag is broken or does not exist: lighthouse@prod",
         )
 
-    def test_resolve_tag_resolves_to_more_than_one_build(self) -> None:
+    def test_resolve_tag_resolves_to_more_than_one_build(
+        self, fixtures: Fixtures
+    ) -> None:
         build1 = BuildFactory()
         publisher.pull(build1)
         build2 = BuildFactory()
@@ -612,7 +634,9 @@ class StorageResolveTagTestCase(TestCase):
         with self.assertRaises(FileNotFoundError):
             publisher.storage.resolve_tag(f"{build1.machine}@prod")
 
-    def test_resolve_tag_when_symlink_points_to_nonbuild(self) -> None:
+    def test_resolve_tag_when_symlink_points_to_nonbuild(
+        self, fixtures: Fixtures
+    ) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
@@ -641,11 +665,11 @@ class MakePackageFromLinesTestCase(TestCase):
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
 
-@fixture.requires("publisher")
+@given("publisher")
 class MakePackagesTestCase(TestCase):
     """Tests for the make_packages method"""
 
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
         index_file = publisher.storage.get_path(build, Content.BINPKGS) / "Packages"

@@ -7,11 +7,11 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from unittest import mock
+from unittest import TestCase, mock
 
 import requests
-import unittest_fixtures as fixture
 from gbp_testkit.helpers import MockJenkins, test_data
+from unittest_fixtures import FixtureContext, Fixtures, given
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
@@ -35,7 +35,7 @@ JENKINS_CONFIG = JenkinsConfig(
 JOB_PARAMS = json.loads(test_data("job_parameters.json"))
 
 
-class JenkinsTestCase(fixture.BaseTestCase):
+class JenkinsTestCase(TestCase):
     """Tests for the Jenkins api wrapper"""
 
     def test_download_artifact(self) -> None:
@@ -183,7 +183,7 @@ class JenkinsTestCase(fixture.BaseTestCase):
         self.assertEqual(jenkins.project_root, ProjectPath("i/think/this/is/invalid"))
 
 
-class ProjectPathExistsTestCase(fixture.BaseTestCase):
+class ProjectPathExistsTestCase(TestCase):
     def test_should_return_false_when_does_not_exist(self) -> None:
         def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
             status_code = 404
@@ -236,7 +236,7 @@ class ProjectPathExistsTestCase(fixture.BaseTestCase):
                 jenkins.project_exists(project_path)
 
 
-class CreateItemTestCase(fixture.BaseTestCase):
+class CreateItemTestCase(TestCase):
     """Tests for the Jenkins.create_item method"""
 
     def test_creates_item(self) -> None:
@@ -313,7 +313,7 @@ class CreateItemTestCase(fixture.BaseTestCase):
         )
 
 
-class GetItemTestCase(fixture.BaseTestCase):
+class GetItemTestCase(TestCase):
     def test_gets_item(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
         jenkins.root.set(["Gentoo"], "<jenkins>Test</jenkins>")
@@ -342,7 +342,7 @@ class GetItemTestCase(fixture.BaseTestCase):
         )
 
 
-class MakeFolderTestCase(fixture.BaseTestCase):
+class MakeFolderTestCase(TestCase):
     """Tests for the Jenkins.make_folder method"""
 
     def test_when_folder_does_not_exist_creates_folder(self) -> None:
@@ -408,7 +408,7 @@ class MakeFolderTestCase(fixture.BaseTestCase):
         jenkins.make_folder(project_path, exist_ok=True)
 
 
-class IsFolderTestCase(fixture.BaseTestCase):
+class IsFolderTestCase(TestCase):
     """Tests for the Jenkins.is_folder method"""
 
     def test_when_is_a_folder_returns_true(self) -> None:
@@ -436,7 +436,7 @@ class IsFolderTestCase(fixture.BaseTestCase):
         self.assertEqual(jenkins.is_folder(ProjectPath()), True)
 
 
-class InstallPluginTestCase(fixture.BaseTestCase):
+class InstallPluginTestCase(TestCase):
     """Tests for the Jenkins.install_plugin method"""
 
     def test_installs_plugin(self) -> None:
@@ -451,7 +451,7 @@ class InstallPluginTestCase(fixture.BaseTestCase):
         )
 
 
-class CreateRepoJobTestCase(fixture.BaseTestCase):
+class CreateRepoJobTestCase(TestCase):
     """Tests for the Jenkins.create_repo_job method"""
 
     def test_creates_given_repo(self) -> None:
@@ -498,7 +498,7 @@ class CreateRepoJobTestCase(fixture.BaseTestCase):
         )
 
 
-class CreateMachineJobTestCase(fixture.BaseTestCase):
+class CreateMachineJobTestCase(TestCase):
     """Tests for the Jenkins.create_machine_job method"""
 
     def test_creates_given_machine(self) -> None:
@@ -530,7 +530,7 @@ class CreateMachineJobTestCase(fixture.BaseTestCase):
         )
 
 
-class ProjectPathTestCase(fixture.BaseTestCase):
+class ProjectPathTestCase(TestCase):
     """Tests for the ProjectPath class"""
 
     def test_job_path_with_root(self) -> None:
@@ -559,9 +559,7 @@ class ProjectPathTestCase(fixture.BaseTestCase):
         self.assertEqual(str(project_path), "Gentoo/repos/marduk")
 
 
-def mock_jenkins(
-    _options: fixture.FixtureOptions, _fixtures: fixture.Fixtures
-) -> fixture.FixtureContext[Jenkins]:
+def mock_jenkins(_options: Any, _fixtures: Fixtures) -> FixtureContext[Jenkins]:
     obj = Jenkins(JENKINS_CONFIG)
     with mock.patch.object(
         obj.session, "get", **{"return_value.json.return_value": JOB_PARAMS}
@@ -569,12 +567,12 @@ def mock_jenkins(
         yield obj
 
 
-@fixture.requires(mock_jenkins)
-class ScheduleBuildTestCase(fixture.BaseTestCase):
+@given(mock_jenkins)
+class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
-    def test(self) -> None:
-        jenkins = self.fixtures.mock_jenkins
+    def test(self, fixtures: Fixtures) -> None:
+        jenkins = fixtures.mock_jenkins
 
         with mock.patch.object(jenkins.session, "post") as mock_post:
             mock_response = mock_post.return_value
@@ -599,19 +597,17 @@ class ScheduleBuildTestCase(fixture.BaseTestCase):
             },
         )
 
-    def test_schedule_build_with_bogus_build_params(self) -> None:
+    def test_schedule_build_with_bogus_build_params(self, fixtures: Fixtures) -> None:
         with self.assertRaises(ValueError) as context:
-            self.fixtures.mock_jenkins.schedule_build(
-                "babette", BOGUS="idunno", FOO="bar"
-            )
+            fixtures.mock_jenkins.schedule_build("babette", BOGUS="idunno", FOO="bar")
 
         self.assertEqual(
             context.exception.args,
             ("parameter(s) ['BOGUS', 'FOO'] are invalid for this build",),
         )
 
-    def test_should_raise_on_http_error(self) -> None:
-        jenkins = self.fixtures.mock_jenkins
+    def test_should_raise_on_http_error(self, fixtures: Fixtures) -> None:
+        jenkins = fixtures.mock_jenkins
 
         class MyException(Exception):
             pass
@@ -623,9 +619,9 @@ class ScheduleBuildTestCase(fixture.BaseTestCase):
             with self.assertRaises(MyException):
                 jenkins.schedule_build("babette")
 
-    def test_with_missing_location_header(self) -> None:
+    def test_with_missing_location_header(self, fixtures: Fixtures) -> None:
         # Sometimes the Jenkins response is missing the location header(?)
-        jenkins = self.fixtures.mock_jenkins
+        jenkins = fixtures.mock_jenkins
 
         with mock.patch.object(jenkins.session, "post") as mock_post:
             attrs = {"status_code": 301, "headers": {}}
@@ -635,7 +631,7 @@ class ScheduleBuildTestCase(fixture.BaseTestCase):
         self.assertEqual(location, None)
 
 
-class GetJobParametersTests(fixture.BaseTestCase):
+class GetJobParametersTests(TestCase):
     # pylint: disable=no-member
     def test_gets_parameter_name_and_default_values(self) -> None:
         jenkins = MockJenkins(JENKINS_CONFIG)
@@ -665,7 +661,7 @@ class GetJobParametersTests(fixture.BaseTestCase):
         self.assertEqual(response, {})
 
 
-class URLBuilderTestCase(fixture.BaseTestCase):
+class URLBuilderTestCase(TestCase):
     """Tests for the URLBuilder"""
 
     config = JenkinsConfig(base_url=URL("https://jenkins.invalid"))

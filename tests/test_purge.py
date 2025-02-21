@@ -5,10 +5,9 @@ import datetime
 import random
 import typing as t
 from dataclasses import dataclass
+from unittest import TestCase
 
-import unittest_fixtures as fixture
-from unittest_fixtures import BaseTestCase as TestCase
-from unittest_fixtures import FixtureOptions, Fixtures
+from unittest_fixtures import Fixtures, fixture, given
 
 from gentoo_build_publisher.purge import Purger
 
@@ -76,20 +75,21 @@ def str2dt(string: str) -> datetime.datetime:
     return datetime.datetime(year, month, day)
 
 
-def items_fixture(_options: FixtureOptions, _fixtures: Fixtures) -> list[Item]:
+def items_fixture(_options: t.Any, _fixtures: Fixtures) -> list[Item]:
     dates = [*DATES]
     random.shuffle(dates)
 
     return [Item(timestamp=str2dt(i)) for i in dates]
 
 
-@fixture.depends(items_fixture)
-def purger_fixture(_options: FixtureOptions, fixtures: Fixtures) -> Purger[Item]:
+@fixture(items_fixture)
+def purger_fixture(_options: t.Any, fixtures: Fixtures) -> Purger[Item]:
 
     return Purger(fixtures.items, key=lambda i: i.timestamp, start=START, end=END)
 
 
-@fixture.requires(items_fixture, purger_fixture)
+# pylint: disable=unused-argument
+@given(items_fixture, purger_fixture)
 class PurgeTestCase(TestCase):
     def assertDates(self, items, expected) -> None:
         # pylint: disable=invalid-name
@@ -99,14 +99,14 @@ class PurgeTestCase(TestCase):
 
         self.assertEqual(set(item_dates), set(expected))
 
-    def test_last_day_of_month(self) -> None:
+    def test_last_day_of_month(self, fixtures: Fixtures) -> None:
         self.assertEqual(
-            self.fixtures.purger.last_day_of_month(END),
+            fixtures.purger.last_day_of_month(END),
             datetime.datetime(2021, 4, 30, 23, 59, 59),
         )
 
-    def test_yesterday_plus(self) -> None:
-        items = self.fixtures.purger.yesterday_plus()
+    def test_yesterday_plus(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.yesterday_plus()
 
         expected = [
             "2021-04-20",
@@ -119,21 +119,21 @@ class PurgeTestCase(TestCase):
         ]
         self.assertDates(items, expected)
 
-    def test_one_per_day_last_week(self) -> None:
-        items = self.fixtures.purger.one_per_day_last_week()
+    def test_one_per_day_last_week(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.one_per_day_last_week()
 
         expected = ["2021-04-14", "2021-04-16", "2021-04-17", "2021-04-20"]
         self.assertDates(items, expected)
 
-    def test_one_per_week_last_month(self) -> None:
-        items = self.fixtures.purger.one_per_week_last_month()
+    def test_one_per_week_last_month(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.one_per_week_last_month()
 
         expected = ["2021-03-01", "2021-03-09", "2021-03-17", "2021-03-27"]
 
         self.assertDates(items, expected)
 
-    def test_one_per_month_last_year(self) -> None:
-        items = self.fixtures.purger.one_per_month_last_year()
+    def test_one_per_month_last_year(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.one_per_month_last_year()
 
         expected = [
             "2020-07-29",
@@ -146,8 +146,8 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def test_one_per_year(self) -> None:
-        items = self.fixtures.purger.one_per_year()
+    def test_one_per_year(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.one_per_year()
 
         expected = [
             "2015-12-31",
@@ -161,18 +161,18 @@ class PurgeTestCase(TestCase):
 
         self.assertDates(items, expected)
 
-    def test_past(self) -> None:
-        items = self.fixtures.purger.past()
+    def test_past(self, fixtures: Fixtures) -> None:
+        items = fixtures.purger.past()
 
         expected = ["2015-12-30", "2015-12-31"]
 
         self.assertDates(items, expected)
 
-    def test_filter_range(self) -> None:
+    def test_filter_range(self, fixtures: Fixtures) -> None:
         start = datetime.datetime(2017, 4, 21)
         end = datetime.datetime(2019, 12, 31)
 
-        filtered = self.fixtures.purger.filter_range(self.fixtures.items, start, end)
+        filtered = fixtures.purger.filter_range(fixtures.items, start, end)
 
         expected = {
             datetime.datetime(2017, 10, 10, 0, 0),
@@ -182,8 +182,8 @@ class PurgeTestCase(TestCase):
 
         self.assertEqual(set(i.timestamp for i in filtered), expected)
 
-    def test_purge(self) -> None:
-        to_purge = self.fixtures.purger.purge()
+    def test_purge(self, fixtures: Fixtures) -> None:
+        to_purge = fixtures.purger.purge()
 
         expected = [
             "2016-01-01",

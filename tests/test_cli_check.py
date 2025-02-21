@@ -6,16 +6,18 @@ import re
 import shutil
 from argparse import ArgumentParser, Namespace
 
-import unittest_fixtures as fixture
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
+from unittest_fixtures import Fixtures, given
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content
 
+# pylint: disable=unused-argument
 
-@fixture.requires("tmpdir", "publisher", "gbp", "console")
+
+@given("tmpdir", "publisher", "gbp", "console")
 class GBPChkTestCase(TestCase):
     def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()
@@ -33,39 +35,39 @@ class GBPChkTestCase(TestCase):
 
         return build
 
-    def test_empty_system(self) -> None:
-        console = self.fixtures.console
-        check.handler(Namespace(), self.fixtures.gbp, console)
+    def test_empty_system(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
+        check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(console.out.file.getvalue(), "0 errors, 0 warnings\n")
 
-    def test_uncompleted_builds_are_skipped(self) -> None:
+    def test_uncompleted_builds_are_skipped(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         record = publisher.record(build)
         publisher.repo.build_records.save(record, completed=None)
 
-        console = self.fixtures.console
-        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
 
-    def test_check_tag_with_dots(self) -> None:
+    def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
         publisher.tag(build, "go-1.21.5")
 
-        console = self.fixtures.console
-        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0, console.err.file.getvalue())
 
-    def test_check_build_content(self) -> None:
+    def test_check_build_content(self, fixtures: Fixtures) -> None:
         good_build = BuildFactory()
         publisher.pull(good_build)
 
         bad_build = self.build_with_missing_content(Content.BINPKGS)
 
-        console = self.fixtures.console
+        console = fixtures.console
         result = check.check_build_content(console)
 
         self.assertEqual(result, (1, 0))
@@ -74,14 +76,14 @@ class GBPChkTestCase(TestCase):
             f"^Path missing for {re.escape(str(bad_build))}:",
         )
 
-    def test_check_orphans(self) -> None:
+    def test_check_orphans(self, fixtures: Fixtures) -> None:
         good_build = BuildFactory()
         publisher.pull(good_build)
 
         bad_build = self.orphan_build()
         binpkg_path = publisher.storage.get_path(bad_build, Content.BINPKGS)
 
-        console = self.fixtures.console
+        console = fixtures.console
         result = check.check_orphans(console)
 
         self.assertEqual(result, (len(Content), 0))
@@ -90,7 +92,7 @@ class GBPChkTestCase(TestCase):
             f"Record missing for {re.escape(str(binpkg_path))}",
         )
 
-    def test_check_orphans_dangling_symlinks(self) -> None:
+    def test_check_orphans_dangling_symlinks(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
 
@@ -102,7 +104,7 @@ class GBPChkTestCase(TestCase):
         # Delete the build. Symlinks are now broken
         publisher.delete(build)
 
-        console = self.fixtures.console
+        console = fixtures.console
         result = check.check_orphans(console)
 
         self.assertEqual(result, (link_count, 0))
@@ -111,7 +113,7 @@ class GBPChkTestCase(TestCase):
         for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
-    def test_check_inconsistent_tags(self) -> None:
+    def test_check_inconsistent_tags(self, fixtures: Fixtures) -> None:
         # More than one build is represented by a tag
         good_build = BuildFactory()
         publisher.pull(good_build)
@@ -129,7 +131,7 @@ class GBPChkTestCase(TestCase):
             link = item_path.parent / "larry"
             link.symlink_to(item_path.name)
 
-        console = self.fixtures.console
+        console = fixtures.console
         result = check.check_inconsistent_tags(console)
 
         self.assertEqual(result, (1, 0))
@@ -137,7 +139,7 @@ class GBPChkTestCase(TestCase):
             console.err.file.getvalue(), '^Tag "larry" has multiple targets: '
         )
 
-    def test_error_count_in_exit_status(self) -> None:
+    def test_error_count_in_exit_status(self, fixtures: Fixtures) -> None:
         for _ in range(2):
             good_build = BuildFactory()
             publisher.pull(good_build)
@@ -148,28 +150,28 @@ class GBPChkTestCase(TestCase):
         for _ in range(2):
             self.build_with_missing_content(Content.VAR_LIB_PORTAGE)
 
-        console = self.fixtures.console
-        exit_status = check.handler(Namespace(), self.fixtures.gbp, console)
+        console = fixtures.console
+        exit_status = check.handler(Namespace(), fixtures.gbp, console)
         self.assertEqual(exit_status, len(Content) * 3 + 2)
 
         stderr_lines = console.err.file.getvalue().split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
 
-    def test_check_tmpdir_nonempty(self) -> None:
+    def test_check_tmpdir_nonempty(self, fixtures: Fixtures) -> None:
         storage = publisher.storage
         root = storage.root
         tmp = root / "tmp"
         dirty_file = tmp / ".keep"
         dirty_file.write_bytes(b"")
 
-        console = self.fixtures.console
+        console = fixtures.console
         result = check.check_dirty_temp(console)
 
         self.assertEqual(result, (0, 1))
         self.assertEqual(console.err.file.getvalue(), f"Warning: {tmp} is not empty.\n")
 
-    def test_parse_args(self) -> None:
+    def test_parse_args(self, fixtures: Fixtures) -> None:
         # here for completeness
         parser = ArgumentParser("gbp")
         check.parse_args(parser)
