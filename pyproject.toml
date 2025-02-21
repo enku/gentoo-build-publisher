@@ -74,7 +74,7 @@ multi_line_output = 3
 
 [tool.pylint.master]
 load-plugins = "pylint_django,pylint.extensions.bad_builtin"
-django-settings-module = "settings"
+django-settings-module = "gbp_testkit.settings"
 init-hook = "import sys; sys.path.insert(0, 'tests')"
 bad-functions = "print"
 ignore = ["/migrations/"]
@@ -101,7 +101,7 @@ module = "ariadne_django.*"
 ignore_missing_imports = true
 
 [tool.django-stubs]
-django_settings_module = "settings"
+django_settings_module = "gbp_testkit.settings"
 
 [tool.pdm]
 version = { source = "scm" }

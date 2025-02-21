@@ -679,10 +679,10 @@ files = [
 
 [[package]]
 name = "gbp-testkit"
-version = "0.1.dev8"
+version = "0.1.dev9"
 requires_python = ">=3.11"
 git = "https://github.com/enku/gbp-testkit.git"
-revision = "f20cb150552fc514860b6ca6252c3dc73ac07aaf"
+revision = "5efd1f3ae2bd110b5b3e9e6601d87b565f08dde3"
 summary = "Gentoo Build Publisher testing tools"
 dependencies = [
     "django>=5.1.6",
