@@ -68,6 +68,20 @@ inspect, publish, pull, schedule builds and more.
 <img src="https://raw.githubusercontent.com/enku/screenshots/refs/heads/master/gbp-ps/screenshot.gif" alt="gbpcli screenshot" width="100%">
 </p>
 
+# Plugins
+
+Various plugins exist for Gentoo Build Publisher. Among them are:
+
+- [gbp-archive](https://github.com/enku/gbp-archive): A plugin to dump and
+  restore builds
+- [gbp-fl](https://github.com/enku/gbp-fl): A
+  [pfl](https://www.portagefilelist.de/)-inspired plugin
+- [gbp-notifications](https://github.com/enku/gbp-notifications): A plugin
+  that can send notifications when events occur
+- [gbp-ps](https://github.com/enku/gbp-ps): A
+  [gbpcli](https://github.com/enku/gbpcli) plugin to display your Gentoo Build
+  Publisher processes
+
 # Articles
 
 Below are some articles that explain some aspects of Build Publisher in
