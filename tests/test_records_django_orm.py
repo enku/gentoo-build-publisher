@@ -16,12 +16,10 @@ from gentoo_build_publisher.types import Build
 # pylint: disable=too-many-public-methods
 @given("build_model", "records_db", "record")
 @where(
-    records_db={"records_backend": "django"},
-    build_model={
-        "submitted": dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),
-        "completed": dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
-        "built": dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
-    },
+    records_db__backend="django",
+    build_model__submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),
+    build_model__completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
+    build_model__built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
 )
 class RecordDBTestCase(TestCase):
     def test_submitted_set(self, fixtures: Fixtures) -> None:

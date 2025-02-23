@@ -679,10 +679,10 @@ files = [
 
 [[package]]
 name = "gbp-testkit"
-version = "0.1.dev9"
+version = "0.1.dev11"
 requires_python = ">=3.11"
 git = "https://github.com/enku/gbp-testkit.git"
-revision = "5efd1f3ae2bd110b5b3e9e6601d87b565f08dde3"
+revision = "21fc832463a7ea6895307ee2c4a54d9e72463fda"
 summary = "Gentoo Build Publisher testing tools"
 dependencies = [
     "django>=5.1.6",
@@ -1386,10 +1386,10 @@ files = [
 
 [[package]]
 name = "unittest-fixtures"
-version = "0.1.dev57"
+version = "0.1.dev61"
 requires_python = ">=3.11"
 git = "https://github.com/enku/unittest-fixtures.git"
-revision = "d6c46e57045025eb9757afd395099733fe0b28c1"
+revision = "eb842b5fe4c86a9a84002e437db4ee45a3b513de"
 summary = "A small library for loading unittest fixtures"
 
 [[package]]

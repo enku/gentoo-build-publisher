@@ -1,8 +1,6 @@
 """Tests for the machines module"""
 
 # pylint: disable=missing-docstring
-from typing import Any
-
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from unittest_fixtures import Fixtures, fixture, given
@@ -77,7 +75,8 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.tags, ["stable", "testing"])
 
 
-def builds_fixture(_options: Any, _fixtures: Fixtures) -> list[Build]:
+@fixture()
+def builds_fixture(_fixtures: Fixtures) -> list[Build]:
     # So for this case let's say we have 4 builds.  None have built timestamps.  The
     # 3rd one is published (but has no built timestamp) and the first 2 are pulled
     # but not published:
@@ -86,7 +85,7 @@ def builds_fixture(_options: Any, _fixtures: Fixtures) -> list[Build]:
 
 
 @fixture("publisher", builds_fixture)
-def machine_info_fixture(_options: Any, fixtures: Fixtures) -> MachineInfo:
+def machine_info_fixture(fixtures: Fixtures) -> MachineInfo:
     machine = fixtures.builds[0].machine
 
     for build in fixtures.builds:

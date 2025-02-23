@@ -265,7 +265,7 @@ class BuildsQueryTestCase(TestCase):
 
 
 @fixture("publisher")
-def latest(_options: Any, _fixtures: Fixtures) -> Build:
+def latest(_fixtures: Fixtures) -> Build:
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
             built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
@@ -321,7 +321,7 @@ class LatestQueryTestCase(TestCase):
 
 
 @fixture("publisher")
-def diff_query_builds(_options: Any, fixtures: Fixtures) -> dict[str, Build]:
+def diff_query_builds(fixtures: Fixtures) -> dict[str, Build]:
     # Given the first build with tar-1.34
     left = BuildFactory()
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
@@ -994,7 +994,7 @@ class TagsTestCase(TestCase):
         assert_data(self, result, {"resolveBuildTag": None})
 
 
-def search_query_builds(_options: Any, _fixtures: Fixtures) -> list[Build]:
+def search_query_builds(_fixtures: Fixtures) -> list[Build]:
     for _, field in SEARCH_PARAMS:
         build1 = BuildFactory()
         record = publisher.record(build1)
@@ -1091,7 +1091,7 @@ class SearchQueryTestCase(TestCase):
 
 
 @fixture("publisher")
-def search_notes_query_builds(_options: Any, _fixtures: Fixtures) -> list[Build]:
+def search_notes_query_builds(_fixtures: Fixtures) -> list[Build]:
     build1 = BuildFactory()
     record = publisher.record(build1)
     publisher.repo.build_records.save(record, note="test foo")

@@ -118,7 +118,7 @@ class CreateDashboardContextTests(TestCase):
 
 
 @fixture("publisher")
-def pf_fixture(_options: Any, fixtures: Fixtures) -> Generator[str, None, None]:
+def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
     pf = package_factory()
     ab: ArtifactFactory = fixtures.publisher.jenkins.artifact_builder
     ab.initial_packages = []

@@ -3,7 +3,6 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring,too-many-ancestors
 import datetime as dt
 from functools import partial
-from typing import Any
 
 from django import urls
 from django.http import HttpResponse
@@ -17,14 +16,14 @@ now = partial(dt.datetime.now, tz=dt.UTC)
 
 
 @fixture("client")
-def lighthouse(_options: Any, fixtures: Fixtures) -> HttpResponse:
+def lighthouse(fixtures: Fixtures) -> HttpResponse:
     response: HttpResponse = fixtures.client.get("/machines/lighthouse/")
     return response
 
 
 # pylint: disable=unused-argument
 @fixture("publisher", "builds")
-def artifacts(_options: Any, fixtures: Fixtures) -> dict[str, Build]:
+def artifacts(fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
     artifact_builder.advance(-86400)
@@ -41,8 +40,10 @@ def artifacts(_options: Any, fixtures: Fixtures) -> dict[str, Build]:
 
 @given("publisher", "builds")
 @where(
-    records_db={"records_backend": "memory"},
-    builds={"machines": ["babette", "lighthouse", "web"], "num_days": 3, "per_day": 2},
+    records_db__backend="memory",
+    builds__machines=["babette", "lighthouse", "web"],
+    builds__num_days=3,
+    builds__per_day=2,
 )
 class TestCase(BaseTestCase):
     pass

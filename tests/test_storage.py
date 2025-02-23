@@ -6,7 +6,6 @@ import os
 import tarfile
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
 
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
@@ -55,13 +54,13 @@ class StorageFromSettings(TestCase):
 
 
 @fixture("tmpdir")
-def storage_fixture(_options: Any, fixtures: Fixtures) -> Storage:
+def storage_fixture(fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
 @fixture("tmpdir")
-def jenkins_fixture(_options: Any, fixtures: Fixtures) -> Jenkins:
+def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
 
@@ -295,12 +294,12 @@ class StorageGetPackagesTestCase(TestCase):
 
 
 @fixture("publisher")
-def timestamp_fixture(_options: Any, fixtures: Fixtures) -> int:
+def timestamp_fixture(fixtures: Fixtures) -> int:
     return int(fixtures.publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
 @fixture("publisher")
-def artifacts(_options: Any, fixtures: Fixtures) -> list[Package]:
+def artifacts(fixtures: Fixtures) -> list[Package]:
     artifact_builder = fixtures.publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
     a2 = artifact_builder.build(fixtures.build, "net-libs/nghttp2-1.47.0")
@@ -370,7 +369,7 @@ class StorageGetMetadataTestCase(TestCase):
 
 
 @fixture("publisher", "build")
-def path_fixture(_options: Any, fixtures: Fixtures) -> Path:
+def path_fixture(fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
 

@@ -149,7 +149,7 @@ class GBPListTests(DjangoTestCase):
 
 
 @given("tmpdir", "publisher", "api_keys", "console")
-@where(api_keys={"api_key_names": ["this", "that", "the", "other"]})
+@where(api_keys__names=["this", "that", "the", "other"])
 class GBPDeleteTests(DjangoTestCase):
     def test_delete(self, fixtures: Fixtures) -> None:
         console = fixtures.console

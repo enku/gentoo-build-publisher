@@ -11,7 +11,7 @@ from unittest import TestCase, mock
 
 import requests
 from gbp_testkit.helpers import MockJenkins, test_data
-from unittest_fixtures import FixtureContext, Fixtures, given
+from unittest_fixtures import FixtureContext, Fixtures, fixture, given
 from yarl import URL
 
 from gentoo_build_publisher.jenkins import (
@@ -559,7 +559,8 @@ class ProjectPathTestCase(TestCase):
         self.assertEqual(str(project_path), "Gentoo/repos/marduk")
 
 
-def mock_jenkins(_options: Any, _fixtures: Fixtures) -> FixtureContext[Jenkins]:
+@fixture()
+def mock_jenkins(_fixtures: Fixtures) -> FixtureContext[Jenkins]:
     obj = Jenkins(JENKINS_CONFIG)
     with mock.patch.object(
         obj.session, "get", **{"return_value.json.return_value": JOB_PARAMS}

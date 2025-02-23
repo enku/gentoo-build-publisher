@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
-from typing import Any
 
 from gbp_testkit import TestCase
 from unittest_fixtures import Fixtures, fixture, given, where
@@ -13,25 +12,25 @@ from gentoo_build_publisher.types import Build
 
 
 @fixture("builds")
-def build_fixture(_options: Any, fixtures: Fixtures) -> Build:
+def build_fixture(fixtures: Fixtures) -> Build:
     builds: list[Build] = fixtures.builds
     return builds[0]
 
 
 @fixture(build_fixture)
-def args_fixture(_options: Any, fixtures: Fixtures) -> Namespace:
+def args_fixture(fixtures: Fixtures) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=False)
 
 
 @fixture(build_fixture)
-def force_args_fixture(_options: Any, fixtures: Fixtures) -> Namespace:
+def force_args_fixture(fixtures: Fixtures) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=True)
 
 
 @given(
     "pulled_builds", "console", "gbp", build_fixture, args_fixture, force_args_fixture
 )
-@where(builds={"per_day": 5}, environ={"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "true"})
+@where(builds__per_day=5, environ={"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "true"})
 class GBPChkTestCase(TestCase):
     def test_deletes_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build

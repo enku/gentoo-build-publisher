@@ -75,7 +75,8 @@ def str2dt(string: str) -> datetime.datetime:
     return datetime.datetime(year, month, day)
 
 
-def items_fixture(_options: t.Any, _fixtures: Fixtures) -> list[Item]:
+@fixture()
+def items_fixture(_fixtures: Fixtures) -> list[Item]:
     dates = [*DATES]
     random.shuffle(dates)
 
@@ -83,7 +84,7 @@ def items_fixture(_options: t.Any, _fixtures: Fixtures) -> list[Item]:
 
 
 @fixture(items_fixture)
-def purger_fixture(_options: t.Any, fixtures: Fixtures) -> Purger[Item]:
+def purger_fixture(fixtures: Fixtures) -> Purger[Item]:
 
     return Purger(fixtures.items, key=lambda i: i.timestamp, start=START, end=END)
 

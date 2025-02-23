@@ -2,13 +2,12 @@
 
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
-from typing import Any
 from unittest import TestCase, mock
 from zoneinfo import ZoneInfo
 
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS
-from unittest_fixtures import FixtureContext, Fixtures, given
+from unittest_fixtures import FixtureContext, Fixtures, fixture, given
 from yarl import URL
 
 from gentoo_build_publisher import publisher as gbp
@@ -344,7 +343,8 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(len(machines), 2)
 
 
-def prepull_events(_options: Any, _fixtures: Fixtures) -> FixtureContext[list[Build]]:
+@fixture()
+def prepull_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def prepull(build: Build) -> None:
@@ -355,8 +355,9 @@ def prepull_events(_options: Any, _fixtures: Fixtures) -> FixtureContext[list[Bu
     yield events
 
 
+@fixture()
 def postpull_events(
-    _options: Any, _fixtures: Fixtures
+    _fixtures: Fixtures,
 ) -> FixtureContext[list[tuple[Build, list[Package], GBPMetadata | None]]]:
     events: list[tuple[Build, list[Package], GBPMetadata | None]] = []
 
@@ -370,7 +371,8 @@ def postpull_events(
     yield events
 
 
-def publish_events(_options: Any, _fixtures: Fixtures) -> FixtureContext[list[Build]]:
+@fixture()
+def publish_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []
 
     def publish(build: Build) -> None:
@@ -430,7 +432,8 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(fixtures.publish_events, [record])
 
 
-def builds_fixture(_options: Any, _fixtures: Fixtures) -> list[Build]:
+@fixture()
+def builds_fixture(_fixtures: Fixtures) -> list[Build]:
     # So for this case let's say we have 4 builds.  None have built timestamps.  The
     # 3rd one is published (but has no built timestamp) and the first 2 are pulled
     # but not published:
