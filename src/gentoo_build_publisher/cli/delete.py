@@ -7,7 +7,6 @@ from gbpcli.subcommands import completers as comp
 from gbpcli.types import Console
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
 
 HELP = "Delete the given build" ""
