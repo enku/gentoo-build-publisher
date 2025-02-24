@@ -104,6 +104,7 @@ ignore_missing_imports = true
 django_settings_module = "gbp_testkit.settings"
 
 [tool.pdm]
+distribution = true
 version = { source = "scm" }
 
 [tool.pdm.dev-dependencies]
