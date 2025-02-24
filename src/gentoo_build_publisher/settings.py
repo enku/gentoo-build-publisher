@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     WORKER_BACKEND: str = "celery"
     API_KEY_ENABLE: bool = True
     API_KEY_LENGTH: int = 24
-    MANUAL_DELETE_ENABLE: bool = False
 
     # Celery worker backend config
     WORKER_CELERY_CONCURRENCY: int = 1

@@ -30,7 +30,7 @@ def force_args_fixture(fixtures: Fixtures) -> Namespace:
 @given(
     "pulled_builds", "console", "gbp", build_fixture, args_fixture, force_args_fixture
 )
-@where(builds__per_day=5, environ={"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "true"})
+@where(builds__per_day=5)
 class GBPChkTestCase(TestCase):
     def test_deletes_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
@@ -69,24 +69,6 @@ class GBPChkTestCase(TestCase):
         status = delete.handler(fixtures.force_args, fixtures.gbp, fixtures.console)
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
-
-
-@given("pulled_builds", "console", "gbp", build_fixture, args_fixture)
-class DisabledDeletestTests(TestCase):
-    options = {"environ": {"BUILD_PUBLISHER_MANUAL_DELETE_ENABLE": "false"}}
-
-    def test_deletes_disabled(self, fixtures: Fixtures) -> None:
-        build: Build = fixtures.build
-        console = fixtures.console
-
-        status = delete.handler(fixtures.args, fixtures.gbp, console)
-
-        self.assertEqual(status, 1)
-        stderr = console.err.file.getvalue()
-        self.assertEqual(
-            stderr, "Cannot delete builds because this feature is disabled.\n"
-        )
-        self.assertTrue(publisher.pulled(build))
 
 
 class CheckParseArgs(TestCase):

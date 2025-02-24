@@ -15,10 +15,6 @@ HELP = "Delete the given build" ""
 
 def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Delete the given build"""
-    if not delete_enabled(Settings.from_environ()):
-        console.err.print("Cannot delete builds because this feature is disabled.")
-        return 1
-
     build = Build(args.machine, args.number)
     tags = ([""] if publisher.published(build) else []) + publisher.tags(build)
 
@@ -52,8 +48,3 @@ def parse_args(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("number", metavar="NUMBER", help="build number"),
         comp.build_ids,
     )
-
-
-def delete_enabled(settings: Settings) -> bool:
-    """Return True if manual deletes are enabled in settings"""
-    return settings.MANUAL_DELETE_ENABLE
