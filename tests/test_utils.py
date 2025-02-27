@@ -10,7 +10,7 @@ import requests
 import requests.api
 import requests.exceptions
 
-from gentoo_build_publisher import utils
+from gentoo_build_publisher import plugins, utils
 
 
 class ColorTestCase(TestCase):
@@ -263,33 +263,30 @@ class ConditionallyDecoratorTests(TestCase):
 
 class ForEachAppTests(TestCase):
     def test(self) -> None:
+        plugins.get_plugins.cache_clear()
         apps = ("x.foo", "y.bar", "z.baz")
 
         mock_callback = mock.Mock(side_effect=apps)
 
-        with mock.patch(
-            "gentoo_build_publisher.utils.importlib.metadata.entry_points"
-        ) as entry_points:
+        with mock.patch("gentoo_build_publisher.plugins.entry_points") as entry_points:
             mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
             entry_points.return_value.select.return_value.__iter__.return_value = iter(
                 mocks
             )
             return_values = utils.for_each_app(mock_callback)
 
-        self.assertEqual(
-            [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")],
-            mock_callback.mock_calls,
+        mock_callback.assert_has_calls(
+            [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")], any_order=True
         )
         self.assertEqual(list(apps), return_values)
 
     def test_when_entry_point_is_not_a_string(self) -> None:
+        plugins.get_plugins.cache_clear()
         apps = ("x.foo", 6, "z.baz")
 
         mock_callback = mock.Mock(side_effect=apps)
 
-        with mock.patch(
-            "gentoo_build_publisher.utils.importlib.metadata.entry_points"
-        ) as entry_points:
+        with mock.patch("gentoo_build_publisher.plugins.entry_points") as entry_points:
             mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
             entry_points.return_value.select.return_value.__iter__.return_value = iter(
                 mocks
@@ -299,7 +296,9 @@ class ForEachAppTests(TestCase):
 
         exception = exc_info.exception
         error_message = exception.args[0]
-        self.assertTrue(error_message.endswith("is not a string"))
+        self.assertTrue(
+            error_message.endswith("is not a dict or string"), error_message
+        )
 
 
 @contextmanager
