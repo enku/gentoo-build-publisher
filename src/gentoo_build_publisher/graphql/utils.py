@@ -6,12 +6,14 @@ import datetime as dt
 import importlib.metadata
 from dataclasses import dataclass, replace
 from functools import wraps
+from importlib import import_module
 from typing import Any, Callable, TypeAlias
 
 import ariadne
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, utils
+from gentoo_build_publisher.plugins import get_plugins
 from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.settings import Settings
 
@@ -80,6 +82,12 @@ def load_schema() -> tuple[list[str], list[ariadne.ObjectType]]:
     """
     all_type_defs: list[str] = []
     all_resolvers = []
+
+    for plugin in get_plugins():
+        if plugin.graphql:
+            module = import_module(plugin.graphql)
+            all_type_defs.append(module.type_defs)
+            all_resolvers.extend(module.resolvers)
 
     for entry_point in importlib.metadata.entry_points(group=SCHEMA_GROUP):
         module = entry_point.load()

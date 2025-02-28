@@ -7,7 +7,7 @@ Plugins register themselves under the group "gentoo_build_publisher.plugins", bu
 from dataclasses import dataclass
 from functools import cache
 from importlib.metadata import EntryPoint, entry_points
-from typing import TypedDict
+from typing import NotRequired, Optional, TypedDict
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -16,6 +16,7 @@ class Plugin:
 
     name: str
     app: str
+    graphql: Optional[str]
 
     def __hash__(self) -> int:
         return hash(self.app)
@@ -31,6 +32,12 @@ class PluginDef(TypedDict):
 
     name: str
     app: str
+
+    graphql: NotRequired[str]
+    """The module that contains the graphql definitions.
+
+    Plugins are not required to expose any GraphQL types
+    """
 
 
 @cache
@@ -50,8 +57,8 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
     data: str | PluginDef = ep.load()
 
     if isinstance(data, str):
-        return Plugin(name=ep.name, app=data)
+        return Plugin(name=ep.name, app=data, graphql=None)
     if isinstance(data, dict):
-        return Plugin(name=data["name"], app=data["app"])
+        return Plugin(name=data["name"], app=data["app"], graphql=data.get("graphql"))
 
     raise ValueError(f"{data!r} is not a dict or string")

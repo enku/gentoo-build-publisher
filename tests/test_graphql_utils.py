@@ -19,8 +19,11 @@ from gentoo_build_publisher.graphql.utils import (
     load_schema,
     require_apikey,
 )
+from gentoo_build_publisher.plugins import get_plugins
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import encode_basic_auth_data
+
+from .helpers import make_entry_point
 
 Mock = mock.Mock
 
@@ -129,3 +132,40 @@ class LoadSchemaTests(TestCase):
         schema = load_schema()
 
         self.assertEqual(schema, ([type_defs], resolvers))
+
+    @mock.patch("gentoo_build_publisher.graphql.utils.importlib.metadata.entry_points")
+    def test_with_entry_point(self, entry_points: mock.Mock) -> None:
+        mock_module = mock.Mock()
+        mock_module.type_defs = "type_defs"
+        mock_module.resolvers = [1, 2, 3]
+        ep = make_entry_point("test", mock_module)
+        entry_points.return_value.__iter__.return_value = iter([ep])
+
+        type_defs_, resolvers_ = load_schema()
+
+        self.assertEqual(["type_defs"], type_defs_)
+        self.assertEqual([1, 2, 3], resolvers_)
+        entry_points.assert_any_call(group="gentoo_build_publisher.graphql_schema")
+
+    @mock.patch("gentoo_build_publisher.graphql.utils.importlib.metadata.entry_points")
+    @mock.patch("gentoo_build_publisher.plugins.entry_points")
+    def test_with_plugin(
+        self, plugins_entry_points: mock.Mock, graphql_entry_points: mock.Mock
+    ) -> None:
+        ep = make_entry_point(
+            "test",
+            {
+                "name": "test",
+                "app": "test.apps.TestAppConfig",
+                "graphql": "tests.mock_graphql_module",
+            },
+        )
+        plugins_entry_points.return_value.select.return_value.__iter__.return_value = (
+            iter([ep])
+        )
+
+        get_plugins.cache_clear()
+        type_defs_, resolvers_ = load_schema()
+
+        self.assertEqual(["This is a test"], type_defs_)
+        self.assertEqual(["r1", "r2", "r3"], resolvers_)
