@@ -171,9 +171,8 @@ Install the Python packages in the `gbp` user's home directory.
 
 ```sh
 cd /home/gbp
-sudo -u gbp -H git clone https://github.com/enku/gentoo-build-publisher.git
 sudo -u gbp -H python3.12 -m venv .
-sudo -u gbp -H ./bin/pip install -e ./gentoo-build-publisher gunicorn psycopg
+sudo -u gbp -H ./bin/pip install gentoo-build-publisher gunicorn psycopg
 mkdir -p /usr/local/bin
 ln -s /home/gbp/bin/gbp /usr/local/bin/gbp
 ```
