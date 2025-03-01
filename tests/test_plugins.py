@@ -20,9 +20,10 @@ class GetPluginsTests(TestCase):
         plugins.get_plugins.cache_clear()
         result = plugins.get_plugins()
 
-        self.assertEqual(
-            [Plugin(name="test", app="test.apps.TestAppConfig", graphql=None)], result
+        plugin = Plugin(
+            name="test", app="test.apps.TestAppConfig", graphql=None, urls=None
         )
+        self.assertEqual([plugin], result)
         entry_points.select.assert_any_call(group="gentoo_build_publisher.apps")
         entry_points.select.assert_any_call(group="gentoo_build_publisher.plugins")
 
@@ -34,8 +35,12 @@ class GetPluginsTests(TestCase):
         plugins.get_plugins.cache_clear()
         result = plugins.get_plugins()
 
-        self.assertEqual(
-            [Plugin(name="test", app="test.apps.TestAppConfig", graphql=None)], result
+        plugin = Plugin(
+            name="test",
+            app="test.apps.TestAppConfig",
+            graphql=None,
+            urls="test.apps.TestAppConfig.urls",
         )
+        self.assertEqual([plugin], result)
         entry_points.select.assert_any_call(group="gentoo_build_publisher.apps")
         entry_points.select.assert_any_call(group="gentoo_build_publisher.plugins")

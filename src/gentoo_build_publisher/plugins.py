@@ -17,6 +17,7 @@ class Plugin:
     name: str
     app: str
     graphql: Optional[str]
+    urls: Optional[str]
 
     def __hash__(self) -> int:
         return hash(self.app)
@@ -39,6 +40,9 @@ class PluginDef(TypedDict):
     Plugins are not required to expose any GraphQL types
     """
 
+    urls: NotRequired[str]
+    """Dotted path to module containing urlpatterns"""
+
 
 @cache
 def get_plugins() -> list[Plugin]:
@@ -57,8 +61,13 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
     data: str | PluginDef = ep.load()
 
     if isinstance(data, str):
-        return Plugin(name=ep.name, app=data, graphql=None)
+        return Plugin(name=ep.name, app=data, graphql=None, urls=f"{data}.urls")
     if isinstance(data, dict):
-        return Plugin(name=data["name"], app=data["app"], graphql=data.get("graphql"))
+        return Plugin(
+            name=data["name"],
+            app=data["app"],
+            graphql=data.get("graphql"),
+            urls=data.get("urls"),
+        )
 
     raise ValueError(f"{data!r} is not a dict or string")

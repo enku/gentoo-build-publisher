@@ -4,20 +4,29 @@ from importlib import import_module
 
 from django.urls import URLPattern
 
-from gentoo_build_publisher import utils
+from gentoo_build_publisher.plugins import Plugin, get_plugins
 from gentoo_build_publisher.views.utils import ViewFinder
 
 urlpatterns = ViewFinder.find()
 
 
-def app_urlpatterns(app: str) -> list[URLPattern]:
-    """Return the urlpatterns defined in the given app"""
+def plugin_urlpatterns(plugin: Plugin) -> list[URLPattern]:
+    """Return the urlpatterns defined in the given plugin"""
+    if not plugin.urls:
+        return []
+
     try:
-        module = import_module(f"{app}.urls")
+        module = import_module(plugin.urls)
     except ImportError:
         return []
 
     return getattr(module, "urlpatterns", [])
 
 
-utils.for_each_app(lambda app: urlpatterns.extend(app_urlpatterns(app)))
+def init() -> None:
+    """Initialize plugin urls"""
+    for plugin in get_plugins():
+        urlpatterns.extend(plugin_urlpatterns(plugin))
+
+
+init()
