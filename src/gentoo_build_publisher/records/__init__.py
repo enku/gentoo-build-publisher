@@ -24,7 +24,7 @@ class BuildRecord(Build):
     """(Jenkins) build log"""
 
     keep: bool = False
-    """Whether nor not the purger should skip this build record"""
+    """Whether nor not the build is marked for non-deletion"""
 
     submitted: dt.datetime | None = None
     """Timestamp the build was submitted to gbp"""

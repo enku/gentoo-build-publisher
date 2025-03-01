@@ -26,7 +26,6 @@ from typing import Any, Iterable
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.machines import MachineInfo
-from gentoo_build_publisher.purge import Purger
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound, Repo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
@@ -195,17 +194,6 @@ class BuildPublisher:
     def schedule_build(self, machine: str, **params: Any) -> str | None:
         """Schedule a build on jenkins for the given machine name"""
         return self.jenkins.schedule_build(machine, **params)
-
-    def purge(self, machine: str) -> None:
-        """Purge old builds for machine"""
-        logging.info("Purging builds for %s", machine)
-        purger = Purger(
-            self.repo.build_records.for_machine(machine), key=BuildRecord.purge_key
-        )
-
-        for record in purger.purge():
-            if not (record.keep or self.storage.get_tags(record)):
-                self.delete(record)
 
     def search(self, machine: str, field: str, key: str) -> list[BuildRecord]:
         """search the given field on the given machine"""

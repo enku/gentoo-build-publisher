@@ -35,10 +35,8 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
     If `note` is given, then the build record will be saved with the given note.
     """
     from gentoo_build_publisher import publisher
-    from gentoo_build_publisher.settings import Settings
     from gentoo_build_publisher.types import Build
     from gentoo_build_publisher.worker import logger
-    from gentoo_build_publisher.worker.tasks import purge_machine
 
     build = Build.from_id(build_id)
 
@@ -48,16 +46,6 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
         logger.exception("Failed to pull build %s", build)
         publisher.delete(build)
         raise
-
-    if Settings.from_environ().ENABLE_PURGE:
-        purge_machine(build.machine)
-
-
-def purge_machine(machine: str) -> None:
-    """Purge old builds for machine"""
-    from gentoo_build_publisher import publisher
-
-    publisher.purge(machine)
 
 
 def delete_build(build_id: str) -> None:

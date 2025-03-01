@@ -20,7 +20,6 @@ class Settings(BaseSettings):
 
     STORAGE_PATH: Path
     JENKINS_BASE_URL: str
-    ENABLE_PURGE: bool = False
     JENKINS_API_KEY: str | None = None
     JENKINS_ARTIFACT_NAME: str = "build.tar.gz"
     JENKINS_DOWNLOAD_CHUNK_SIZE: int = JENKINS_DEFAULT_CHUNK_SIZE

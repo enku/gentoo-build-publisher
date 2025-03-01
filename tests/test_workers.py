@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-docstring,no-value-for-parameter,unused-argument
 import io
-import os
 from contextlib import redirect_stderr
 from pathlib import Path
 from typing import Callable, cast
@@ -76,17 +75,6 @@ class PublishBuildTestCase(TestCase):
         )
 
 
-class PurgeBuildTestCase(TestCase):
-    """Tests for the purge_machine task"""
-
-    @params("celery", "rq", "sync", "thread")
-    def test(self, worker: WorkerInterface) -> None:
-        with mock.patch.object(publisher, "purge", wraps=publisher.purge) as purge_mock:
-            worker.run(tasks.purge_machine, "foo")
-
-        purge_mock.assert_called_once_with("foo")
-
-
 @given("publisher")
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
@@ -98,32 +86,6 @@ class PullBuildTestCase(TestCase):
 
         build = Build("lima", "1012")
         self.assertIs(publisher.pulled(build), True)
-
-    @params("celery", "rq", "sync", "thread")
-    def test_calls_purge_machine(
-        self, worker: WorkerInterface, fixtures: Fixtures
-    ) -> None:
-        """Should issue the purge_machine task when setting is true"""
-        with mock.patch(
-            "gentoo_build_publisher.worker.tasks.purge_machine"
-        ) as mock_purge_machine:
-            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "1"}):
-                worker.run(tasks.pull_build, "charlie.197", note=None, tags=None)
-
-        mock_purge_machine.assert_called_with("charlie")
-
-    @params("celery", "rq", "sync", "thread")
-    def test_does_not_call_purge_machine(
-        self, worker: WorkerInterface, fixtures: Fixtures
-    ) -> None:
-        """Should not issue the purge_machine task when setting is false"""
-        with mock.patch(
-            "gentoo_build_publisher.worker.tasks.purge_machine"
-        ) as mock_purge_machine:
-            with mock.patch.dict(os.environ, {"BUILD_PUBLISHER_ENABLE_PURGE": "0"}):
-                worker.run(tasks.pull_build, "delta.424", note=None, tags=None)
-
-        mock_purge_machine.assert_not_called()
 
     @params("celery", "rq", "sync", "thread")
     @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())

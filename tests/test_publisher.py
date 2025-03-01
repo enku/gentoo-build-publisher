@@ -15,7 +15,7 @@ from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
-from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
+from gentoo_build_publisher.types import Build, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
 
@@ -162,79 +162,6 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         self.assertIs(publisher.storage.pulled(build), True)
         self.assertEqual(set(publisher.tags(build)), tags)
-
-    def test_purge_deletes_old_build(self, fixtures: Fixtures) -> None:
-        """Should remove purgeable builds"""
-        publisher = fixtures.publisher
-        old_build = fixtures.build
-        publisher.pull(old_build)
-        record = publisher.record(old_build)
-        publisher.repo.build_records.save(
-            record, submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
-        )
-
-        new_build = BuildFactory()
-        publisher.pull(new_build)
-        record = publisher.record(new_build)
-        publisher.repo.build_records.save(
-            record, submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC)
-        )
-
-        publisher.purge(old_build.machine)
-
-        self.assertIs(publisher.repo.build_records.exists(old_build), False)
-
-        for item in Content:
-            path = publisher.storage.get_path(old_build, item)
-            self.assertIs(path.exists(), False, path)
-
-    def test_purge_does_not_delete_old_tagged_builds(self, fixtures: Fixtures) -> None:
-        """Should remove purgeable builds"""
-
-        publisher = fixtures.publisher
-        repo = publisher.repo
-        datetime = dt.datetime
-        kept_build = BuildFactory(machine="lighthouse")
-        repo.build_records.save(
-            publisher.record(kept_build),
-            submitted=datetime(1970, 1, 1, tzinfo=dt.UTC),
-            keep=True,
-        )
-        tagged_build = BuildFactory(machine="lighthouse")
-        repo.build_records.save(
-            publisher.record(tagged_build),
-            submitted=datetime(1970, 1, 1, tzinfo=dt.UTC),
-        )
-        publisher.pull(tagged_build)
-        publisher.tag(tagged_build, "prod")
-        repo.build_records.save(
-            publisher.record(BuildFactory(machine="lighthouse")),
-            submitted=datetime(1970, 12, 31, tzinfo=dt.UTC),
-        )
-
-        publisher.purge("lighthouse")
-
-        self.assertIs(repo.build_records.exists(kept_build), True)
-        self.assertIs(repo.build_records.exists(tagged_build), True)
-
-    def test_purge_doesnt_delete_old_published_build(self, fixtures: Fixtures) -> None:
-        """Should not delete old build if published"""
-        publisher = fixtures.publisher
-        build = fixtures.build
-        repo = publisher.repo
-
-        publisher.publish(build)
-        repo.build_records.save(
-            publisher.record(build), submitted=dt.datetime(1970, 1, 1, tzinfo=dt.UTC)
-        )
-        repo.build_records.save(
-            publisher.record(BuildFactory()),
-            submitted=dt.datetime(1970, 12, 31, tzinfo=dt.UTC),
-        )
-
-        publisher.purge(build.machine)
-
-        self.assertIs(repo.build_records.exists(build), True)
 
     def test_update_build_metadata(self, fixtures: Fixtures) -> None:
         # pylint: disable=protected-access
