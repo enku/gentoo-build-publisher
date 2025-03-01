@@ -87,7 +87,6 @@ emerge --verbose --ask --noreplace \
     app-containers/buildah \
     app-containers/runc \
     dev-db/postgresql \
-    dev-lang/python:3.12 \
     dev-util/jenkins-bin \
     dev-vcs/git \
     net-misc/rabbitmq-server \
@@ -171,7 +170,7 @@ Install the Python packages in the `gbp` user's home directory.
 
 ```sh
 cd /home/gbp
-sudo -u gbp -H python3.12 -m venv .
+sudo -u gbp -H python -m venv .
 sudo -u gbp -H ./bin/pip install gentoo-build-publisher gunicorn psycopg
 mkdir -p /usr/local/bin
 ln -s /home/gbp/bin/gbp /usr/local/bin/gbp
