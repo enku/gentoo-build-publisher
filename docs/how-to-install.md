@@ -36,8 +36,8 @@ installing on a single virtual machine is the easiest to document.
 The first step is to install Gentoo on a virtual machine.  There is nothing
 special about doing this for GBP. Either testing or stable branches should
 suffice. From now on we assume it's being installed on an amd64-based virtual
-machine, but other hardware types may work as well.  A typical Handbook-style
-installation should suffice.
+machine, but other hardware types may work as well.  There are [official
+Gentoo virtual machine images](https://www.gentoo.org/downloads/) available.
 
 Your virtual machines should be connected to a network which is accessible
 from all the machines it will publish for.
@@ -127,7 +127,7 @@ Continue through the wizard filling out the forms.  When finished click the
 ### Create a Jenkins API key
 
 From the top bar in the Jenkins UI, click on your user/name. Then from the left
-menu click "Configure".  Under "API Token" click the "Add new Token" button.
+menu click "Security".  Under "API Token" click the "Add new Token" button.
 Give it the name "gbp" then click "Generate". "Copy the token now, because it
 cannot be recovered in the future."  Click the "Save" button.
 
@@ -137,11 +137,11 @@ Configure PostgreSQL and start the service.
 
 ```sh
 emerge --config postgresql
-systemctl enable --now postgresql-16.service
+systemctl enable --now postgresql-17.service
 ```
 
-> **_NOTE:_**  If a version of PostgreSQL other than 16 was installed,
-> replace the `16` the major version number that was installed.
+> **_NOTE:_**  If a version of PostgreSQL other than 17 was installed,
+> replace the `17` the major version number that was installed.
 
 Create the role for gbp.
 
@@ -171,7 +171,7 @@ Install the Python packages in the `gbp` user's home directory.
 ```sh
 cd /home/gbp
 sudo -u gbp -H python -m venv .
-sudo -u gbp -H ./bin/pip install gentoo-build-publisher gunicorn psycopg
+sudo -u gbp -H ./bin/python -m pip install gentoo-build-publisher gunicorn psycopg
 mkdir -p /usr/local/bin
 ln -s /home/gbp/bin/gbp /usr/local/bin/gbp
 ```
@@ -349,10 +349,11 @@ browser to the GBP instance on port 80, e.g. http://10.10.100.12/.
 In addition the `gbp` [command line
 interface](https://github.com/enku/gbpcli#readme) has useful commands for
 interacting with your GBP instance.  You can use it from the instance itself
-or install it on a local machine via pip:
+or install it on a local machine via
+[pipx](https://packages.gentoo.org/packages/dev-python/pipx):
 
 ```sh
-pip install gbpcli
+pipx install gbpcli
 ```
 
 Note that some CLI commands, for example `addmachine`, `addrepo` and `check`
