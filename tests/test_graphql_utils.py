@@ -19,7 +19,6 @@ from gentoo_build_publisher.graphql.utils import (
     load_schema,
     require_apikey,
 )
-from gentoo_build_publisher.plugins import get_plugins
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import encode_basic_auth_data
 
@@ -164,7 +163,6 @@ class LoadSchemaTests(TestCase):
             iter([ep])
         )
 
-        get_plugins.cache_clear()
         type_defs_, resolvers_ = load_schema()
 
         self.assertEqual(["This is a test"], type_defs_)

@@ -10,7 +10,7 @@ import requests
 import requests.api
 import requests.exceptions
 
-from gentoo_build_publisher import plugins, utils
+from gentoo_build_publisher import utils
 
 
 class ColorTestCase(TestCase):
@@ -263,7 +263,6 @@ class ConditionallyDecoratorTests(TestCase):
 
 class ForEachAppTests(TestCase):
     def test(self) -> None:
-        plugins.get_plugins.cache_clear()
         apps = ("x.foo", "y.bar", "z.baz")
 
         mock_callback = mock.Mock(side_effect=apps)
@@ -281,7 +280,6 @@ class ForEachAppTests(TestCase):
         self.assertEqual(list(apps), return_values)
 
     def test_when_entry_point_is_not_a_string(self) -> None:
-        plugins.get_plugins.cache_clear()
         apps = ("x.foo", 6, "z.baz")
 
         mock_callback = mock.Mock(side_effect=apps)

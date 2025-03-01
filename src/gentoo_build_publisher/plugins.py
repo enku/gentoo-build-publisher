@@ -5,7 +5,6 @@ Plugins register themselves under the group "gentoo_build_publisher.plugins", bu
 """
 
 from dataclasses import dataclass
-from functools import cache
 from importlib.metadata import EntryPoint, entry_points
 from typing import NotRequired, Optional, TypedDict
 
@@ -44,7 +43,6 @@ class PluginDef(TypedDict):
     """Dotted path to module containing urlpatterns"""
 
 
-@cache
 def get_plugins() -> list[Plugin]:
     """Return the list of registered plugins"""
     eps = entry_points()

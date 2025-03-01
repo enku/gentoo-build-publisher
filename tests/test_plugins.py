@@ -17,7 +17,6 @@ class GetPluginsTests(TestCase):
         entry_points = m_entry_points.return_value
         entry_points.select.return_value.__iter__.side_effect = (iter([]), iter([ep]))
 
-        plugins.get_plugins.cache_clear()
         result = plugins.get_plugins()
 
         plugin = Plugin(
@@ -32,7 +31,6 @@ class GetPluginsTests(TestCase):
         entry_points = m_entry_points.return_value
         entry_points.select.return_value.__iter__.side_effect = (iter([ep]), iter([]))
 
-        plugins.get_plugins.cache_clear()
         result = plugins.get_plugins()
 
         plugin = Plugin(
