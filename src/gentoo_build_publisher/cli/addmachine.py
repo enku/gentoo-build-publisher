@@ -9,7 +9,7 @@ from gbpcli.gbp import GBP
 from gbpcli.graphql import check
 from gbpcli.types import Console
 
-from . import get_dist_query
+from .utils import get_dist_query
 
 
 def handler(args: argparse.Namespace, gbp: GBP, console: Console) -> int:
