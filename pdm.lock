@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:f0f01bb2cc64530b366ba876ca9c57c30b6de75c0757e2d257f3a916cdf80b71"
+content_hash = "sha256:d15316cefc23db11bad1b9f4848cbe7696a635abfce980171d5e5d8029cfd8ea"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -503,38 +503,42 @@ files = [
 
 [[package]]
 name = "cryptography"
-version = "44.0.1"
+version = "44.0.2"
 requires_python = "!=3.9.0,!=3.9.1,>=3.7"
 summary = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 dependencies = [
     "cffi>=1.12; platform_python_implementation != \"PyPy\"",
 ]
 files = [
-    {file = "cryptography-44.0.1-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:bf688f615c29bfe9dfc44312ca470989279f0e94bb9f631f85e3459af8efc009"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dd7c7e2d71d908dc0f8d2027e1604102140d84b155e658c20e8ad1304317691f"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:887143b9ff6bad2b7570da75a7fe8bbf5f65276365ac259a5d2d5147a73775f2"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:322eb03ecc62784536bc173f1483e76747aafeb69c8728df48537eb431cd1911"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:21377472ca4ada2906bc313168c9dc7b1d7ca417b63c1c3011d0c74b7de9ae69"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:df978682c1504fc93b3209de21aeabf2375cb1571d4e61907b3e7a2540e83026"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:eb3889330f2a4a148abead555399ec9a32b13b7c8ba969b72d8e500eb7ef84cd"},
-    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:8e6a85a93d0642bd774460a86513c5d9d80b5c002ca9693e63f6e540f1815ed0"},
-    {file = "cryptography-44.0.1-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:6f76fdd6fd048576a04c5210d53aa04ca34d2ed63336d4abd306d0cbe298fddf"},
-    {file = "cryptography-44.0.1-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6c8acf6f3d1f47acb2248ec3ea261171a671f3d9428e34ad0357148d492c7864"},
-    {file = "cryptography-44.0.1-cp37-abi3-win32.whl", hash = "sha256:24979e9f2040c953a94bf3c6782e67795a4c260734e5264dceea65c8f4bae64a"},
-    {file = "cryptography-44.0.1-cp37-abi3-win_amd64.whl", hash = "sha256:fd0ee90072861e276b0ff08bd627abec29e32a53b2be44e41dbcdf87cbee2b00"},
-    {file = "cryptography-44.0.1-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:a2d8a7045e1ab9b9f803f0d9531ead85f90c5f2859e653b61497228b18452008"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b8272f257cf1cbd3f2e120f14c68bff2b6bdfcc157fafdee84a1b795efd72862"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e8d181e90a777b63f3f0caa836844a1182f1f265687fac2115fcf245f5fbec3"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:436df4f203482f41aad60ed1813811ac4ab102765ecae7a2bbb1dbb66dcff5a7"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:4f422e8c6a28cf8b7f883eb790695d6d45b0c385a2583073f3cec434cc705e1a"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:72198e2b5925155497a5a3e8c216c7fb3e64c16ccee11f0e7da272fa93b35c4c"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:2a46a89ad3e6176223b632056f321bc7de36b9f9b93b2cc1cccf935a3849dc62"},
-    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:53f23339864b617a3dfc2b0ac8d5c432625c80014c25caac9082314e9de56f41"},
-    {file = "cryptography-44.0.1-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:888fcc3fce0c888785a4876ca55f9f43787f4c5c1cc1e2e0da71ad481ff82c5b"},
-    {file = "cryptography-44.0.1-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:00918d859aa4e57db8299607086f793fa7813ae2ff5a4637e318a25ef82730f7"},
-    {file = "cryptography-44.0.1-cp39-abi3-win32.whl", hash = "sha256:9b336599e2cb77b1008cb2ac264b290803ec5e8e89d618a5e978ff5eb6f715d9"},
-    {file = "cryptography-44.0.1-cp39-abi3-win_amd64.whl", hash = "sha256:e403f7f766ded778ecdb790da786b418a9f2394f36e8cc8b796cc056ab05f44f"},
-    {file = "cryptography-44.0.1.tar.gz", hash = "sha256:f51f5705ab27898afda1aaa430f34ad90dc117421057782022edf0600bec5f14"},
+    {file = "cryptography-44.0.2-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:efcfe97d1b3c79e486554efddeb8f6f53a4cdd4cf6086642784fa31fc384e1d7"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:29ecec49f3ba3f3849362854b7253a9f59799e3763b0c9d0826259a88efa02f1"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc821e161ae88bfe8088d11bb39caf2916562e0a2dc7b6d56714a48b784ef0bb"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:3c00b6b757b32ce0f62c574b78b939afab9eecaf597c4d624caca4f9e71e7843"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:7bdcd82189759aba3816d1f729ce42ffded1ac304c151d0a8e89b9996ab863d5"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:4973da6ca3db4405c54cd0b26d328be54c7747e89e284fcff166132eb7bccc9c"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:4e389622b6927d8133f314949a9812972711a111d577a5d1f4bee5e58736b80a"},
+    {file = "cryptography-44.0.2-cp37-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:f514ef4cd14bb6fb484b4a60203e912cfcb64f2ab139e88c2274511514bf7308"},
+    {file = "cryptography-44.0.2-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:1bc312dfb7a6e5d66082c87c34c8a62176e684b6fe3d90fcfe1568de675e6688"},
+    {file = "cryptography-44.0.2-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:3b721b8b4d948b218c88cb8c45a01793483821e709afe5f622861fc6182b20a7"},
+    {file = "cryptography-44.0.2-cp37-abi3-win32.whl", hash = "sha256:51e4de3af4ec3899d6d178a8c005226491c27c4ba84101bfb59c901e10ca9f79"},
+    {file = "cryptography-44.0.2-cp37-abi3-win_amd64.whl", hash = "sha256:c505d61b6176aaf982c5717ce04e87da5abc9a36a5b39ac03905c4aafe8de7aa"},
+    {file = "cryptography-44.0.2-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:8e0ddd63e6bf1161800592c71ac794d3fb8001f2caebe0966e77c5234fa9efc3"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:81276f0ea79a208d961c433a947029e1a15948966658cf6710bbabb60fcc2639"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9a1e657c0f4ea2a23304ee3f964db058c9e9e635cc7019c4aa21c330755ef6fd"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:6210c05941994290f3f7f175a4a57dbbb2afd9273657614c506d5976db061181"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:d1c3572526997b36f245a96a2b1713bf79ce99b271bbcf084beb6b9b075f29ea"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:b042d2a275c8cee83a4b7ae30c45a15e6a4baa65a179a0ec2d78ebb90e4f6699"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:d03806036b4f89e3b13b6218fefea8d5312e450935b1a2d55f0524e2ed7c59d9"},
+    {file = "cryptography-44.0.2-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:c7362add18b416b69d58c910caa217f980c5ef39b23a38a0880dfd87bdf8cd23"},
+    {file = "cryptography-44.0.2-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:8cadc6e3b5a1f144a039ea08a0bdb03a2a92e19c46be3285123d32029f40a922"},
+    {file = "cryptography-44.0.2-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6f101b1f780f7fc613d040ca4bdf835c6ef3b00e9bd7125a4255ec574c7916e4"},
+    {file = "cryptography-44.0.2-cp39-abi3-win32.whl", hash = "sha256:3dc62975e31617badc19a906481deacdeb80b4bb454394b4098e3f2525a488c5"},
+    {file = "cryptography-44.0.2-cp39-abi3-win_amd64.whl", hash = "sha256:5f6f90b72d8ccadb9c6e311c775c8305381db88374c65fa1a68250aa8a9cb3a6"},
+    {file = "cryptography-44.0.2-pp311-pypy311_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:909c97ab43a9c0c0b0ada7a1281430e4e5ec0458e6d9244c0e821bbf152f061d"},
+    {file = "cryptography-44.0.2-pp311-pypy311_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:96e7a5e9d6e71f9f4fca8eebfd603f8e86c5225bb18eb621b2c1e50b290a9471"},
+    {file = "cryptography-44.0.2-pp311-pypy311_pp73-manylinux_2_34_aarch64.whl", hash = "sha256:d1b3031093a366ac767b3feb8bcddb596671b3aaff82d4050f984da0c248b615"},
+    {file = "cryptography-44.0.2-pp311-pypy311_pp73-manylinux_2_34_x86_64.whl", hash = "sha256:04abd71114848aa25edb28e225ab5f268096f44cf0127f3d36975bdf1bdf3390"},
+    {file = "cryptography-44.0.2.tar.gz", hash = "sha256:c63454aa261a0cf0c5b4718349629793e9e634993538db841165b3df74f37ec0"},
 ]
 
 [[package]]
@@ -679,10 +683,10 @@ files = [
 
 [[package]]
 name = "gbp-testkit"
-version = "0.1.dev11"
+version = "0.1.dev19"
 requires_python = ">=3.11"
 git = "https://github.com/enku/gbp-testkit.git"
-revision = "21fc832463a7ea6895307ee2c4a54d9e72463fda"
+revision = "df638a927abb81b1d2744e8a68832748db9d25b9"
 summary = "Gentoo Build Publisher testing tools"
 dependencies = [
     "django>=5.1.6",
@@ -693,20 +697,21 @@ dependencies = [
 
 [[package]]
 name = "gbpcli"
-version = "2.4.1"
+version = "2.5.0b1"
 requires_python = ">=3.11"
 summary = "Gentoo Build Publisher Command-Line Interface"
 dependencies = [
     "argcomplete>=3.2.1",
     "distutils-strtobool>=0.1.0",
     "platformdirs>=4.2.0",
+    "python-dotenv>=1.0.1",
     "requests",
     "rich>=12.5.1",
     "yarl",
 ]
 files = [
-    {file = "gbpcli-2.4.1-py3-none-any.whl", hash = "sha256:c3f9a1ce1a8e02915c265f83d87ec024ecaef043963dd50387f9811e58691a9a"},
-    {file = "gbpcli-2.4.1.tar.gz", hash = "sha256:f943f4942cfc7d0a95696ab35b726906e0f2c6c396328abf2c9aa136bb49381b"},
+    {file = "gbpcli-2.5.0b1-py3-none-any.whl", hash = "sha256:51c21091151c045681593edaf556aecb4e3d0aaab96dff52fd2e5e91171adec0"},
+    {file = "gbpcli-2.5.0b1.tar.gz", hash = "sha256:11381d60b6bbd094c24112c16b838194dd65b68ccda586798f0caf551cf0d56f"},
 ]
 
 [[package]]
@@ -734,12 +739,12 @@ files = [
 
 [[package]]
 name = "isort"
-version = "6.0.0"
+version = "6.0.1"
 requires_python = ">=3.9.0"
 summary = "A Python utility / library to sort Python imports."
 files = [
-    {file = "isort-6.0.0-py3-none-any.whl", hash = "sha256:567954102bb47bb12e0fae62606570faacddd441e45683968c8d1734fb1af892"},
-    {file = "isort-6.0.0.tar.gz", hash = "sha256:75d9d8a1438a9432a7d7b54f2d3b45cad9a4a0fdba43617d9873379704a8bdf1"},
+    {file = "isort-6.0.1-py3-none-any.whl", hash = "sha256:2dc5d7f65c9678d94c88dfc29161a320eec67328bc97aad576874cb4be1e9615"},
+    {file = "isort-6.0.1.tar.gz", hash = "sha256:1cb5df28dfbc742e490c5e41bad6da41b805b0a8be7bc93cd0fb2a8a890ac450"},
 ]
 
 [[package]]
@@ -1193,6 +1198,16 @@ files = [
 ]
 
 [[package]]
+name = "python-dotenv"
+version = "1.0.1"
+requires_python = ">=3.8"
+summary = "Read key-value pairs from a .env file and set them as environment variables"
+files = [
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
+]
+
+[[package]]
 name = "redis"
 version = "5.2.1"
 requires_python = ">=3.8"
@@ -1291,7 +1306,7 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.45.3"
+version = "0.46.0"
 requires_python = ">=3.9"
 summary = "The little ASGI library that shines."
 dependencies = [
@@ -1299,8 +1314,8 @@ dependencies = [
     "typing-extensions>=3.10.0; python_version < \"3.10\"",
 ]
 files = [
-    {file = "starlette-0.45.3-py3-none-any.whl", hash = "sha256:dfb6d332576f136ec740296c7e8bb8c8a7125044e7c6da30744718880cdd059d"},
-    {file = "starlette-0.45.3.tar.gz", hash = "sha256:2cbcba2a75806f8a41c722141486f37c28e30a0921c5f6fe4346cb0dcee1302f"},
+    {file = "starlette-0.46.0-py3-none-any.whl", hash = "sha256:913f0798bd90ba90a9156383bcf1350a17d6259451d0d8ee27fc0cf2db609038"},
+    {file = "starlette-0.46.0.tar.gz", hash = "sha256:b359e4567456b28d473d0193f34c0de0ed49710d75ef183a74a5ce0499324f50"},
 ]
 
 [[package]]
@@ -1335,15 +1350,15 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.32.0.20241016"
-requires_python = ">=3.8"
+version = "2.32.0.20250301"
+requires_python = ">=3.9"
 summary = "Typing stubs for requests"
 dependencies = [
     "urllib3>=2",
 ]
 files = [
-    {file = "types-requests-2.32.0.20241016.tar.gz", hash = "sha256:0d9cad2f27515d0e3e3da7134a1b6f28fb97129d86b867f24d9c726452634d95"},
-    {file = "types_requests-2.32.0.20241016-py3-none-any.whl", hash = "sha256:4195d62d6d3e043a4eaaf08ff8a62184584d2e8684e9d2aa178c7915a7da3747"},
+    {file = "types_requests-2.32.0.20250301-py3-none-any.whl", hash = "sha256:0003e0124e2cbefefb88222ff822b48616af40c74df83350f599a650c8de483b"},
+    {file = "types_requests-2.32.0.20250301.tar.gz", hash = "sha256:3d909dc4eaab159c0d964ebe8bfa326a7afb4578d8706408d417e17d61b0c500"},
 ]
 
 [[package]]
@@ -1358,20 +1373,20 @@ files = [
 
 [[package]]
 name = "typos"
-version = "1.29.9"
+version = "1.30.0"
 requires_python = ">=3.7"
 summary = "Source Code Spelling Correction"
 files = [
-    {file = "typos-1.29.9-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:4547ff98a61f71f75a721b0c401eef220c456e937d77cae141aabf97cdee155d"},
-    {file = "typos-1.29.9-py3-none-macosx_11_0_arm64.whl", hash = "sha256:fb74645a60eb76d4a147de36968d5db51ee6bd35e72a9210e462c96bbe30e7e9"},
-    {file = "typos-1.29.9-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:211ac5179c4c0309f6c486b475cd47ff732df2f5a87b0c940ff906cd432ecf5c"},
-    {file = "typos-1.29.9-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:98f2aa90baa26ba511106ff3bd46e13cdf1c327167159faf6bb8950eb22cc748"},
-    {file = "typos-1.29.9-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:24faf9854f317ec1037c72d42821146260a1e1d2deeb6d0eed85a90c56808564"},
-    {file = "typos-1.29.9-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:7f0d3fce6ed2fe738e5346cface35d59f1583e2957464b68eb014f861e06c11e"},
-    {file = "typos-1.29.9-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:f32f63b7d96c47d749981d7d666978504f73d25704ff27dcb500c516fb86e585"},
-    {file = "typos-1.29.9-py3-none-win32.whl", hash = "sha256:059fc40f7e830b7dabad5bc2e311872ba7dfb6cdc4dc8227330c81f61bbdc52f"},
-    {file = "typos-1.29.9-py3-none-win_amd64.whl", hash = "sha256:9f618a399ff2ff144b97c0a867f0439c26394f8849853f2f68339fce5b3bae02"},
-    {file = "typos-1.29.9.tar.gz", hash = "sha256:481480d7c33a6a426c8728b2df65d9188f0bc855ea8390f4a4f44e713040cbc8"},
+    {file = "typos-1.30.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:46fb93c7fc0ab9bb51e2124e5f1697416453119a1aca4cd16a8115c4e07e11f0"},
+    {file = "typos-1.30.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f0e60ff3ebfeb9d392165539aae8ae12329364502042760647475b0baa1bfc11"},
+    {file = "typos-1.30.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c9fd9df27ebab8b3a7dae09451b9af4609e574717e21014d04e898576e99a9d7"},
+    {file = "typos-1.30.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f066a72dd9b0c8cfe43de88e57fec6bba4419981a264d5a869adb06ee252ddb2"},
+    {file = "typos-1.30.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fc54a9f3485b9a5aac55aa0d15e718fc26e8a20507f3a6b68defaba3ead9d813"},
+    {file = "typos-1.30.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:f24e2cc02186f20df05348692c3e76c4e50b996d5ddf0597f080178460596182"},
+    {file = "typos-1.30.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:9d69d96fd4daf1a805bef5378428c6ea48a80577b3b8a1bc50350b1435ae467c"},
+    {file = "typos-1.30.0-py3-none-win32.whl", hash = "sha256:a28fda092ae412640b8127a32499bdd1c97ac3249f39a8d88790c2d16c53b94e"},
+    {file = "typos-1.30.0-py3-none-win_amd64.whl", hash = "sha256:00f7679f3a1939ecabe9ae95f4803e551a14ca8cc1b28d194447d87174a93897"},
+    {file = "typos-1.30.0.tar.gz", hash = "sha256:fe20191b791685deef668a52f65f47afe7be410b9218a48f3e7d4bc49200f27c"},
 ]
 
 [[package]]
@@ -1386,10 +1401,10 @@ files = [
 
 [[package]]
 name = "unittest-fixtures"
-version = "0.1.dev61"
+version = "0.1.dev69"
 requires_python = ">=3.11"
 git = "https://github.com/enku/unittest-fixtures.git"
-revision = "eb842b5fe4c86a9a84002e437db4ee45a3b513de"
+revision = "7164edb401e6d32d59eb045783061cfa122b4332"
 summary = "A small library for loading unittest fixtures"
 
 [[package]]
