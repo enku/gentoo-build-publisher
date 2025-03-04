@@ -81,6 +81,7 @@ Various plugins exist for Gentoo Build Publisher. Among them are:
 - [gbp-ps](https://github.com/enku/gbp-ps): A
   [gbpcli](https://github.com/enku/gbpcli) plugin to display your Gentoo Build
   Publisher processes
+- [gbp-purge](https://github.com/enku/gbp-purge): A plugin to purge old builds
 
 # Articles
 
