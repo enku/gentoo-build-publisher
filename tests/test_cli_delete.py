@@ -3,9 +3,9 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
-from gbp_testkit import TestCase
 from unittest_fixtures import Fixtures, fixture, given, where
 
+from gbp_testkit import TestCase
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build

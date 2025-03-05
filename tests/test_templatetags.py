@@ -6,8 +6,8 @@ from typing import Any
 from unittest import TestCase, mock
 
 from django.template import Context, Template, TemplateSyntaxError
-from gbp_testkit.helpers import LOCAL_TIMEZONE
 
+from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils.time import localtime
 

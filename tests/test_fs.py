@@ -3,11 +3,11 @@ import datetime as dt
 import os
 import shutil
 
+from unittest_fixtures import Fixtures, given
+
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gbp_testkit.helpers import create_file
-from unittest_fixtures import Fixtures, given
-
 from gentoo_build_publisher import fs
 from gentoo_build_publisher.types import Content
 

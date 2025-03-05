@@ -2,9 +2,9 @@
 from argparse import ArgumentParser, Namespace
 from unittest import mock
 
-from gbp_testkit import TestCase
 from unittest_fixtures import Fixtures, given
 
+from gbp_testkit import TestCase
 from gentoo_build_publisher.cli import worker
 
 # pylint: disable=unused-argument

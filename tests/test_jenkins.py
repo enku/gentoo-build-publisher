@@ -10,10 +10,10 @@ from typing import Any
 from unittest import TestCase, mock
 
 import requests
-from gbp_testkit.helpers import MockJenkins, test_data
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given
 from yarl import URL
 
+from gbp_testkit.helpers import MockJenkins, test_data
 from gentoo_build_publisher.jenkins import (
     COPY_ARTIFACT_PLUGIN,
     Jenkins,

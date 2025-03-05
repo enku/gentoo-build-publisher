@@ -7,11 +7,11 @@ import tarfile
 from dataclasses import replace
 from pathlib import Path
 
+from unittest_fixtures import Fixtures, fixture, given
+
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
 from gbp_testkit.helpers import MockJenkins
-from unittest_fixtures import Fixtures, fixture, given
-
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.settings import Settings

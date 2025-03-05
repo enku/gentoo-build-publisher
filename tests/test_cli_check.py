@@ -6,10 +6,10 @@ import re
 import shutil
 from argparse import ArgumentParser, Namespace
 
-from gbp_testkit import TestCase
-from gbp_testkit.factories import BuildFactory
 from unittest_fixtures import Fixtures, given
 
+from gbp_testkit import TestCase
+from gbp_testkit.factories import BuildFactory
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Build, Content

@@ -3,9 +3,9 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
 
-from gbp_testkit import DjangoTestCase as TestCase
 from unittest_fixtures import Fixtures, given
 
+from gbp_testkit import DjangoTestCase as TestCase
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath

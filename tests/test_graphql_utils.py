@@ -6,11 +6,11 @@ import os
 from typing import Any
 from unittest import mock
 
-from gbp_testkit import TestCase
-from gbp_testkit.helpers import graphql
 from graphql import GraphQLResolveInfo
 from unittest_fixtures import Fixtures, given
 
+from gbp_testkit import TestCase
+from gbp_testkit.helpers import graphql
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.graphql import resolvers, type_defs

@@ -6,6 +6,8 @@ from unittest import mock
 
 from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
+from unittest_fixtures import Fixtures, given
+
 from gbp_testkit import DjangoTestCase, TestCase
 from gbp_testkit.factories import (
     ArtifactFactory,
@@ -14,8 +16,6 @@ from gbp_testkit.factories import (
     package_factory,
 )
 from gbp_testkit.helpers import QuickCache
-from unittest_fixtures import Fixtures, given
-
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils.time import localtime

@@ -2,10 +2,10 @@
 import importlib.resources
 from unittest import mock
 
-from gbp_testkit import TestCase
-from gbp_testkit.helpers import test_gbp
 from gbpcli.graphql import Query
 
+from gbp_testkit import TestCase
+from gbp_testkit.helpers import test_gbp
 from gentoo_build_publisher.cli.utils import get_dist_query
 
 CREATE_MACHINE_QUERY_STR = (

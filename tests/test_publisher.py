@@ -5,11 +5,11 @@ import datetime as dt
 from unittest import TestCase, mock
 from zoneinfo import ZoneInfo
 
-from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gbp_testkit.helpers import BUILD_LOGS
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given
 from yarl import URL
 
+from gbp_testkit.factories import BuildFactory, BuildRecordFactory
+from gbp_testkit.helpers import BUILD_LOGS
 from gentoo_build_publisher import publisher as gbp
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records.memory import RecordDB

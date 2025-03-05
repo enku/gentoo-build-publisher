@@ -6,9 +6,9 @@ from functools import partial
 
 from django import urls
 from django.http import HttpResponse
-from gbp_testkit import DjangoTestCase as BaseTestCase
 from unittest_fixtures import Fixtures, fixture, given, where
 
+from gbp_testkit import DjangoTestCase as BaseTestCase
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build
 

@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:d15316cefc23db11bad1b9f4848cbe7696a635abfce980171d5e5d8029cfd8ea"
+content_hash = "sha256:7bfdd8bfc19b60ee663852bf6a2845264a921befdeb8000954d3057c5d24155d"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -679,20 +679,6 @@ summary = "A platform independent file lock."
 files = [
     {file = "filelock-3.17.0-py3-none-any.whl", hash = "sha256:533dc2f7ba78dc2f0f531fc6c4940addf7b70a481e269a5a3b93be94ffbe8338"},
     {file = "filelock-3.17.0.tar.gz", hash = "sha256:ee4e77401ef576ebb38cd7f13b9b28893194acc20a8e68e18730ba9c0e54660e"},
-]
-
-[[package]]
-name = "gbp-testkit"
-version = "0.1.dev19"
-requires_python = ">=3.11"
-git = "https://github.com/enku/gbp-testkit.git"
-revision = "df638a927abb81b1d2744e8a68832748db9d25b9"
-summary = "Gentoo Build Publisher testing tools"
-dependencies = [
-    "django>=5.1.6",
-    "factory-boy>=3.3.3",
-    "types-requests>=2.32.0.20241016",
-    "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
 ]
 
 [[package]]

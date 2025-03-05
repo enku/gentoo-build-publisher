@@ -4,11 +4,11 @@
 import datetime as dt
 from unittest import mock
 
+from unittest_fixtures import Fixtures, fixture, given, parametrized
+
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
-from unittest_fixtures import Fixtures, fixture, given, parametrized
-
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord

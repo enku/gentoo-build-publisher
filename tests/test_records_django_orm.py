@@ -4,10 +4,10 @@
 import datetime as dt
 from dataclasses import replace
 
-from gbp_testkit import DjangoTestCase as TestCase
-from gbp_testkit.factories import BuildModelFactory, BuildRecordFactory
 from unittest_fixtures import Fixtures, given, where
 
+from gbp_testkit import DjangoTestCase as TestCase
+from gbp_testkit.factories import BuildModelFactory, BuildRecordFactory
 from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import Build

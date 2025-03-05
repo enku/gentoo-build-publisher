@@ -6,9 +6,9 @@ from itertools import product
 from pathlib import Path
 
 from django.test import TestCase
-from gbp_testkit.factories import BuildRecordFactory
 from unittest_fixtures import Fixtures, given, parametrized
 
+from gbp_testkit.factories import BuildRecordFactory
 from gentoo_build_publisher.records import (
     ApiKeyDB,
     BuildRecord,

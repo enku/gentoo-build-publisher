@@ -58,6 +58,9 @@ redis = [
 ]
 test = [
     "nox>=2024.4.15",
+    "factory-boy>=3.3.3",
+    "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
+    "types-requests>=2.32.0.20250301",
 ]
 [build-system]
 requires = ["pdm-backend"]
@@ -65,7 +68,7 @@ build-backend = "pdm.backend"
 
 [tool.coverage.run]
 branch = true
-source = ["gentoo_build_publisher"]
+source = ["gentoo_build_publisher", "gbp_testkit"]
 omit = ["src/gentoo_build_publisher/migrations/*"]
 
 [tool.isort]
@@ -107,7 +110,8 @@ django_settings_module = "gbp_testkit.settings"
 distribution = true
 version = { source = "scm" }
 
-[tool.pdm.dev-dependencies]
+
+[dependency-groups]
 dev = [
     "black>=22.6.0",
     "coverage[toml]>=6.4.2",
@@ -124,5 +128,4 @@ dev = [
     "typos>=1.16.23",
     "fakeredis>=2.20.0",
     "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
-    "gbp-testkit @ git+https://github.com/enku/gbp-testkit.git",
 ]
