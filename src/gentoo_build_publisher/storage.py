@@ -205,6 +205,8 @@ class Storage:
 
         if not tag_name:
             tag = machine
+        else:
+            utils.validate_identifier(tag_name)
 
         # In order for this tag to resolve, all the content has to exist and point to
         # the same build and the build has to exist in storage
