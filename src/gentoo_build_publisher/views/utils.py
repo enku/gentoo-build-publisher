@@ -14,7 +14,13 @@ from django.urls import URLPattern, path
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import Build, CacheProtocol, GBPMetadata, Package
+from gentoo_build_publisher.types import (
+    TAG_SYM,
+    Build,
+    CacheProtocol,
+    GBPMetadata,
+    Package,
+)
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
 
@@ -28,6 +34,7 @@ TemplateView: TypeAlias = Callable[..., ViewContext]
 
 
 _NOT_FOUND = object()
+GBP_SETTINGS = getattr(settings, "BUILD_PUBLISHER", {})
 
 
 def view(pattern: str, **kwargs: Any) -> Callable[[View], View]:
@@ -260,6 +267,40 @@ def get_query_value_from_request(
         return fallback
 
 
+def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
+    """Return the build, tag name and dirname given the MACHINE[@TAG] string
+
+    dirname is the name of the symlink in storage (not the full path)
+    If it's not a tagged name, the tag_name will be the empty string.
+    If the actual target does not exist, raise Http404
+    """
+    build: Build | None
+    machine, _, tag_name = machine_tag.partition(TAG_SYM)
+
+    if tag_name:
+        try:
+            build = publisher.storage.resolve_tag(machine_tag)
+        except (ValueError, FileNotFoundError):
+            build = None
+    else:
+        build = MachineInfo(machine).published_build
+
+    if build is None:
+        raise Http404("Published build for that machine does not exist")
+
+    dirname = machine if not tag_name else f"{build.machine}{TAG_SYM}{tag_name}"
+
+    return build, tag_name, dirname
+
+
 def get_url_for_package(build: Build, package: Package, request: HttpRequest) -> str:
     """Return the URL for the given Package"""
     return request.build_absolute_uri(f"/binpkgs/{build}/{package.path}")
+
+
+def color_range_from_settings() -> tuple[Color, Color]:
+    """Return a color tuple for gradients and such based on Django settings"""
+    return (
+        Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117))),
+        Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236))),
+    )
