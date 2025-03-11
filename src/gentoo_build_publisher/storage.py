@@ -198,12 +198,14 @@ class Storage:
 
         If tag doesn't exist or is broken, raise an exception.
         """
-        machine, _, tag_name = tag.partition(TAG_SYM)
+        machine, tag_sym, tag_name = tag.partition(TAG_SYM)
 
-        if not tag_name:
+        if not tag_sym:
             raise ValueError(f"Invalid tag: {tag}")
 
-        utils.validate_identifier(tag_name)
+        if not tag_name:
+            tag = machine
+
         # In order for this tag to resolve, all the content has to exist and point to
         # the same build and the build has to exist in storage
         target_builds = set()
@@ -224,7 +226,7 @@ class Storage:
         else:
             return Build(machine, target_builds.pop())
 
-        raise FileNotFoundError(f"Tag is broken or does not exist: {tag}")
+        raise FileNotFoundError(f"Tag is broken or does not exist: {tag!r}")
 
     def published(self, build: Build) -> bool:
         """Return True if the build currently published.

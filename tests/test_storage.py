@@ -615,7 +615,7 @@ class StorageResolveTagTestCase(TestCase):
 
         self.assertEqual(
             context.exception.args[0],
-            "Tag is broken or does not exist: lighthouse@prod",
+            "Tag is broken or does not exist: 'lighthouse@prod'",
         )
 
     def test_resolve_tag_resolves_to_more_than_one_build(
@@ -645,6 +645,15 @@ class StorageResolveTagTestCase(TestCase):
 
         with self.assertRaises(FileNotFoundError):
             publisher.storage.resolve_tag(f"{build.machine}@prod")
+
+    def test_resolve_published_tag(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+        publisher.publish(build)
+
+        target = publisher.storage.resolve_tag(f"{build.machine}@")
+
+        self.assertEqual(target, build)
 
 
 class MakePackageFromLinesTestCase(TestCase):
