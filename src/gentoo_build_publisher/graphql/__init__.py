@@ -8,7 +8,7 @@ from ariadne_django.scalars import datetime_scalar
 from gentoo_build_publisher.types import ChangeState
 
 from .build import BuildType
-from .machine_summary import MachineSummaryType
+from .machine_summary import MachineSummary
 from .mutations import Mutation
 from .queries import Query
 from .utils import load_schema
@@ -21,7 +21,7 @@ type_defs = ariadne.gql(
 resolvers = [
     BuildType,
     ChangeStateEnum,
-    MachineSummaryType,
+    MachineSummary,
     Mutation,
     Query,
     datetime_scalar,

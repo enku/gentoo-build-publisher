@@ -16,45 +16,45 @@ Info: TypeAlias = GraphQLResolveInfo
 
 
 @BuildType.field("built")
-def built(build: Build, _info: Info) -> dt.datetime | None:
+def _(build: Build, _info: Info) -> dt.datetime | None:
     return publisher.record(build).built
 
 
 @BuildType.field("completed")
-def completed(build: Build, _info: Info) -> dt.datetime | None:
+def _(build: Build, _info: Info) -> dt.datetime | None:
     return publisher.record(build).completed
 
 
 @BuildType.field("keep")
-def keep(build: Build, _info: Info) -> bool:
+def _(build: Build, _info: Info) -> bool:
     return publisher.record(build).keep
 
 
 @BuildType.field("logs")
-def logs(build: Build, _info: Info) -> str | None:
+def _(build: Build, _info: Info) -> str | None:
     return publisher.record(build).logs
 
 
 @BuildType.field("notes")
-def notes(build: Build, _info: Info) -> str | None:
+def _(build: Build, _info: Info) -> str | None:
     return publisher.record(build).note
 
 
 @BuildType.field("packages")
-def packages(build: Build, _info: Info) -> list[str] | None:
+def _(build: Build, _info: Info) -> list[str] | None:
     if not publisher.pulled(build):
         return None
 
     try:
-        _packages = publisher.get_packages(build)
+        packages = publisher.get_packages(build)
     except LookupError:
         return None
 
-    return [package.cpv for package in _packages]
+    return [package.cpv for package in packages]
 
 
 @BuildType.field("packagesBuilt")
-def packages_built(build: Build, _info: Info) -> list[Package] | None:
+def _(build: Build, _info: Info) -> list[Package] | None:
     try:
         gbp_metadata = publisher.storage.get_metadata(build)
     except LookupError as error:
@@ -64,20 +64,20 @@ def packages_built(build: Build, _info: Info) -> list[Package] | None:
 
 
 @BuildType.field("published")
-def published(build: Build, _info: Info) -> bool:
+def _(build: Build, _info: Info) -> bool:
     return publisher.published(build)
 
 
 @BuildType.field("pulled")
-def pulled(build: Build, _info: Info) -> bool:
+def _(build: Build, _info: Info) -> bool:
     return publisher.pulled(build)
 
 
 @BuildType.field("submitted")
-def submitted(build: Build, _info: Info) -> dt.datetime:
+def _(build: Build, _info: Info) -> dt.datetime:
     return publisher.record(build).submitted or dt.datetime.now(tz=dt.UTC)
 
 
 @BuildType.field("tags")
-def tags(build: Build, _info: Info) -> list[str]:
+def _(build: Build, _info: Info) -> list[str]:
     return publisher.tags(build)

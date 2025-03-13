@@ -14,31 +14,28 @@ Query = ObjectType("Query")
 Info: TypeAlias = GraphQLResolveInfo
 Object: TypeAlias = dict[str, Any]
 
-# pylint: disable=redefined-builtin,invalid-name
-# pylint: disable=missing-function-docstring
+# pylint: disable=redefined-builtin,missing-function-docstring
 
 
 @Query.field("machines")
-def machines(
-    _obj: Any, _info: Info, names: list[str] | None = None
-) -> list[MachineInfo]:
+def _(_obj: Any, _info: Info, names: list[str] | None = None) -> list[MachineInfo]:
     return publisher.machines(names=names)
 
 
 @Query.field("build")
-def build(_obj: Any, _info: Info, id: str) -> Build | None:
-    _build = Build.from_id(id)
+def _(_obj: Any, _info: Info, id: str) -> Build | None:
+    build = Build.from_id(id)
 
-    return None if not publisher.repo.build_records.exists(_build) else _build
+    return None if not publisher.repo.build_records.exists(build) else build
 
 
 @Query.field("latest")
-def latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
+def _(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
     return publisher.latest_build(machine, completed=True)
 
 
 @Query.field("builds")
-def builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
+def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     return [
         record
         for record in publisher.repo.build_records.for_machine(machine)
@@ -47,7 +44,7 @@ def builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
 
 
 @Query.field("diff")
-def diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
+def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     left_build = Build.from_id(left)
 
     if not publisher.repo.build_records.exists(left_build):
@@ -64,26 +61,24 @@ def diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
 
 
 @Query.field("search")
-def search(
-    _obj: Any, _info: Info, machine: str, field: str, key: str
-) -> list[BuildRecord]:
+def _(_obj: Any, _info: Info, machine: str, field: str, key: str) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
 
     return publisher.search(machine, search_field, key)
 
 
 @Query.field("searchNotes")
-def searchnotes(_obj: Any, _info: Info, machine: str, key: str) -> list[BuildRecord]:
+def _(_obj: Any, _info: Info, machine: str, key: str) -> list[BuildRecord]:
     return publisher.search(machine, "note", key)
 
 
 @Query.field("version")
-def version(_obj: Any, _info: Info) -> str:
+def _(_obj: Any, _info: Info) -> str:
     return utils.get_version()
 
 
 @Query.field("working")
-def working(_obj: Any, _info: Info) -> list[BuildRecord]:
+def _(_obj: Any, _info: Info) -> list[BuildRecord]:
     return [
         record
         for machine in publisher.repo.build_records.list_machines()
@@ -93,7 +88,7 @@ def working(_obj: Any, _info: Info) -> list[BuildRecord]:
 
 
 @Query.field("resolveBuildTag")
-def resolvebuildtag(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
+def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
     try:
         return publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
     except FileNotFoundError:

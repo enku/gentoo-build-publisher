@@ -18,8 +18,7 @@ Mutation = ObjectType("Mutation")
 Info: TypeAlias = GraphQLResolveInfo
 Object: TypeAlias = dict[str, Any]
 
-# pylint: disable=redefined-builtin
-# pylint: disable=missing-function-docstring
+# pylint: disable=redefined-builtin,missing-function-docstring
 
 
 class BuildParameterInput(TypedDict):
@@ -31,7 +30,7 @@ class BuildParameterInput(TypedDict):
 
 @Mutation.field("pull")
 @maybe_require_apikey
-def pull(
+def _(
     _obj: Any,
     _info: Info,
     *,
@@ -49,7 +48,7 @@ def pull(
 @Mutation.field("scheduleBuild")
 @convert_kwargs_to_snake_case
 @maybe_require_apikey
-def schedule_build(
+def _(
     _obj: Any,
     _info: Info,
     machine: str,
@@ -64,7 +63,7 @@ def schedule_build(
 
 @Mutation.field("keepBuild")
 @maybe_require_apikey
-def keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
+def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
 
     if not publisher.repo.build_records.exists(build):
@@ -75,7 +74,7 @@ def keepbuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
 
 @Mutation.field("releaseBuild")
 @maybe_require_apikey
-def releasebuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
+def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
 
     if not publisher.repo.build_records.exists(build):
@@ -86,9 +85,7 @@ def releasebuild(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
 
 @Mutation.field("createNote")
 @maybe_require_apikey
-def createnote(
-    _obj: Any, _info: Info, id: str, note: str | None = None
-) -> BuildRecord | None:
+def _(_obj: Any, _info: Info, id: str, note: str | None = None) -> BuildRecord | None:
     build = Build.from_id(id)
 
     if not publisher.repo.build_records.exists(build):
@@ -99,7 +96,7 @@ def createnote(
 
 @Mutation.field("createBuildTag")
 @maybe_require_apikey
-def createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
+def _(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     build = Build.from_id(id)
 
     publisher.tag(build, tag)
@@ -109,7 +106,7 @@ def createbuildtag(_obj: Any, _info: Info, id: str, tag: str) -> Build:
 
 @Mutation.field("removeBuildTag")
 @maybe_require_apikey
-def removebuildtag(_obj: Any, _info: Info, machine: str, tag: str) -> MachineInfo:
+def _(_obj: Any, _info: Info, machine: str, tag: str) -> MachineInfo:
     publisher.untag(machine, tag)
 
     return MachineInfo(machine)
@@ -117,9 +114,7 @@ def removebuildtag(_obj: Any, _info: Info, machine: str, tag: str) -> MachineInf
 
 @Mutation.field("createRepo")
 @maybe_require_apikey
-def createrepo(
-    _obj: Any, _info: Info, name: str, repo: str, branch: str
-) -> Error | None:
+def _(_obj: Any, _info: Info, name: str, repo: str, branch: str) -> Error | None:
     jenkins = publisher.jenkins
 
     jenkins.make_folder(jenkins.project_root / "repos", parents=True, exist_ok=True)
@@ -135,7 +130,7 @@ def createrepo(
 @Mutation.field("createMachine")
 @convert_kwargs_to_snake_case
 @maybe_require_apikey
-def create_machine(
+def _(
     _obj: Any, _info: Info, name: str, repo: str, branch: str, ebuild_repos: list[str]
 ) -> Error | None:
     jenkins = publisher.jenkins
@@ -155,7 +150,7 @@ def create_machine(
 
 @Mutation.field("publish")
 @maybe_require_apikey
-def publish(_obj: Any, _info: Info, id: str) -> MachineInfo:
+def _(_obj: Any, _info: Info, id: str) -> MachineInfo:
     build = Build.from_id(id)
 
     if publisher.pulled(build):
