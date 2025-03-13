@@ -48,7 +48,7 @@ def tmpdir(_fixtures: Fixtures) -> FixtureContext[Path]:
 
 @fixture("tmpdir")
 def environ(
-    fixtures: Fixtures, environ=None, clear: bool = False
+    fixtures: Fixtures, environ: dict[str, str] | None = None, clear: bool = False
 ) -> FixtureContext[dict[str, str]]:
     environ = environ or {}
     mock_environ = {
