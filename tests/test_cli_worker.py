@@ -1,10 +1,9 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser, Namespace
-from unittest import mock
+from unittest import TestCase, mock
 
 from unittest_fixtures import Fixtures, given, where
 
-from gbp_testkit import TestCase
 from gentoo_build_publisher.cli import worker
 from gentoo_build_publisher.settings import Settings
 
