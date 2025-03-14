@@ -26,7 +26,7 @@ def plugin_urlpatterns(plugin: Plugin) -> list[URLPattern]:
 def init() -> None:
     """Initialize plugin urls"""
     for plugin in get_plugins():
-        urlpatterns.extend(plugin_urlpatterns(plugin))
+        urlpatterns.extend(plugin_urlpatterns(plugin))  # pragma: no cover
 
 
 init()

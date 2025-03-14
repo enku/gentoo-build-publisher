@@ -41,7 +41,7 @@ from typing import TYPE_CHECKING, Any
 
 from celery import Celery
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from gentoo_build_publisher.build_publisher import BuildPublisher
 
 default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
