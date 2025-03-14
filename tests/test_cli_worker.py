@@ -2,15 +2,17 @@
 from argparse import ArgumentParser, Namespace
 from unittest import mock
 
-from unittest_fixtures import Fixtures, given
+from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import TestCase
 from gentoo_build_publisher.cli import worker
+from gentoo_build_publisher.settings import Settings
 
 # pylint: disable=unused-argument
 
 
-@given("tmpdir", "publisher", "gbp", "console")
+@given("environ", "tmpdir", "publisher", "gbp", "console")
+@where(environ={"BUILD_PUBLISHER_WORKER_BACKEND": "test"})
 class WorkerTests(TestCase):
     """Tests for the worker gbpcli subcommand"""
 
@@ -27,6 +29,17 @@ class WorkerTests(TestCase):
             "Working for Gentoo Build Publisher!\n",
         )
         mock_work.assert_called_once()
+
+    def test_takes_type_from_settings_when_not_specified(
+        self, fixtures: Fixtures
+    ) -> None:
+        args = Namespace(type=None)
+        settings = Settings.from_environ()
+        with mock.patch("gentoo_build_publisher.cli.worker.Worker") as mock_worker:
+            status = worker.handler(args, fixtures.gbp, fixtures.console)
+
+        self.assertEqual(status, 0)
+        mock_worker.assert_called_once_with(settings)
 
     def test_parse_args(self, fixtures: Fixtures) -> None:
         parser = ArgumentParser("gbp")
