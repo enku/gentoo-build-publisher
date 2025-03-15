@@ -10,12 +10,7 @@ from django.shortcuts import redirect
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.types import Build
-from gentoo_build_publisher.views.context import (
-    MachineInputContext,
-    ViewInputContext,
-    create_dashboard_context,
-    create_machine_context,
-)
+from gentoo_build_publisher.views import context as ctx
 from gentoo_build_publisher.views.utils import (
     ViewContext,
     color_range_from_settings,
@@ -33,9 +28,11 @@ def dashboard(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
     color_range = color_range_from_settings()
     days = get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ViewInputContext(cache=cache, color_range=color_range, days=days)
+    input_context = ctx.ViewInputContext(
+        cache=cache, color_range=color_range, days=days
+    )
 
-    return create_dashboard_context(input_context)
+    return ctx.create_dashboard_context(input_context)
 
 
 @view("machines/<str:machine>/")
@@ -47,10 +44,10 @@ def machines(request: HttpRequest, machine: str) -> ViewContext:
 
     days = get_query_value_from_request(request, "chart_days", int, 7)
     color_range = color_range_from_settings()
-    input_context = MachineInputContext(
+    input_context = ctx.MachineInputContext(
         cache=cache, color_range=color_range, days=days, machine=machine
     )
-    return create_machine_context(input_context)
+    return ctx.create_machine_context(input_context)
 
 
 @view(
