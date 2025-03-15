@@ -6,7 +6,7 @@ from typing import TypedDict
 
 from django.utils import timezone
 
-from gentoo_build_publisher import publisher
+from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils import Color
@@ -14,6 +14,7 @@ from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 from gentoo_build_publisher.views.utils import (
     Gradient,
     StatsCollector,
+    color_range_from_settings,
     days_strings,
     get_chart_days,
     gradient_colors,
@@ -58,6 +59,13 @@ class MachineContext(TypedDict):
     published_build: Build | None
     recent_packages: list[Package]
     storage: int
+
+
+class PluginsContext(TypedDict):
+    """Context for the plugins view"""
+
+    gradient_colors: Gradient
+    plugins: list[plugins.Plugin]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -163,4 +171,12 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "published_build": machine_info.published_build,
         "recent_packages": sc.recent_packages(machine),
         "storage": storage,
+    }
+
+
+def create_plugins_context() -> PluginsContext:
+    """Return PluginsContext for the plugins view"""
+    return {
+        "gradient_colors": gradient_colors(*color_range_from_settings(), 2),
+        "plugins": plugins.get_plugins(),
     }

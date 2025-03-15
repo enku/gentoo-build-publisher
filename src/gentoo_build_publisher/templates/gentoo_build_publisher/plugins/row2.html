@@ -1,0 +1,20 @@
+<div class="row">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Version</th>
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for plugin in plugins %}
+      <tr>
+        <th scope="row">{{ plugin.name }}</th>
+        <td>{{ plugin.version }}</td>
+        <td>{{ plugin.description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

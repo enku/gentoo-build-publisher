@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
+from typing import Iterable
 from unittest import mock
 
 import rich.console
@@ -27,6 +28,7 @@ from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.models import BuildLog, BuildModel
+from gentoo_build_publisher.plugins import Plugin
 from gentoo_build_publisher.records import BuildRecord, RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
@@ -224,3 +226,22 @@ def jenkins(fixtures: Fixtures) -> Jenkins:
     fixed_settings = replace(fixtures.settings, STORAGE_PATH=root)
 
     return MockJenkins.from_settings(fixed_settings)
+
+
+@fixture()
+def plugins(
+    _fixtures: Fixtures, plugins: Iterable[str] = ("foo", "bar", "baz")
+) -> FixtureContext[list[Plugin]]:
+    plist = [
+        Plugin(
+            app=f"test.plugin.{i}",
+            description=f"Plugin for {i}",
+            graphql=None,
+            name=i,
+            urls=None,
+        )
+        for i in plugins
+    ]
+    with mock.patch("gentoo_build_publisher.plugins.get_plugins") as gp:
+        gp.return_value = plist
+        yield plist

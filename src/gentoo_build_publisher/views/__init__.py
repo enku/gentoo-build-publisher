@@ -46,6 +46,12 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return ctx.create_machine_context(input_context)
 
 
+@view("plugins/")
+@render("gentoo_build_publisher/plugins/main.html")
+def _(request: HttpRequest) -> ViewContext:
+    return ctx.create_plugins_context()
+
+
 @view(
     "machines/<str:machine>/builds/<str:build_id>/packages/"
     "<str:c>/<str:p>/<str:pv>-<int:b>"

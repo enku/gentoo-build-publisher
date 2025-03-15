@@ -212,6 +212,19 @@ class BinPkgViewTests(TestCase):
         self.assertEqual(response.status_code, 404, response.content)
 
 
+@given("plugins")
+class PluginsTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        client = self.client
+        response = client.get("/plugins/")
+
+        for plugin in fixtures.plugins:
+            with self.subTest(plugin=plugin.name):
+                self.assertContains(response, f'<th scope="row">{plugin.name}</th>')
+
+        self.assertTemplateUsed(response, "gentoo_build_publisher/plugins/main.html")
+
+
 def first_build(build_dict: dict[str, list[Build]], name: str) -> Build:
     return build_dict[name][0]
 
