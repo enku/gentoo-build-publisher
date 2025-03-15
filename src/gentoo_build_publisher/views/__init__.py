@@ -11,23 +11,19 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.views import context as ctx
-from gentoo_build_publisher.views.utils import (
-    ViewContext,
-    color_range_from_settings,
-    get_query_value_from_request,
-    get_url_for_package,
-    parse_tag_or_raise_404,
-    render,
-    view,
-)
+from gentoo_build_publisher.views import utils
+
+render = utils.render
+view = utils.view
+ViewContext = utils.ViewContext
 
 
 @view("", name="dashboard")
 @render("gentoo_build_publisher/dashboard/main.html")
 def dashboard(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
-    color_range = color_range_from_settings()
-    days = get_query_value_from_request(request, "chart_days", int, 7)
+    color_range = utils.color_range_from_settings()
+    days = utils.get_query_value_from_request(request, "chart_days", int, 7)
     input_context = ctx.ViewInputContext(
         cache=cache, color_range=color_range, days=days
     )
@@ -42,8 +38,8 @@ def machines(request: HttpRequest, machine: str) -> ViewContext:
     if not next(iter(publisher.repo.build_records.for_machine(machine)), None):
         raise Http404("No builds for this machine")
 
-    days = get_query_value_from_request(request, "chart_days", int, 7)
-    color_range = color_range_from_settings()
+    days = utils.get_query_value_from_request(request, "chart_days", int, 7)
+    color_range = utils.color_range_from_settings()
     input_context = ctx.MachineInputContext(
         cache=cache, color_range=color_range, days=days, machine=machine
     )
@@ -80,7 +76,7 @@ def binpkg(  # pylint: disable=too-many-arguments
     except ValueError as error:
         raise Http404 from error
 
-    url = get_url_for_package(build, package, request)
+    url = utils.get_url_for_package(build, package, request)
 
     return redirect(url, permanent=True)
 
@@ -89,7 +85,7 @@ def binpkg(  # pylint: disable=too-many-arguments
 @render("gentoo_build_publisher/repos.conf", content_type="text/plain")
 def repos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
     """Create a repos.conf entry for the given machine"""
-    build, _, dirname = parse_tag_or_raise_404(machine)
+    build, _, dirname = utils.parse_tag_or_raise_404(machine)
     hostname = request.headers.get("Host", "localhost").partition(":")[0]
     repos = publisher.storage.repos(build)
 
@@ -100,7 +96,7 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
 @render("gentoo_build_publisher/binrepos.conf", content_type="text/plain")
 def binrepos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
     """Create a binrepos.conf entry for the given machine"""
-    dirname = parse_tag_or_raise_404(machine)[2]
+    dirname = utils.parse_tag_or_raise_404(machine)[2]
     uri = request.build_absolute_uri(f"/binpkgs/{dirname}/")
 
     return {"machine": machine, "uri": uri}
