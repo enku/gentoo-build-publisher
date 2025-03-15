@@ -15,6 +15,7 @@ class Plugin:
 
     name: str
     app: str
+    version: str = "?"
     description: str = ""
     graphql: Optional[str]
     urls: Optional[str]
@@ -33,6 +34,9 @@ class PluginDef(TypedDict):
 
     name: str
     app: str
+
+    version: NotRequired[str]
+    """Plugin version specifier"""
 
     description: NotRequired[str]
     """Natural text description of the plugin"""
@@ -68,6 +72,7 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
         return Plugin(
             name=data["name"],
             app=data["app"],
+            version=data.get("version", "?"),
             description=data.get("description", ""),
             graphql=data.get("graphql"),
             urls=data.get("urls"),
