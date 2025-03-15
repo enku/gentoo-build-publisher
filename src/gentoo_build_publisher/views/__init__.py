@@ -20,7 +20,7 @@ ViewContext = utils.ViewContext
 
 @view("", name="dashboard")
 @render("gentoo_build_publisher/dashboard/main.html")
-def dashboard(request: HttpRequest) -> ViewContext:
+def _(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
     color_range = utils.color_range_from_settings()
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
@@ -31,9 +31,9 @@ def dashboard(request: HttpRequest) -> ViewContext:
     return ctx.create_dashboard_context(input_context)
 
 
-@view("machines/<str:machine>/")
+@view("machines/<str:machine>/", name="gbp-machines")
 @render("gentoo_build_publisher/machine/main.html")
-def machines(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ViewContext:
     """Response for the machines page"""
     if not next(iter(publisher.repo.build_records.for_machine(machine)), None):
         raise Http404("No builds for this machine")
@@ -50,7 +50,7 @@ def machines(request: HttpRequest, machine: str) -> ViewContext:
     "machines/<str:machine>/builds/<str:build_id>/packages/"
     "<str:c>/<str:p>/<str:pv>-<int:b>"
 )
-def binpkg(  # pylint: disable=too-many-arguments
+def _(  # pylint: disable=too-many-arguments
     request: HttpRequest,
     *,
     machine: str,
@@ -83,7 +83,7 @@ def binpkg(  # pylint: disable=too-many-arguments
 
 @view("machines/<str:machine>/repos.conf")
 @render("gentoo_build_publisher/repos.conf", content_type="text/plain")
-def repos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ViewContext:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = utils.parse_tag_or_raise_404(machine)
     hostname = request.headers.get("Host", "localhost").partition(":")[0]
@@ -94,7 +94,7 @@ def repos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
 
 @view("machines/<str:machine>/binrepos.conf")
 @render("gentoo_build_publisher/binrepos.conf", content_type="text/plain")
-def binrepos_dot_conf(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ViewContext:
     """Create a binrepos.conf entry for the given machine"""
     dirname = utils.parse_tag_or_raise_404(machine)[2]
     uri = request.build_absolute_uri(f"/binpkgs/{dirname}/")

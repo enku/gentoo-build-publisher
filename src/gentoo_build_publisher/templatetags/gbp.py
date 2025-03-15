@@ -7,7 +7,7 @@ from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from gentoo_build_publisher import publisher, views
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils import time
 
@@ -140,7 +140,7 @@ def machine_build_row(build: Build) -> dict[str, Any]:
 @register.filter(is_safe=True)
 def machine_link(machine: str) -> str:
     """Render machine link (anchor tag)"""
-    path = reverse(views.machines, args=(machine,))
+    path = reverse("gbp-machines", args=(machine,))
     return mark_safe(f'<a class="machine-link" href="{path}">{machine}</a>')
 
 
