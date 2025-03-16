@@ -31,6 +31,9 @@ classifiers = [
 homepage = "https://github.com/enku/gentoo-build-publisher"
 repository = "https://github.com/enku/gentoo-build-publisher"
 
+[project.entry-points."gentoo_build_publisher.plugins"]
+gentoo_build_publisher = "gentoo_build_publisher:plugin"
+
 [project.entry-points."gentoo_build_publisher.records"]
 django = "gentoo_build_publisher.records.django_orm"
 memory = "gentoo_build_publisher.records.memory"
@@ -42,9 +45,6 @@ apikey = "gentoo_build_publisher.cli.apikey"
 check = "gentoo_build_publisher.cli.check"
 delete = "gentoo_build_publisher.cli.delete"
 worker = "gentoo_build_publisher.cli.worker"
-
-[project.entry-points."gentoo_build_publisher.graphql_schema"]
-gbp = "gentoo_build_publisher.graphql"
 
 [project.entry-points."gentoo_build_publisher.worker_interface"]
 celery = "gentoo_build_publisher.worker.celery:CeleryWorker"

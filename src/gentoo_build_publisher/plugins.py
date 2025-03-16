@@ -19,6 +19,7 @@ class Plugin:
     description: str = ""
     graphql: Optional[str]
     urls: Optional[str]
+    priority: int = 10
 
     def __hash__(self) -> int:
         return hash(self.app)
@@ -50,15 +51,18 @@ class PluginDef(TypedDict):
     urls: NotRequired[str]
     """Dotted path to module containing urlpatterns"""
 
+    priority: NotRequired[int]
+
 
 def get_plugins() -> list[Plugin]:
     """Return the list of registered plugins"""
     eps = entry_points()
     gbp = "gentoo_build_publisher"
 
-    return list(
+    return sorted(
         {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.plugins")}
-        | {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.apps")}
+        | {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.apps")},
+        key=lambda p: p.priority,
     )
 
 
@@ -76,6 +80,7 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
             description=data.get("description", ""),
             graphql=data.get("graphql"),
             urls=data.get("urls"),
+            priority=data.get("priority", 10),
         )
 
     raise ValueError(f"{data!r} is not a dict or string")

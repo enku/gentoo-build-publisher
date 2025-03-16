@@ -142,8 +142,8 @@ class LoadSchemaTests(TestCase):
 
         type_defs_, resolvers_ = load_schema()
 
-        self.assertEqual(["type_defs"], type_defs_)
-        self.assertEqual([1, 2, 3], resolvers_)
+        self.assertEqual([type_defs, "type_defs"], type_defs_)
+        self.assertEqual([*resolvers, 1, 2, 3], resolvers_)
         entry_points.assert_any_call(group="gentoo_build_publisher.graphql_schema")
 
     @mock.patch("gentoo_build_publisher.graphql.utils.importlib.metadata.entry_points")

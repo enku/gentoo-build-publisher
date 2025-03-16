@@ -15,7 +15,6 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "gentoo_build_publisher.apps.GentooBuildPublisherConfig",
 ]
 for_each_app(INSTALLED_APPS.append)
 

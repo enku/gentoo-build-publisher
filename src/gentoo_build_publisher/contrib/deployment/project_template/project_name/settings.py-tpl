@@ -17,7 +17,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'ariadne_django',
-    'gentoo_build_publisher',
 ]
 utils.for_each_app(INSTALLED_APPS.append)
 

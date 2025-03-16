@@ -59,6 +59,17 @@ os.environ.setdefault("BUILD_PUBLISHER_JENKINS_BASE_URL", "http://jenkins.invali
 os.environ.setdefault("BUILD_PUBLISHER_STORAGE_PATH", "__testing__")
 
 
+plugin = {
+    "name": "gentoo-build-publisher",
+    "version": __version__,
+    "app": "gentoo_build_publisher.apps.GentooBuildPublisherConfig",
+    "urls": "gentoo_build_publisher.gbp_urls",
+    "description": "Gentoo build server, binhost, ebuild repo server, and config manager",
+    "graphql": "gentoo_build_publisher.graphql",
+    "priority": 0,
+}
+
+
 @cache
 def __getattr__(name: str) -> Any:
     if name == "publisher":
