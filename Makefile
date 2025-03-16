@@ -70,17 +70,12 @@ mypy:
 .PHONY: mypy
 
 
-csslint:
-	npx csslint src/gentoo_build_publisher/static
-.PHONY: csslint
-
-
 .PHONY: typos
 typos:
 	typos --format=brief
 
 
-lint: pylint mypy csslint eslint typos
+lint: pylint mypy eslint typos
 .PHONY: lint
 
 
