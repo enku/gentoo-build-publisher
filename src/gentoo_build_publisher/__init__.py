@@ -35,6 +35,7 @@ client machines which point to their respective machine configurations.
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 import os
 from functools import cache
 from typing import TYPE_CHECKING, Any
@@ -43,6 +44,8 @@ from celery import Celery
 
 if TYPE_CHECKING:  # pragma: no cover
     from gentoo_build_publisher.build_publisher import BuildPublisher
+
+__version__ = importlib.metadata.version("gentoo-build-publisher")
 
 default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
 
