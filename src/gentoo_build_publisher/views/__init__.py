@@ -54,7 +54,8 @@ def _(request: HttpRequest) -> ViewContext:
 
 @view(
     "machines/<str:machine>/builds/<str:build_id>/packages/"
-    "<str:c>/<str:p>/<str:pv>-<int:b>"
+    "<str:c>/<str:p>/<str:pv>-<int:b>",
+    name="gbp-binpkg",
 )
 def _(  # pylint: disable=too-many-arguments
     request: HttpRequest,
