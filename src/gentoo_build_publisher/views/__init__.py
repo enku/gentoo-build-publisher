@@ -46,7 +46,7 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return ctx.create_machine_context(input_context)
 
 
-@view("plugins/")
+@view("plugins/", name="gbp-plugins")
 @render("gentoo_build_publisher/plugins/main.html")
 def _(request: HttpRequest) -> ViewContext:
     return ctx.create_plugins_context()

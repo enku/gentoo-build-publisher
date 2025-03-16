@@ -12,6 +12,12 @@ a {
   text-decoration: underline dotted;
 }
 
+.nav-link.active {
+  color: var(--bs-navbar-active-color);
+  font-family: var(--bs-body-font-family);
+  font-weight: bolder;
+}
+
 header {
   font-family: "Bitter", "Open Sans", sans-serif;
 }
