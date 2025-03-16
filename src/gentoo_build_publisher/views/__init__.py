@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from ariadne_django.views import GraphQLView
-from django.core.cache import cache
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect
 
@@ -23,7 +22,7 @@ ViewContext = utils.ViewContext
 def _(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ctx.ViewInputContext(cache=cache, days=days)
+    input_context = ctx.ViewInputContext(days=days)
 
     return ctx.create_dashboard_context(input_context)
 
@@ -36,7 +35,7 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
         raise Http404("No builds for this machine")
 
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ctx.MachineInputContext(cache=cache, days=days, machine=machine)
+    input_context = ctx.MachineInputContext(days=days, machine=machine)
     return ctx.create_machine_context(input_context)
 
 
