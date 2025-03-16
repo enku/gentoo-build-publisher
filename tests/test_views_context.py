@@ -18,7 +18,6 @@ from gbp_testkit.factories import (
 )
 from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 from gentoo_build_publisher.views.context import (
     MachineInputContext,
@@ -35,7 +34,6 @@ class CreateDashboardContextTests(TestCase):
     def input_context(self, **kwargs: Any) -> ViewInputContext:
         defaults: dict[str, Any] = {
             "cache": QuickCache(),
-            "color_range": (Color(255, 0, 0), Color(0, 0, 255)),
             "days": 2,
             "now": timezone.localtime(),
         }
@@ -70,7 +68,7 @@ class CreateDashboardContextTests(TestCase):
                 str(polaris2): [],
             },
         )
-        self.assertEqual(ctx["gradient_colors"], ["#ff0000", "#0000ff"])
+        self.assertEqual(ctx["gradient_colors"], ["#504575", "#dddaec"])
         self.assertEqual(ctx["builds_per_machine"], [3, 1])
         self.assertEqual(ctx["machines"], ["polaris", "lighthouse"])
         self.assertEqual(ctx["now"], input_context.now)
@@ -132,7 +130,6 @@ class CreateMachineContextTests(TestCase):
     def input_context(self, **kwargs: Any) -> MachineInputContext:
         defaults: dict[str, Any] = {
             "cache": QuickCache(),
-            "color_range": (Color(255, 0, 0), Color(0, 0, 255)),
             "days": 2,
             "now": timezone.localtime(),
         }

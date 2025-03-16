@@ -22,11 +22,8 @@ ViewContext = utils.ViewContext
 @render("gentoo_build_publisher/dashboard/main.html")
 def _(request: HttpRequest) -> ViewContext:
     """Dashboard view"""
-    color_range = utils.color_range_from_settings()
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ctx.ViewInputContext(
-        cache=cache, color_range=color_range, days=days
-    )
+    input_context = ctx.ViewInputContext(cache=cache, days=days)
 
     return ctx.create_dashboard_context(input_context)
 
@@ -39,10 +36,7 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
         raise Http404("No builds for this machine")
 
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    color_range = utils.color_range_from_settings()
-    input_context = ctx.MachineInputContext(
-        cache=cache, color_range=color_range, days=days, machine=machine
-    )
+    input_context = ctx.MachineInputContext(cache=cache, days=days, machine=machine)
     return ctx.create_machine_context(input_context)
 
 

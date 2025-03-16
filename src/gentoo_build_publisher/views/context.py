@@ -9,7 +9,6 @@ from django.utils import timezone
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
-from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 from gentoo_build_publisher.views.utils import (
     Gradient,
@@ -73,7 +72,6 @@ class ViewInputContext:
     """Input context to generate output context"""
 
     days: int
-    color_range: tuple[Color, Color]
     cache: CacheProtocol
     now: dt.datetime = field(default_factory=timezone.localtime)
 
@@ -116,7 +114,7 @@ def create_dashboard_context(input_context: ViewInputContext) -> DashboardContex
             lp for machine in sc.machines if (lp := sc.latest_published(machine))
         ),
         "gradient_colors": gradient_colors(
-            *input_context.color_range, len(sc.machines)
+            *color_range_from_settings(), len(sc.machines)
         ),
         "builds_per_machine": [
             sc.machine_info(machine).build_count for machine in sc.machines
@@ -163,7 +161,7 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "builds_over_time": [
             [sc.builds_by_day(machine).get(day, 0) for day in chart_days]
         ],
-        "gradient_colors": gradient_colors(*input_context.color_range, 10),
+        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
         "latest_build": latest_build,
         "machine": machine,
         "machines": [machine],
