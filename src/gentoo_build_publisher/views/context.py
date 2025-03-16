@@ -61,8 +61,8 @@ class MachineContext(TypedDict):
     storage: int
 
 
-class PluginsContext(TypedDict):
-    """Context for the plugins view"""
+class AboutContext(TypedDict):
+    """Context for the about view"""
 
     gradient_colors: Gradient
     plugins: list[plugins.Plugin]
@@ -174,8 +174,8 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
     }
 
 
-def create_plugins_context() -> PluginsContext:
-    """Return PluginsContext for the plugins view"""
+def create_about_context() -> AboutContext:
+    """Return AboutContext for the plugins view"""
     return {
         "gradient_colors": gradient_colors(*color_range_from_settings(), 2),
         "plugins": plugins.get_plugins(),

@@ -213,16 +213,16 @@ class BinPkgViewTests(TestCase):
 
 
 @given("plugins")
-class PluginsTests(TestCase):
+class AboutViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         client = self.client
-        response = client.get("/plugins/")
+        response = client.get("/about/")
 
         for plugin in fixtures.plugins:
             with self.subTest(plugin=plugin.name):
                 self.assertContains(response, f'<th scope="row">{plugin.name}</th>')
 
-        self.assertTemplateUsed(response, "gentoo_build_publisher/plugins/main.html")
+        self.assertTemplateUsed(response, "gentoo_build_publisher/about/main.html")
 
 
 def first_build(build_dict: dict[str, list[Build]], name: str) -> Build:
