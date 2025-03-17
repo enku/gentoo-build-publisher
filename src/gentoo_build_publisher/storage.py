@@ -11,7 +11,7 @@ from typing import IO, Iterable
 
 import orjson
 
-from gentoo_build_publisher import fs, utils
+from gentoo_build_publisher import utils
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import (
     TAG_SYM,
@@ -21,6 +21,7 @@ from gentoo_build_publisher.types import (
     Package,
     PackageMetadata,
 )
+from gentoo_build_publisher.utils import fs
 
 INVALID_TEST_PATH = "__testing__"
 GBP_METADATA_FILENAME = "gbp.json"

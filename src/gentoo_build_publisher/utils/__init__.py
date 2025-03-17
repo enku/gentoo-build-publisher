@@ -19,7 +19,7 @@ from cryptography.fernet import Fernet
 from yarl import URL
 
 from gentoo_build_publisher import plugins
-from gentoo_build_publisher.utils import string
+from gentoo_build_publisher.utils import fs, string
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_IDENTIFIER_START = {".", "-"}
