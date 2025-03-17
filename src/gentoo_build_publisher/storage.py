@@ -11,7 +11,7 @@ from typing import IO, Iterable
 
 import orjson
 
-from gentoo_build_publisher import fs, string, utils
+from gentoo_build_publisher import fs, utils
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import (
     TAG_SYM,
@@ -330,7 +330,7 @@ def make_package_from_lines(lines: Iterable[str]) -> Package:
     """Given the appropriate lines from Packages, return a Package object"""
     package_info = {
         name.lower(): value.rstrip()
-        for (name, value) in (string.namevalue(line, ":") for line in lines)
+        for (name, value) in (utils.string.namevalue(line, ":") for line in lines)
     }
 
     try:
@@ -353,5 +353,5 @@ def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
 
     Assumes file pointer is after the preamble.
     """
-    for section in string.get_sections(package_index_file):
+    for section in utils.string.get_sections(package_index_file):
         yield make_package_from_lines(section)

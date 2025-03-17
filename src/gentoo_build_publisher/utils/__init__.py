@@ -8,7 +8,7 @@ import importlib.metadata
 import importlib.resources
 import platform
 import re
-import string
+import string as stringlib
 from dataclasses import asdict, is_dataclass
 from functools import partial, singledispatch, wraps
 from importlib.metadata import version
@@ -19,10 +19,11 @@ from cryptography.fernet import Fernet
 from yarl import URL
 
 from gentoo_build_publisher import plugins
+from gentoo_build_publisher.utils import string
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_IDENTIFIER_START = {".", "-"}
-VALID_IDENTIFIER_CHARS = {*string.ascii_letters, *string.digits, *"_.-"}
+VALID_IDENTIFIER_CHARS = {*stringlib.ascii_letters, *stringlib.digits, *"_.-"}
 MAXIMUM_IDENTIFIER_LENGTH = 128
 
 

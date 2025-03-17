@@ -4,7 +4,7 @@
 import io
 import unittest
 
-from gentoo_build_publisher import string
+from gentoo_build_publisher.utils import string
 
 
 class NameValueTestCase(unittest.TestCase):
