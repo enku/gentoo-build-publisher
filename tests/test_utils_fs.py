@@ -143,3 +143,11 @@ class CDTests(TestCase):
             self.assertEqual(os.getcwd(), tmpdir)
 
         self.assertNotEqual(os.getcwd(), tmpdir)
+
+
+class ImportFromRootTests(TestCase):
+    def test(self) -> None:
+        # pylint: disable=import-outside-toplevel,no-name-in-module
+        from gentoo_build_publisher import fs as root_fs
+
+        self.assertIs(fs, root_fs)
