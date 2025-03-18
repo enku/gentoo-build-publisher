@@ -56,12 +56,6 @@ thread = "gentoo_build_publisher.worker.thread:ThreadWorker"
 redis = [
     "rq>=1.15.1",
 ]
-test = [
-    "nox>=2024.4.15",
-    "factory-boy>=3.3.3",
-    "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
-    "types-requests>=2.32.0.20250301",
-]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -115,17 +109,18 @@ version = { source = "scm" }
 dev = [
     "black>=22.6.0",
     "coverage[toml]>=6.4.2",
-    "factory-boy>=3.2.1",
     "mypy==1.7.1",
     # pylint-django fails with 2.15.0. See bug #370
     # https://github.com/PyCQA/pylint-django/issues/370
     "pylint>=2.14.5,!=2.15.0",
     "pylint-django>=2.5.3",
     "django-stubs>=1.12.0",
-    "types-requests>=2.28.7",
     "tblib>=1.7.0",
     "celery-types>=0.19.0",
     "typos>=1.16.23",
     "fakeredis>=2.20.0",
     "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
+    "nox>=2024.4.15",
+    "factory-boy>=3.3.3",
+    "types-requests>=2.32.0.20250301",
 ]

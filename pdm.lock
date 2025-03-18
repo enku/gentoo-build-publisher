@@ -2,10 +2,10 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "dev", "redis", "test"]
+groups = ["default", "dev", "redis"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:7bfdd8bfc19b60ee663852bf6a2845264a921befdeb8000954d3057c5d24155d"
+content_hash = "sha256:47475142a87b39df966919d9766fe12f5178f29a1ac9b3659f60de0261b175c9"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
