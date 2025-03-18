@@ -51,6 +51,13 @@ def dummy_resolver(
     return "permitted"
 
 
+def broken_resolver(
+    _obj: Any, _info: GraphQLResolveInfo, *args: Any, **kwargs: Any
+) -> str:
+    """Test resolver"""
+    raise ValueError()
+
+
 @given("tmpdir", "publisher")
 class RequireAPIKeyTestCase(TestCase):
     def test_good_apikey(self, fixtures: Fixtures) -> None:
@@ -124,6 +131,23 @@ class RequireAPIKeyTestCase(TestCase):
         self.assertEqual(
             str(context.exception), "Unauthorized to resolve dummy_resolver"
         )
+
+    def test_other_error(self, fixtures: Fixtures) -> None:
+        name = "test"
+        api_key = ApiKey(
+            name=name,
+            key=apikey.create_api_key(),
+            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+        )
+        publisher.repo.api_keys.save(api_key)
+        encoded = encode_basic_auth_data(name, api_key.key)
+        gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
+        info = Mock(context=gql_context)
+        info.path.key = "broken_resolver"
+        resolver = require_apikey(broken_resolver)
+
+        with self.assertRaises(ValueError):
+            resolver(None, info)
 
 
 class LoadSchemaTests(TestCase):

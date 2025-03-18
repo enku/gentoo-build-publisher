@@ -52,16 +52,18 @@ def require_apikey(fn: Resolver) -> Resolver:
     @wraps(fn)
     def wrapper(obj: Any, info: Info, **kwargs: Any) -> Any:
         """wrapper function"""
-        try:
-            auth = info.context["request"].headers["Authorization"]
+        if auth := info.context["request"].headers.get("Authorization"):
             name, key = utils.parse_basic_auth_header(auth)
-            api_key = publisher.repo.api_keys.get(name=name.lower())
-            if api_key.key == key:
-                api_key = replace(api_key, last_used=dt.datetime.now(tz=dt.UTC))
-                publisher.repo.api_keys.save(api_key)
-                return fn(obj, info, **kwargs)
-        except (KeyError, ValueError, RecordNotFound):
-            pass
+
+            try:
+                api_key = publisher.repo.api_keys.get(name=name.lower())
+            except RecordNotFound:
+                pass
+            else:
+                if api_key.key == key:
+                    api_key = replace(api_key, last_used=dt.datetime.now(tz=dt.UTC))
+                    publisher.repo.api_keys.save(api_key)
+                    return fn(obj, info, **kwargs)
 
         raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
 
