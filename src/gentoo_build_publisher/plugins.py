@@ -6,7 +6,7 @@ Plugins register themselves under the group "gentoo_build_publisher.plugins", bu
 
 from dataclasses import dataclass
 from importlib.metadata import EntryPoint, entry_points
-from typing import NotRequired, Optional, TypedDict
+from typing import NotRequired, TypedDict
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
@@ -17,8 +17,8 @@ class Plugin:
     app: str
     version: str = "?"
     description: str = ""
-    graphql: Optional[str]
-    urls: Optional[str]
+    graphql: str | None
+    urls: str | None
     priority: int = 10
 
     def __hash__(self) -> int:
