@@ -17,7 +17,7 @@ class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Build:
     """A build ID (machine.build_id)"""
 
@@ -59,7 +59,7 @@ class Content(Enum):
     VAR_LIB_PORTAGE = "var-lib-portage"
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class Package:
     """A Gentoo binary package"""
 
@@ -94,7 +94,7 @@ class ChangeState(Enum):
     ADDED = 1
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Change:
     """A changed item (file or directory)"""
 
@@ -102,7 +102,7 @@ class Change:
     status: ChangeState
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class PackageMetadata:
     """data structure for a build's package metadata"""
 
@@ -111,7 +111,7 @@ class PackageMetadata:
     built: list[Package]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class GBPMetadata:
     """data structure combining Jenkins and package metadata
 
@@ -135,7 +135,7 @@ class CacheProtocol(Protocol):
         """Set a value in the cache"""
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class Repo:
     """A (git) repo"""
 
@@ -143,14 +143,14 @@ class Repo:
     branch: str
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class EbuildRepo(Repo):
     """An repository for ebuilds (e.g. "gentoo")"""
 
     name: str
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class MachineJob:
     """A machine job definition"""
 
@@ -159,7 +159,7 @@ class MachineJob:
     ebuild_repos: list[str]
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class ApiKey:
     """A (HTTP) API key"""
 
