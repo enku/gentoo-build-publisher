@@ -77,12 +77,12 @@ Plugins are available.
 
 | Plugin | Description | Client/Server |
 | ------ | ----------- | ------------- |
-| [gbp-archive](https://github.com/enku/gbp-archive) | A plugin to dump and restore builds | Both (but only runs on from the server) |
-| [gbp-fl](https://github.com/enku/gbp-fl) | A [pfl](https://www.portagefilelist.de/)-inspired plugin | Both |
-| [gbp-notifications](https://github.com/enku/gbp-notifications) | A plugin that can send notifications when events occur | Server |
-| [gbp-ps](https://github.com/enku/gbp-ps) | A plugin to display your Gentoo Build Publisher processes | Both |
-| [gbp-purge](https://github.com/enku/gbp-purge) | A plugin to purge old builds | Server |
-| [gbp-webhook](https://github.com/enku/gbp-webhook) | A webhook for gbp-notifications to display desktop notifications and more | Client |
+| [archive](https://github.com/enku/gbp-archive) | A plugin to dump and restore builds | Both (but only runs on from the server) |
+| [fl](https://github.com/enku/gbp-fl) | A [pfl](https://www.portagefilelist.de/)-inspired plugin | Both |
+| [notifications](https://github.com/enku/gbp-notifications) | A plugin that can send notifications when events occur | Server |
+| [ps](https://github.com/enku/gbp-ps) | A plugin to display your Gentoo Build Publisher processes | Both |
+| [purge](https://github.com/enku/gbp-purge) | A plugin to purge old builds | Server |
+| [webhook](https://github.com/enku/gbp-webhook) | A webhook for gbp-notifications to display desktop notifications and more | Client |
 
 # Articles
 
