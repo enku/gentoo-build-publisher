@@ -70,18 +70,19 @@ inspect, publish, pull, schedule builds and more.
 
 # Plugins
 
-Various plugins exist for Gentoo Build Publisher. Among them are:
+Various plugins exist for Gentoo Build Publisher. Some are "server" plugins,
+meaning they plug into Gentoo Build Publisher, the server. Others are "client"
+plugins, meaning they plug into the CLI. And some are both.  The following
+Plugins are available.
 
-- [gbp-archive](https://github.com/enku/gbp-archive): A plugin to dump and
-  restore builds
-- [gbp-fl](https://github.com/enku/gbp-fl): A
-  [pfl](https://www.portagefilelist.de/)-inspired plugin
-- [gbp-notifications](https://github.com/enku/gbp-notifications): A plugin
-  that can send notifications when events occur
-- [gbp-ps](https://github.com/enku/gbp-ps): A
-  [gbpcli](https://github.com/enku/gbpcli) plugin to display your Gentoo Build
-  Publisher processes
-- [gbp-purge](https://github.com/enku/gbp-purge): A plugin to purge old builds
+| Plugin | Description | Client/Server |
+| ------ | ----------- | ------------- |
+| [gbp-archive](https://github.com/enku/gbp-archive) | A plugin to dump and restore builds | Both (but only runs on from the server |
+| [gbp-fl](https://github.com/enku/gbp-fl) | A [pfl](https://www.portagefilelist.de/)-inspired plugin | Both |
+| [gbp-notifications](https://github.com/enku/gbp-notifications) | A plugin that can send notifications when events occur | Server |
+| [gbp-ps](https://github.com/enku/gbp-ps) | A plugin to display your Gentoo Build Publisher processes | Both |
+| [gbp-purge](https://github.com/enku/gbp-purge) | A plugin to purge old builds | Server |
+| [gbp-webhook](https://github.com/enku/gbp-webhook) | A webhook for gbp-notifications to display desktop notifications and more | Client |
 
 # Articles
 
