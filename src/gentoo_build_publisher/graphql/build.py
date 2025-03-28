@@ -3,7 +3,7 @@
 import datetime as dt
 from typing import TypeAlias
 
-from ariadne import ObjectType
+from ariadne import ObjectType, convert_kwargs_to_snake_case
 from graphql import GraphQLError, GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher
@@ -41,7 +41,8 @@ def _(build: Build, _info: Info) -> str | None:
 
 
 @BuildType.field("packages")
-def _(build: Build, _info: Info) -> list[str] | None:
+@convert_kwargs_to_snake_case
+def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
     if not publisher.pulled(build):
         return None
 
@@ -50,6 +51,8 @@ def _(build: Build, _info: Info) -> list[str] | None:
     except LookupError:
         return None
 
+    if build_id:
+        return [package.cpvb() for package in packages]
     return [package.cpv for package in packages]
 
 

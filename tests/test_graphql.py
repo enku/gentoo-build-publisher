@@ -108,6 +108,24 @@ class BuildQueryTestCase(TestCase):
         # Then we get the list of packages in the build
         assert_data(self, result, {"build": {"packages": PACKAGE_INDEX}})
 
+    def test_packages_build_id(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+
+        # when we query the build's packages
+        query = """
+        query ($id: ID!) {
+          build(id: $id) {
+            packages(buildId: true)
+          }
+        }
+        """
+        result = graphql(fixtures.client, query, {"id": build.id})
+
+        # Then we get the list of packages in the build
+        expected = [f"{p}-1" for p in PACKAGE_INDEX]
+        assert_data(self, result, {"build": {"packages": expected}})
+
     def test_packages_when_not_pulled_returns_none(self, fixtures: Fixtures) -> None:
         # given the unpulled package
         build = BuildFactory()

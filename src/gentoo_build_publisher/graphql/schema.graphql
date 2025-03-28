@@ -19,7 +19,7 @@ type Build {
   notes: String
   keep: Boolean!
   logs: String
-  packages: [String!]
+  packages(buildId: Boolean = false): [String!]
   packagesBuilt: [Package!]
 }
 
