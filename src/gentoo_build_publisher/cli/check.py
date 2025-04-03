@@ -2,6 +2,7 @@
 
 import argparse
 import itertools
+import json
 from pathlib import Path
 from typing import Callable, TypeAlias
 
@@ -141,5 +142,40 @@ def check_dirty_temp(console: Console) -> CheckResult:
     if next(tmp.iterdir(), None):
         warnings += 1
         console.err.print(f"Warning: {tmp} is not empty.")
+
+    return errors, warnings
+
+
+@register
+def check_corrupt_gbp_json(console: Console) -> CheckResult:
+    """Check that the gbp.json file is not corrupt"""
+    errors = 0
+    warnings = 0
+
+    machines = publisher.repo.build_records.list_machines()
+    records = itertools.chain(
+        *(publisher.repo.build_records.for_machine(machine) for machine in machines)
+    )
+    storage = publisher.storage
+
+    for record in records:
+        gbp_json_path = storage.get_path(record, Content.BINPKGS) / "gbp.json"
+
+        if not gbp_json_path.exists():
+            # This is a warning and not an error because early versions of GBP did not
+            # create a gbp.json. But that's old behavior and I want to eventually phase
+            # this out and make it an error. Would be nice to conditionally make this
+            # check based on what version of GBP created the build (ironically the
+            # version is stored in gbp.json).
+            console.err.print(f"Warning: {gbp_json_path} is missing.")
+            warnings += 1
+            continue
+
+        with gbp_json_path.open("rb") as gbp_json:
+            try:
+                json.load(gbp_json)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                console.err.print(f"Error: {gbp_json_path} is corrupt.")
+                errors += 1
 
     return errors, warnings

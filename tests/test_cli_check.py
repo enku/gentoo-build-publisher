@@ -50,7 +50,8 @@ class GBPChkTestCase(TestCase):
         exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
-        self.assertEqual(console.out.file.getvalue(), "0 errors, 1 warnings\n")
+        self.assertEqual(console.out.file.getvalue(), "0 errors, 2 warnings\n")
+        # 2 warnings because also gbp.json
 
     def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -171,6 +172,38 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(result, (0, 1))
         self.assertEqual(console.err.file.getvalue(), f"Warning: {tmp} is not empty.\n")
+
+    def test_check_corrupt_gbp_json(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+        storage = publisher.storage
+
+        gbp_dot_json = storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_dot_json.write_text("xxx", encoding="utf8")
+
+        console = fixtures.console
+        errors, warnings = check.check_corrupt_gbp_json(console)
+
+        self.assertEqual((errors, warnings), (1, 0))
+        self.assertEqual(
+            console.err.file.getvalue(), f"Error: {gbp_dot_json} is corrupt.\n"
+        )
+
+    def test_check_missing_gbp_json(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+        storage = publisher.storage
+
+        gbp_dot_json = storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_dot_json.unlink()
+
+        console = fixtures.console
+        errors, warnings = check.check_corrupt_gbp_json(console)
+
+        self.assertEqual((errors, warnings), (0, 1))
+        self.assertEqual(
+            console.err.file.getvalue(), f"Warning: {gbp_dot_json} is missing.\n"
+        )
 
     def test_parse_args(self, fixtures: Fixtures) -> None:
         # here for completeness
