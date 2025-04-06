@@ -187,7 +187,7 @@ class BuildPublisher:
         self.storage.delete(build)
         dispatcher.emit("postdelete", build=build)
 
-    def get_packages(self, build: BuildRecord) -> list[Package]:
+    def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
         return self.storage.get_packages(build)
 
@@ -199,7 +199,7 @@ class BuildPublisher:
         """search the given field on the given machine"""
         return list(self.repo.build_records.search(machine, field, key))
 
-    def diff_binpkgs(self, left: BuildRecord, right: BuildRecord) -> Iterable[Change]:
+    def diff_binpkgs(self, left: Build, right: Build) -> Iterable[Change]:
         """Compare two package's binpkgs and generate the differences"""
         if left == right:
             return

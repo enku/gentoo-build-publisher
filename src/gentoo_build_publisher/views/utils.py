@@ -132,7 +132,7 @@ class StatsCollector:
 
         return total
 
-    def build_packages(self, build: BuildRecord) -> list[str]:
+    def build_packages(self, build: Build) -> list[str]:
         """Return a list of CPVs build in the given build"""
         metadata = get_metadata(build, self.cache)
         return [i.cpv for i in metadata.packages.built] if metadata is not None else []
@@ -218,7 +218,7 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
     return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
 
 
-def get_metadata(build: BuildRecord, cache: CacheProtocol) -> GBPMetadata | None:
+def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.

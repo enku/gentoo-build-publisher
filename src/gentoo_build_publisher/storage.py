@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import shutil
 import tempfile
-from dataclasses import asdict
 from functools import lru_cache
 from pathlib import Path
 from typing import IO, Iterable
@@ -13,7 +12,6 @@ from typing import IO, Iterable
 import orjson
 
 from gentoo_build_publisher import utils
-from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import (
     TAG_SYM,
@@ -281,16 +279,16 @@ class Storage:
 
         return package_index_path.open(encoding="utf-8")
 
-    def get_packages(self, build: BuildRecord) -> list[Package]:
+    def get_packages(self, build: Build) -> list[Package]:
         """Return the list of packages for this build"""
         with self.package_index_file(build) as package_index_file:
             # Skip preamble (for now)
             while package_index_file.readline().rstrip():
                 pass
 
-            return list(make_packages(package_index_file, build))
+            return list(make_packages(package_index_file))
 
-    def get_metadata(self, build: BuildRecord) -> GBPMetadata:
+    def get_metadata(self, build: Build) -> GBPMetadata:
         """Read binpkg/gbp.json and return GBPMetadata instance
 
         If the file does not exist (e.g. not pulled), raise LookupError
@@ -317,7 +315,6 @@ class Storage:
                         path=built["path"],
                         repo=built["repo"],
                         size=built["size"],
-                        build=build,
                     )
                     for built in json["packages"]["built"]
                 ],
@@ -327,17 +324,10 @@ class Storage:
     def set_metadata(self, build: Build, metadata: GBPMetadata) -> None:
         """Save metadata to "gbp.json" in the binpkgs directory"""
         path = self.get_path(build, Content.BINPKGS) / GBP_METADATA_FILENAME
-
-        # We don't want the "build" attribute on metadata.packages.built. First convert
-        # everything to a dict and then delete the keys
-        metadata_dict = asdict(metadata)
-        for package in metadata_dict["packages"]["built"]:
-            del package["build"]
-
-        path.write_bytes(orjson.dumps(metadata_dict))  # pylint: disable=no-member
+        path.write_bytes(orjson.dumps(metadata))  # pylint: disable=no-member
 
 
-def make_package_from_lines(lines: Iterable[str], build: BuildRecord) -> Package:
+def make_package_from_lines(lines: Iterable[str]) -> Package:
     """Given the appropriate lines from Packages, return a Package object"""
     package_info = {
         name.lower(): value.rstrip()
@@ -352,7 +342,6 @@ def make_package_from_lines(lines: Iterable[str], build: BuildRecord) -> Package
             build_id=int(package_info["build_id"]),
             size=int(package_info["size"]),
             build_time=int(package_info["build_time"]),
-            build=build,
         )
     except KeyError as error:
         raise ValueError(
@@ -360,10 +349,10 @@ def make_package_from_lines(lines: Iterable[str], build: BuildRecord) -> Package
         ) from None
 
 
-def make_packages(package_index_file: IO[str], build: BuildRecord) -> Iterable[Package]:
+def make_packages(package_index_file: IO[str]) -> Iterable[Package]:
     """Yield Packages from Package index file
 
     Assumes file pointer is after the preamble.
     """
     for section in utils.string.get_sections(package_index_file):
-        yield make_package_from_lines(section, build)
+        yield make_package_from_lines(section)
