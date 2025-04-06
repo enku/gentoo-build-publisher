@@ -85,13 +85,10 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.machines, ["babette", "lighthouse"])
 
     def test_package_count(self, fixtures: Fixtures) -> None:
+        builder = publisher.jenkins.artifact_builder  # type: ignore
         for build in [
-            *create_builds_and_packages(
-                "babette", 5, 2, publisher.jenkins.artifact_builder
-            ),
-            *create_builds_and_packages(
-                "lighthouse", 3, 4, publisher.jenkins.artifact_builder
-            ),
+            *create_builds_and_packages("babette", 5, 2, builder),
+            *create_builds_and_packages("lighthouse", 3, 4, builder),
         ]:
             publisher.pull(build)
 
@@ -104,9 +101,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.package_count("lighthouse"), 36)
 
     def test_build_packages(self, fixtures: Fixtures) -> None:
-        [build] = create_builds_and_packages(
-            "lighthouse", 1, 4, publisher.jenkins.artifact_builder
-        )
+        builder = publisher.jenkins.artifact_builder  # type: ignore
+        [build] = create_builds_and_packages("lighthouse", 1, 4, builder)
         publisher.pull(build)
 
         sc = self.stats_collector()
@@ -120,17 +116,12 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.build_packages(build), expected)
 
     def test_latest_published(self, fixtures: Fixtures) -> None:
+        builder = publisher.jenkins.artifact_builder  # type: ignore
         build = None
         for build in [
-            *create_builds_and_packages(
-                "babette", 5, 2, publisher.jenkins.artifact_builder
-            ),
-            *create_builds_and_packages(
-                "lighthouse", 3, 4, publisher.jenkins.artifact_builder
-            ),
-            *create_builds_and_packages(
-                "polaris", 3, 1, publisher.jenkins.artifact_builder
-            ),
+            *create_builds_and_packages("babette", 5, 2, builder),
+            *create_builds_and_packages("lighthouse", 3, 4, builder),
+            *create_builds_and_packages("polaris", 3, 1, builder),
         ]:
             publisher.pull(build)
         assert build
@@ -144,9 +135,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.latest_published("lighthouse"), None)
 
     def test_recent_packages(self, fixtures: Fixtures) -> None:
-        for build in create_builds_and_packages(
-            "babette", 3, 4, publisher.jenkins.artifact_builder
-        ):
+        builder = publisher.jenkins.artifact_builder  # type: ignore
+        for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
 
         sc = self.stats_collector()
@@ -160,9 +150,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(recent_packages, pkgs_sorted)
 
     def test_total_package_size(self, fixtures: Fixtures) -> None:
-        for build in create_builds_and_packages(
-            "babette", 3, 4, publisher.jenkins.artifact_builder
-        ):
+        builder = publisher.jenkins.artifact_builder  # type: ignore
+        for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
 
         sc = self.stats_collector()
@@ -171,10 +160,9 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.total_package_size("bogus"), 0)
 
     def test_latest_build(self, fixtures: Fixtures) -> None:
+        builder = publisher.jenkins.artifact_builder  # type: ignore
         build = None
-        for build in create_builds_and_packages(
-            "babette", 3, 4, publisher.jenkins.artifact_builder
-        ):
+        for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
         assert build
 
@@ -226,25 +214,22 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(bbd, expected)
 
     def test_packages_by_day(self, fixtures: Fixtures) -> None:
+        builder = publisher.jenkins.artifact_builder  # type: ignore
         d1 = dt.datetime(2021, 4, 13, 9, 5)
-        publisher.jenkins.artifact_builder.timer = int(d1.timestamp())
-        [build] = create_builds_and_packages(
-            "babette", 1, 3, publisher.jenkins.artifact_builder
-        )
+        builder.timer = int(d1.timestamp())
+        [build] = create_builds_and_packages("babette", 1, 3, builder)
         publisher.pull(build)
         gbp_json_path = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
         gbp_json_path.unlink()
 
         d2 = dt.datetime(2024, 1, 14, 9, 5)
-        publisher.jenkins.artifact_builder.timer = int(d2.timestamp())
-        for build in create_builds_and_packages(
-            "babette", 2, 3, publisher.jenkins.artifact_builder
-        ):
+        builder.timer = int(d2.timestamp())
+        for build in create_builds_and_packages("babette", 2, 3, builder):
             publisher.pull(build)
 
         pbd = self.stats_collector().packages_by_day("babette")
 
-        # d1's packages are skipped because there is on gbp.json
+        # d1's packages are skipped because there is no gbp.json
         self.assertEqual(list(pbd.keys()), [d2.date()])
 
         self.assertEqual(len(pbd[d2.date()]), 6)
@@ -277,9 +262,8 @@ class ExperimentalMarkerTests(DjangoTestCase):
 @given("publisher")
 class GetPackageURLTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
-        [build] = create_builds_and_packages(
-            "babette", 1, 1, publisher.jenkins.artifact_builder
-        )
+        builder = publisher.jenkins.artifact_builder  # type: ignore
+        [build] = create_builds_and_packages("babette", 1, 1, builder)
         publisher.pull(build)
         package = publisher.get_packages(build)[-1]
         request = HttpRequest()
@@ -299,10 +283,7 @@ def dummy_view(request: HttpRequest) -> HttpResponse:
 
 
 def create_builds_and_packages(
-    machine: str,
-    number_of_builds: int,
-    pkgs_per_build: int,
-    artifact_builder: ArtifactFactory,
+    machine: str, number_of_builds: int, pkgs_per_build: int, builder: ArtifactFactory
 ) -> list[Build]:
     builds: list[Build] = BuildFactory.build_batch(number_of_builds, machine=machine)
     pf = package_factory()
@@ -310,6 +291,6 @@ def create_builds_and_packages(
     for build in builds:
         for _ in range(pkgs_per_build):
             package = next(pf)
-            artifact_builder.build(build, package)
+            builder.build(build, package)
 
     return builds
