@@ -47,7 +47,7 @@ def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
         return None
 
     try:
-        packages = publisher.get_packages(build)
+        packages = publisher.get_packages(publisher.record(build))
     except LookupError:
         return None
 
@@ -59,7 +59,8 @@ def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
 @BuildType.field("packagesBuilt")
 def _(build: Build, _info: Info) -> list[Package] | None:
     try:
-        gbp_metadata = publisher.storage.get_metadata(build)
+        record = publisher.record(build)
+        gbp_metadata = publisher.storage.get_metadata(record)
     except LookupError as error:
         raise GraphQLError("Packages built unknown") from error
 

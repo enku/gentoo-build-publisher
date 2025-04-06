@@ -64,6 +64,9 @@ class BuildQueryTestCase(TestCase):
             logs
             packagesBuilt {
               cpv
+              build {
+                id
+              }
             }
           }
         }
@@ -82,8 +85,8 @@ class BuildQueryTestCase(TestCase):
                 "built": "2022-03-01T06:28:44+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
-                    {"cpv": "acct-group/sgx-0"},
-                    {"cpv": "x11-wm/mutter-41.3"},
+                    {"cpv": "acct-group/sgx-0", "build": {"id": build.id}},
+                    {"cpv": "x11-wm/mutter-41.3", "build": {"id": build.id}},
                 ],
             }
         }

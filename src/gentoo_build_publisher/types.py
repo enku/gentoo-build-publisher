@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import astuple, dataclass, field
 from enum import Enum, unique
 from typing import Any, Protocol
 
-from gentoo_build_publisher import utils
+from gentoo_build_publisher import records, utils
 
 # Symbol used to designate a build tag
 TAG_SYM = "@"
@@ -81,9 +81,28 @@ class Package:
     build_time: int
     """Unix time that the package was built"""
 
+    build: records.BuildRecord | None = None
+
     def cpvb(self) -> str:
         """return cpv + build id"""
         return f"{self.cpv}-{self.build_id}"
+
+    @property
+    def machine(self) -> str | None:
+        """Return the machine this package belongs to or None"""
+        return self.build.machine if self.build else None
+
+    def __hash__(self) -> int:
+        return hash(astuple(self)[:-1])
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if hash(self) != hash(other):
+            return False
+
+        return self.machine == other.machine
 
 
 class ChangeState(Enum):

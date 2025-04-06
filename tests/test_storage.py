@@ -316,7 +316,8 @@ class StorageGetMetadataTestCase(TestCase):
     def test_should_return_gbpmetadata_when_gbp_json_exists(
         self, fixtures: Fixtures
     ) -> None:
-        metadata = publisher.storage.get_metadata(fixtures.build)
+        record = publisher.record(fixtures.build)
+        metadata = publisher.storage.get_metadata(record)
 
         expected = GBPMetadata(
             build_duration=124,
@@ -331,6 +332,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=841,
                         build_time=fixtures.timestamp + 10,
+                        build=record,
                     ),
                     Package(
                         cpv="net-libs/nghttp2-1.47.0",
@@ -339,6 +341,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=529,
                         build_time=fixtures.timestamp + 20,
+                        build=record,
                     ),
                     Package(
                         cpv="sys-libs/glibc-2.34-r9",
@@ -347,6 +350,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=484,
                         build_time=fixtures.timestamp + 30,
+                        build=record,
                     ),
                 ],
             ),
@@ -384,6 +388,7 @@ class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
 
     def test(self, fixtures: Fixtures) -> None:
+        record = publisher.record(fixtures.build)
         package_metadata = PackageMetadata(
             total=666,
             size=666,
@@ -399,7 +404,7 @@ class StorageSetMetadataTestCase(TestCase):
             ],
         )
         gbp_metadata = GBPMetadata(build_duration=666, packages=package_metadata)
-        publisher.storage.set_metadata(fixtures.build, gbp_metadata)
+        publisher.storage.set_metadata(record, gbp_metadata)
 
         with fixtures.path.open("r") as json_file:
             result = json.load(json_file)
@@ -660,15 +665,17 @@ class MakePackageFromLinesTestCase(TestCase):
     """Tests for the make_package_from_lines method"""
 
     def test(self) -> None:
-        result = make_package_from_lines(data.PACKAGE_LINES)
+        record = publisher.record(BuildFactory())
+        result = make_package_from_lines(data.PACKAGE_LINES, record)
 
         self.assertIsInstance(result, Package)
 
     def test_when_line_missing(self) -> None:
+        record = publisher.record(BuildFactory())
         lines = [line for line in data.PACKAGE_LINES if not line.startswith("CPV:")]
 
         with self.assertRaises(ValueError) as context:
-            make_package_from_lines(lines)
+            make_package_from_lines(lines, record)
 
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
@@ -680,12 +687,13 @@ class MakePackagesTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         publisher.pull(build)
+        record = publisher.record(build)
         index_file = publisher.storage.get_path(build, Content.BINPKGS) / "Packages"
 
         with index_file.open(encoding="UTF-8") as opened_index_file:
             for line in opened_index_file:  # skip preamble
                 if not line.strip():
                     break
-            packages = [*make_packages(opened_index_file)]
+            packages = [*make_packages(opened_index_file, record)]
 
         self.assertEqual(len(packages), 4)

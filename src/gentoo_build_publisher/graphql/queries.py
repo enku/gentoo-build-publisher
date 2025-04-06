@@ -45,12 +45,12 @@ def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
 
 @Query.field("diff")
 def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
-    left_build = Build.from_id(left)
+    left_build = publisher.record(Build.from_id(left))
 
     if not publisher.repo.build_records.exists(left_build):
         raise GraphQLError(f"Build does not exist: {left}")
 
-    right_build = Build.from_id(right)
+    right_build = publisher.record(Build.from_id(right))
 
     if not publisher.repo.build_records.exists(right_build):
         raise GraphQLError(f"Build does not exist: {right}")
