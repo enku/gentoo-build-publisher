@@ -231,8 +231,7 @@ def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
         except LookupError:
             return None
 
-        if metadata:
-            cache.set(cache_key, metadata)
+        cache.set(cache_key, metadata)
 
         return metadata
 
