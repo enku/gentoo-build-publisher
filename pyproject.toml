@@ -119,7 +119,7 @@ dev = [
     "celery-types>=0.19.0",
     "typos>=1.16.23",
     "fakeredis>=2.20.0",
-    "unittest-fixtures @ git+https://github.com/enku/unittest-fixtures.git",
+    "unittest-fixtures",
     "nox>=2024.4.15",
     "factory-boy>=3.3.3",
     "types-requests>=2.32.0.20250301",
