@@ -109,3 +109,6 @@ detail.
 - [Gentoo Build Publisher: dump &
   restore](https://lunarcowboy.com/gentoo-build-publisher-dump-restore.html):
   February 2025
+- [Gentoo Build Publisher: Auth & API
+  Keys](https://lunarcowboy.com/gentoo-build-publisher-auth-api-keys.html):
+  April 2025
