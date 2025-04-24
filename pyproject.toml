@@ -58,6 +58,7 @@ redis = [
 ]
 test = [
     "factory-boy>=3.3.3",
+    "unittest-fixtures",
 ]
 [build-system]
 requires = ["pdm-backend"]
@@ -122,7 +123,6 @@ dev = [
     "celery-types>=0.19.0",
     "typos>=1.16.23",
     "fakeredis>=2.20.0",
-    "unittest-fixtures",
     "nox>=2024.4.15",
     "gentoo-build-publisher[test]",
     "types-requests>=2.32.0.20250301",
