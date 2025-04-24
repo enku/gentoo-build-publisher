@@ -56,6 +56,9 @@ thread = "gentoo_build_publisher.worker.thread:ThreadWorker"
 redis = [
     "rq>=1.15.1",
 ]
+test = [
+    "factory-boy>=3.3.3",
+]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -121,6 +124,6 @@ dev = [
     "fakeredis>=2.20.0",
     "unittest-fixtures",
     "nox>=2024.4.15",
-    "factory-boy>=3.3.3",
+    "gentoo-build-publisher[test]",
     "types-requests>=2.32.0.20250301",
 ]

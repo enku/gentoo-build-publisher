@@ -2,10 +2,10 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "dev", "redis"]
+groups = ["default", "dev", "redis", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:b0afe4bf83556088b39d004a43a69a1846b145d85eaa5bb31019e5a22f8e483a"
+content_hash = "sha256:0999ff4a8558b8d34eb0fa1182c4efd812ad014b5eab30053a3040fd2a6be128"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -671,7 +671,7 @@ name = "factory-boy"
 version = "3.3.3"
 requires_python = ">=3.8"
 summary = "A versatile test fixtures replacement based on thoughtbot's factory_bot for Ruby."
-groups = ["dev"]
+groups = ["dev", "test"]
 dependencies = [
     "Faker>=0.7.0",
 ]
@@ -685,7 +685,7 @@ name = "faker"
 version = "37.1.0"
 requires_python = ">=3.9"
 summary = "Faker is a Python package that generates fake data for you."
-groups = ["dev"]
+groups = ["dev", "test"]
 dependencies = [
     "tzdata",
 ]
@@ -1499,7 +1499,7 @@ name = "tzdata"
 version = "2025.2"
 requires_python = ">=2"
 summary = "Provider of IANA time zone data"
-groups = ["default", "dev"]
+groups = ["default", "dev", "test"]
 files = [
     {file = "tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8"},
     {file = "tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9"},
