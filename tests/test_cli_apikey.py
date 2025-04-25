@@ -12,8 +12,9 @@ from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import DjangoTestCase, TestCase
 from gbp_testkit.helpers import LOCAL_TIMEZONE
-from gentoo_build_publisher import models, publisher, utils
+from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.cli import apikey
+from gentoo_build_publisher.django.gentoo_build_publisher import models
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 

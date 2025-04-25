@@ -9,7 +9,7 @@ from typing import Callable, TypeAlias
 from gbpcli.gbp import GBP
 from gbpcli.types import Console
 
-import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
+import gentoo_build_publisher.django._setup  # pylint: disable=unused-import
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.types import Build, Content

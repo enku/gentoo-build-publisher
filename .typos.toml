@@ -1,2 +1,2 @@
 [files]
-extend-exclude = ["src/gentoo_build_publisher/migrations/"]
+extend-exclude = ["src/gentoo_build_publisher/django/gentoo_build_publisher/migrations/"]

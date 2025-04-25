@@ -10,7 +10,7 @@ from dataclasses import replace
 from gbpcli.gbp import GBP
 from gbpcli.types import Console
 
-import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
+import gentoo_build_publisher.django._setup  # pylint: disable=unused-import
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.worker import Worker
 

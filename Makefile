@@ -61,7 +61,7 @@ pylint:
 
 
 eslint:
-	npx eslint src/gentoo_build_publisher/static
+	npx eslint src/gentoo_build_publisher/django/gentoo_build_publisher/static
 .PHONY: eslint
 
 

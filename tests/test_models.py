@@ -3,7 +3,11 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 from gbp_testkit import DjangoTestCase as TestCase
 from gbp_testkit.factories import BuildModelFactory
-from gentoo_build_publisher.models import BuildLog, BuildNote, KeptBuild
+from gentoo_build_publisher.django.gentoo_build_publisher.models import (
+    BuildLog,
+    BuildNote,
+    KeptBuild,
+)
 
 
 class BuildModelTestCase(TestCase):

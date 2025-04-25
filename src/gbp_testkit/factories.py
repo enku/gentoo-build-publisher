@@ -13,7 +13,7 @@ from typing import Generator
 import factory
 
 from gentoo_build_publisher import build_publisher, publisher
-from gentoo_build_publisher.models import BuildModel
+from gentoo_build_publisher.django.gentoo_build_publisher.models import BuildModel
 from gentoo_build_publisher.records import BuildRecord, Repo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage

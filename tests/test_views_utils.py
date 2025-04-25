@@ -17,15 +17,15 @@ from gbp_testkit.factories import (
 )
 from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.types import Build, Content
-from gentoo_build_publisher.utils.time import localtime
-from gentoo_build_publisher.views.utils import (
+from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     StatsCollector,
     experimental,
     get_metadata,
     get_query_value_from_request,
     get_url_for_package,
 )
+from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.utils.time import localtime
 
 
 @given("publisher")

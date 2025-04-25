@@ -11,7 +11,8 @@ from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
-from gentoo_build_publisher.views.utils import (
+
+from .utils import (
     Gradient,
     StatsCollector,
     color_range_from_settings,

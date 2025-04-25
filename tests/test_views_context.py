@@ -18,13 +18,13 @@ from gbp_testkit.factories import (
 )
 from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
-from gentoo_build_publisher.views.context import (
+from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
     MachineInputContext,
     ViewInputContext,
     create_dashboard_context,
     create_machine_context,
 )
+from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 
 
 @given("publisher")

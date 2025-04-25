@@ -9,8 +9,9 @@ from django.shortcuts import redirect
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.types import Build
-from gentoo_build_publisher.views import context as ctx
-from gentoo_build_publisher.views import utils
+
+from . import context as ctx
+from . import utils
 
 render = utils.render
 view = utils.view

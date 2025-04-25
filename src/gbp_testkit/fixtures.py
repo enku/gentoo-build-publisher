@@ -26,8 +26,11 @@ from unittest_fixtures import FixtureContext, Fixtures, fixture
 import gentoo_build_publisher
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.cli import apikey
+from gentoo_build_publisher.django.gentoo_build_publisher.models import (
+    BuildLog,
+    BuildModel,
+)
 from gentoo_build_publisher.jenkins import Jenkins
-from gentoo_build_publisher.models import BuildLog, BuildModel
 from gentoo_build_publisher.plugins import Plugin
 from gentoo_build_publisher.records import BuildRecord, RecordDB
 from gentoo_build_publisher.settings import Settings

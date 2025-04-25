@@ -7,9 +7,16 @@ from typing import Any, Iterable
 from django.conf import settings
 from django.db import models
 
-import gentoo_build_publisher._django_setup  # pylint: disable=unused-import
-from gentoo_build_publisher.models import ApiKey as ApiKeyModel
-from gentoo_build_publisher.models import BuildLog, BuildModel, BuildNote, KeptBuild
+import gentoo_build_publisher.django._setup  # pylint: disable=unused-import
+from gentoo_build_publisher.django.gentoo_build_publisher.models import (
+    ApiKey as ApiKeyModel,
+)
+from gentoo_build_publisher.django.gentoo_build_publisher.models import (
+    BuildLog,
+    BuildModel,
+    BuildNote,
+    KeptBuild,
+)
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt

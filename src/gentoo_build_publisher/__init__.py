@@ -31,7 +31,6 @@ client machines which point to their respective machine configurations.
 +--------------------+     +-----------+     +--------+       +---------+
 """
 
-# pylint: disable=invalid-name
 from __future__ import annotations
 
 import importlib
@@ -48,11 +47,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __version__ = importlib.metadata.version("gentoo-build-publisher")
 
-default_app_config = "gentoo_build_publisher.apps.GentooBuildPublisherConfig"
 
 celery = Celery("gentoo_build_publisher")
 celery.config_from_object("django.conf:settings", namespace="CELERY")
-celery.autodiscover_tasks()
+celery.autodiscover_tasks(["gentoo_build_publisher"])
 
 publisher: BuildPublisher
 
@@ -63,8 +61,8 @@ os.environ.setdefault("BUILD_PUBLISHER_STORAGE_PATH", "__testing__")
 plugin = {
     "name": "gentoo-build-publisher",
     "version": __version__,
-    "app": "gentoo_build_publisher.apps.GentooBuildPublisherConfig",
-    "urls": "gentoo_build_publisher.gbp_urls",
+    "app": "gentoo_build_publisher.django.gentoo_build_publisher.apps.GentooBuildPublisherConfig",
+    "urls": "gentoo_build_publisher.django.gentoo_build_publisher.urls",
     "description": "Gentoo build server, binhost, ebuild repo server, and config manager",
     "graphql": "gentoo_build_publisher.graphql",
     "priority": 0,
