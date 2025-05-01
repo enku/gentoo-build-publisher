@@ -75,6 +75,7 @@ class RequireAPIKeyTestCase(TestCase):
         resolver = require_apikey(dummy_resolver)
 
         self.assertEqual(resolver(None, info), "permitted")
+        assert info.context["user"] == "test"
 
     def test_good_key_updates_records_last_use(self, fixtures: Fixtures) -> None:
         name = "test"

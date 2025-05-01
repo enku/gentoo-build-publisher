@@ -63,6 +63,7 @@ def require_apikey(fn: Resolver) -> Resolver:
                 if api_key.key == key:
                     api_key = replace(api_key, last_used=dt.datetime.now(tz=dt.UTC))
                     publisher.repo.api_keys.save(api_key)
+                    info.context["user"] = name
                     return fn(obj, info, **kwargs)
 
         raise UnauthorizedError(f"Unauthorized to resolve {info.path.key}")
