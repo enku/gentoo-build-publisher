@@ -287,5 +287,5 @@ def package_factory() -> Generator[str, None, None]:
     cats = ("dev-python", "media-libs", "app-admin", "net-im")
     pkgs = ("markdown", "mesa", "pycups", "gcc", "ffmpeg")
 
-    for cat, pkg in product(cats, pkgs):
+    for cat, pkg in product(cats, pkgs):  # pragma: no branch
         yield f"{cat}/{pkg}-1.0"
