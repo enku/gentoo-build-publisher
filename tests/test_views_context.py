@@ -139,13 +139,15 @@ class CreateMachineContextTests(TestCase):
     def test_average_storage(self, fixtures: Fixtures) -> None:
         total_size = 0
         build_size = 0
+        artifact_builder = fixtures.publisher.jenkins.artifact_builder
 
         for _ in range(3):
-            fixtures.publisher.jenkins.artifact_builder.advance(3600)
             build = BuildFactory()
             for _pkgs in range(3):
                 cpv = next(fixtures.pf)
-                pkg = fixtures.publisher.jenkins.artifact_builder.build(build, cpv)
+                pkg = artifact_builder.build(
+                    build, cpv, build_time=artifact_builder.timer + 3600
+                )
                 build_size += pkg.size
             total_size += build_size
             publisher.pull(build)
