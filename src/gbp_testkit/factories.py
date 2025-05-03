@@ -267,17 +267,13 @@ class ArtifactFactory:
         tarchive: tarfile.TarFile,
         arcname: str,
         content: bytes,
-        mtime: int | None = None,
+        mtime: int,
     ) -> None:
         file_obj = io.BytesIO(content)
         tar_info = tarfile.TarInfo(arcname)
         tar_info.size = len(content)
         tar_info.mode = 0o0644
-
-        if mtime is None:
-            tar_info.mtime = int(dt.datetime.utcnow().timestamp())
-        else:
-            tar_info.mtime = mtime
+        tar_info.mtime = mtime
 
         tarchive.addfile(tar_info, file_obj)
 
