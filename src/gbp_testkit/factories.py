@@ -264,10 +264,7 @@ class ArtifactFactory:
 
     @staticmethod
     def add_to_tarchive(
-        tarchive: tarfile.TarFile,
-        arcname: str,
-        content: bytes,
-        mtime: int,
+        tarchive: tarfile.TarFile, arcname: str, content: bytes, mtime: int
     ) -> None:
         file_obj = io.BytesIO(content)
         tar_info = tarfile.TarInfo(arcname)
