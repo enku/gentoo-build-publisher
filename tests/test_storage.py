@@ -295,12 +295,12 @@ class StorageGetPackagesTestCase(TestCase):
 
 @fixture("publisher")
 def timestamp_fixture(fixtures: Fixtures) -> int:
-    return int(fixtures.publisher.jenkins.artifact_builder.timestamp / 1000)
+    return int(publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
 @fixture("publisher")
 def artifacts(fixtures: Fixtures) -> list[Package]:
-    artifact_builder = fixtures.publisher.jenkins.artifact_builder
+    artifact_builder = publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
     a2 = artifact_builder.build(fixtures.build, "net-libs/nghttp2-1.47.0")
     a3 = artifact_builder.build(fixtures.build, "sys-libs/glibc-2.34-r9")

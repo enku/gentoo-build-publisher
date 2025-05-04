@@ -24,12 +24,12 @@ def lighthouse(fixtures: Fixtures) -> HttpResponse:
 # pylint: disable=unused-argument
 @fixture("publisher", "builds")
 def artifacts(fixtures: Fixtures) -> dict[str, Build]:
-    artifact_builder = fixtures.publisher.jenkins.artifact_builder
+    artifact_builder = publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
     artifact_builder.advance(-86400)
     artifact_builder.build(published, "sys-libs/pam-1.5.3")
-    fixtures.publisher.pull(published)
-    fixtures.publisher.publish(published)
+    publisher.pull(published)
+    publisher.publish(published)
     latest = latest_build(fixtures.builds, "lighthouse")
     artifact_builder.advance(86400)
     artifact_builder.build(latest, "www-client/firefox-121.0.1")

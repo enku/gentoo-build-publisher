@@ -8,6 +8,7 @@ from unittest_fixtures import Fixtures, given
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gbp_testkit.helpers import create_file
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import fs
 
@@ -29,7 +30,7 @@ class EnsureStorageRootTestCase(TestCase):
 class ExtractTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
-        byte_stream = fixtures.publisher.jenkins.artifact_builder.get_artifact(build)
+        byte_stream = publisher.jenkins.artifact_builder.get_artifact(build)
 
         path = fixtures.tmpdir / "test.tar.gz"
         with open(path, "wb") as outfile:

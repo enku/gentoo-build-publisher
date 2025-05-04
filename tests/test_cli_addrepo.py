@@ -6,7 +6,7 @@ from argparse import ArgumentParser, Namespace
 from unittest_fixtures import Fixtures, given
 
 from gbp_testkit import DjangoTestCase as TestCase
-from gentoo_build_publisher.build_publisher import BuildPublisher
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
@@ -26,7 +26,6 @@ class AddRepoTestCase(TestCase):
         self.assertEqual(exit_status, 0)
 
     def test_when_item_already_exists(self, fixtures: Fixtures) -> None:
-        publisher: BuildPublisher = fixtures.publisher
         publisher.jenkins.make_folder(ProjectPath("repos"))
         publisher.jenkins.create_repo_job(
             EbuildRepo(name="gentoo", url="foo", branch="master")

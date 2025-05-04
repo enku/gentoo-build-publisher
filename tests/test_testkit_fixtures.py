@@ -7,6 +7,8 @@ from unittest import TestCase
 from django.test import TestCase as DjangoTestCase
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given, where
 
+from gentoo_build_publisher import publisher
+
 
 @fixture("tmpdir")
 def cd(fixtures: Fixtures) -> FixtureContext[Path]:
@@ -63,7 +65,6 @@ class SettingsTests(TestCase):
 @given("publisher", "tmpdir")
 class PublisherTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        publisher = fixtures.publisher
         tmpdir = fixtures.tmpdir
 
         self.assertEqual("MockJenkins", type(publisher.jenkins).__name__)
@@ -202,7 +203,6 @@ class BuildsTests(TestCase):
 @where(builds__num_days=7)
 class PulledBuildsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        publisher = fixtures.publisher
         self.assertEqual(7, publisher.repo.build_records.count())
 
 

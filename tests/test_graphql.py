@@ -329,7 +329,7 @@ class LatestQueryTestCase(TestCase):
 def diff_query_builds(fixtures: Fixtures) -> dict[str, Build]:
     # Given the first build with tar-1.34
     left = BuildFactory()
-    artifact_builder = fixtures.publisher.jenkins.artifact_builder
+    artifact_builder = publisher.jenkins.artifact_builder
     old = artifact_builder.build(left, "app-arch/tar-1.34")
     publisher.pull(left)
 

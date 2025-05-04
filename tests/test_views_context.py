@@ -43,7 +43,7 @@ class CreateDashboardContextTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         lighthouse1 = BuildFactory(machine="lighthouse")
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
-            fixtures.publisher.jenkins.artifact_builder.build(lighthouse1, cpv)
+            publisher.jenkins.artifact_builder.build(lighthouse1, cpv)
         publisher.pull(lighthouse1)
 
         polaris1 = BuildFactory(machine="polaris")
@@ -118,7 +118,7 @@ class CreateDashboardContextTests(TestCase):
 @fixture("publisher")
 def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
     pf = package_factory()
-    ab: ArtifactFactory = fixtures.publisher.jenkins.artifact_builder
+    ab: ArtifactFactory = publisher.jenkins.artifact_builder
     ab.initial_packages = []
     ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
 
@@ -139,7 +139,7 @@ class CreateMachineContextTests(TestCase):
     def test_average_storage(self, fixtures: Fixtures) -> None:
         total_size = 0
         build_size = 0
-        artifact_builder = fixtures.publisher.jenkins.artifact_builder
+        artifact_builder = publisher.jenkins.artifact_builder
 
         for _ in range(3):
             build = BuildFactory()
@@ -153,7 +153,7 @@ class CreateMachineContextTests(TestCase):
             publisher.pull(build)
 
         now = localtime(
-            dt.datetime.fromtimestamp(fixtures.publisher.jenkins.artifact_builder.timer)
+            dt.datetime.fromtimestamp(publisher.jenkins.artifact_builder.timer)
         )
         input_context = self.input_context(now=now, machine=build.machine)
         ctx = create_machine_context(input_context)
@@ -162,15 +162,15 @@ class CreateMachineContextTests(TestCase):
 
     def test_packages_built_today(self, fixtures: Fixtures) -> None:
         for day in [1, 1, 1, 0]:
-            fixtures.publisher.jenkins.artifact_builder.advance(day * SECONDS_PER_DAY)
+            publisher.jenkins.artifact_builder.advance(day * SECONDS_PER_DAY)
             build = BuildFactory()
             for _ in range(3):
                 cpv = next(fixtures.pf)
-                fixtures.publisher.jenkins.artifact_builder.build(build, cpv)
+                publisher.jenkins.artifact_builder.build(build, cpv)
             publisher.pull(build)
 
         now = localtime(
-            dt.datetime.fromtimestamp(fixtures.publisher.jenkins.artifact_builder.timer)
+            dt.datetime.fromtimestamp(publisher.jenkins.artifact_builder.timer)
         )
         input_context = self.input_context(now=now, machine=build.machine)
         ctx = create_machine_context(input_context)
