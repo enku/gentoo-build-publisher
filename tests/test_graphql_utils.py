@@ -207,3 +207,19 @@ class LoadSchemaTests(TestCase):
 
         self.assertEqual(["This is a test"], type_defs_)
         self.assertEqual(["r1", "r2", "r3"], resolvers_)
+
+    @mock.patch("gentoo_build_publisher.graphql.utils.importlib.metadata.entry_points")
+    @mock.patch("gentoo_build_publisher.plugins.entry_points")
+    def test_no_graphql(
+        self, plugins_entry_points: mock.Mock, graphql_entry_points: mock.Mock
+    ) -> None:
+        ep = make_entry_point(
+            "test", {"name": "test", "app": "test.apps.TestAppConfig"}
+        )
+        plugins_entry_points.return_value.select.return_value.__iter__.return_value = (
+            iter([ep])
+        )
+        type_defs_, resolvers_ = load_schema()
+
+        self.assertEqual([], type_defs_)
+        self.assertEqual([], resolvers_)
