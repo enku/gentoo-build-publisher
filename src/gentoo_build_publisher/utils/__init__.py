@@ -10,7 +10,7 @@ import platform
 import re
 import string as stringlib
 from dataclasses import asdict, is_dataclass
-from functools import partial, singledispatch, wraps
+from functools import partial, wraps
 from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, ParamSpec, Self, TypeVar
 
@@ -274,21 +274,6 @@ def for_each_app(do: Callable[[str], _T]) -> list[_T]:
         return_values.append(do(app))
 
     return return_values
-
-
-@singledispatch
-def serializable(obj: Any) -> Any:
-    """Return obj as a (JSON) serializable value"""
-    if is_dataclass(obj):
-        return asdict(obj)
-
-    return obj
-
-
-@serializable.register(dt.datetime)
-@serializable.register(dt.date)
-def _(value: dt.date | dt.datetime) -> str:
-    return value.isoformat()
 
 
 _RESOLVERS: dict[type, dict[str, Callable[[Any], Any]]] = {}
