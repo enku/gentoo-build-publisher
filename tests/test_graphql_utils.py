@@ -133,6 +133,21 @@ class RequireAPIKeyTestCase(TestCase):
             str(context.exception), "Unauthorized to resolve dummy_resolver"
         )
 
+    def test_api_key_does_not_exist(self, fixtures: Fixtures) -> None:
+        name = "test"
+        encoded = encode_basic_auth_data(name, "bogus")
+        gql_context = {"request": Mock(headers={"Authorization": f"Basic {encoded}"})}
+        info = Mock(context=gql_context)
+        info.path.key = "dummy_resolver"
+        resolver = require_apikey(dummy_resolver)
+
+        with self.assertRaises(UnauthorizedError) as context:
+            resolver(None, info)
+
+        self.assertEqual(
+            str(context.exception), "Unauthorized to resolve dummy_resolver"
+        )
+
     def test_other_error(self, fixtures: Fixtures) -> None:
         name = "test"
         api_key = ApiKey(
