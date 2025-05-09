@@ -124,17 +124,12 @@ class MockJenkinsSession(Session):
         url_obj = URL(url)
 
         if url_obj.path == "/pluginManager/installNecessaryPlugins":
-            try:
-                assert "data" in kwargs
-                payload = kwargs["data"]
+            if payload := kwargs.get("data"):
                 tree = ET.fromstring(payload)
                 install = tree.find("install")
-                assert install is not None
-                assert "plugin" in install.attrib
-            except AssertionError:
-                return self.response(500)
-
-            return self.response(200)
+                if install is not None and "plugin" in install.attrib:
+                    return self.response(200)
+            return self.response(500)
 
         if url_obj.name == "createItem":
             path = url_obj.parent.path
