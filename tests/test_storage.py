@@ -16,6 +16,7 @@ from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
+    INVALID_TEST_PATH,
     Storage,
     make_package_from_lines,
     make_packages,
@@ -36,6 +37,25 @@ TEST_SETTINGS = Settings(
 
 
 # pylint: disable=unused-argument
+@given("tmpdir")
+class StorageInitTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        root = fixtures.tmpdir / "root"
+
+        storage = Storage(root)
+
+        self.assertEqual(root, storage.root)
+
+        contents = set(i.name for i in root.iterdir())
+        self.assertEqual({"tmp", *(content.value for content in Content)}, contents)
+
+    def test_test_path(self, fixtures: Fixtures) -> None:
+        storage = Storage(INVALID_TEST_PATH)
+
+        self.assertEqual(INVALID_TEST_PATH, storage.root)
+        self.assertFalse(Path(storage.root).exists())
+
+
 @given("environ", "tmpdir")
 class StorageFromSettings(TestCase):
     options = {"environ": {}, "environ_clear": False}
