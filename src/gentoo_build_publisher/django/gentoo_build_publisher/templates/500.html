@@ -1,0 +1,26 @@
+{% extends "gentoo_build_publisher/base.html" %}
+{% load static %}
+{% block main %}
+{% load gbp %}
+<div class="row">
+  {% roundrect "Five Hundred" "500" gradient_colors.0 %}
+</div>
+<div class="row">
+    <h3>This isn't working out for you, is it?</h3>
+    <p>
+    This probably is not the page you were expecting. I'm sorry but something
+    unexpected happened that results in your having to make a decision:
+    </p>
+
+    <ul class="list-group">
+      <li class="list-group-item"><a href=".">Try again</a> later, or</li>
+      <li class="list-group-item">Submit a <a href="https://github.com/enku/gentoo-build-publisher/issues">bug report</a></li>
+    </ul>
+
+    <p>The choice is yours.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+  {{ gradient_colors|json_script:'gradientColors' }}
+  <script src="{% static 'gbp/machine.js' %}"></script>
+  {% endblock %}
