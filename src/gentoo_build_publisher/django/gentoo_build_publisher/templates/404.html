@@ -1,0 +1,21 @@
+{% extends "gentoo_build_publisher/base.html" %}
+{% load static %}
+{% block main %}
+{% load gbp %}
+<div class="row">
+  {% roundrect "Not Found" "404" gradient_colors.0 %}
+</div>
+<div class="row">
+    <h3>It's not you, it's me.</h3>
+    <p>
+    I know this isn't what you were looking for. I'm afraid I just can't be
+    what you are looking for. Perhaps it's best if you
+    <a href="{% url 'dashboard' %}">start from the beginning</a> and pretend this
+    short-lived thing we had never even happened.
+    </p>
+</div>
+{% endblock %}
+{% block scripts %}
+  {{ gradient_colors|json_script:'gradientColors' }}
+  <script src="{% static 'gbp/machine.js' %}"></script>
+{% endblock %}
