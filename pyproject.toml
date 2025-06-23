@@ -80,6 +80,9 @@ init-hook = "import sys; sys.path.insert(0, 'tests')"
 bad-functions = "print"
 ignore = ["/migrations/"]
 
+[tool.pylint.variables]
+init-import = "yes"
+
 [tool.flake8]
 max-line-length = 88
 
