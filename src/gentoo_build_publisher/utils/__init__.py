@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import base64
-import datetime as dt
 import importlib.metadata
 import importlib.resources
 import platform
 import re
 import string as stringlib
-from dataclasses import asdict, is_dataclass
 from functools import partial, wraps
 from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, ParamSpec, Self, TypeVar
@@ -19,7 +17,6 @@ from cryptography.fernet import Fernet
 from yarl import URL
 
 from gentoo_build_publisher import plugins
-from gentoo_build_publisher.utils import fs, string
 
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_IDENTIFIER_START = {".", "-"}
