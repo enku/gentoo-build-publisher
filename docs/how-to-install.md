@@ -250,7 +250,7 @@ Tell Gentoo Build Publisher to create a ebuild repo job from the official
 Gentoo repo.
 
 ```sh
-gbp addrepo gentoo https://anongit.gentoo.org/git/repo/gentoo.git
+gbp addrepo --branch stable gentoo https://github.com/gentoo-mirror/gentoo.git
 ```
 
 Now that we have a Gentoo repo job. Let's give it a whirl.  From the Jenkins
