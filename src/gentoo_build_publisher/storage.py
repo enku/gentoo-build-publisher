@@ -113,15 +113,18 @@ class Storage:
 
             fs.save_stream(byte_stream, artifact_file)
             fs.extract(Path(artifact_file.name), dirpath)
-
-            for item in Content:
-                src = dirpath / item.value
-                dst = self.get_path(build, item)
-                link_dest = self.get_path(previous, item) if previous else None
-
-                fs.copy_path(src, dst, link_dest)
+            self._copy_contents(build, dirpath, previous)
 
         logger.info("Extracted build: %s", build)
+
+    def _copy_contents(self, build: Build, source: Path, previous: Build | None) -> None:
+        """Copy the build's extracted contents, at source, into Storage"""
+        for item in Content:
+            src = source / item.value
+            dst = self.get_path(build, item)
+            link_dest = self.get_path(previous, item) if previous else None
+
+            fs.copy_path(src, dst, link_dest)
 
     def pulled(self, build: Build) -> bool:
         """Returns True if build has been pulled
