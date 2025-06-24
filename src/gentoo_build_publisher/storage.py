@@ -117,7 +117,9 @@ class Storage:
 
         logger.info("Extracted build: %s", build)
 
-    def _copy_contents(self, build: Build, source: Path, previous: Build | None) -> None:
+    def _copy_contents(
+        self, build: Build, source: Path, previous: Build | None
+    ) -> None:
         """Copy the build's extracted contents, at source, into Storage"""
         for item in Content:
             src = source / item.value
