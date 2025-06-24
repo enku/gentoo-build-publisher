@@ -21,7 +21,7 @@ from gentoo_build_publisher.types import (
     Package,
     PackageMetadata,
 )
-from gentoo_build_publisher.utils import fs
+from gentoo_build_publisher.utils import fs, string
 
 INVALID_TEST_PATH = "__testing__"
 GBP_METADATA_FILENAME = "gbp.json"
@@ -334,7 +334,7 @@ def make_package_from_lines(lines: Iterable[str]) -> Package:
     """Given the appropriate lines from Packages, return a Package object"""
     package_info = {
         name.lower(): value.rstrip()
-        for (name, value) in (utils.string.namevalue(line, ":") for line in lines)
+        for (name, value) in (string.namevalue(line, ":") for line in lines)
     }
 
     try:
