@@ -16,6 +16,7 @@ function buildsOverTimeChart() {
     data: { labels: chartDays, datasets },
     responsive: true,
     options: {
+      animations: false,
       plugins: { legend: { display: false } },
       scales: { y: { ticks: { stepSize: 1 } } },
     },
