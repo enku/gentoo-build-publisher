@@ -64,6 +64,7 @@ class MachineInfoTestCase(TestCase):
     def test_tags_property_shows_tags_across_machines_builds(
         self, fixtures: Fixtures
     ) -> None:
+        # Given the tagged builds for "foo"
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
             publisher.pull(build)
@@ -71,17 +72,16 @@ class MachineInfoTestCase(TestCase):
         publisher.tag(builds[-1], "testing")
         publisher.tag(builds[0], "stable")
 
+        # When we get MachineInfo for foo
         machine_info = MachineInfo("foo")
 
+        # Then it has the the tags for all builds
         self.assertEqual(machine_info.tags, ["stable", "testing"])
 
 
 @fixture()
-def builds_fixture(_fixtures: Fixtures) -> list[Build]:
-    # So for this case let's say we have 4 builds.  None have built timestamps.  The
-    # 3rd one is published (but has no built timestamp) and the first 2 are pulled
-    # but not published:
-    builds: list[Build] = BuildFactory.create_batch(4)
+def builds_fixture(_fixtures: Fixtures, count: int = 4) -> list[Build]:
+    builds: list[Build] = BuildFactory.create_batch(count)
     return builds
 
 
