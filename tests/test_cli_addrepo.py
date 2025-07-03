@@ -5,8 +5,8 @@ from argparse import ArgumentParser, Namespace
 
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as TestCase
-from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath

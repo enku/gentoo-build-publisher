@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from unittest_fixtures import Fixtures, given
 
-from gbp_testkit import fixtures as testkit
+import gbp_testkit.fixtures as testkit
 from gbp_testkit.helpers import print_command
 
 

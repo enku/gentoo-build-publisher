@@ -10,8 +10,8 @@ from unittest.mock import Mock, patch
 from django.conf import settings
 from unittest_fixtures import Fixtures, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
-from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.cli import apikey

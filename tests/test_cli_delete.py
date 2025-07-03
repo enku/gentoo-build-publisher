@@ -5,8 +5,8 @@ from argparse import ArgumentParser, Namespace
 
 from unittest_fixtures import Fixtures, fixture, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
-from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build

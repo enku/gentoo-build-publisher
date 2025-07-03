@@ -6,8 +6,8 @@ from unittest import mock
 
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as TestCase
-from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo

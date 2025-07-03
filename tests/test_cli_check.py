@@ -8,8 +8,8 @@ from argparse import ArgumentParser, Namespace
 
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
-from gbp_testkit import fixtures as testkit
 from gbp_testkit.factories import BuildFactory
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
