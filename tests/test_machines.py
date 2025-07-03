@@ -1,7 +1,7 @@
 """Tests for the machines module"""
 
 # pylint: disable=missing-docstring
-from unittest_fixtures import Fixtures, fixture, given
+from unittest_fixtures import Fixtures, fixture, given, where
 
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
@@ -11,15 +11,16 @@ from gentoo_build_publisher.types import Build
 
 
 # pylint: disable=unused-argument
-@given("publisher")
+@given("publisher", build1="build", build2="build")
+@where(build1__machine="foo", build2__machine="foo")
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingy"""
 
     def test(self, fixtures: Fixtures) -> None:
         # Given the "foo" builds, one of which is published
-        first_build = BuildFactory(machine="foo")
+        first_build = fixtures.build1
         publisher.publish(first_build)
-        latest_build = BuildFactory(machine="foo")
+        latest_build = fixtures.build2
         publisher.pull(latest_build)
 
         # Given the "other" builds

@@ -184,8 +184,8 @@ def client(_fixtures: Fixtures) -> Client:
 
 
 @fixture()
-def build(_fixtures: Fixtures) -> Build:
-    return BuildFactory()
+def build(_fixtures: Fixtures, machine: str = "babette") -> Build:
+    return BuildFactory(machine=machine)
 
 
 @fixture()
