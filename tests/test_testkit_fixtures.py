@@ -7,10 +7,11 @@ from unittest import TestCase
 from django.test import TestCase as DjangoTestCase
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given, where
 
+import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import publisher
 
 
-@fixture("tmpdir")
+@fixture(testkit.tmpdir)
 def cd(fixtures: Fixtures) -> FixtureContext[Path]:
     """Changes to the given directory (tmpdir by default)"""
     cwd = cwd = os.getcwd()
@@ -23,7 +24,7 @@ class TmpdirTests(TestCase):
     def test(self) -> None:
         tmpdir = None
 
-        @given("tmpdir")
+        @given(testkit.tmpdir)
         class MyTest(TestCase):
             def test_it(self, fixtures: Fixtures) -> None:
                 nonlocal tmpdir
@@ -42,7 +43,7 @@ class EnvironTests(TestCase):
     def test(self) -> None:
         self.assertNotIn("ENVIRON_TEST", os.environ)
 
-        @given("environ")
+        @given(testkit.environ)
         @where(environ={"ENVIRON_TEST": "yes"})
         class MyTest(TestCase):
             def test_it(self, fixtures: Fixtures) -> None:
@@ -55,14 +56,14 @@ class EnvironTests(TestCase):
         self.assertNotIn("ENVIRON_TEST", os.environ)
 
 
-@given("settings")
+@given(testkit.settings)
 @where(environ={"BUILD_PUBLISHER_JENKINS_BASE_URL": "blablabla"})
 class SettingsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         self.assertEqual(fixtures.settings.JENKINS_BASE_URL, "blablabla")
 
 
-@given("publisher", "tmpdir")
+@given(testkit.publisher, testkit.tmpdir)
 class PublisherTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         tmpdir = fixtures.tmpdir
@@ -71,18 +72,18 @@ class PublisherTests(TestCase):
         self.assertEqual(tmpdir / "root", publisher.storage.root)
 
 
-@given("gbp")
+@given(testkit.gbp)
 class GBPTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         gbp = fixtures.gbp
         gbp.machine_names()
 
 
-@given("tmpdir", "environ", cd)
+@given(testkit.tmpdir, testkit.environ, cd)
 @where(environ={"SAVE_VIRTUAL_CONSOLE": "1"})
 class ConsoleTestsWithSave(TestCase):
     def test_having_save_enabled(self, fixtures: Fixtures) -> None:
-        @given("console")
+        @given(testkit.console)
         class MyTest(TestCase):
             def test_it(self, fixtures: Fixtures) -> None:
                 console = fixtures.console
@@ -98,12 +99,12 @@ class ConsoleTestsWithSave(TestCase):
         self.assertEqual(len(screenshots), 1)
 
 
-@given("tmpdir", "environ", cd)
+@given(testkit.tmpdir, testkit.environ, cd)
 class ConsoleTestsWithoutSave(TestCase):
     def test_having_save_disabled(self, fixtures: Fixtures) -> None:
         os.environ.pop("SAVE_VIRTUAL_CONSOLE", None)
 
-        @given("console")
+        @given(testkit.console)
         class MyTest(TestCase):
             def test_it(self, fixtures: Fixtures) -> None:
                 console = fixtures.console
@@ -118,7 +119,7 @@ class ConsoleTestsWithoutSave(TestCase):
         self.assertEqual(len(screenshots), 0)
 
 
-@given("api_keys")
+@given(testkit.api_keys)
 @where(api_keys__names=["ApiKey1", "TestKey2", "PlaceholderKey3", "TestKey4"])
 class APIKeysTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
@@ -129,21 +130,21 @@ class APIKeysTests(TestCase):
         )
 
 
-@given("records_db")
+@given(testkit.records_db)
 class RecordsDBTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         records_db = fixtures.records_db
         self.assertEqual("RecordDB", type(records_db).__name__)
 
 
-@given("build_model")
+@given(testkit.build_model)
 class BuildModelTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
         build_model = fixtures.build_model
         self.assertEqual("BuildModel", type(build_model).__name__)
 
 
-@given("record")
+@given(testkit.record)
 @where(records_db__backend="django", record__logs="test")
 class RecordTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
@@ -152,14 +153,14 @@ class RecordTests(DjangoTestCase):
         self.assertEqual("test", record.logs)
 
 
-@given("clock")
+@given(testkit.clock)
 class ClockTestsNow(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         now = dt.datetime.now(tz=dt.UTC)
         self.assertLessEqual(fixtures.clock, now)
 
 
-@given("clock")
+@given(testkit.clock)
 @where(clock=dt.datetime(2038, 1, 19, 3, 14, 7, tzinfo=dt.UTC))
 class ClockTestsNowPassedParam(TestCase):
     def test(self, fixtures: Fixtures) -> None:
@@ -168,7 +169,7 @@ class ClockTestsNowPassedParam(TestCase):
         )
 
 
-@given("client")
+@given(testkit.client)
 class ClientTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         client = fixtures.client
@@ -178,14 +179,14 @@ class ClientTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@given("build")
+@given(testkit.build)
 class BuildTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         self.assertEqual("Build", type(build).__name__)
 
 
-@given("builds")
+@given(testkit.builds)
 @where(
     builds__machines=["ApiKey1", "TestKey2", "PlaceholderKey3", "TestKey4"],
     builds__num_days=7,
@@ -199,21 +200,21 @@ class BuildsTests(TestCase):
             self.assertEqual(7, len(v))
 
 
-@given("pulled_builds", "publisher")
+@given(testkit.pulled_builds, testkit.publisher)
 @where(builds__num_days=7)
 class PulledBuildsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         self.assertEqual(7, publisher.repo.build_records.count())
 
 
-@given("storage")
+@given(testkit.storage)
 class StorageTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         storage = fixtures.storage
         self.assertEqual("Storage", type(storage).__name__)
 
 
-@given("jenkins")
+@given(testkit.jenkins)
 class JenkinsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         jenkins = fixtures.jenkins

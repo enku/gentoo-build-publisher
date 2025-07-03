@@ -8,6 +8,7 @@ from pathlib import Path
 from django.test import TestCase
 from unittest_fixtures import Fixtures, given, parametrized
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildRecordFactory
 from gentoo_build_publisher.records import (
     ApiKeyDB,
@@ -27,7 +28,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 BACKENDS = [["django"], ["memory"]]
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class RecordDBTestCase(TestCase):
     def backend(self, backend_name: str) -> RecordDB:
         settings = Settings(

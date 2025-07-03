@@ -9,6 +9,7 @@ from pathlib import Path
 
 from unittest_fixtures import Fixtures, fixture, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
 from gbp_testkit.helpers import MockJenkins
@@ -37,7 +38,7 @@ TEST_SETTINGS = Settings(
 
 
 # pylint: disable=unused-argument
-@given("tmpdir")
+@given(testkit.tmpdir)
 class StorageInitTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         root = fixtures.tmpdir / "root"
@@ -56,7 +57,7 @@ class StorageInitTests(TestCase):
         self.assertFalse(Path(storage.root).exists())
 
 
-@given("environ", "tmpdir")
+@given(testkit.environ, testkit.tmpdir)
 class StorageFromSettings(TestCase):
     options = {"environ": {}, "environ_clear": False}
 
@@ -73,13 +74,13 @@ class StorageFromSettings(TestCase):
         self.assertEqual(storage.root, fixtures.tmpdir)
 
 
-@fixture("tmpdir")
+@fixture(testkit.tmpdir)
 def storage_fixture(fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
-@fixture("tmpdir")
+@fixture(testkit.tmpdir)
 def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
@@ -87,7 +88,7 @@ def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     return MockJenkins.from_settings(settings)
 
 
-@given("build", storage_fixture, jenkins_fixture)
+@given(testkit.build, storage_fixture, jenkins_fixture)
 class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
 
@@ -145,7 +146,7 @@ class StorageDownloadArtifactTestCase(TestCase):
         self.assertIs(orphan.exists(), False, orphan)
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class StoragePublishTestCase(TestCase):
     """Tests for Storage.publish"""
 
@@ -165,7 +166,9 @@ class StoragePublishTestCase(TestCase):
             storage.publish(build)
 
 
-@given("environ", "storage", "build", "settings", "jenkins")
+@given(
+    testkit.environ, testkit.storage, testkit.build, testkit.settings, testkit.jenkins
+)
 class StoragePublishedTestCase(TestCase):
     """Tests for Storage.published"""
 
@@ -205,7 +208,7 @@ class StoragePublishedTestCase(TestCase):
         self.assertFalse(fixtures.storage.published(fixtures.build))
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class StorageDeleteTestCase(TestCase):
     """Tests for Storage.delete"""
 
@@ -230,7 +233,7 @@ class StorageDeleteTestCase(TestCase):
                 self.assertIs(os.path.exists(directory), False)
 
 
-@given("build", "storage", jenkins_fixture)
+@given(testkit.build, testkit.storage, jenkins_fixture)
 class StorageExtractArtifactTestCase(TestCase):
     """Tests for Storage.extract_artifact"""
 
@@ -281,7 +284,7 @@ class StorageExtractArtifactTestCase(TestCase):
         self.assertEqual(package_index.stat().st_nlink, 2)
 
 
-@given("publisher", "build")
+@given(testkit.publisher, testkit.build)
 class StorageGetPackagesTestCase(TestCase):
     """tests for the Storage.get_packages() method"""
 
@@ -313,12 +316,12 @@ class StorageGetPackagesTestCase(TestCase):
             publisher.storage.get_packages(fixtures.build)
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def timestamp_fixture(fixtures: Fixtures) -> int:
     return int(publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def artifacts(fixtures: Fixtures) -> list[Package]:
     artifact_builder = publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
@@ -329,7 +332,7 @@ def artifacts(fixtures: Fixtures) -> list[Package]:
     return [a1, a2, a3]
 
 
-@given("build", "publisher", timestamp_fixture, artifacts)
+@given(testkit.build, testkit.publisher, timestamp_fixture, artifacts)
 class StorageGetMetadataTestCase(TestCase):
     """tests for the Storage.get_metadata() method"""
 
@@ -388,7 +391,7 @@ class StorageGetMetadataTestCase(TestCase):
         )
 
 
-@fixture("publisher", "build")
+@fixture(testkit.publisher, testkit.build)
 def path_fixture(fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
@@ -399,7 +402,7 @@ def path_fixture(fixtures: Fixtures) -> Path:
     return metadata
 
 
-@given("publisher", "build", path_fixture)
+@given(testkit.publisher, testkit.build, path_fixture)
 class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
 
@@ -446,7 +449,7 @@ class StorageSetMetadataTestCase(TestCase):
         self.assertEqual(result, expected)
 
 
-@given("publisher")
+@given(testkit.publisher)
 class StorageReposTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -465,7 +468,7 @@ class StorageReposTestCase(TestCase):
         self.assertEqual(context.exception.args, ("The build has not been pulled",))
 
 
-@given("publisher")
+@given(testkit.publisher)
 class StorageTaggingTestCase(TestCase):
     def test_can_create_tagged_directory_symlinks(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -598,7 +601,7 @@ class StorageTaggingTestCase(TestCase):
         self.assertEqual(expected, path)
 
 
-@given("publisher")
+@given(testkit.publisher)
 class StorageResolveTagTestCase(TestCase):
     """Tests for the Storage.resolve_tag method"""
 
@@ -693,7 +696,7 @@ class MakePackageFromLinesTestCase(TestCase):
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
 
-@given("publisher")
+@given(testkit.publisher)
 class MakePackagesTestCase(TestCase):
     """Tests for the make_packages method"""
 

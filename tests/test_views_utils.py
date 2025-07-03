@@ -8,6 +8,7 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
 from gbp_testkit.factories import (
     ArtifactFactory,
@@ -28,7 +29,7 @@ from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils.time import localtime
 
 
-@given("publisher")
+@given(testkit.publisher)
 class GetMetadataTestCase(TestCase):
     """This is just cached Storage.get_metadata()"""
 
@@ -72,7 +73,7 @@ class GetQueryValueFromRequestTests(TestCase):
         self.assertEqual(chart_days, 10)
 
 
-@given("publisher")
+@given(testkit.publisher)
 class StatsCollectorTests(TestCase):
     def stats_collector(self) -> StatsCollector:
         return StatsCollector(QuickCache())
@@ -259,7 +260,7 @@ class ExperimentalMarkerTests(DjangoTestCase):
             self.assertEqual(response.status_code, 200)
 
 
-@given("publisher")
+@given(testkit.publisher)
 class GetPackageURLTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
         builder = publisher.jenkins.artifact_builder  # type: ignore

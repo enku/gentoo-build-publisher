@@ -11,6 +11,7 @@ from django.conf import settings
 from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import DjangoTestCase, TestCase
+from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.cli import apikey
@@ -19,7 +20,7 @@ from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 
 
-@given("console")
+@given(testkit.console)
 class GBPCreateTests(DjangoTestCase):
     def test_create_api_key_with_given_name(self, fixtures: Fixtures) -> None:
         console = fixtures.console
@@ -110,7 +111,7 @@ class GBPCreateTests(DjangoTestCase):
         self.assertEqual(console.out.file.getvalue(), "thisisatest\n")
 
 
-@given("console")
+@given(testkit.console)
 @patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
 class GBPListTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
@@ -149,7 +150,7 @@ class GBPListTests(DjangoTestCase):
         self.assertEqual(console.out.file.getvalue(), "No API keys registered.\n")
 
 
-@given("tmpdir", "publisher", "api_keys", "console")
+@given(testkit.tmpdir, testkit.publisher, testkit.api_keys, testkit.console)
 @where(api_keys__names=["this", "that", "the", "other"])
 class GBPDeleteTests(DjangoTestCase):
     def test_delete(self, fixtures: Fixtures) -> None:
@@ -182,7 +183,7 @@ class GBPDeleteTests(DjangoTestCase):
         self.assertEqual(console.err.file.getvalue(), "No key exists with that name.\n")
 
 
-@given("console")
+@given(testkit.console)
 class GBPAPIKeyTests(TestCase):
     def test_unknown_action(self, fixtures: Fixtures) -> None:
         console = fixtures.console

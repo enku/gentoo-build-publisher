@@ -3,6 +3,7 @@
 # pylint: disable=missing-docstring
 from unittest_fixtures import Fixtures, fixture, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gentoo_build_publisher import publisher
@@ -11,7 +12,7 @@ from gentoo_build_publisher.types import Build
 
 
 # pylint: disable=unused-argument
-@given("publisher", build1="build", build2="build")
+@given(testkit.publisher, build1=testkit.build, build2=testkit.build)
 @where(build1__machine="foo", build2__machine="foo")
 class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingy"""
@@ -85,7 +86,7 @@ def builds_fixture(_fixtures: Fixtures, count: int = 4) -> list[Build]:
     return builds
 
 
-@fixture("publisher", builds_fixture)
+@fixture(testkit.publisher, builds_fixture)
 def machine_info_fixture(fixtures: Fixtures) -> MachineInfo:
     machine = fixtures.builds[0].machine
 
@@ -101,7 +102,7 @@ def machine_info_fixture(fixtures: Fixtures) -> MachineInfo:
     return MachineInfo(fixtures.builds[0].machine)
 
 
-@given(builds_fixture, "publisher", machine_info_fixture)
+@given(builds_fixture, testkit.publisher, machine_info_fixture)
 class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""
 

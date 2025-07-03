@@ -6,12 +6,13 @@ from argparse import ArgumentParser, Namespace
 from unittest_fixtures import Fixtures, fixture, given, where
 
 from gbp_testkit import TestCase
+from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build
 
 
-@fixture("builds")
+@fixture(testkit.builds)
 def build_fixture(fixtures: Fixtures) -> Build:
     builds: list[Build] = fixtures.builds
     return builds[0]
@@ -28,7 +29,12 @@ def force_args_fixture(fixtures: Fixtures) -> Namespace:
 
 
 @given(
-    "pulled_builds", "console", "gbp", build_fixture, args_fixture, force_args_fixture
+    args_fixture,
+    build_fixture,
+    force_args_fixture,
+    testkit.console,
+    testkit.gbp,
+    testkit.pulled_builds,
 )
 @where(builds__per_day=5)
 class GBPChkTestCase(TestCase):

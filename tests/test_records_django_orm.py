@@ -6,6 +6,7 @@ from dataclasses import replace
 
 from unittest_fixtures import Fixtures, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as TestCase
 from gbp_testkit.factories import BuildModelFactory, BuildRecordFactory
 from gentoo_build_publisher.django.gentoo_build_publisher.models import (
@@ -19,7 +20,7 @@ from gentoo_build_publisher.types import Build
 
 
 # pylint: disable=too-many-public-methods
-@given("build_model", "records_db", "record")
+@given(testkit.build_model, testkit.records_db, testkit.record)
 @where(
     records_db__backend="django",
     build_model__submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),

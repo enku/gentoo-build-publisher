@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 from unittest_fixtures import Fixtures, fixture, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import (
     ArtifactFactory,
@@ -27,7 +28,7 @@ from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 
 
-@given("publisher")
+@given(testkit.publisher)
 class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
 
@@ -115,7 +116,7 @@ class CreateDashboardContextTests(TestCase):
         self.assertEqual(len(ctx["built_recently"]), 2)
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
     pf = package_factory()
     ab: ArtifactFactory = publisher.jenkins.artifact_builder
@@ -125,7 +126,7 @@ def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
     return pf
 
 
-@given("publisher", pf_fixture)
+@given(testkit.publisher, pf_fixture)
 class CreateMachineContextTests(TestCase):
     def input_context(self, **kwargs: Any) -> MachineInputContext:
         defaults: dict[str, Any] = {

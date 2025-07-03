@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given
 from yarl import URL
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS
 from gentoo_build_publisher import publisher
@@ -19,7 +20,7 @@ from gentoo_build_publisher.types import Build, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class BuildPublisherFromSettingsTestCase(TestCase):
     def test_from_settings_returns_publisher_with_given_settings(
         self, fixtures: Fixtures
@@ -38,7 +39,7 @@ class BuildPublisherFromSettingsTestCase(TestCase):
         self.assertIsInstance(pub.repo.build_records, RecordDB)
 
 
-@given("build", "publisher")
+@given(testkit.build, testkit.publisher)
 class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
     def test_publish(self, fixtures: Fixtures) -> None:
         """.publish should publish the build artifact"""
@@ -291,7 +292,7 @@ def publish_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:
     yield events
 
 
-@given("publisher", prepull_events, postpull_events, publish_events)
+@given(testkit.publisher, prepull_events, postpull_events, publish_events)
 class DispatcherTestCase(TestCase):
     maxDiff = None
 
@@ -349,7 +350,7 @@ def builds_fixture(_fixtures: Fixtures) -> list[Build]:
     return builds
 
 
-@given("publisher")
+@given(testkit.publisher)
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 

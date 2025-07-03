@@ -9,6 +9,7 @@ from argparse import ArgumentParser, Namespace
 from unittest_fixtures import Fixtures, given
 
 from gbp_testkit import TestCase
+from gbp_testkit import fixtures as testkit
 from gbp_testkit.factories import BuildFactory
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import check
@@ -17,7 +18,7 @@ from gentoo_build_publisher.types import Build, Content
 # pylint: disable=unused-argument
 
 
-@given("tmpdir", "publisher", "gbp", "console")
+@given(testkit.tmpdir, testkit.publisher, testkit.gbp, testkit.console)
 class GBPChkTestCase(TestCase):
     def build_with_missing_content(self, content: Content) -> Build:
         build = BuildFactory()

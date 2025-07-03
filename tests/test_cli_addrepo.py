@@ -6,13 +6,14 @@ from argparse import ArgumentParser, Namespace
 from unittest_fixtures import Fixtures, given
 
 from gbp_testkit import DjangoTestCase as TestCase
+from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addrepo
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
 
 
-@given("publisher", "gbp", "console")
+@given(testkit.publisher, testkit.gbp, testkit.console)
 class AddRepoTestCase(TestCase):
     def test_calls_graphql_with_the_expected_args(self, fixtures: Fixtures) -> None:
         args = Namespace(

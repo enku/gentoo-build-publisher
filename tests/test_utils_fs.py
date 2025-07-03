@@ -5,6 +5,7 @@ import shutil
 
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gbp_testkit.helpers import create_file
@@ -13,7 +14,7 @@ from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import fs
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class EnsureStorageRootTestCase(TestCase):
     def test_creates_dir_if_not_exists(self, fixtures: Fixtures) -> None:
         shutil.rmtree(fixtures.tmpdir)
@@ -26,7 +27,7 @@ class EnsureStorageRootTestCase(TestCase):
             self.assertIs(fixtures.tmpdir.joinpath(subdir).is_dir(), True)
 
 
-@given("tmpdir", "publisher")
+@given(testkit.tmpdir, testkit.publisher)
 class ExtractTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -46,7 +47,7 @@ class ExtractTestCase(TestCase):
             self.assertIs(path.is_dir(), True)
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 
@@ -90,7 +91,7 @@ class QuickCheckTestCase(TestCase):
         self.assertIs(result, False)
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class SymlinkTestCase(TestCase):
     def test_raise_exception_when_symlink_target_exists_and_not_symlink(
         self, fixtures: Fixtures
@@ -109,7 +110,7 @@ class SymlinkTestCase(TestCase):
         self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class CheckSymlink(TestCase):
     def test_good_symlink(self, fixtures: Fixtures) -> None:
         target = create_file(fixtures.tmpdir / "target")
@@ -133,7 +134,7 @@ class CheckSymlink(TestCase):
         self.assertIs(fs.check_symlink(str(name), "bogus"), False)
 
 
-@given("tmpdir")
+@given(testkit.tmpdir)
 class CDTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         tmpdir = str(fixtures.tmpdir)

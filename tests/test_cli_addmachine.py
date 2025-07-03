@@ -7,12 +7,13 @@ from unittest import mock
 from unittest_fixtures import Fixtures, given
 
 from gbp_testkit import DjangoTestCase as TestCase
+from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 
-@given("gbp", "console")
+@given(testkit.gbp, testkit.console)
 class AddMachineTestCase(TestCase):
     def test_calls_jenkins_with_the_expected_args(self, fixtures: Fixtures) -> None:
         # Given the command-line args

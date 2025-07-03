@@ -8,6 +8,7 @@ from django import urls
 from django.http import HttpResponse
 from unittest_fixtures import Fixtures, fixture, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as BaseTestCase
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build
@@ -15,14 +16,14 @@ from gentoo_build_publisher.types import Build
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
-@fixture("client")
+@fixture(testkit.client)
 def lighthouse(fixtures: Fixtures) -> HttpResponse:
     response: HttpResponse = fixtures.client.get("/machines/lighthouse/")
     return response
 
 
 # pylint: disable=unused-argument
-@fixture("publisher", "builds")
+@fixture(testkit.publisher, testkit.builds)
 def artifacts(fixtures: Fixtures) -> dict[str, Build]:
     artifact_builder = publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
@@ -38,7 +39,7 @@ def artifacts(fixtures: Fixtures) -> dict[str, Build]:
     return {"published": published, "latest": latest}
 
 
-@given("publisher", "builds")
+@given(testkit.publisher, testkit.builds)
 @where(
     records_db__backend="memory",
     builds__machines=["babette", "lighthouse", "web"],
@@ -149,7 +150,7 @@ class BinReposDotConfTestCase(TestCase):
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
 
 
-@given("publisher", "client", "builds", artifacts, lighthouse)
+@given(testkit.publisher, testkit.client, testkit.builds, artifacts, lighthouse)
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 
@@ -212,7 +213,7 @@ class BinPkgViewTests(TestCase):
         self.assertEqual(response.status_code, 404, response.content)
 
 
-@given("plugins")
+@given(testkit.plugins)
 class AboutViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         client = self.client

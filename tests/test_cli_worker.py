@@ -4,13 +4,14 @@ from unittest import TestCase, mock
 
 from unittest_fixtures import Fixtures, given, where
 
+import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher.cli import worker
 from gentoo_build_publisher.settings import Settings
 
 # pylint: disable=unused-argument
 
 
-@given("environ", "tmpdir", "publisher", "gbp", "console")
+@given(testkit.environ, testkit.tmpdir, testkit.publisher, testkit.gbp, testkit.console)
 @where(environ={"BUILD_PUBLISHER_WORKER_BACKEND": "test"})
 class WorkerTests(TestCase):
     """Tests for the worker gbpcli subcommand"""

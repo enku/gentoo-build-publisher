@@ -6,6 +6,7 @@ from unittest import mock
 
 from unittest_fixtures import Fixtures, fixture, given, parametrized
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
@@ -30,7 +31,7 @@ def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
     test_case.assertEqual(data, expected)
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
@@ -197,7 +198,7 @@ class BuildQueryTestCase(TestCase):
         self.assertEqual(result["errors"][0]["path"], ["build", "packagesBuilt"])
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class BuildsQueryTestCase(TestCase):
     """Tests for the builds query"""
 
@@ -294,7 +295,7 @@ def latest(_fixtures: Fixtures) -> Build:
     return latest_build
 
 
-@given("tmpdir", "publisher", latest, "client")
+@given(testkit.tmpdir, testkit.publisher, latest, testkit.client)
 class LatestQueryTestCase(TestCase):
     """Tests for the latest query"""
 
@@ -342,7 +343,7 @@ def diff_query_builds(fixtures: Fixtures) -> dict[str, Build]:
     return {"left": left, "right": right}
 
 
-@given("tmpdir", "publisher", diff_query_builds, "client")
+@given(testkit.tmpdir, testkit.publisher, diff_query_builds, testkit.client)
 class DiffQueryTestCase(TestCase):
     """Tests for the diff query"""
 
@@ -469,7 +470,7 @@ class DiffQueryTestCase(TestCase):
         )
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class MachinesQueryTestCase(TestCase):
     """Tests for the machines query"""
 
@@ -592,7 +593,7 @@ class MachinesQueryTestCase(TestCase):
         self.assertEqual(len(result["data"]["machines"]), 2)
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""
 
@@ -631,7 +632,7 @@ class PublishMutationTestCase(TestCase):
         mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class PullMutationTestCase(TestCase):
     """Tests for the pull mutation"""
 
@@ -702,7 +703,7 @@ class PullMutationTestCase(TestCase):
         )
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class ScheduleBuildMutationTestCase(TestCase):
     """Tests for the build mutation"""
 
@@ -783,7 +784,7 @@ class ScheduleBuildMutationTestCase(TestCase):
         mock_schedule_build.assert_called_once_with("repos/job/gentoo")
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class KeepBuildMutationTestCase(TestCase):
     """Tests for the keep mutation"""
 
@@ -819,7 +820,7 @@ class KeepBuildMutationTestCase(TestCase):
         assert_data(self, result, {"keepBuild": None})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
@@ -856,7 +857,7 @@ class ReleaseBuildMutationTestCase(TestCase):
         assert_data(self, result, {"releaseBuild": None})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class CreateNoteMutationTestCase(TestCase):
     """Tests for the createNote mutation"""
 
@@ -919,7 +920,7 @@ class CreateNoteMutationTestCase(TestCase):
         assert_data(self, result, {"createNote": None})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class TagsTestCase(TestCase):
     def test_createbuildtag_mutation_tags_the_build(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -1011,7 +1012,7 @@ def search_query_builds(_fixtures: Fixtures) -> list[Build]:
     return [build1, build2]
 
 
-@given("tmpdir", "publisher", search_query_builds, "client")
+@given(testkit.tmpdir, testkit.publisher, search_query_builds, testkit.client)
 class SearchQueryTestCase(TestCase):
     """Tests for the search query"""
 
@@ -1107,7 +1108,7 @@ def search_notes_query_builds(_fixtures: Fixtures) -> list[Build]:
     return [build1, build2]
 
 
-@given("tmpdir", "publisher", search_notes_query_builds, "client")
+@given(testkit.tmpdir, testkit.publisher, search_notes_query_builds, testkit.client)
 class SearchNotesQueryTestCase(TestCase):
     """tests for the searchNotes query"""
 
@@ -1171,7 +1172,7 @@ class SearchNotesQueryTestCase(TestCase):
         assert_data(self, result, {"searchNotes": []})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class WorkingTestCase(TestCase):
     query = """
     {
@@ -1194,7 +1195,7 @@ class WorkingTestCase(TestCase):
         assert_data(self, result, {"working": [{"id": working.id}]})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class VersionTestCase(TestCase):
     maxDiff = None
     query = """query { version }"""
@@ -1206,7 +1207,7 @@ class VersionTestCase(TestCase):
         assert_data(self, result, {"version": version})
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class CreateRepoTestCase(TestCase):
     """Tests for the createRepo mutation"""
 
@@ -1253,7 +1254,7 @@ class CreateRepoTestCase(TestCase):
         )
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class CreateMachineTestCase(TestCase):
     """Tests for the createMachine mutation"""
 

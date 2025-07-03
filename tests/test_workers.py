@@ -11,6 +11,7 @@ import fakeredis
 from requests import HTTPError
 from unittest_fixtures import Fixtures, given, parametrized, where
 
+import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import build_records
@@ -49,7 +50,7 @@ def params(*names) -> Callable:
     return parametrized(ifparams(*names))
 
 
-@given("publisher")
+@given(testkit.publisher)
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
@@ -75,7 +76,7 @@ class PublishBuildTestCase(TestCase):
         )
 
 
-@given("publisher")
+@given(testkit.publisher)
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
@@ -154,7 +155,7 @@ class JobsTests(TestCase):
             Worker(settings)
 
 
-@given("settings")
+@given(testkit.settings)
 @where(
     environ={
         "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",

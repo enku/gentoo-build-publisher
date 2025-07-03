@@ -9,6 +9,7 @@ from unittest import mock
 from graphql import GraphQLResolveInfo
 from unittest_fixtures import Fixtures, given
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.helpers import graphql
 from gentoo_build_publisher import publisher
@@ -27,7 +28,7 @@ from .helpers import make_entry_point
 Mock = mock.Mock
 
 
-@given("tmpdir", "publisher", "client")
+@given(testkit.tmpdir, testkit.publisher, testkit.client)
 class MaybeRequiresAPIKeyTests(TestCase):
     query = 'mutation { scheduleBuild(machine: "babette") }'
 
@@ -58,7 +59,7 @@ def broken_resolver(
     raise ValueError()
 
 
-@given("tmpdir", "publisher")
+@given(testkit.tmpdir, testkit.publisher)
 class RequireAPIKeyTestCase(TestCase):
     def test_good_apikey(self, fixtures: Fixtures) -> None:
         name = "test"
