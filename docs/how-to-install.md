@@ -183,7 +183,7 @@ to run.
 
 ```sh
 sudo -u gbp -H ./bin/django-admin startproject \
-    --template=./lib/python3.12/site-packages/gentoo_build_publisher/contrib/deployment/project_template \
+    --template=./lib/python3.13/site-packages/gentoo_build_publisher/contrib/deployment/project_template \
     djangoproject .
 ```
 
@@ -192,7 +192,7 @@ sudo -u gbp -H ./bin/django-admin startproject \
 Copy the file `gentoo-build-publisher.conf` file over from the repo.
 
 ```sh
-cp /home/gbp/lib/python3.12/site-packages/gentoo_build_publisher/contrib/deployment/gentoo-build-publisher.conf /etc/gentoo-build-publisher.conf
+cp /home/gbp/lib/python3.13/site-packages/gentoo_build_publisher/contrib/deployment/gentoo-build-publisher.conf /etc/gentoo-build-publisher.conf
 chown gbp:gbp /etc/gentoo-build-publisher.conf
 chmod 0600 /etc/gentoo-build-publisher.conf
 ```
@@ -209,7 +209,7 @@ files exist for these in the gentoo-build-publisher repo.
 
 ```sh
 mkdir -p /usr/local/lib/systemd/system
-cp /home/gbp/lib/python3.12/site-packages/gentoo_build_publisher/contrib/deployment/*.service /usr/local/lib/systemd/system
+cp /home/gbp/lib/python3.13/site-packages/gentoo_build_publisher/contrib/deployment/*.service /usr/local/lib/systemd/system
 systemctl daemon-reload
 ```
 
@@ -218,7 +218,7 @@ systemctl daemon-reload
 Copy the `contrib/deployment/nginx.conf` nginx configuration file.
 
 ```sh
-cp /home/gbp/lib/python3.12/site-packages/gentoo_build_publisher/contrib/deployment/nginx.conf /etc/nginx/nginx.conf
+cp /home/gbp/lib/python3.13/site-packages/gentoo_build_publisher/contrib/deployment/nginx.conf /etc/nginx/nginx.conf
 ```
 
 Edit `/etc/nginx/nginx.conf` if needed, though the included one is sufficient
@@ -227,7 +227,7 @@ for most cases.
 ## Configure rsyncd
 
 ```sh
-cp /home/gbp/lib/python3.12/site-packages/gentoo_build_publisher/contrib/deployment/rsyncd.conf /etc/rsyncd.conf
+cp /home/gbp/lib/python3.13/site-packages/gentoo_build_publisher/contrib/deployment/rsyncd.conf /etc/rsyncd.conf
 ```
 
 
