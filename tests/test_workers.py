@@ -12,7 +12,6 @@ from requests import HTTPError
 from unittest_fixtures import Fixtures, given, parametrized, where
 
 import gbp_testkit.fixtures as testkit
-from gentoo_build_publisher import celery as celery_app
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import build_records
 from gentoo_build_publisher.settings import Settings
@@ -23,7 +22,7 @@ from gentoo_build_publisher.worker import (
     WorkerNotFoundError,
     tasks,
 )
-from gentoo_build_publisher.worker.celery import CeleryWorker
+from gentoo_build_publisher.worker.celery import CeleryWorker, celery_app
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
 

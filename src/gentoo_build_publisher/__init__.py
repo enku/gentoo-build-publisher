@@ -40,17 +40,11 @@ import warnings
 from functools import cache
 from typing import TYPE_CHECKING, Any
 
-from celery import Celery
-
 if TYPE_CHECKING:  # pragma: no cover
     from gentoo_build_publisher.build_publisher import BuildPublisher
 
 __version__ = importlib.metadata.version("gentoo-build-publisher")
 
-
-celery = Celery("gentoo_build_publisher")
-celery.config_from_object("django.conf:settings", namespace="CELERY")
-celery.autodiscover_tasks(["gentoo_build_publisher"])
 
 publisher: BuildPublisher
 
