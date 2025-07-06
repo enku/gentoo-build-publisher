@@ -705,9 +705,8 @@ class MakePackagesTestCase(TestCase):
         index_file = publisher.storage.get_path(build, Content.BINPKGS) / "Packages"
 
         with index_file.open(encoding="UTF-8") as opened_index_file:
-            for line in opened_index_file:  # skip preamble
-                if not line.strip():
-                    break
+            while opened_index_file.readline().strip():  # skip preamble
+                pass
             packages = [*make_packages(opened_index_file)]
 
         self.assertEqual(len(packages), 4)
