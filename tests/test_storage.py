@@ -396,8 +396,7 @@ def path_fixture(fixtures: Fixtures) -> Path:
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
 
-    if metadata.exists():
-        metadata.unlink()
+    metadata.unlink()
 
     return metadata
 
