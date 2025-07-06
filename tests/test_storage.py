@@ -248,7 +248,7 @@ class StorageExtractArtifactTestCase(TestCase):
 
         try:
             fixtures.storage.extract_artifact(fixtures.build, byte_stream_mock)
-        except tarfile.ReadError:
+        except tarfile.ReadError:  # pragma: no cover
             self.fail("extract_artifact() should not have attempted to extract")
 
     def test_extracts_bytesteam_and_content(self, fixtures: Fixtures) -> None:
