@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, field
 from enum import Enum, unique
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 from gentoo_build_publisher import utils
 
@@ -33,7 +33,7 @@ class Build:
         return f"{self.machine}.{self.build_id}"
 
     @classmethod
-    def from_id(cls, build_id: str) -> Build:
+    def from_id(cls, build_id: str) -> Self:
         """Instantiate Build gienven the build id"""
         machine, build_id = build_id.split(".", 1)
 

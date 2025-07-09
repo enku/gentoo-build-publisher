@@ -22,7 +22,7 @@ import logging
 import math
 from datetime import datetime
 from difflib import Differ
-from typing import Any, Iterable
+from typing import Any, Iterable, Self
 
 from gentoo_build_publisher.jenkins import Jenkins, JenkinsMetadata
 from gentoo_build_publisher.machines import MachineInfo
@@ -52,7 +52,7 @@ class BuildPublisher:
         self.repo = repo
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> BuildPublisher:
+    def from_settings(cls, settings: Settings) -> Self:
         """Instantiate from settings"""
         jenkins = Jenkins.from_settings(settings)
         storage = Storage.from_settings(settings)

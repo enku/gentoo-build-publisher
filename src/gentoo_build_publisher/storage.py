@@ -7,7 +7,7 @@ import shutil
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import IO, Iterable
+from typing import IO, Iterable, Self
 
 import orjson
 
@@ -70,7 +70,7 @@ class Storage:
         self.root = root
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> Storage:
+    def from_settings(cls, settings: Settings) -> Self:
         """Instantiate from settings"""
         return cls(settings.STORAGE_PATH)
 
