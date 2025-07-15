@@ -34,6 +34,8 @@ DATABASES = {
 
 ROOT_URLCONF = "gentoo_build_publisher.urls"
 
+STATIC_URL = "/static/"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
