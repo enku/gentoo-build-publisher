@@ -78,6 +78,7 @@ Plugins are available.
 | Plugin | Description | Client/Server |
 | ------ | ----------- | ------------- |
 | [archive](https://github.com/enku/gbp-archive) | A plugin to dump and restore builds | Both (but only runs on from the server) |
+| [feeds](https://github.com/enku/gbp-feeds) | Atom/RSS feeds for Gentoo Build Publisher | Server |
 | [fl](https://github.com/enku/gbp-fl) | A [pfl](https://www.portagefilelist.de/)-inspired plugin | Both |
 | [notifications](https://github.com/enku/gbp-notifications) | A plugin that can send notifications when events occur | Server |
 | [ps](https://github.com/enku/gbp-ps) | A plugin to display your Gentoo Build Publisher processes | Both |
