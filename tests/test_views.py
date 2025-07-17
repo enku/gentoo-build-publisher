@@ -173,6 +173,31 @@ class MachineViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+@given(testkit.publisher, testkit.client, testkit.builds, artifacts)
+class BuildViewTests(TestCase):
+    """Tests for the build view"""
+
+    def test_responds_with_rendered_template(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+
+        response = client.get(url)
+
+        self.assertEqual(200, response.status_code)
+        template = response.templates[0]
+        self.assertEqual("gentoo_build_publisher/build/main.html", template.name)
+
+    def test_404_response(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        url = "/machines/bogus/builds/xxx/"
+
+        response = client.get(url)
+
+        self.assertEqual(404, response.status_code)
+
+
 @given(artifacts)
 class BinPkgViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:

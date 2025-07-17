@@ -1,0 +1,12 @@
+{% extends "gentoo_build_publisher/base.html" %}
+{% block title %}Gentoo Build Publisher: {{ build }}{% endblock %}
+{% load static %}
+{% block main %}
+  {% include "gentoo_build_publisher/build/row1.html" %}
+  {% include "gentoo_build_publisher/build/row2.html" %}
+{% endblock %}
+{% block scripts %}
+  {{ gradient_colors|json_script:'gradientColors' }}
+  {{ builds|json_script:'builds' }}
+  <script src="{% static 'gbp/build.js' %}"></script>
+  {% endblock %}

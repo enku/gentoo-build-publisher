@@ -1,0 +1,44 @@
+{% load gbp %}
+<div class="row">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Build <span>{{ build.machine|machine_link }} {{ build.build_id }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Build Date <span>{{ build.built }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Submitted <span>{{ build.submitted }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Completed <span>{{ build.completed }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Published <span>{{ published|yesno }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Keep <span>{{ build.keep|yesno }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Tags <span>{{ tags|join:" " }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-1"></div>
+  <div class="col-md-6">
+    <h5 class="d-flex justify-content-between align-items-center mb-3">
+      {{ packages_built|length }} Package{{ packages_built|pluralize }} Built
+    </h5>
+    <ul class="list-group mb-3">
+    {% for package in packages_built %}
+      {% machine_package_row package %}
+    {% endfor %}
+    </ul>
+    </div>
+  </div>
+</div>

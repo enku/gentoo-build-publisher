@@ -20,10 +20,16 @@ from gbp_testkit.factories import (
 from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
+    BuildInputContext,
     MachineInputContext,
     ViewInputContext,
+    create_build_context,
     create_dashboard_context,
     create_machine_context,
+)
+from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
+    color_range_from_settings,
+    gradient_colors,
 )
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 
@@ -204,3 +210,33 @@ class CreateMachineContextTests(TestCase):
         ctx = create_machine_context(input_context)
 
         self.assertEqual(len(ctx["packages_built_today"]), 0)
+
+
+@given(testkit.publisher, pf_fixture)
+class CreateBuildContextTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+
+        for _ in range(3):
+            cpv = next(fixtures.pf)
+            publisher.jenkins.artifact_builder.build(build, cpv)
+        publisher.pull(build)
+        record = publisher.repo.build_records.get(build)
+        input_context = BuildInputContext(build=record)
+
+        context = create_build_context(input_context)
+
+        expected = {
+            "build": record,
+            "build_id": build.build_id,
+            "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
+            "machine": build.machine,
+            "packages_built": publisher.storage.get_metadata(record).packages.built,
+            "published": False,
+            "tags": [],
+        }
+        self.assertEqual(expected, context)
+
+        publisher.publish(build)
+        context = create_build_context(input_context)
+        self.assertTrue(context["published"])

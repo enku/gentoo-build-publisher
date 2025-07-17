@@ -62,6 +62,18 @@ class MachineContext(TypedDict):
     storage: int
 
 
+class BuildContext(TypedDict):
+    """build view context"""
+
+    build: BuildRecord
+    machine: str
+    build_id: str
+    gradient_colors: Gradient
+    packages_built: list[Package]
+    published: bool
+    tags: list[str]
+
+
 class AboutContext(TypedDict):
     """Context for the about view"""
 
@@ -171,6 +183,29 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "published_build": machine_info.published_build,
         "recent_packages": sc.recent_packages(machine),
         "storage": storage,
+    }
+
+
+@dataclass(frozen=True, kw_only=True)
+class BuildInputContext:
+    """ViewInputContext for the build view"""
+
+    build: BuildRecord
+
+
+def create_build_context(input_context: BuildInputContext) -> BuildContext:
+    """Return context for the build view"""
+    build = input_context.build
+    packages_built = publisher.storage.get_metadata(build).packages.built
+
+    return {
+        "build": build,
+        "build_id": build.build_id,
+        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
+        "machine": build.machine,
+        "packages_built": packages_built,
+        "published": publisher.published(build),
+        "tags": publisher.tags(build),
     }
 
 
