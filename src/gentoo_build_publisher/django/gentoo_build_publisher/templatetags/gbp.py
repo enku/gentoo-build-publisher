@@ -162,7 +162,8 @@ def machine_package_row(package: Package) -> dict[str, Any]:
         "build_time": localtime(dt.datetime.fromtimestamp(package.build_time)),
     }
 
+
 @register.inclusion_tag("gentoo_build_publisher/card_item.html")
-def card_item(left: Any, right: Any, pill: bool=False) -> dict[str, Any]:
+def card_item(left: Any, right: Any, pill: bool = False) -> dict[str, Any]:
     """Render a card item"""
     return {"left": left, "right": right, "pill": pill}
