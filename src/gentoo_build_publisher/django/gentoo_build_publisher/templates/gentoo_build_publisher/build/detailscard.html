@@ -1,0 +1,28 @@
+{% load gbp %}
+<div class="card">
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Build <span>{{ build.machine|machine_link }} {{ build.build_id }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Build Date <span>{{ build.built }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Submitted <span>{{ build.submitted }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Completed <span>{{ build.completed }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Published <span>{{ published|yesno }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Keep <span>{{ build.keep|yesno }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Tags <span>{{ tags|join:" " }}</span>
+      </li>
+    </ul>
+  </div>
+</div>
