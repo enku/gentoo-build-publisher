@@ -189,6 +189,49 @@ class BuildViewTests(TestCase):
         template = response.templates[0]
         self.assertEqual("gentoo_build_publisher/build/main.html", template.name)
 
+    def test_given_tag(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        publisher.tag(build, "test")
+        url = "/machines/lighthouse/builds/@test/"
+
+        response = client.get(url)
+
+        self.assertEqual(
+            302, response.status_code, "Did not respond with temporary redirect"
+        )
+        self.assertEqual(
+            f"/machines/lighthouse/builds/{build.build_id}/",
+            response["Location"],
+            "Redirect was not the expected URL",
+        )
+
+    def test_given_tag_does_not_exist(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+
+        response = client.get("/machines/lighthouse/builds/@bogus/")
+
+        self.assertEqual(404, response.status_code, "Did not respond with 404")
+
+    def test_published_tag(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        publisher.publish(build)
+        url = "/machines/lighthouse/builds/@/"
+
+        response = client.get(url)
+
+        self.assertEqual(
+            302, response.status_code, "Did not respond with temporary redirect"
+        )
+        self.assertEqual(
+            f"/machines/lighthouse/builds/{build.build_id}/",
+            response["Location"],
+            "Redirect was not the expected URL",
+        )
+
     def test_404_response(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         url = "/machines/bogus/builds/xxx/"

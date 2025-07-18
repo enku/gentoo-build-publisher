@@ -41,6 +41,15 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return ctx.create_machine_context(input_context)
 
 
+@view("machines/<str:machine>/builds/@/")
+@view("machines/<str:machine>/builds/@<str:tag>/")
+def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+    """Build detail by @tag"""
+    build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
+
+    return redirect("gbp-builds", machine=machine, build_id=build.build_id)
+
+
 @view("machines/<str:machine>/builds/<str:build_id>/", name="gbp-builds")
 @render("gentoo_build_publisher/build/main.html")
 def _(request: HttpRequest, machine: str, build_id: str) -> ViewContext:
