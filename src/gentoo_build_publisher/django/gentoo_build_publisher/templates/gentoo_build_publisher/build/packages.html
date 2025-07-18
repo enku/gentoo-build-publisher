@@ -1,0 +1,11 @@
+{% load gbp %}
+<div class="col-md-6">
+  <h5 class="d-flex justify-content-between align-items-center mb-3">
+    {{ packages_built|length }} Package{{ packages_built|pluralize }} Built
+  </h5>
+  <ul class="list-group mb-3">
+  {% for package in packages_built %}
+    {% machine_package_row package %}
+  {% endfor %}
+  </ul>
+</div>
