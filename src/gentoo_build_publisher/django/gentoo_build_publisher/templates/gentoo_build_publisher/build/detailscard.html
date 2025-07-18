@@ -2,27 +2,15 @@
 <div class="card">
   <div class="card-body">
     <ul class="list-group list-group-flush">
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Build <span>{{ build.machine|machine_link }} {{ build.build_id }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Build Date <span>{{ build.built }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Submitted <span>{{ build.submitted }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Completed <span>{{ build.completed }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Published <span>{{ published|yesno }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Keep <span>{{ build.keep|yesno }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Tags <span>{{ tags|join:" " }}</span>
-      </li>
+      {% with machine_link_output=build.machine|machine_link %}
+        {% card_item "Build" machine_link_output|add:" "|add:build.build_id|safe %}
+      {% endwith %}
+      {% card_item "Build Date" build.built %}
+      {% card_item "Submitted" build.submitted %}
+      {% card_item "Completed" build.completed %}
+      {% card_item "Published" published|yesno %}
+      {% card_item "Keep" build.keep|yesno %}
+      {% card_item "Tags" tags|join:" " %}
     </ul>
   </div>
 </div>

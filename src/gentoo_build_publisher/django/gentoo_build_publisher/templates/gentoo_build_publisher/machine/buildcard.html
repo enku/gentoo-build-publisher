@@ -3,29 +3,23 @@
     <h5 class="card-header">{{ build_count }} Build{{ build_count|pluralize }}</h5>
   <div class="card-body">
     <ul class="list-group list-group-flush">
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Latest <span class="badge badge-primary badge-pill">{{ latest_build.build_id }}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Published <span class="badge badge-primary badge-pill">{% firstof published_build.build_id "None" %}</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Storage <span class="badge badge-primary badge-pill">{{ storage|numberize:"b1" }}B</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        Storage/Build <span class="badge badge-primary badge-pill">{{ average_storage|numberize:"b1" }}B</span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-times-center">
-        Packages built today <span class="badge badge-primary badge-pill">{{ packages_built_today|length }}</span>
-      </li>
+      {% card_item "Latest" latest_build.build_id True %}
+
       {% if published_build %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        repos.conf <a href="repos.conf" download><i class="bi bi-download"></i></a>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        binrepos.conf <a href="binrepos.conf" download><i class="bi bi-download"></i></a>
-      </li>
+        {% card_item "Published" published_build.build_id True %}
+      {% else %}
+        {% card_item "Published" "None" True %}
       {% endif %}
+
+      {% card_item "Storage" storage|numberize:"b1"|add:"B" True %}
+      {% card_item "Storage/Build" average_storage|numberize:"b1"|add:"B" True %}
+      {% card_item "Packages built today" packages_built_today|length True %}
+
+      {% if published_build %}
+        {% card_item "repos.conf" '<a href="repos.conf" download><i class="bi bi-download"></i></a>' %}
+        {% card_item "binrepos.conf" '<a href="binrepos.conf" download><i class="bi bi-download"></i></a>' %}
+      {% endif %}
+
     </ul>
   </div>
 </div>
