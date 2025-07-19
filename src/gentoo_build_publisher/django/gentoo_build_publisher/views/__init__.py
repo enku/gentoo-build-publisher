@@ -57,6 +57,23 @@ def _(request: HttpRequest, machine: str, build_id: str) -> ViewContext:
     return ctx.create_build_context(ctx.BuildInputContext(build=build))
 
 
+@view("machines/<str:machine>/builds/@/logs.txt")
+@view("machines/<str:machine>/builds/@<str:tag>/logs.txt")
+def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+    """Build logs by @tag"""
+    build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
+
+    return redirect("gbp-logs", machine=machine, build_id=build.build_id)
+
+
+@view("machines/<str:machine>/builds/<str:build_id>/logs.txt", name="gbp-logs")
+def _(request: HttpRequest, machine: str, build_id: str) -> HttpResponse:
+    """View to return the logs of a given build record"""
+    build = utils.get_build_record_or_404(machine, build_id)
+
+    return HttpResponse(build.logs or "", content_type="text/plain")
+
+
 @view("about/", name="gbp-about")
 @render("gentoo_build_publisher/about/main.html")
 def _(request: HttpRequest) -> ViewContext:

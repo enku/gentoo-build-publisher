@@ -264,6 +264,69 @@ class BuildViewTests(TestCase):
         self.assertEqual(404, response.status_code)
 
 
+@given(artifacts, testkit.client)
+class LogsTests(TestCase):
+    def test_gets_logs(self, fixtures: Fixtures) -> None:
+        build = fixtures.artifacts["latest"]
+        record = publisher.repo.build_records.get(build)
+
+        url = f"/machines/{build.machine}/builds/{build.build_id}/logs.txt"
+        client = fixtures.client
+        response = client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text, record.logs)
+        self.assertEqual(response["Content-Type"], "text/plain")
+
+    def test_404(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+
+        response = client.get("/machines/bogus/builds/123/logs.txt")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_given_tag(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        build = fixtures.artifacts["latest"]
+        publisher.tag(build, "test")
+        url = "/machines/lighthouse/builds/@test/logs.txt"
+
+        response = client.get(url)
+
+        self.assertEqual(
+            302, response.status_code, "Did not respond with temporary redirect"
+        )
+        self.assertEqual(
+            f"/machines/lighthouse/builds/{build.build_id}/logs.txt",
+            response["Location"],
+            "Redirect was not the expected URL",
+        )
+
+    def test_given_tag_does_not_exist(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+
+        response = client.get("/machines/lighthouse/builds/@bogus/logs.txt")
+
+        self.assertEqual(404, response.status_code, "Did not respond with 404")
+
+    def test_published_tag(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        build = fixtures.artifacts["latest"]
+        publisher.publish(build)
+        url = "/machines/lighthouse/builds/@/logs.txt"
+
+        response = client.get(url)
+
+        self.assertEqual(
+            302, response.status_code, "Did not respond with temporary redirect"
+        )
+        self.assertEqual(
+            f"/machines/lighthouse/builds/{build.build_id}/logs.txt",
+            response["Location"],
+            "Redirect was not the expected URL",
+        )
+
+
 @given(artifacts)
 class BinPkgViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
