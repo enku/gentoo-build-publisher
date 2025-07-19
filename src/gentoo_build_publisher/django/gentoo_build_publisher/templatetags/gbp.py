@@ -16,6 +16,12 @@ register = template.Library()
 
 
 @register.filter(is_safe=False)
+def rstrip(val: Any) -> str:
+    """Call .rstrip() on (stringified) val and return the result"""
+    return str(val).rstrip()
+
+
+@register.filter(is_safe=False)
 def numberize(val: float | int, precision: int | str = 2) -> str:
     """Format number, `val` as a string.
 

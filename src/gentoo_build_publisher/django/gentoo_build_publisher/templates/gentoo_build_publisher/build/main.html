@@ -1,5 +1,26 @@
 {% extends "gentoo_build_publisher/base.html" %}
 {% block title %}Gentoo Build Publisher: {{ build }}{% endblock %}
+
+{% block style %}
+{{ block.super }}
+
+.paperclip-container {
+  position: relative;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px
+  margin-top: 30px;
+  background-color: {{ gradient_colors.9 }};
+}
+
+.paperclip {
+  position: absolute;
+  top: -24px;
+  left: -24px;
+  font-size: 2rem;
+}
+{% endblock %}
+
 {% load static %}
 {% block main %}
   {% include "gentoo_build_publisher/build/row1.html" %}

@@ -232,6 +232,29 @@ class BuildViewTests(TestCase):
             "Redirect was not the expected URL",
         )
 
+    def test_build_note(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        record = publisher.repo.build_records.get(build)
+        publisher.repo.build_records.save(record, note="This is a build note")
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+
+        response = client.get(url)
+
+        expected = r'<div id="build-note">\s*<pre>This is a build note</pre>\s*</div>'
+        self.assertRegex(response.text, expected, "Note not found in response")
+
+    def test_no_build_note(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+
+        response = client.get(url)
+
+        self.assertNotIn("build-note", response.text)
+
     def test_404_response(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         url = "/machines/bogus/builds/xxx/"
