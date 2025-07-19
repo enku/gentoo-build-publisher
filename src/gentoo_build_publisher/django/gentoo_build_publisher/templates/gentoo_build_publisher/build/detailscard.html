@@ -11,6 +11,7 @@
       {% card_item "Published" published|yesno %}
       {% card_item "Keep" build.keep|yesno %}
       {% card_item "Tags" tags|join:" " %}
+      {% card_item "Logs" build|logs_link|safe %}
     </ul>
   </div>
 </div>

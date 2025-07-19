@@ -159,6 +159,15 @@ def build_link(build: Build) -> str:
     return mark_safe(f'<a class="build-link" href="{path}">{build.build_id}</a>')
 
 
+@register.filter(is_safe=True)
+def logs_link(build: Build) -> str:
+    """Render the build logs link"""
+    path = reverse(
+        "gbp-logs", kwargs={"machine": build.machine, "build_id": build.build_id}
+    )
+    return f'<a class="logs-link" href="{path}"><i class="bi bi-download"></i></a>'
+
+
 @register.inclusion_tag("gentoo_build_publisher/machine/package_row.html")
 def machine_package_row(package: Package) -> dict[str, Any]:
     """Render a package row"""
