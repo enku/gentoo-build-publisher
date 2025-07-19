@@ -1,9 +1,15 @@
 {% extends "gentoo_build_publisher/base.html" %}
 {% load static %}
+{% block style %}
+{{ block.super }}
+  .main-header, .badge {
+    background-color: #714343;
+  }
+{% endblock %}
 {% block main %}
 {% load gbp %}
 <div class="row">
-  {% roundrect "Not Found" "404" gradient_colors.0 %}
+  {% roundrect "Not Found" "404" "#714343" %}
 </div>
 <div class="row">
     <h3>It's not you, it's me.</h3>
@@ -16,6 +22,5 @@
 </div>
 {% endblock %}
 {% block scripts %}
-  {{ gradient_colors|json_script:'gradientColors' }}
   <script src="{% static 'gbp/machine.js' %}"></script>
 {% endblock %}
