@@ -21,6 +21,7 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     StatsCollector,
     experimental,
+    get_build_record_or_404,
     get_metadata,
     get_query_value_from_request,
     get_url_for_package,
@@ -71,6 +72,25 @@ class GetQueryValueFromRequestTests(TestCase):
         chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
         self.assertEqual(chart_days, 10)
+
+
+@given(testkit.pulled_builds)
+class GetBuildRecordOr404Tests(TestCase):
+    def test_with_build(self, fixtures: Fixtures) -> None:
+        build = fixtures.builds[0]
+
+        record = get_build_record_or_404(build.machine, build.build_id)
+
+        self.assertEqual(type(record).__name__, "BuildRecord")
+        self.assertEqual(
+            (build.machine, build.build_id),
+            (record.machine, record.build_id),
+            "Record returned was not the one expected",
+        )
+
+    def test_without_build(self, fixtures: Fixtures) -> None:
+        with self.assertRaises(Http404):
+            get_build_record_or_404("bogus", "666")
 
 
 @given(testkit.publisher)

@@ -8,7 +8,6 @@ from django.shortcuts import redirect
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
-from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.types import Build
 
 from . import context as ctx
@@ -53,12 +52,7 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 @view("machines/<str:machine>/builds/<str:build_id>/", name="gbp-builds")
 @render("gentoo_build_publisher/build/main.html")
 def _(request: HttpRequest, machine: str, build_id: str) -> ViewContext:
-    try:
-        build = publisher.repo.build_records.get(
-            Build(machine=machine, build_id=build_id)
-        )
-    except RecordNotFound:
-        raise Http404 from None
+    build = utils.get_build_record_or_404(machine, build_id)
 
     return ctx.create_build_context(ctx.BuildInputContext(build=build))
 

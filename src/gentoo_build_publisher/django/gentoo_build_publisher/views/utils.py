@@ -13,7 +13,7 @@ from django.urls import URLPattern, path
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
-from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import (
     TAG_SYM,
     Build,
@@ -264,6 +264,20 @@ def get_query_value_from_request(
         return type_(query_value)
     except ValueError:
         return fallback
+
+
+def get_build_record_or_404(machine: str, build_id: str) -> BuildRecord:
+    """Return the BuildRecord given the machine and build_id
+
+    If no such record exists, raise Http404.
+    """
+    repo = publisher.repo
+    records = repo.build_records
+
+    try:
+        return records.get(Build(machine=machine, build_id=build_id))
+    except RecordNotFound:
+        raise Http404 from None
 
 
 def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
