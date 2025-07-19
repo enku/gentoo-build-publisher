@@ -150,7 +150,7 @@ def machine_link(machine: str) -> str:
     return mark_safe(f'<a class="machine-link" href="{path}">{machine}</a>')
 
 
-@register.filter(is_save=True)
+@register.filter(is_safe=True)
 def build_link(build: Build) -> str:
     """Render build link"""
     path = reverse(
