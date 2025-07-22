@@ -270,7 +270,7 @@ class BuildsQueryTestCase(TestCase):
         )
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def latest(_fixtures: Fixtures) -> Build:
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
@@ -326,7 +326,7 @@ class LatestQueryTestCase(TestCase):
         assert_data(self, result, {"latest": {"id": str(fixtures.latest)}})
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def diff_query_builds(fixtures: Fixtures) -> dict[str, Build]:
     # Given the first build with tar-1.34
     left = BuildFactory()
@@ -1096,7 +1096,7 @@ class SearchQueryTestCase(TestCase):
         assert_data(self, result, {"search": []})
 
 
-@fixture("publisher")
+@fixture(testkit.publisher)
 def search_notes_query_builds(_fixtures: Fixtures) -> list[Build]:
     build1 = BuildFactory()
     record = publisher.record(build1)
