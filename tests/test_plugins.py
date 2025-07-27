@@ -42,3 +42,15 @@ class GetPluginsTests(TestCase):
         self.assertEqual([plugin], result)
         entry_points.select.assert_any_call(group="gentoo_build_publisher.apps")
         entry_points.select.assert_any_call(group="gentoo_build_publisher.plugins")
+
+    def test_priority(self, m_entry_points: mock.Mock) -> None:
+        a = make_entry_point("foo", {"name": "foo", "app": "test.apps.TestAppConfig"})
+        b = make_entry_point(
+            "bar", {"name": "bar", "app": "test.apps.TestAppConfig", "priority": -10}
+        )
+        entry_points = m_entry_points.return_value
+        entry_points.select.return_value.__iter__.side_effect = (iter([]), iter([a, b]))
+
+        result = plugins.get_plugins()
+
+        self.assertEqual(["bar", "foo"], [i.name for i in result])
