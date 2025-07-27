@@ -30,3 +30,10 @@ class PluginURLPatternsTests(TestCase):
             urls="tests.test_urls",
         )
         self.assertEqual(urlpatterns, urls.plugin_urlpatterns(plugin))
+
+    def test_module_without_urlpatterns(self) -> None:
+        plugin = plugins.Plugin(
+            name="Test URL", app="tests.test_urls", graphql=None, urls="tests"
+        )
+
+        self.assertEqual([], urls.plugin_urlpatterns(plugin))
