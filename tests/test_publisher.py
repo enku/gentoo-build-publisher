@@ -341,15 +341,6 @@ class DispatcherTestCase(TestCase):
         self.assertEqual(fixtures.publish_events, [record])
 
 
-@fixture()
-def builds_fixture(_fixtures: Fixtures) -> list[Build]:
-    # So for this case let's say we have 4 builds.  None have built timestamps.  The
-    # 3rd one is published (but has no built timestamp) and the first 2 are pulled
-    # but not published:
-    builds: list[Build] = BuildFactory.create_batch(4)
-    return builds
-
-
 @given(testkit.publisher)
 class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
