@@ -23,7 +23,7 @@ from gentoo_build_publisher.graphql.utils import (
 from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import encode_basic_auth_data
 
-from .helpers import make_entry_point
+from .lib import make_entry_point
 
 Mock = mock.Mock
 

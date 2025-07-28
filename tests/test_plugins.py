@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from gentoo_build_publisher import plugins
 
-from .helpers import make_entry_point
+from .lib import make_entry_point
 
 Plugin = plugins.Plugin
 
