@@ -22,6 +22,11 @@ def builder_fixture(_fixtures: Fixtures) -> ArtifactFactory:
     return ArtifactFactory(initial_packages=[])
 
 
+@fixture()
+def mock_jenkins_session(_: Fixtures) -> MockJenkinsSession:
+    return MockJenkinsSession()
+
+
 @given(builder_fixture)
 class ArtifactFactoryTestCase(TestCase):
     def test_timestamp(self, fixtures: Fixtures) -> None:
@@ -226,24 +231,25 @@ class TreeTestCase(TestCase):
             root.get(["B", "C", "D"])
 
 
+@given(mock_jenkins_session)
 class MockJenkinsSessionTestCase(TestCase):
-    def test_head(self) -> None:
-        session = MockJenkinsSession()
+    def test_head(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
         session.root.set(["Test"], "test")
 
         response = session.head("http://jenkins.invalid/job/Test")
 
         self.assertEqual(response.status_code, 200)
 
-    def test_head_404(self) -> None:
-        session = MockJenkinsSession()
+    def test_head_404(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
 
         response = session.head("http://jenkins.invalid/job/Test")
 
         self.assertEqual(response.status_code, 404)
 
-    def test_post(self) -> None:
-        session = MockJenkinsSession()
+    def test_post(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
 
         response = session.post(
             "http://jenkins.invalid/createItem", data=b"test", params={"name": "Test"}
@@ -252,8 +258,8 @@ class MockJenkinsSessionTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(session.root.get(["Test"]), b"test")
 
-    def test_post_404(self) -> None:
-        session = MockJenkinsSession()
+    def test_post_404(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
 
         response = session.post(
             "http://jenkins.invalid/job/Gentoo/createItem",
@@ -266,8 +272,8 @@ class MockJenkinsSessionTestCase(TestCase):
         with self.assertRaises(KeyError):
             session.root.get(["Gentoo", "Test"])
 
-    def test_post_without_createitem(self) -> None:
-        session = MockJenkinsSession()
+    def test_post_without_createitem(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
 
         response = session.post(
             "http://jenkins.invalid/Test", data=b"test", params={"name": "Test"}
@@ -275,8 +281,8 @@ class MockJenkinsSessionTestCase(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_get(self) -> None:
-        session = MockJenkinsSession()
+    def test_get(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
         session.root.set(["Test"], "<jenkins>test</jenkins>")
 
         response = session.get("http://jenkins.invalid/job/Test/config.xml")
@@ -285,17 +291,17 @@ class MockJenkinsSessionTestCase(TestCase):
         self.assertEqual(response.content, b"<jenkins>test</jenkins>")
         self.assertEqual(response.text, "<jenkins>test</jenkins>")
 
-    def test_get_without_configxml(self) -> None:
+    def test_get_without_configxml(self, fixtures: Fixtures) -> None:
         """I don't think this happens in real life, but for testing..."""
-        session = MockJenkinsSession()
+        session = fixtures.mock_jenkins_session
         session.root.set(["Test"], "<jenkins>test</jenkins>")
 
         response = session.get("http://jenkins.invalid/job/Test/")
 
         self.assertEqual(response.status_code, 400)
 
-    def test_get_404(self) -> None:
-        session = MockJenkinsSession()
+    def test_get_404(self, fixtures: Fixtures) -> None:
+        session = fixtures.mock_jenkins_session
 
         response = session.get("http://jenkins.invalid/job/Test/config.xml")
 
