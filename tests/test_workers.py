@@ -5,7 +5,7 @@ import io
 from contextlib import redirect_stderr
 from dataclasses import replace
 from pathlib import Path
-from typing import Callable, cast
+from typing import Any, Callable, cast
 from unittest import TestCase, mock
 
 import fakeredis
@@ -46,7 +46,7 @@ def ifparams(*names: str) -> list[list[WorkerInterface]]:
     return [[get_worker(name)] for name in names]
 
 
-def params(*names) -> Callable:
+def params(*names: str) -> Callable[..., Any]:
     return parametrized(ifparams(*names))
 
 
