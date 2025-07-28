@@ -3,6 +3,7 @@
 # pylint: disable=missing-docstring,no-value-for-parameter,unused-argument
 import io
 from contextlib import redirect_stderr
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable, cast
 from unittest import TestCase, mock
@@ -119,23 +120,21 @@ class DeleteBuildTestCase(TestCase):
         mock_delete.assert_called_once_with(Build("zulu", "56"))
 
 
+@given(testkit.environ, testkit.settings)
+@where(
+    environ={
+        "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
+        "BUILD_PUBLISHER_WORKER_BACKEND": "celery",
+        "BUILD_PUBLISHER_WORKER_RQ_URL": "redis://localhost.invalid:6379",
+        "BUILD_PUBLISHER_STORAGE_PATH": "/dev/null",
+    }
+)
 class JobsTests(TestCase):
-    def test_celery(self) -> None:
-        settings = Settings(
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-            WORKER_BACKEND="celery",
-            WORKER_RQ_URL="redis://localhost.invalid:6379",
-            STORAGE_PATH=Path("/dev/null"),
-        )
-        self.assertIsInstance(Worker(settings), CeleryWorker)
+    def test_celery(self, fixtures: Fixtures) -> None:
+        self.assertIsInstance(Worker(fixtures.settings), CeleryWorker)
 
-    def test_rq(self) -> None:
-        settings = Settings(
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-            WORKER_BACKEND="rq",
-            WORKER_RQ_URL="redis://localhost.invalid:6379",
-            STORAGE_PATH=Path("/dev/null"),
-        )
+    def test_rq(self, fixtures: Fixtures) -> None:
+        settings = replace(fixtures.settings, WORKER_BACKEND="rq")
         worker = cast(RQWorker, Worker(settings))
         self.assertIsInstance(worker, RQWorker)
         self.assertEqual(
@@ -143,13 +142,8 @@ class JobsTests(TestCase):
             {"host": "localhost.invalid", "port": 6379},
         )
 
-    def test_invalid(self) -> None:
-        settings = Settings(
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-            WORKER_BACKEND="bogus",
-            WORKER_RQ_URL="redis://localhost.invalid:6379",
-            STORAGE_PATH=Path("/dev/null"),
-        )
+    def test_invalid(self, fixtures: Fixtures) -> None:
+        settings = replace(fixtures.settings, WORKER_BACKEND="bogus")
         with self.assertRaises(WorkerNotFoundError):
             Worker(settings)
 
