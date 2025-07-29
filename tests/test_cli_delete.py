@@ -28,14 +28,8 @@ def force_args_fixture(fixtures: Fixtures) -> Namespace:
     return Namespace(machine="babette", number=fixtures.build.build_id, force=True)
 
 
-@given(
-    args_fixture,
-    build_fixture,
-    force_args_fixture,
-    testkit.console,
-    testkit.gbp,
-    testkit.pulled_builds,
-)
+@given(args_fixture, build_fixture, force_args_fixture)
+@given(testkit.console, testkit.gbp, testkit.pulled_builds)
 @where(builds__per_day=5)
 class GBPChkTestCase(TestCase):
     def test_deletes_build(self, fixtures: Fixtures) -> None:
