@@ -235,7 +235,6 @@ class ArtifactFactory:
             for package, status in build_data.package_info:
                 if status is PackageStatus.ADDED:
                     packages.append(package)
-
                 else:
                     packages.remove(package)
 
