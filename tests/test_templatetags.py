@@ -10,7 +10,7 @@ from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.utils.time import localtime
 
 NOW = "gentoo_build_publisher.utils.time.now"
@@ -113,22 +113,27 @@ class ChartTests(TemplateTagTests):
         self.assertEqual(result, expected)
 
 
+@given(testkit.record, testkit.publisher)
+@where(records_db__backend="django")
 class BuildRowTests(TemplateTagTests):
     template = "{% build_row build build_packages %}"
 
-    def test(self) -> None:
-        expected = """\
+    def test(self, fixtures: Fixtures) -> None:
+        # pylint: disable=line-too-long
+        build = fixtures.record
+        machine = build.machine
+        id = build.build_id  # pylint: disable=redefined-builtin
+        expected = f"""\
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
-    <h6 class="my-0"><a class="machine-link" href="/machines/babette/">babette</a></h6>
-    <small class="text-muted"><a class="build-link" href="/machines/babette/builds/1094/">1094</a></small>
+    <h6 class="my-0"><a class="machine-link" href="/machines/{machine}/">{machine}</a></h6>
+    <small class="text-muted"><a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a></small>
   </div>
   <span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='x11-libs/libdrm-2.4.118&lt;br/&gt;x11-misc/xkeyboard-config-2.40-r1' data-bs-html="true">2 packages</span>
 </li>
 """
-        build = Build("babette", "1094")
         packages = ["x11-libs/libdrm-2.4.118", "x11-misc/xkeyboard-config-2.40-r1"]
-        build_packages = {"babette.1094": packages}
+        build_packages = {str(build): packages}
         result = self.render(build=build, build_packages=build_packages)
         self.assertEqual(result, expected)
 
@@ -211,7 +216,7 @@ class DisplayTimeTests(TemplateTagTests):
         self.assertEqual(self.render(timestamp=timestamp), "Jan 4")
 
 
-@given(testkit.record)
+@given(testkit.record, testkit.publisher)
 @where(records_db__backend="django")
 class BuildLinkTests(TemplateTagTests):
     def test_renders_link(self, fixtures: Fixtures) -> None:
@@ -221,5 +226,16 @@ class BuildLinkTests(TemplateTagTests):
 
         expected = (
             f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
+        )
+        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+
+    def test_with_build_note(self, fixtures: Fixtures) -> None:
+        build = fixtures.record
+        build = publisher.repo.build_records.save(build, note="This is a test")
+        machine = build.machine
+        id = build.build_id  # pylint: disable=redefined-builtin
+
+        expected = (
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a> 🗒'
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)

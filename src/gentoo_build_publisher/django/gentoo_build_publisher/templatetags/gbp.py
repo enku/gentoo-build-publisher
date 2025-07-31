@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils import time
 
@@ -103,7 +104,9 @@ def chart(
 
 
 @register.inclusion_tag("gentoo_build_publisher/build_row.html")
-def build_row(build: Build, build_packages: dict[str, list[str]]) -> dict[str, Any]:
+def build_row(
+    build: BuildRecord, build_packages: dict[str, list[str]]
+) -> dict[str, Any]:
     """Render a (Jenkins) build row"""
     packages = build_packages.get(str(build), [])
     packages_str = "<br/>".join(packages)
@@ -151,12 +154,13 @@ def machine_link(machine: str) -> str:
 
 
 @register.filter(is_safe=True)
-def build_link(build: Build) -> str:
+def build_link(build: BuildRecord) -> str:
     """Render build link"""
+    note = " 🗒" if build.note else ""
     path = reverse(
         "gbp-builds", kwargs={"machine": build.machine, "build_id": build.build_id}
     )
-    return mark_safe(f'<a class="build-link" href="{path}">{build.build_id}</a>')
+    return mark_safe(f'<a class="build-link" href="{path}">{build.build_id}</a>{note}')
 
 
 @register.filter(is_safe=True)
