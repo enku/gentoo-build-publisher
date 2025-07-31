@@ -6,7 +6,9 @@ from typing import Any
 from unittest import TestCase, mock
 
 from django.template import Context, Template, TemplateSyntaxError
+from unittest_fixtures import Fixtures, given, where
 
+from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher.types import Build
 from gentoo_build_publisher.utils.time import localtime
@@ -207,3 +209,17 @@ class DisplayTimeTests(TemplateTagTests):
         timestamp = localtime(dt.datetime(2024, 1, 4, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 4")
+
+
+@given(testkit.record)
+@where(records_db__backend="django")
+class BuildLinkTests(TemplateTagTests):
+    def test_renders_link(self, fixtures: Fixtures) -> None:
+        build = fixtures.record
+        machine = build.machine
+        id = build.build_id  # pylint: disable=redefined-builtin
+
+        expected = (
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
+        )
+        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
