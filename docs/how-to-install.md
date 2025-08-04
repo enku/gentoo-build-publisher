@@ -78,8 +78,6 @@ just systemd.
 Install the required Gentoo packages:
 
 ```sh
-# unmask jenkins-bin if in the stable tree
-echo dev-util/jenkins-bin > /etc/portage/package.accept_keywords/jenkins-bin
 echo app-misc/mime-types nginx > /etc/portage/package.use/gentoo-bin-publisher
 echo net-firewall/iptables nftables >> /etc/portage/package.use/gentoo-bin-publisher
 emerge --verbose --ask --noreplace \
