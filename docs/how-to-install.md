@@ -277,9 +277,13 @@ trigger a build manually from the shell:
 gbp build base
 ```
 
-After a few moments, if all goes successfully, you should have your first
-completed build pushed to GBP.  Go to the GBP dashboard in a browser (The
-hostname/IP of your virtual machine at port 80).
+A build for the `base` machine will be run on Jenkins. You should be able to
+see the build process (including console output) by browsing the Jenkins
+instance from a web browser using the same address and credentials used to
+[configure Jenkins](#configure-jenkins) above.  After a few moments, if all
+goes successfully, you should have your first completed build pushed to GBP.
+Go to the GBP dashboard in a browser (The hostname/IP of your virtual machine
+at port 80).
 
 Congratulations! You have your first GBP machine build.  Let's tag it for
 prosperity!
