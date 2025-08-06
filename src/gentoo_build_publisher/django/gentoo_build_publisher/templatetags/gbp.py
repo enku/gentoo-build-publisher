@@ -128,9 +128,16 @@ def package_row(package: str, machines: list[str]) -> dict[str, Any]:
 
 
 @register.inclusion_tag("gentoo_build_publisher/roundrect.html")
-def roundrect(text: str, title: str, color: str) -> dict[str, Any]:
+def roundrect(text: str, title: str, color: str, scale: float = 1.0) -> dict[str, Any]:
     """Render a circle with a number in it and name below"""
-    return {"text": text, "title": title, "color": color}
+    return {
+        "color": color,
+        "font_size": round(scale * 50),
+        "height": round(scale * 140),
+        "letter_spacing": round(scale * 8),
+        "text": text,
+        "title": title,
+    }
 
 
 @register.inclusion_tag("gentoo_build_publisher/machine/build_row.html")

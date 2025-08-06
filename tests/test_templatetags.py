@@ -188,6 +188,17 @@ class RoundRectTests(TemplateTagTests):
         result = self.render(text="lighthouse", title="This is a test", color="#572554")
         self.assertEqual(result, expected)
 
+    def test_with_scale(self) -> None:
+        template = "{% roundrect text title color scale %}"
+        expected = """
+<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#572554"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="25px" letter-spacing="4">lighthouse</text></svg></div>
+"""
+        result = self.render(
+            template=template, text="lighthouse", title="", color="#572554", scale=0.5
+        )
+
+        self.assertEqual(result, expected)
+
 
 class MachineLinkTests(TemplateTagTests):
     def test_renders_link(self) -> None:
