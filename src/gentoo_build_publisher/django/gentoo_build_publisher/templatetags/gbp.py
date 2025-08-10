@@ -170,6 +170,12 @@ def build_link(build: BuildRecord) -> str:
     return mark_safe(f'<a class="build-link" href="{path}">{build.build_id}</a>{note}')
 
 
+@register.filter
+def build_with_slash(build: Build) -> str:
+    """Return build with slash between machine name and build ID"""
+    return f"{build.machine}/{build.build_id}"
+
+
 @register.filter(is_safe=True)
 def logs_link(build: Build) -> str:
     """Render the build logs link"""

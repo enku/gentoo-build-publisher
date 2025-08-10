@@ -250,3 +250,12 @@ class BuildLinkTests(TemplateTagTests):
             f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a> 🗒'
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+
+
+@given(testkit.build)
+class BuildWithSlashTests(TemplateTagTests):
+    def test(self, fixtures: Fixtures) -> None:
+        self.assertEqual(
+            self.render("{{ build|build_with_slash }}", build=fixtures.build),
+            f"babette/{fixtures.build.build_id}",
+        )
