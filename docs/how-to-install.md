@@ -138,8 +138,9 @@ emerge --config postgresql
 systemctl enable --now postgresql-17.service
 ```
 
-> **_NOTE:_**  If a version of PostgreSQL other than 17 was installed,
-> replace the `17` the major version number that was installed.
+> [!NOTE]
+> If a version of PostgreSQL other than 17 was installed, replace the `17` the
+> major version number that was installed.
 
 Create the role for gbp.
 
