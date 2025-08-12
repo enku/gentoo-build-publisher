@@ -11,6 +11,7 @@ from unittest_fixtures import Fixtures, given, where
 from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
 
 NOW = "gentoo_build_publisher.utils.time.now"
@@ -276,3 +277,14 @@ class MachineBuildRowTests(TemplateTagTests):
   <div>
     <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/">{b.build_id}</a></h6>"""
         self.assertTrue(self.render(build=fixtures.record).startswith(expected))
+
+    def test_missing_gbp_dot_json(self, fixtures: Fixtures) -> None:
+        # Older (2021-ish) builds don't have a gbp.json file
+        build = fixtures.record
+        publisher.pull(build)
+        repos = publisher.storage.get_path(build, Content.BINPKGS)
+        gbp_json = repos.joinpath("gbp.json")
+        gbp_json.unlink()
+
+        # We just want to ensure that this does not error out (LookupError).
+        self.render(build=fixtures.record)

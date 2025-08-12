@@ -143,7 +143,11 @@ def roundrect(text: str, title: str, color: str, scale: float = 1.0) -> dict[str
 @register.inclusion_tag("gentoo_build_publisher/machine/build_row.html")
 def machine_build_row(build: Build) -> dict[str, Any]:
     """Render a (Jenkins) build row"""
-    packages_built = publisher.storage.get_metadata(build).packages.built
+    try:
+        packages_built = publisher.storage.get_metadata(build).packages.built
+    except LookupError:
+        packages_built = []
+
     packages_built_str = "<br/>".join(p.cpv for p in packages_built)
 
     return {
