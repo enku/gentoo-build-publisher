@@ -259,3 +259,20 @@ class BuildWithSlashTests(TemplateTagTests):
             self.render("{{ build|build_with_slash }}", build=fixtures.build),
             f"babette/{fixtures.build.build_id}",
         )
+
+
+@given(testkit.record, testkit.publisher)
+@where(records_db__backend="django")
+class MachineBuildRowTests(TemplateTagTests):
+    template = "{% machine_build_row build %}"
+
+    def test(self, fixtures: Fixtures) -> None:
+        b = fixtures.record
+        publisher.pull(b)
+
+        # pylint: disable=line-too-long
+        expected = f"""
+<li class="list-group-item d-flex justify-content-between lh-condensed">
+  <div>
+    <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/">{b.build_id}</a></h6>"""
+        self.assertTrue(self.render(build=fixtures.record).startswith(expected))
