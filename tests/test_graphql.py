@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-docstring,too-many-lines,unused-argument
 import datetime as dt
+from typing import Any
 from unittest import mock
 
 from unittest_fixtures import Fixtures, fixture, given, parametrized
@@ -23,7 +24,9 @@ SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
 
 
-def assert_data(test_case: TestCase, result: dict, expected: dict) -> None:
+def assert_data(
+    test_case: TestCase, result: dict[str, Any], expected: dict[str, Any]
+) -> None:
     test_case.assertFalse(result.get("errors"))
 
     data = result["data"]
