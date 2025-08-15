@@ -17,6 +17,7 @@ from .utils import (
     StatsCollector,
     color_range_from_settings,
     days_strings,
+    gbp_metadata,
     get_chart_days,
     gradient_colors,
 )
@@ -196,11 +197,7 @@ class BuildInputContext:
 def create_build_context(input_context: BuildInputContext) -> BuildContext:
     """Return context for the build view"""
     build = input_context.build
-
-    try:
-        packages_built = publisher.storage.get_metadata(build).packages.built
-    except LookupError:  # missing gbp.json
-        packages_built = []
+    packages_built = gbp_metadata(build).packages.built
 
     return {
         "build": build,

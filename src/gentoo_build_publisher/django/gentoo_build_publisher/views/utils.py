@@ -202,10 +202,7 @@ class StatsCollector:
         ):
             date = localtime(build.built).date()
 
-            try:
-                metadata = publisher.storage.get_metadata(build)
-            except LookupError:
-                continue
+            metadata = gbp_metadata(build)
 
             pbd.setdefault(date, set()).update(metadata.packages.built)
 
@@ -218,7 +215,7 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
     return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
 
 
-def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
+def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata:
     """Return the GBPMetadata for a package.
 
     This call may be cashed for performance.
@@ -226,10 +223,7 @@ def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata | None:
     cache_key = f"metadata-{build}"
 
     if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
-        try:
-            metadata = publisher.storage.get_metadata(build)
-        except LookupError:
-            return None
+        metadata = gbp_metadata(build)
 
         cache.set(cache_key, metadata)
 
@@ -317,3 +311,25 @@ def color_range_from_settings() -> tuple[Color, Color]:
         Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117))),
         Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236))),
     )
+
+
+def gbp_metadata(build: Build) -> GBPMetadata:
+    """Shorthand for publisher.storage.get_metadata
+
+    If gbp.json doesn't exist for the given build, the GBPMetadata is generated
+    on-demand.
+    """
+    try:
+        return publisher.storage.get_metadata(build)
+    except LookupError:
+        pass
+
+    try:
+        packages = publisher.storage.get_packages(build)
+    except LookupError:
+        packages = []
+
+    record = publisher.record(build)
+    jenkins_metadata = publisher.jenkins.get_metadata(record)
+
+    return publisher.gbp_metadata(jenkins_metadata, packages)

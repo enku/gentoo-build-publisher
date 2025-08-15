@@ -21,6 +21,7 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     StatsCollector,
     experimental,
+    gbp_metadata,
     get_build_record_or_404,
     get_metadata,
     get_query_value_from_request,
@@ -250,8 +251,7 @@ class StatsCollectorTests(TestCase):
 
         pbd = self.stats_collector().packages_by_day("babette")
 
-        # d1's packages are skipped because there is no gbp.json
-        self.assertEqual(list(pbd.keys()), [d2.date()])
+        self.assertEqual(list(pbd.keys()), [d2.date(), d1.date()])
 
         self.assertEqual(len(pbd[d2.date()]), 6)
 
@@ -297,6 +297,33 @@ class GetPackageURLTests(DjangoTestCase):
         pkg, vb = rest.split("-", 1)
         expected = f"http://testserver/binpkgs/{build}/{cat}/{pkg}/{pkg}-{vb}.gpkg.tar"
         self.assertEqual(url, expected)
+
+
+@given(testkit.publisher)
+class GBPMetaDataTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        build = BuildFactory(machine="lighthouse")
+        for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
+            publisher.jenkins.artifact_builder.build(build, cpv)
+        publisher.pull(build)
+
+        metadata = gbp_metadata(build)
+
+        self.assertEqual(metadata, publisher.storage.get_metadata(build))
+
+    def test_with_missing_gbp_json(self, fixtures: Fixtures) -> None:
+        build = BuildFactory(machine="lighthouse")
+        for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
+            publisher.jenkins.artifact_builder.build(build, cpv)
+        publisher.pull(build)
+        expected = publisher.storage.get_metadata(build)
+
+        gbp_json = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_json.unlink()
+
+        metadata = gbp_metadata(build)
+
+        self.assertEqual(metadata, expected)
 
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
