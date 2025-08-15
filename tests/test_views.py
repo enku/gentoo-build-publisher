@@ -11,7 +11,7 @@ from unittest_fixtures import Fixtures, fixture, given, where
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as BaseTestCase
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import Build, Content
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 
@@ -262,6 +262,18 @@ class BuildViewTests(TestCase):
         response = client.get(url)
 
         self.assertEqual(404, response.status_code)
+
+    def test_missing_gbp_json(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        builds = fixtures.builds
+        build = builds["lighthouse"][-1]
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+        gbp_json = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_json.unlink()
+
+        response = client.get(url)
+
+        self.assertEqual(200, response.status_code)
 
 
 @given(artifacts, testkit.client)

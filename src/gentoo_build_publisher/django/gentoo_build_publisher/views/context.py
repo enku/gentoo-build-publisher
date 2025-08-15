@@ -196,7 +196,11 @@ class BuildInputContext:
 def create_build_context(input_context: BuildInputContext) -> BuildContext:
     """Return context for the build view"""
     build = input_context.build
-    packages_built = publisher.storage.get_metadata(build).packages.built
+
+    try:
+        packages_built = publisher.storage.get_metadata(build).packages.built
+    except LookupError:  # missing gbp.json
+        packages_built = []
 
     return {
         "build": build,
