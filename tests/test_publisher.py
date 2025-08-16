@@ -16,7 +16,7 @@ from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
-from gentoo_build_publisher.types import Build, GBPMetadata, Package
+from gentoo_build_publisher.types import Build, Content, GBPMetadata, Package
 from gentoo_build_publisher.utils.time import utctime
 
 
@@ -250,6 +250,28 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         machines = publisher.machines(names={"bar", "baz", "bogus"})
 
         self.assertEqual(len(machines), 2)
+
+    def test_build_metadata(self, fixtures: Fixtures) -> None:
+        """Get a build's GBPMetadata"""
+        build = fixtures.build
+        publisher.pull(build)
+
+        metadata = publisher.build_metadata(build)
+
+        expected = publisher.storage.get_metadata(build)
+        self.assertEqual(expected, metadata)
+
+    def test_build_metadata_without_json(self, fixtures: Fixtures) -> None:
+        """GBPMetadata without a gbp.json file"""
+        build = fixtures.build
+        publisher.pull(build)
+        expected = publisher.storage.get_metadata(build)
+        gbp_json = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
+        gbp_json.unlink()
+
+        metadata = publisher.build_metadata(build)
+
+        self.assertEqual(expected, metadata)
 
 
 @fixture()

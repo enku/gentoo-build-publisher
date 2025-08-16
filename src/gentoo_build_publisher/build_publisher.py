@@ -249,3 +249,26 @@ class BuildPublisher:
         duration = jenkins_metadata.duration
 
         return GBPMetadata(build_duration=duration, packages=pkg_metadata)
+
+    def build_metadata(self, build: Build) -> GBPMetadata:
+        """Return the GBPMetadata for the given build.
+
+        This uses the gbp.json from storage if available. If not available it is
+        generated on-demand.
+        """
+        try:
+            return self.storage.get_metadata(build)
+        except LookupError:
+            pass
+
+        # Really old builds, or corrupt builds, don't have a gbp.json file. We can still
+        # generate the GBPMetadata however.
+        try:
+            packages = self.storage.get_packages(build)
+        except LookupError:
+            packages = []
+
+        record = self.record(build)
+        jenkins_metadata = self.jenkins.get_metadata(record)
+
+        return self.gbp_metadata(jenkins_metadata, packages)
