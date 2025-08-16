@@ -2,6 +2,7 @@
 
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
+from dataclasses import replace
 from unittest import TestCase, mock
 from zoneinfo import ZoneInfo
 
@@ -265,7 +266,12 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         """GBPMetadata without a gbp.json file"""
         build = fixtures.build
         publisher.pull(build)
-        expected = publisher.storage.get_metadata(build)
+        build = publisher.record(build)
+        assert build.completed and build.built
+        duration = int((build.completed - build.built).total_seconds())
+        expected = replace(
+            publisher.storage.get_metadata(build), build_duration=duration
+        )
         gbp_json = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
         gbp_json.unlink()
 

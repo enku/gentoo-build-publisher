@@ -268,7 +268,18 @@ class BuildPublisher:
         except LookupError:
             packages = []
 
-        record = self.record(build)
-        jenkins_metadata = self.jenkins.get_metadata(record)
+        # build_duration comes from Jenkins, but we may not have this build in Jenkins
+        # anymore. Instead we calculate it (estimate) based on the BuildRecord. But only
+        # for completed builds.
+        build = self.record(build)
+        timestamp, duration = (
+            (
+                build.built.timestamp() * 1000,
+                (build.completed - build.built).total_seconds(),
+            )
+            if build.built and build.completed
+            else (0, 0)
+        )
+        jenkins_metadata = JenkinsMetadata(int(duration), int(timestamp))
 
         return self.gbp_metadata(jenkins_metadata, packages)
