@@ -201,8 +201,7 @@ class StatsCollector:
             lambda b: b.built and b.submitted, self.machine_info(machine).builds
         ):
             date = localtime(build.built).date()
-
-            metadata = gbp_metadata(build)
+            metadata = publisher.build_metadata(build)
 
             pbd.setdefault(date, set()).update(metadata.packages.built)
 
@@ -223,7 +222,7 @@ def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata:
     cache_key = f"metadata-{build}"
 
     if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
-        metadata = gbp_metadata(build)
+        metadata = publisher.build_metadata(build)
 
         cache.set(cache_key, metadata)
 
@@ -311,25 +310,3 @@ def color_range_from_settings() -> tuple[Color, Color]:
         Color(*GBP_SETTINGS.get("COLOR_START", (80, 69, 117))),
         Color(*GBP_SETTINGS.get("COLOR_END", (221, 218, 236))),
     )
-
-
-def gbp_metadata(build: Build) -> GBPMetadata:
-    """Shorthand for publisher.storage.get_metadata
-
-    If gbp.json doesn't exist for the given build, the GBPMetadata is generated
-    on-demand.
-    """
-    try:
-        return publisher.storage.get_metadata(build)
-    except LookupError:
-        pass
-
-    try:
-        packages = publisher.storage.get_packages(build)
-    except LookupError:
-        packages = []
-
-    record = publisher.record(build)
-    jenkins_metadata = publisher.jenkins.get_metadata(record)
-
-    return publisher.gbp_metadata(jenkins_metadata, packages)

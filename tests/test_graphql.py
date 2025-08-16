@@ -170,36 +170,6 @@ class BuildQueryTestCase(TestCase):
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
-    def test_packagesbuild_should_return_error_when_gbpjson_missing(
-        self, fixtures: Fixtures
-    ) -> None:
-        # given the pulled build with gbp.json missing
-        build = BuildFactory()
-        publisher.pull(build)
-        (publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json").unlink()
-
-        # when we query the build's packagesBuild
-        query = """
-        query ($id: ID!) {
-          build(id: $id) {
-            id
-            machine
-            packagesBuilt {
-              cpv
-            }
-          }
-        }
-        """
-        result = graphql(fixtures.client, query, {"id": build.id})
-
-        self.assertEqual(
-            result["data"]["build"],
-            {"id": build.id, "machine": build.machine, "packagesBuilt": None},
-        )
-        self.assertEqual(len(result["errors"]), 1)
-        self.assertEqual(result["errors"][0]["message"], "Packages built unknown")
-        self.assertEqual(result["errors"][0]["path"], ["build", "packagesBuilt"])
-
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client)
 class BuildsQueryTestCase(TestCase):

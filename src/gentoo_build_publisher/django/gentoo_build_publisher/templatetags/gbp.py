@@ -7,7 +7,7 @@ from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from gentoo_build_publisher.django.gentoo_build_publisher.views import utils
+from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils import time
@@ -143,7 +143,7 @@ def roundrect(text: str, title: str, color: str, scale: float = 1.0) -> dict[str
 @register.inclusion_tag("gentoo_build_publisher/machine/build_row.html")
 def machine_build_row(build: Build) -> dict[str, Any]:
     """Render a (Jenkins) build row"""
-    packages_built = utils.gbp_metadata(build).packages.built
+    packages_built = publisher.build_metadata(build).packages.built
     packages_built_str = "<br/>".join(p.cpv for p in packages_built)
 
     return {

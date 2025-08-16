@@ -17,7 +17,6 @@ from .utils import (
     StatsCollector,
     color_range_from_settings,
     days_strings,
-    gbp_metadata,
     get_chart_days,
     gradient_colors,
 )
@@ -197,7 +196,7 @@ class BuildInputContext:
 def create_build_context(input_context: BuildInputContext) -> BuildContext:
     """Return context for the build view"""
     build = input_context.build
-    packages_built = gbp_metadata(build).packages.built
+    packages_built = publisher.build_metadata(build).packages.built
 
     return {
         "build": build,

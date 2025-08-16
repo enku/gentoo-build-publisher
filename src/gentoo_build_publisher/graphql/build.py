@@ -4,7 +4,7 @@ import datetime as dt
 from typing import TypeAlias
 
 from ariadne import ObjectType, convert_kwargs_to_snake_case
-from graphql import GraphQLError, GraphQLResolveInfo
+from graphql import GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Package
@@ -58,10 +58,7 @@ def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
 
 @BuildType.field("packagesBuilt")
 def _(build: Build, _info: Info) -> list[Package] | None:
-    try:
-        gbp_metadata = publisher.storage.get_metadata(build)
-    except LookupError as error:
-        raise GraphQLError("Packages built unknown") from error
+    gbp_metadata = publisher.build_metadata(build)
 
     return gbp_metadata.packages.built
 
