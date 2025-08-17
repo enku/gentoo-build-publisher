@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 from unittest import mock
 
 import rich.console
@@ -42,6 +42,7 @@ from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
 from .helpers import MockJenkins, create_user_auth, test_gbp
 
 COUNTER = 0
+_NO_OBJECT = object()
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
@@ -248,3 +249,29 @@ def plugins(
     with mock.patch("gentoo_build_publisher.plugins.get_plugins") as gp:
         gp.return_value = plist
         yield plist
+
+
+@fixture()
+def patch(
+    _: Fixtures,
+    target: str = "",
+    object: Any = _NO_OBJECT,  # pylint: disable=redefined-builtin
+    attrs: dict[str, Any] | None = None,
+    **kwargs: Any,
+) -> FixtureContext[mock.Mock]:
+    attrs = attrs or {}
+
+    if not target:
+        patcher = None
+        fake = mock.Mock(**kwargs)
+    elif object is _NO_OBJECT:
+        patcher = mock.patch(target, **kwargs)
+        fake = patcher.start()
+    else:
+        patcher = mock.patch.object(object, target, **kwargs)
+        fake = patcher.start()
+
+    yield fake
+
+    if patcher:
+        patcher.stop()
