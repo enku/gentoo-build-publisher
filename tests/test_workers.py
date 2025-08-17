@@ -50,7 +50,9 @@ def params(*names: str) -> Callable[..., Any]:
     return parametrized(ifparams(*names))
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, logger_error=testkit.patch, pull_build=testkit.patch)
+@where(logger_error__target="gentoo_build_publisher.worker.logger.error")
+@where(pull_build__target="gentoo_build_publisher.worker.tasks.pull_build")
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
@@ -63,20 +65,20 @@ class PublishBuildTestCase(TestCase):
         self.assertIs(publisher.published(build), True)
 
     @params("celery", "rq", "sync", "thread")
-    @mock.patch("gentoo_build_publisher.worker.logger.error")
     def test_should_give_up_when_pull_raises_httperror(
-        self, worker: WorkerInterface, log_error_mock: mock.Mock, fixtures: Fixtures
+        self, worker: WorkerInterface, fixtures: Fixtures
     ) -> None:
-        with mock.patch("gentoo_build_publisher.worker.tasks.pull_build") as apply_mock:
-            apply_mock.side_effect = HTTPError
-            worker.run(tasks.publish_build, "babette.193")
+        fixtures.pull_build.side_effect = HTTPError
 
-        log_error_mock.assert_called_with(
+        worker.run(tasks.publish_build, "babette.193")
+
+        fixtures.logger_error.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
         )
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, logger_error=testkit.patch)
+@where(logger_error__target="gentoo_build_publisher.worker.logger.error")
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
@@ -89,7 +91,6 @@ class PullBuildTestCase(TestCase):
         self.assertIs(publisher.pulled(build), True)
 
     @params("celery", "rq", "sync", "thread")
-    @mock.patch("gentoo_build_publisher.worker.logger.error", new=mock.Mock())
     def test_should_delete_db_model_when_download_fails(
         self, worker: WorkerInterface, fixtures: Fixtures
     ) -> None:
@@ -109,15 +110,19 @@ class PullBuildTestCase(TestCase):
         self.assertFalse(records.exists(Build("oscar", "197")))
 
 
+@given(delete=testkit.patch)
+@where(delete__object=publisher, delete__target="delete")
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
     @params("celery", "rq", "sync", "thread")
-    def test_should_delete_the_build(self, worker: WorkerInterface) -> None:
-        with mock.patch.object(publisher, "delete") as mock_delete:
-            worker.run(tasks.delete_build, "zulu.56")
+    def test_should_delete_the_build(
+        self, worker: WorkerInterface, fixtures: Fixtures
+    ) -> None:
+        fixtures.delete.reset_mock()
+        worker.run(tasks.delete_build, "zulu.56")
 
-        mock_delete.assert_called_once_with(Build("zulu", "56"))
+        fixtures.delete.assert_called_once_with(Build("zulu", "56"))
 
 
 @given(testkit.environ, testkit.settings)

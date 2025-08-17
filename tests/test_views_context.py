@@ -3,11 +3,10 @@
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
 from typing import Any, Generator
-from unittest import mock
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
-from unittest_fixtures import Fixtures, fixture, given
+from unittest_fixtures import Fixtures, fixture, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
@@ -34,7 +33,9 @@ from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, localtimezone=testkit.patch)
+@where(localtimezone__target="gentoo_build_publisher.utils.time.LOCAL_TIMEZONE")
+@where(localtimezone__new=ZoneInfo("America/Chicago"))
 class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
 
@@ -115,9 +116,8 @@ class CreateDashboardContextTests(TestCase):
                     if day == 0:
                         break
 
-        localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
-        with mock.patch(localtimezone, new=ZoneInfo("America/Chicago")):
-            ctx = create_dashboard_context(self.input_context(now=localtime(now)))
+        ctx = create_dashboard_context(self.input_context(now=localtime(now)))
+
         self.assertEqual(ctx["builds_over_time"], [[3, 1], [3, 1]])
         self.assertEqual(len(ctx["built_recently"]), 2)
 

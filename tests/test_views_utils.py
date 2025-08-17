@@ -2,11 +2,10 @@
 
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
-from unittest import mock
 
 from django.http import Http404, HttpRequest, HttpResponse
 from django.utils import timezone
-from unittest_fixtures import Fixtures, given
+from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
@@ -54,21 +53,25 @@ class GetMetadataTestCase(TestCase):
         self.assertEqual(metadata, [1, 2, 3])
 
 
+@given(request=testkit.patch)
 class GetQueryValueFromRequestTests(TestCase):
-    def test_returns_fallback(self) -> None:
-        request = mock.Mock(GET={})
+    def test_returns_fallback(self, fixtures: Fixtures) -> None:
+        request = fixtures.request
+        request.GET = {}
         chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
         self.assertEqual(chart_days, 10)
 
-    def test_with_queryparam(self) -> None:
-        request = mock.Mock(GET={"chart_days": "10"})
+    def test_with_queryparam(self, fixtures: Fixtures) -> None:
+        request = fixtures.request
+        request.GET = {"chart_days": "10"}
         chart_days = get_query_value_from_request(request, "chart_days", int, 7)
 
         self.assertEqual(chart_days, 10)
 
-    def test_with_invalid_queryparam(self) -> None:
-        request = mock.Mock(GET={"chart_days": "bogus"})
+    def test_with_invalid_queryparam(self, fixtures: Fixtures) -> None:
+        request = fixtures.request
+        request.GET = {"chart_days": "bogus"}
         chart_days = get_query_value_from_request(request, "chart_days", int, 10)
 
         self.assertEqual(chart_days, 10)
@@ -255,9 +258,11 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(len(pbd[d2.date()]), 6)
 
 
+@given(request=testkit.patch)
+@where(request__spec=HttpRequest)
 class ExperimentalMarkerTests(DjangoTestCase):
-    def test_debug_is_false(self) -> None:
-        request = mock.MagicMock(spec=HttpRequest)
+    def test_debug_is_false(self, fixtures: Fixtures) -> None:
+        request = fixtures.request
         experimental_view = experimental(dummy_view)
 
         with self.settings(DEBUG=False):
@@ -267,8 +272,8 @@ class ExperimentalMarkerTests(DjangoTestCase):
             with self.assertRaises(Http404):
                 response = experimental_view(request)
 
-    def test_debug_is_true(self) -> None:
-        request = mock.MagicMock(spec=HttpRequest)
+    def test_debug_is_true(self, fixtures: Fixtures) -> None:
+        request = fixtures.request
         experimental_view = experimental(dummy_view)
 
         with self.settings(DEBUG=True):

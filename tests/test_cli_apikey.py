@@ -5,7 +5,6 @@
 import datetime as dt
 from argparse import ArgumentParser, Namespace
 from dataclasses import replace
-from unittest.mock import Mock, patch
 
 from django.conf import settings
 from unittest_fixtures import Fixtures, given, where
@@ -20,14 +19,14 @@ from gentoo_build_publisher.types import ApiKey
 from gentoo_build_publisher.utils import time
 
 
-@given(testkit.console)
+@given(testkit.console, gbp=testkit.patch, create_secret_key=testkit.patch)
+@where(create_secret_key__target="gentoo_build_publisher.cli.apikey.create_secret_key")
 class GBPCreateTests(DjangoTestCase):
     def test_create_api_key_with_given_name(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        mock_gbp = Mock(name="gbp")
         namespace = Namespace(action="create", name="test")
 
-        status = apikey.handler(namespace, mock_gbp, console)
+        status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 0)
         key = console.out.file.getvalue().strip()
@@ -44,7 +43,7 @@ class GBPCreateTests(DjangoTestCase):
 
     def test_name_is_case_insensitive(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        apikey.handler(Namespace(action="create", name="TEST"), Mock(), console)
+        apikey.handler(Namespace(action="create", name="TEST"), fixtures.gbp, console)
 
         self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
         self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
@@ -57,7 +56,7 @@ class GBPCreateTests(DjangoTestCase):
         publisher.repo.api_keys.save(api_key)
 
         status = apikey.handler(
-            Namespace(action="create", name="TEST"), Mock(), console
+            Namespace(action="create", name="TEST"), fixtures.gbp, console
         )
 
         self.assertEqual(status, 1)
@@ -70,7 +69,9 @@ class GBPCreateTests(DjangoTestCase):
     def test_create_empty_name(self, fixtures: Fixtures) -> None:
         console = fixtures.console
 
-        status = apikey.handler(Namespace(action="create", name=""), Mock(), console)
+        status = apikey.handler(
+            Namespace(action="create", name=""), fixtures.gbp, console
+        )
 
         self.assertEqual(status, 2)
         self.assertEqual(console.err.file.getvalue(), "''\n")
@@ -79,7 +80,7 @@ class GBPCreateTests(DjangoTestCase):
         console = fixtures.console
 
         status = apikey.handler(
-            Namespace(action="create", name="b😈d"), Mock(), console
+            Namespace(action="create", name="b😈d"), fixtures.gbp, console
         )
 
         self.assertEqual(status, 2)
@@ -89,7 +90,9 @@ class GBPCreateTests(DjangoTestCase):
         console = fixtures.console
         name = "x" * 129
 
-        status = apikey.handler(Namespace(action="create", name=name), Mock(), console)
+        status = apikey.handler(
+            Namespace(action="create", name=name), fixtures.gbp, console
+        )
 
         self.assertEqual(status, 2)
         self.assertEqual(
@@ -98,21 +101,22 @@ class GBPCreateTests(DjangoTestCase):
             "xxxxxxxxxxxxxxx\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n",
         )
 
-    @patch("gentoo_build_publisher.cli.apikey.create_secret_key")
-    def test_root_key(self, create_secret_key: Mock, fixtures: Fixtures) -> None:
+    def test_root_key(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        gbp = Mock()
-        create_secret_key.return_value = b"thisisatest"
+        fixtures.create_secret_key.return_value = b"thisisatest"
 
-        status = apikey.handler(Namespace(action="create", name="root"), gbp, console)
+        status = apikey.handler(
+            Namespace(action="create", name="root"), fixtures.gbp, console
+        )
 
         self.assertEqual(status, 0)
         self.assertFalse(models.ApiKey.objects.filter(name="root").exists())
         self.assertEqual(console.out.file.getvalue(), "thisisatest\n")
 
 
-@given(testkit.console)
-@patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
+@given(testkit.console, local_timezone=testkit.patch, gbp=testkit.patch)
+@where(local_timezone__target="gentoo_build_publisher.utils.time.LOCAL_TIMEZONE")
+@where(local_timezone__new=LOCAL_TIMEZONE)
 class GBPListTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
         console = fixtures.console
@@ -123,9 +127,7 @@ class GBPListTests(DjangoTestCase):
 
         publisher.repo.api_keys.save(replace(api_key, last_used=timestamp))
 
-        gbp = Mock()
-
-        status = apikey.handler(Namespace(action="list"), gbp, console)
+        status = apikey.handler(Namespace(action="list"), fixtures.gbp, console)
 
         self.assertEqual(status, 0)
         expected = """\
@@ -142,22 +144,22 @@ class GBPListTests(DjangoTestCase):
 
     def test_with_no_keys(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        gbp = Mock()
 
-        status = apikey.handler(Namespace(action="list"), gbp, console)
+        status = apikey.handler(Namespace(action="list"), fixtures.gbp, console)
 
         self.assertEqual(status, 0)
         self.assertEqual(console.out.file.getvalue(), "No API keys registered.\n")
 
 
 @given(testkit.tmpdir, testkit.publisher, testkit.api_keys, testkit.console)
+@given(gbp=testkit.patch)
 @where(api_keys__names=["this", "that", "the", "other"])
 class GBPDeleteTests(DjangoTestCase):
     def test_delete(self, fixtures: Fixtures) -> None:
         console = fixtures.console
         namespace = Namespace(action="delete", name="that")
 
-        status = apikey.handler(namespace, Mock(), console)
+        status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 0)
         key_query = models.ApiKey.objects.filter(name="that")
@@ -167,7 +169,7 @@ class GBPDeleteTests(DjangoTestCase):
         console = fixtures.console
         namespace = Namespace(action="delete", name="THAT")
 
-        status = apikey.handler(namespace, Mock(), console)
+        status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 0)
         key_query = models.ApiKey.objects.filter(name="that")
@@ -177,19 +179,19 @@ class GBPDeleteTests(DjangoTestCase):
         console = fixtures.console
         namespace = Namespace(action="delete", name="bogus")
 
-        status = apikey.handler(namespace, Mock(), console)
+        status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 3)
         self.assertEqual(console.err.file.getvalue(), "No key exists with that name.\n")
 
 
-@given(testkit.console)
+@given(testkit.console, gbp=testkit.patch)
 class GBPAPIKeyTests(TestCase):
     def test_unknown_action(self, fixtures: Fixtures) -> None:
         console = fixtures.console
         namespace = Namespace(action="bogus")
 
-        status = apikey.handler(namespace, Mock(), console)
+        status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 255)
         self.assertEqual(console.err.file.getvalue(), "Unknown action: bogus\n")
@@ -202,8 +204,9 @@ class ParseArgs(TestCase):
         apikey.parse_args(parser)
 
 
+@given(action=testkit.patch, parser=testkit.patch, parsed_args=testkit.patch)
 class KeyNamesTests(TestCase):
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         names = ["this", "that", "the", "other"]
 
         for name in names:
@@ -213,7 +216,10 @@ class KeyNamesTests(TestCase):
             publisher.repo.api_keys.save(api_key)
 
         response = apikey.key_names(
-            prefix="", action=Mock(), parser=Mock(), parsed_args=Mock()
+            prefix="",
+            action=fixtures.action,
+            parser=fixtures.parser,
+            parsed_args=fixtures.parsed_args,
         )
 
         self.assertEqual(response, sorted(names))

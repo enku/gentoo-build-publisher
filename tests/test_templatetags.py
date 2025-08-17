@@ -3,7 +3,7 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring
 import datetime as dt
 from typing import Any
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from django.template import Context, Template, TemplateSyntaxError
 from unittest_fixtures import Fixtures, given, where
@@ -207,22 +207,26 @@ class MachineLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
 
 
-@mock.patch(NOW, mock.Mock(return_value=dt.datetime(2024, 1, 11, 20, 54)))
-@mock.patch("gentoo_build_publisher.utils.time.LOCAL_TIMEZONE", new=LOCAL_TIMEZONE)
+@given(now=testkit.patch)
+@where(now__target=NOW, now__return_value=dt.datetime(2024, 1, 11, 20, 54))
+@given(localtimezone=testkit.patch)
+@where(localtimezone__target="gentoo_build_publisher.utils.time.LOCAL_TIMEZONE")
+@where(localtimezone__new=LOCAL_TIMEZONE)
 class DisplayTimeTests(TemplateTagTests):
+    # pylint: disable=unused-argument
     template = "{{ timestamp|display_time }}"
 
-    def test_same_day(self) -> None:
+    def test_same_day(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 11, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "07:54:00")
 
-    def test_previous_day(self) -> None:
+    def test_previous_day(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 10, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 10 07:54")
 
-    def test_previous_week(self) -> None:
+    def test_previous_week(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 4, 8, 54))
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 4")

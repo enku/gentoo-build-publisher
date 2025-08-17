@@ -9,7 +9,9 @@ from unittest import TestCase, mock
 import requests
 import requests.api
 import requests.exceptions
+from unittest_fixtures import Fixtures, given, where
 
+import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import utils
 
 
@@ -261,36 +263,32 @@ class ConditionallyDecoratorTests(TestCase):
         return "test"
 
 
+@given(entry_points=testkit.patch, callback=testkit.patch)
+@where(entry_points__target="gentoo_build_publisher.plugins.entry_points")
 class ForEachAppTests(TestCase):
-    def test(self) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         apps = ("x.foo", "y.bar", "z.baz")
+        fixtures.callback.side_effect = apps
+        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
+        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
+            iter(mocks)
+        )
+        return_values = utils.for_each_app(fixtures.callback)
 
-        mock_callback = mock.Mock(side_effect=apps)
-
-        with mock.patch("gentoo_build_publisher.plugins.entry_points") as entry_points:
-            mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
-            entry_points.return_value.select.return_value.__iter__.return_value = iter(
-                mocks
-            )
-            return_values = utils.for_each_app(mock_callback)
-
-        mock_callback.assert_has_calls(
+        fixtures.callback.assert_has_calls(
             [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")], any_order=True
         )
         self.assertEqual(list(apps), return_values)
 
-    def test_when_entry_point_is_not_a_string(self) -> None:
+    def test_when_entry_point_is_not_a_string(self, fixtures: Fixtures) -> None:
         apps = ("x.foo", 6, "z.baz")
-
-        mock_callback = mock.Mock(side_effect=apps)
-
-        with mock.patch("gentoo_build_publisher.plugins.entry_points") as entry_points:
-            mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
-            entry_points.return_value.select.return_value.__iter__.return_value = iter(
-                mocks
-            )
-            with self.assertRaises(ValueError) as exc_info:
-                utils.for_each_app(mock_callback)
+        fixtures.callback.side_effect = apps
+        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
+        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
+            iter(mocks)
+        )
+        with self.assertRaises(ValueError) as exc_info:
+            utils.for_each_app(fixtures.callback)
 
         exception = exc_info.exception
         error_message = exception.args[0]

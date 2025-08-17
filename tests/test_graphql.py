@@ -3,9 +3,8 @@
 # pylint: disable=missing-docstring,too-many-lines,unused-argument
 import datetime as dt
 from typing import Any
-from unittest import mock
 
-from unittest_fixtures import Fixtures, fixture, given, parametrized
+from unittest_fixtures import Fixtures, fixture, given, parametrized, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
@@ -17,8 +16,6 @@ from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Content, EbuildRepo, MachineJob, Repo
 from gentoo_build_publisher.utils import get_version, time
 from gentoo_build_publisher.worker import tasks
-
-Mock = mock.Mock
 
 SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
@@ -34,7 +31,9 @@ def assert_data(
     test_case.assertEqual(data, expected)
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.client)
+@given(testkit.tmpdir, testkit.publisher, testkit.client, utctime=testkit.patch)
+@where(utctime__target="gentoo_build_publisher.build_publisher.utctime")
+@where(utctime__return_value=time.utctime(dt.datetime(2022, 3, 1, 6, 28, 44)))
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
@@ -47,12 +46,7 @@ class BuildQueryTestCase(TestCase):
         artifact_builder.build(build, "x11-wm/mutter-41.3")
         artifact_builder.build(build, "acct-group/sgx-0", repo="marduk")
 
-        with mock.patch(
-            "gentoo_build_publisher.build_publisher.utctime"
-        ) as mock_utctime:
-            mock_utctime.return_value = time.utctime(dt.datetime(2022, 3, 1, 6, 28, 44))
-            publisher.pull(build)
-
+        publisher.pull(build)
         publisher.tag(build, "prod")
 
         query = """
@@ -566,7 +560,8 @@ class MachinesQueryTestCase(TestCase):
         self.assertEqual(len(result["data"]["machines"]), 2)
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.client)
+@given(testkit.tmpdir, testkit.publisher, testkit.client, worker=testkit.patch)
+@where(worker__target=WORKER)
 class PublishMutationTestCase(TestCase):
     """Tests for the publish mutation"""
 
@@ -599,13 +594,13 @@ class PublishMutationTestCase(TestCase):
           }
         }
         """
-        with mock.patch(WORKER) as mock_worker:
-            graphql(fixtures.client, query)
+        graphql(fixtures.client, query)
 
-        mock_worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
+        fixtures.worker.run.assert_called_once_with(tasks.publish_build, "babette.193")
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.client)
+@given(testkit.tmpdir, testkit.publisher, testkit.client, worker=testkit.patch)
+@where(worker__target=WORKER)
 class PullMutationTestCase(TestCase):
     """Tests for the pull mutation"""
 
@@ -621,11 +616,10 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch(WORKER) as mock_worker:
-            result = graphql(fixtures.client, query, variables={"id": build.id})
+        result = graphql(fixtures.client, query, variables={"id": build.id})
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_worker.run.assert_called_once_with(
+        fixtures.worker.run.assert_called_once_with(
             tasks.pull_build, build.id, note=None, tags=None
         )
 
@@ -640,15 +634,12 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch(WORKER) as mock_worker:
-            result = graphql(
-                fixtures.client,
-                query,
-                variables={"id": build.id, "note": "This is a test"},
-            )
+        result = graphql(
+            fixtures.client, query, variables={"id": build.id, "note": "This is a test"}
+        )
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_worker.run.assert_called_once_with(
+        fixtures.worker.run.assert_called_once_with(
             tasks.pull_build, build.id, note="This is a test", tags=None
         )
 
@@ -663,20 +654,20 @@ class PullMutationTestCase(TestCase):
             }
           }
         }"""
-        with mock.patch(WORKER) as mock_worker:
-            result = graphql(
-                fixtures.client,
-                query,
-                variables={"id": build.id, "tags": ["emptytree"]},
-            )
+        result = graphql(
+            fixtures.client, query, variables={"id": build.id, "tags": ["emptytree"]}
+        )
 
         assert_data(self, result, {"pull": {"publishedBuild": None}})
-        mock_worker.run.assert_called_once_with(
+        fixtures.worker.run.assert_called_once_with(
             tasks.pull_build, build.id, note=None, tags=["emptytree"]
         )
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.client)
+@given(testkit.tmpdir, testkit.publisher, testkit.client, schedule_build=testkit.patch)
+@where(schedule_build__object=publisher)
+@where(schedule_build__target="schedule_build")
+@where(schedule_build__return_value="https://jenkins.invalid/queue/item/31528/")
 class ScheduleBuildMutationTestCase(TestCase):
     """Tests for the build mutation"""
 
@@ -685,17 +676,13 @@ class ScheduleBuildMutationTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         query = 'mutation { scheduleBuild(machine: "babette") }'
 
-        with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
-            mock_schedule_build.return_value = (
-                "https://jenkins.invalid/queue/item/31528/"
-            )
-            result = graphql(fixtures.client, query)
+        result = graphql(fixtures.client, query)
 
         self.assertEqual(
             result,
             {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
         )
-        mock_schedule_build.assert_called_once_with("babette")
+        fixtures.schedule_build.assert_called_once_with("babette")
 
     def test_with_params(self, fixtures: Fixtures) -> None:
         query = """mutation
@@ -707,26 +694,21 @@ class ScheduleBuildMutationTestCase(TestCase):
           }
         """
 
-        with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
-            mock_schedule_build.return_value = (
-                "https://jenkins.invalid/queue/item/31528/"
-            )
-            result = graphql(fixtures.client, query)
+        result = graphql(fixtures.client, query)
 
         self.assertEqual(
             result,
             {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
         )
-        mock_schedule_build.assert_called_once_with("babette", BUILD_TARGET="world")
+        fixtures.schedule_build.assert_called_once_with("babette", BUILD_TARGET="world")
 
     def test_should_return_error_when_schedule_build_fails(
         self, fixtures: Fixtures
     ) -> None:
         query = 'mutation { scheduleBuild(machine: "babette") }'
+        fixtures.schedule_build.side_effect = Exception("The end is near")
 
-        with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
-            mock_schedule_build.side_effect = Exception("The end is near")
-            result = graphql(fixtures.client, query)
+        result = graphql(fixtures.client, query)
 
         expected = {
             "data": {"scheduleBuild": None},
@@ -739,22 +721,18 @@ class ScheduleBuildMutationTestCase(TestCase):
             ],
         }
         self.assertEqual(result, expected)
-        mock_schedule_build.assert_called_once_with("babette")
+        fixtures.schedule_build.assert_called_once_with("babette")
 
     def test_with_repos(self, fixtures: Fixtures) -> None:
         query = 'mutation { scheduleBuild(machine: "gentoo", isRepo: true) }'
 
-        with mock.patch.object(publisher, "schedule_build") as mock_schedule_build:
-            mock_schedule_build.return_value = (
-                "https://jenkins.invalid/queue/item/31528/"
-            )
-            result = graphql(fixtures.client, query)
+        result = graphql(fixtures.client, query)
 
         self.assertEqual(
             result,
             {"data": {"scheduleBuild": "https://jenkins.invalid/queue/item/31528/"}},
         )
-        mock_schedule_build.assert_called_once_with("repos/job/gentoo")
+        fixtures.schedule_build.assert_called_once_with("repos/job/gentoo")
 
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client)
