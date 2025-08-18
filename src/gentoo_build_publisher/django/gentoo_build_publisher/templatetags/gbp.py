@@ -163,11 +163,16 @@ def machine_link(machine: str) -> str:
 @register.filter(is_safe=True)
 def build_link(build: BuildRecord) -> str:
     """Render build link"""
-    note = " 🗒" if build.note else ""
     path = reverse(
         "gbp-builds", kwargs={"machine": build.machine, "build_id": build.build_id}
     )
-    text = f'<a class="build-link" href="{path}">{build.build_id}</a>{note}'
+    text = f'<a class="build-link" href="{path}">{build.build_id}</a>'
+
+    if publisher.published(build):
+        text = f"<b>{text}</b>"
+
+    if build.note:
+        text = f"{text} 🗒"
 
     if tags := publisher.tags(build):
         tags = [f"@{tag}" for tag in tags]

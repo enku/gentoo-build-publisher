@@ -271,6 +271,21 @@ class BuildLinkTests(TemplateTagTests):
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
+    def test_published(self, fixtures: Fixtures) -> None:
+        build = fixtures.record
+        machine = build.machine
+        id = build.build_id  # pylint: disable=redefined-builtin
+        publisher.pull(build)
+        publisher.publish(build)
+        build = publisher.record(build)
+
+        expected = (
+            "<b>"
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
+            "</b>"
+        )
+        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+
 
 @given(testkit.build)
 class BuildWithSlashTests(TemplateTagTests):
