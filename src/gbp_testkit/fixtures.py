@@ -254,7 +254,7 @@ def plugins(
 @fixture()
 def patch(  # pylint: disable=redefined-builtin
     _: Fixtures, target: str = "", object: Any = _NO_OBJECT, **kwargs: Any
-) -> FixtureContext[mock.Mock]:
+) -> FixtureContext[Any]:
     if not target:
         patcher = None
         fake = mock.Mock(**kwargs)
