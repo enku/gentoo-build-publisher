@@ -1,8 +1,8 @@
 {% load gbp %}
 <div class="container">
   <div class="row">
-    {% circle build_count "Build"|pluralize gradient_colors.0 %}
-    {% circle machines|length "Machine"|pluralize gradient_colors.0 %}
-    {% circle package_count "Package"|pluralize gradient_colors.0 %}
+    {% circle build_count "Builds" gradient_colors.0 %}
+    {% circle machines|length "Machines" gradient_colors.0 %}
+    {% circle package_count "Packages" gradient_colors.0 %}
   </div>
 </div>
