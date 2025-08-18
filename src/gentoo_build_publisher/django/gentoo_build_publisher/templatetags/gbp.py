@@ -167,7 +167,13 @@ def build_link(build: BuildRecord) -> str:
     path = reverse(
         "gbp-builds", kwargs={"machine": build.machine, "build_id": build.build_id}
     )
-    return mark_safe(f'<a class="build-link" href="{path}">{build.build_id}</a>{note}')
+    text = f'<a class="build-link" href="{path}">{build.build_id}</a>{note}'
+
+    if tags := publisher.tags(build):
+        tags = [f"@{tag}" for tag in tags]
+        text = f'{text} <span class="tags">{" ".join(tags)}</span>'
+
+    return mark_safe(text)
 
 
 @register.filter

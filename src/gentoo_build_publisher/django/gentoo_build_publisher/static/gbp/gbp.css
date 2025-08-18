@@ -35,6 +35,11 @@ main {
   box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
 }
 
+.tags {
+    font-size: smaller;
+    color: #493f6a;
+}
+
 @media (min-width: 768px) {
   .bd-placeholder-img-lg {
     font-size: 3.5rem;
