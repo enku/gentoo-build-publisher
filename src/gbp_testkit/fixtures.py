@@ -252,15 +252,9 @@ def plugins(
 
 
 @fixture()
-def patch(
-    _: Fixtures,
-    target: str = "",
-    object: Any = _NO_OBJECT,  # pylint: disable=redefined-builtin
-    attrs: dict[str, Any] | None = None,
-    **kwargs: Any,
+def patch(  # pylint: disable=redefined-builtin
+    _: Fixtures, target: str = "", object: Any = _NO_OBJECT, **kwargs: Any
 ) -> FixtureContext[mock.Mock]:
-    attrs = attrs or {}
-
     if not target:
         patcher = None
         fake = mock.Mock(**kwargs)

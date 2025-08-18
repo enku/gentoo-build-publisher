@@ -2,11 +2,13 @@
 
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
+import sys
 import tarfile
 from unittest import TestCase, mock
 
-from unittest_fixtures import Fixtures, fixture, given
+from unittest_fixtures import Fixtures, fixture, given, where
 
+import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import (
     ArtifactFactory,
     BuildFactory,
@@ -306,3 +308,26 @@ class MockJenkinsSessionTestCase(TestCase):
         response = session.get("http://jenkins.invalid/job/Test/config.xml")
 
         self.assertEqual(response.status_code, 404)
+
+
+@given(foo=testkit.patch)
+@where(foo__bar="baz")
+@given(version=testkit.patch)
+@where(version__target="sys.version", version__new="test")
+@given(argv=testkit.patch)
+@where(argv__object=sys, argv__target="argv", argv__new=["foo", "bar"])
+class PatchTests(TestCase):
+    def test_with_no_object_and_no_target(self, fixtures: Fixtures) -> None:
+        # Just produces a bare mock
+        self.assertIsInstance(fixtures.foo, mock.Mock)
+
+    def test_with_no_object_and_target(self, fixtures: Fixtures) -> None:
+        self.assertEqual(sys.version, "test")
+        self.assertEqual(fixtures.version, "test")
+
+    def test_with_object_and_target(self, fixtures: Fixtures) -> None:
+        self.assertEqual(sys.argv, ["foo", "bar"])
+        self.assertEqual(fixtures.argv, ["foo", "bar"])
+
+    def test_attributes(self, fixtures: Fixtures) -> None:
+        self.assertEqual(fixtures.foo.bar, "baz")
