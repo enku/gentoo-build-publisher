@@ -67,7 +67,7 @@ build-backend = "pdm.backend"
 [tool.coverage.run]
 branch = true
 source = ["gentoo_build_publisher", "gbp_testkit", "tests"]
-omit = ["src/gentoo_build_publisher/migrations/*"]
+omit = ["src/gentoo_build_publisher/migrations/*", "tests/__main__.py"]
 
 [tool.isort]
 profile = "black"
