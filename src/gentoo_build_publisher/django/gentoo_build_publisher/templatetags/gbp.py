@@ -166,10 +166,7 @@ def build_link(build: BuildRecord) -> str:
     path = reverse(
         "gbp-builds", kwargs={"machine": build.machine, "build_id": build.build_id}
     )
-    text = f'<a class="build-link" href="{path}">{build.build_id}</a>'
-
-    if publisher.published(build):
-        text = f"<b>{text}</b>"
+    text = f'<a class="build-link" href="{path}">{build_id(build)}</a>'
 
     if build.note:
         text = f"{text} 🗒"

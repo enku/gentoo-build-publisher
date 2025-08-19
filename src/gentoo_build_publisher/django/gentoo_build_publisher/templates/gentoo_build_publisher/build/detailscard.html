@@ -2,8 +2,8 @@
 <div class="card col-md-9 mb-4">
   <div class="card-body">
     <ul class="list-group list-group-flush">
-      {% with machine_link_output=build.machine|machine_link %}
-        {% card_item "Build" machine_link_output|add:"/"|add:build.build_id|safe %}
+      {% with machine_link_output=build.machine|machine_link build_id=build|build_id %}
+        {% card_item "Build" machine_link_output|add:"/"|add:build_id %}
       {% endwith %}
       {% card_item "Build Date" build.built %}
       {% card_item "Submitted" build.submitted %}

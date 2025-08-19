@@ -128,7 +128,7 @@ class BuildRowTests(TemplateTagTests):
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
     <h6 class="my-0"><a class="machine-link" href="/machines/{machine}/">{machine}</a></h6>
-    <small class="text-muted"><a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a></small>
+    <small class="text-muted"><a class="build-link" href="/machines/{machine}/builds/{id}/"><span class="build_id">{id}</span></a></small>
   </div>
   <span title="Packages" class="text-muted" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='x11-libs/libdrm-2.4.118&lt;br/&gt;x11-misc/xkeyboard-config-2.40-r1' data-bs-html="true">2 packages</span>
 </li>
@@ -241,7 +241,9 @@ class BuildLinkTests(TemplateTagTests):
         id = build.build_id  # pylint: disable=redefined-builtin
 
         expected = (
-            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">'
+            f'<span class="build_id">{id}</span>'
+            "</a>"
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
@@ -252,7 +254,9 @@ class BuildLinkTests(TemplateTagTests):
         id = build.build_id  # pylint: disable=redefined-builtin
 
         expected = (
-            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a> 🗒'
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">'
+            f'<span class="build_id">{id}</span>'
+            "</a> 🗒"
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
@@ -266,7 +270,9 @@ class BuildLinkTests(TemplateTagTests):
         id = build.build_id  # pylint: disable=redefined-builtin
 
         expected = (
-            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">'
+            f'<span class="build_id">{id}</span>'
+            "</a>"
             ' <span class="tags">@bar @foo</span>'
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
@@ -280,9 +286,9 @@ class BuildLinkTests(TemplateTagTests):
         build = publisher.record(build)
 
         expected = (
-            "<b>"
-            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">{id}</a>'
-            "</b>"
+            f'<a class="build-link" href="/machines/{machine}/builds/{id}/">'
+            f'<span class="build_id published">{id}</span>'
+            "</a>"
         )
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
@@ -309,7 +315,7 @@ class MachineBuildRowTests(TemplateTagTests):
         expected = f"""
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
-    <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/">{b.build_id}</a></h6>"""
+    <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/"><span class="build_id">{b.build_id}</span></a></h6>"""
         self.assertTrue(self.render(build=fixtures.record).startswith(expected))
 
     def test_missing_gbp_dot_json(self, fixtures: Fixtures) -> None:
