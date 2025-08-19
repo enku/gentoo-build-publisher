@@ -210,3 +210,11 @@ def machine_package_row(package: Package) -> dict[str, Any]:
 def card_item(left: Any, right: Any, pill: bool = False) -> dict[str, Any]:
     """Render a card item"""
     return {"left": left, "right": right, "pill": pill}
+
+
+@register.filter(is_safe=True)
+def build_id(build: BuildRecord) -> str:
+    """Simply renders the build's build_id"""
+    cls = "build_id published" if publisher.published(build) else "build_id"
+
+    return mark_safe(f'<span class="{cls}">{build.build_id}</span>')

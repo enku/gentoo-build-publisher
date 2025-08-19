@@ -322,3 +322,24 @@ class MachineBuildRowTests(TemplateTagTests):
 
         # We just want to ensure that this does not error out (LookupError).
         self.render(build=fixtures.record)
+
+
+@given(testkit.record, testkit.publisher)
+@where(records_db__backend="django")
+class BuildIDTests(TemplateTagTests):
+    template = "{{ build|build_id }}"
+
+    def test_not_published(self, fixtures: Fixtures) -> None:
+        build = fixtures.record
+
+        expected = f'<span class="build_id">{build.build_id}</span>'
+        self.assertEqual(expected, self.render(build=build))
+
+    def test_published(self, fixtures: Fixtures) -> None:
+        build = fixtures.record
+        publisher.pull(build)
+        publisher.publish(build)
+        build = publisher.record(build)
+
+        expected = f'<span class="build_id published">{build.build_id}</span>'
+        self.assertEqual(expected, self.render(build=build))
