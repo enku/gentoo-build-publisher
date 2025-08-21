@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from unittest import TestCase
 
+from django.conf import settings as django_settings
 from django.test import TestCase as DjangoTestCase
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given, where
 
@@ -219,3 +220,10 @@ class JenkinsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         jenkins = fixtures.jenkins
         self.assertEqual("MockJenkins", type(jenkins).__name__)
+
+
+@given(testkit.allowed_host)
+@where(allowed_host="foobar")
+class AllowedHostTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        self.assertEqual(django_settings.ALLOWED_HOSTS[-1], "foobar")

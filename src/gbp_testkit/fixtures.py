@@ -16,6 +16,7 @@ from unittest import mock
 
 import rich.console
 from cryptography.fernet import Fernet
+from django.conf import settings as django_settings
 from django.test.client import Client
 from gbpcli.gbp import GBP
 from gbpcli.theme import DEFAULT_THEME
@@ -91,7 +92,20 @@ def publisher(_fixtures: Fixtures) -> FixtureContext[BuildPublisher]:
         yield bp
 
 
-@fixture(publisher)
+@fixture()
+def allowed_host(_: Fixtures, allowed_host: str = "testserver") -> FixtureContext[None]:
+    """Add the host to settings.ALLOWED_HOSTS
+
+    For the allowed_host "testserver", the default, this is automatically done by the
+    Django test runner. But we are not always using the Django test runner.
+    """
+    hosts = [*django_settings.ALLOWED_HOSTS, allowed_host]
+
+    with mock.patch.object(django_settings, "ALLOWED_HOSTS", hosts):
+        yield
+
+
+@fixture(publisher, allowed_host)
 def gbp(_fixtures: Fixtures, user: str = "test_user") -> GBP:
     return test_gbp(
         "http://gbp.invalid/", auth={"user": user, "api_key": create_user_auth(user)}
