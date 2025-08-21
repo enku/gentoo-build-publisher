@@ -59,7 +59,7 @@ class MockJenkins(Jenkins):
         super().__init__(config)
 
         self.artifact_builder = ArtifactFactory()
-        self.scheduled_builds: list[str] = []
+        self.scheduled_builds: list[tuple[str, dict[str, Any]]] = []
         mock_jenkins_session = mock.MagicMock(wraps=MockJenkinsSession())
         mock_jenkins_session.auth = config.auth
         self.session = mock_jenkins_session
@@ -84,8 +84,8 @@ class MockJenkins(Jenkins):
         build_time = self.artifact_builder.build_info(build).build_time
         return JenkinsMetadata(duration=124, timestamp=build_time)
 
-    def schedule_build(self, machine: str, **_params: Any) -> str:
-        self.scheduled_builds.append(machine)
+    def schedule_build(self, machine: str, **params: Any) -> str:
+        self.scheduled_builds.append((machine, params))
 
         return str(self.config.base_url / "job" / machine / "build")
 

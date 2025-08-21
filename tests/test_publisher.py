@@ -377,4 +377,4 @@ class ScheduleBuildTestCase(TestCase):
         response = publisher.schedule_build("babette")
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)
-        self.assertEqual(publisher.jenkins.scheduled_builds, ["babette"])
+        self.assertEqual(publisher.jenkins.scheduled_builds, [("babette", {})])
