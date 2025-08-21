@@ -1,7 +1,7 @@
 """Tests for the gbpcli "addrepo" subcommand"""
 
 # pylint: disable=missing-docstring
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 
 from unittest_fixtures import Fixtures, given
 
@@ -13,16 +13,14 @@ from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.types import EbuildRepo
 
 
-@given(testkit.publisher, testkit.gbp, testkit.console)
+@given(testkit.publisher, testkit.gbpcli)
 class AddRepoTestCase(TestCase):
     def test_calls_graphql_with_the_expected_args(self, fixtures: Fixtures) -> None:
-        args = Namespace(
-            name="gentoo",
-            repo="https://anongit.gentoo.org/git/repo/gentoo.git",
-            branch="master",
+        cmdline = (
+            "gbp addrepo"
+            " --branch=master gentoo https://github.com/gentoo-mirror/gentoo.git"
         )
-        console = fixtures.console
-        exit_status = addrepo.handler(args, fixtures.gbp, console)
+        exit_status = fixtures.gbpcli(cmdline)
 
         self.assertEqual(exit_status, 0)
 
@@ -32,17 +30,16 @@ class AddRepoTestCase(TestCase):
             EbuildRepo(name="gentoo", url="foo", branch="master")
         )
 
-        args = Namespace(
-            name="gentoo",
-            repo="https://anongit.gentoo.org/git/repo/gentoo.git",
-            branch="master",
+        cmdline = (
+            "gbp addrepo"
+            " --branch=master gentoo https://github.com/gentoo-mirror/gentoo.git"
         )
-        console = fixtures.console
-        exit_status = addrepo.handler(args, fixtures.gbp, console)
+        exit_status = fixtures.gbpcli(cmdline)
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(
-            console.err.file.getvalue(), "error: FileExistsError: repos/gentoo\n"
+            fixtures.gbpcli.console.err.file.getvalue(),
+            "error: FileExistsError: repos/gentoo\n",
         )
 
 
