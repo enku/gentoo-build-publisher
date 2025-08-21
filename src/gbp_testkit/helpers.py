@@ -6,7 +6,7 @@ import os
 import shlex
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 from unittest import mock
 
 import gbpcli
@@ -216,6 +216,27 @@ class Tree:
             node = node.nodes[item]
 
         return node.nodes[path[-1]].value
+
+
+class GBPCLI:  # pylint: disable=too-few-public-methods
+    """An object that you can pass a gbpcli command line to
+
+    e.g.
+
+    >>> gbpcli("gbp check")
+    """
+
+    def __init__(self, gbp: GBP, console: Console) -> None:
+        self.console = console
+        self.gbp = gbp
+
+    def __call__(self, cmdline: str) -> int:
+        args = parse_args(cmdline)
+        func: Callable[[argparse.Namespace, GBP, Console], int] = args.func
+
+        print_command(cmdline, self.console)
+
+        return func(args, self.gbp, self.console)
 
 
 def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:

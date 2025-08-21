@@ -80,6 +80,12 @@ class GBPTests(TestCase):
         gbp.machine_names()
 
 
+@given(testkit.gbpcli)
+class GBPCLITests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        self.assertEqual(fixtures.gbpcli("gbp check"), 0)
+
+
 @given(testkit.tmpdir, testkit.environ, cd)
 @where(environ={"SAVE_VIRTUAL_CONSOLE": "1"})
 class ConsoleTestsWithSave(TestCase):
