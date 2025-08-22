@@ -1,7 +1,7 @@
 """Tests for the cli delete subcommand"""
 
 # pylint: disable=missing-docstring
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 
 from unittest_fixtures import Fixtures, fixture, given, where
 
@@ -18,25 +18,14 @@ def build_fixture(fixtures: Fixtures) -> Build:
     return builds[0]
 
 
-@fixture(build_fixture)
-def args_fixture(fixtures: Fixtures) -> Namespace:
-    return Namespace(machine="babette", number=fixtures.build.build_id, force=False)
-
-
-@fixture(build_fixture)
-def force_args_fixture(fixtures: Fixtures) -> Namespace:
-    return Namespace(machine="babette", number=fixtures.build.build_id, force=True)
-
-
-@given(args_fixture, build_fixture, force_args_fixture)
-@given(testkit.console, testkit.gbp, testkit.pulled_builds)
+@given(testkit.gbpcli, testkit.pulled_builds, build_fixture)
 @where(builds__per_day=5)
 class GBPChkTestCase(TestCase):
     def test_deletes_build(self, fixtures: Fixtures) -> None:
         build: Build = fixtures.build
 
         self.assertTrue(publisher.pulled(build))
-        delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
+        fixtures.gbpcli(f"gbp delete {build.machine} {build.build_id}")
 
         self.assertFalse(publisher.pulled(build))
 
@@ -44,14 +33,14 @@ class GBPChkTestCase(TestCase):
         build: Build = fixtures.build
         publisher.publish(build)
 
-        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
+        status = fixtures.gbpcli(f"gbp delete {build.machine} {build.build_id}")
 
         self.assertEqual(status, 1)
         stderr = fixtures.console.err.file.getvalue()
         self.assertEqual(stderr, "Cannot delete a published build.\n")
         self.assertTrue(publisher.pulled(build))
 
-        status = delete.handler(fixtures.force_args, fixtures.gbp, fixtures.console)
+        status = fixtures.gbpcli(f"gbp delete -f {build.machine} {build.build_id}")
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
 
@@ -59,14 +48,14 @@ class GBPChkTestCase(TestCase):
         build: Build = fixtures.build
         publisher.tag(build, "testing")
 
-        status = delete.handler(fixtures.args, fixtures.gbp, fixtures.console)
+        status = fixtures.gbpcli(f"gbp delete {build.machine} {build.build_id}")
 
         self.assertEqual(status, 1)
         stderr = fixtures.console.err.file.getvalue()
         self.assertEqual(stderr, "Cannot delete a tagged build.\n")
         self.assertTrue(publisher.pulled(build))
 
-        status = delete.handler(fixtures.force_args, fixtures.gbp, fixtures.console)
+        status = fixtures.gbpcli(f"gbp delete -f {build.machine} {build.build_id}")
         self.assertEqual(status, 0)
         self.assertFalse(publisher.pulled(build))
 
