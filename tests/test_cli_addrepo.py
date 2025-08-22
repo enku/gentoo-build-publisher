@@ -38,7 +38,7 @@ class AddRepoTestCase(TestCase):
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(
-            fixtures.gbpcli.console.err.file.getvalue(),
+            fixtures.console.err.file.getvalue(),
             "error: FileExistsError: repos/gentoo\n",
         )
 

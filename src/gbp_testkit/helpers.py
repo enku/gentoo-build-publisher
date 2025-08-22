@@ -218,25 +218,24 @@ class Tree:
         return node.nodes[path[-1]].value
 
 
-class GBPCLI:  # pylint: disable=too-few-public-methods
-    """An object that you can pass a gbpcli command line to
+def make_gbpcli(gbp: GBP, console: Console) -> Callable[[str], int]:
+    """Return a function that you can pass a gbpcli command line to
 
     e.g.
 
+    >>> gbpcli = make_gbpcli(gbp, console)
     >>> gbpcli("gbp check")
     """
 
-    def __init__(self, gbp: GBP, console: Console) -> None:
-        self.console = console
-        self.gbp = gbp
-
-    def __call__(self, cmdline: str) -> int:
+    def gbpcli_(cmdline: str) -> int:
         args = parse_args(cmdline)
         func: Callable[[argparse.Namespace, GBP, Console], int] = args.func
 
-        print_command(cmdline, self.console)
+        print_command(cmdline, console)
 
-        return func(args, self.gbp, self.console)
+        return func(args, gbp, console)
+
+    return gbpcli_
 
 
 def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 from unittest import mock
 
 import rich.console
@@ -40,7 +40,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .helpers import GBPCLI, MockJenkins, create_user_auth, test_gbp
+from .helpers import MockJenkins, create_user_auth, make_gbpcli, test_gbp
 
 COUNTER = 0
 _NO_OBJECT = object()
@@ -135,15 +135,19 @@ def console(_fixtures: Fixtures) -> FixtureContext[Console]:
 
 
 @fixture(console, gbp)
-def gbpcli(fixtures: Fixtures) -> GBPCLI:
-    """An object that you can pass a gbpcli command line to
+def gbpcli(fixtures: Fixtures) -> Callable[[str], int]:
+    """A function that you can pass a gbpcli command line to
+    Also adds the gbp and console fixtures to the TestCase.
 
     e.g.
 
-    >>> gbpcli("gbp list babette")
-    >>> output = gbpcli.console.out.getvalue()
+    >>> @given(gbpcli)
+    >>> class MyTests(TestCase):
+    ...     def test(self, fixtures):
+    ...         fixtures.gbpcli("gbp list babette")
+    ...         output = fixtures.console.out.getvalue()
     """
-    return GBPCLI(fixtures.gbp, fixtures.console)
+    return make_gbpcli(fixtures.gbp, fixtures.console)
 
 
 @fixture(publisher)
