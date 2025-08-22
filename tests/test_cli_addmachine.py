@@ -1,7 +1,7 @@
 """Tests for the gbpcli "addmachine" subcommand"""
 
 # pylint: disable=missing-docstring
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from unittest import mock
 
 from unittest_fixtures import Fixtures, given
@@ -13,19 +13,14 @@ from gentoo_build_publisher.cli import addmachine
 from gentoo_build_publisher.types import MachineJob, Repo
 
 
-@given(testkit.gbp, testkit.console)
+@given(testkit.gbpcli)
 class AddMachineTestCase(TestCase):
     def test_calls_jenkins_with_the_expected_args(self, fixtures: Fixtures) -> None:
         # Given the command-line args
-        args = Namespace(
-            name="base",
-            repo="https://github.com/enku/gbp-machines.git",
-            branch="master",
-            deps=["gentoo"],
-        )
+        cmdline = "gbp addmachine base https://github.com/enku/gbp-machines.git"
 
         # When we call the addmachine handler
-        exit_status = addmachine.handler(args, fixtures.gbp, fixtures.console)
+        exit_status = fixtures.gbpcli(cmdline)
 
         # Then it calls Jenkins with the expected args
         self.assertEqual(exit_status, 0)
@@ -57,17 +52,13 @@ class AddMachineTestCase(TestCase):
         )
         publisher.jenkins.create_machine_job(job)
 
-        args = Namespace(
-            name="base",
-            repo="https://github.com/enku/gbp-machines.git",
-            branch="master",
-            deps=["gentoo"],
-        )
-        console = fixtures.console
-        exit_status = addmachine.handler(args, fixtures.gbp, console)
+        cmdline = "gbp addmachine base https://github.com/enku/gbp-machines.git"
+        exit_status = fixtures.gbpcli(cmdline)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(console.err.file.getvalue(), "error: FileExistsError: base\n")
+        self.assertEqual(
+            fixtures.console.err.file.getvalue(), "error: FileExistsError: base\n"
+        )
 
 
 class CheckParseArgs(TestCase):
