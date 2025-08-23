@@ -86,6 +86,23 @@ class GBPCLITests(TestCase):
         self.assertEqual(fixtures.gbpcli("gbp check"), 0)
 
 
+@given(testkit.console)
+class ConsoleTests(TestCase):
+    def test_stdout(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
+
+        console.out.print("Hello world!")
+
+        self.assertEqual(console.stdout, "Hello world!\n")
+
+    def test_stderr(self, fixtures: Fixtures) -> None:
+        console = fixtures.console
+
+        console.err.print("Hello world!")
+
+        self.assertEqual(console.stderr, "Hello world!\n")
+
+
 @given(testkit.tmpdir, testkit.environ, cd)
 @where(environ={"SAVE_VIRTUAL_CONSOLE": "1"})
 class ConsoleTestsWithSave(TestCase):

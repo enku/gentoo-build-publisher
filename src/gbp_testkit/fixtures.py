@@ -3,7 +3,6 @@
 # pylint: disable=missing-docstring,redefined-outer-name
 import datetime as dt
 import importlib.metadata
-import io
 import itertools
 import os
 import tempfile
@@ -14,14 +13,10 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 from unittest import mock
 
-import rich.console
 from cryptography.fernet import Fernet
 from django.conf import settings as django_settings
 from django.test.client import Client
 from gbpcli.gbp import GBP
-from gbpcli.theme import DEFAULT_THEME
-from gbpcli.types import Console
-from rich.theme import Theme
 from unittest_fixtures import FixtureContext, Fixtures, fixture
 
 import gentoo_build_publisher
@@ -40,7 +35,7 @@ from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
 from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
-from .helpers import MockJenkins, create_user_auth, make_gbpcli, test_gbp
+from .helpers import MockJenkins, TestConsole, create_user_auth, make_gbpcli, test_gbp
 
 COUNTER = 0
 _NO_OBJECT = object()
@@ -113,17 +108,9 @@ def gbp(_fixtures: Fixtures, user: str = "test_user") -> GBP:
 
 
 @fixture()
-def console(_fixtures: Fixtures) -> FixtureContext[Console]:
-    out = io.StringIO()
-    err = io.StringIO()
-    theme = Theme(DEFAULT_THEME)
+def console(_fixtures: Fixtures) -> FixtureContext[TestConsole]:
+    c = TestConsole()
 
-    c = Console(
-        out=rich.console.Console(
-            file=out, width=88, theme=theme, highlight=False, record=True
-        ),
-        err=rich.console.Console(file=err, width=88, record=True),
-    )
     yield c
 
     if "SAVE_VIRTUAL_CONSOLE" in os.environ:
