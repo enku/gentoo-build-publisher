@@ -40,7 +40,7 @@ class GBPChkTestCase(TestCase):
         console = fixtures.console
         check.handler(Namespace(), fixtures.gbp, console)
 
-        self.assertEqual(console.out.file.getvalue(), "0 errors, 0 warnings\n")
+        self.assertEqual(console.stdout, "0 errors, 0 warnings\n")
 
     def test_uncompleted_builds_are_warnings(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -51,7 +51,7 @@ class GBPChkTestCase(TestCase):
         exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
         self.assertEqual(exit_status, 0)
-        self.assertEqual(console.out.file.getvalue(), "0 errors, 2 warnings\n")
+        self.assertEqual(console.stdout, "0 errors, 2 warnings\n")
         # 2 warnings because also gbp.json
 
     def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
@@ -62,7 +62,7 @@ class GBPChkTestCase(TestCase):
         console = fixtures.console
         exit_status = check.handler(Namespace(), fixtures.gbp, console)
 
-        self.assertEqual(exit_status, 0, console.err.file.getvalue())
+        self.assertEqual(exit_status, 0, console.stderr)
 
     def test_check_build_content(self, fixtures: Fixtures) -> None:
         good_build = BuildFactory()
@@ -75,8 +75,7 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(result, (1, 0))
         self.assertRegex(
-            console.err.file.getvalue(),
-            f"^Path missing for {re.escape(str(bad_build))}:",
+            console.stderr, f"^Path missing for {re.escape(str(bad_build))}:"
         )
 
     def test_check_orphans(self, fixtures: Fixtures) -> None:
@@ -91,8 +90,7 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(result, (len(Content), 0))
         self.assertRegex(
-            console.err.file.getvalue(),
-            f"Record missing for {re.escape(str(binpkg_path))}",
+            console.stderr, f"Record missing for {re.escape(str(binpkg_path))}"
         )
 
     def test_check_orphans_dangling_symlinks(self, fixtures: Fixtures) -> None:
@@ -112,7 +110,7 @@ class GBPChkTestCase(TestCase):
 
         self.assertEqual(result, (link_count, 0))
 
-        lines = console.err.file.getvalue().split("\n")
+        lines = console.stderr.split("\n")
         for line in lines[:-1]:
             self.assertRegex(line, f"^Broken tag: .*{build.machine}(@broken_tag)?")
 
@@ -138,9 +136,7 @@ class GBPChkTestCase(TestCase):
         result = check.check_inconsistent_tags(console)
 
         self.assertEqual(result, (1, 0))
-        self.assertRegex(
-            console.err.file.getvalue(), '^Tag "larry" has multiple targets: '
-        )
+        self.assertRegex(console.stderr, '^Tag "larry" has multiple targets: ')
 
     def test_error_count_in_exit_status(self, fixtures: Fixtures) -> None:
         for _ in range(2):
@@ -157,7 +153,7 @@ class GBPChkTestCase(TestCase):
         exit_status = check.handler(Namespace(), fixtures.gbp, console)
         self.assertEqual(exit_status, len(Content) * 3 + 2)
 
-        stderr_lines = console.err.file.getvalue().split("\n")
+        stderr_lines = console.stderr.split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
 
@@ -172,7 +168,7 @@ class GBPChkTestCase(TestCase):
         result = check.check_dirty_temp(console)
 
         self.assertEqual(result, (0, 1))
-        self.assertEqual(console.err.file.getvalue(), f"Warning: {tmp} is not empty.\n")
+        self.assertEqual(console.stderr, f"Warning: {tmp} is not empty.\n")
 
     def test_check_corrupt_gbp_json(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -186,9 +182,7 @@ class GBPChkTestCase(TestCase):
         errors, warnings = check.check_corrupt_gbp_json(console)
 
         self.assertEqual((errors, warnings), (1, 0))
-        self.assertEqual(
-            console.err.file.getvalue(), f"Error: {gbp_dot_json} is corrupt.\n"
-        )
+        self.assertEqual(console.stderr, f"Error: {gbp_dot_json} is corrupt.\n")
 
     def test_check_missing_gbp_json(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -202,9 +196,7 @@ class GBPChkTestCase(TestCase):
         errors, warnings = check.check_corrupt_gbp_json(console)
 
         self.assertEqual((errors, warnings), (0, 1))
-        self.assertEqual(
-            console.err.file.getvalue(), f"Warning: {gbp_dot_json} is missing.\n"
-        )
+        self.assertEqual(console.stderr, f"Warning: {gbp_dot_json} is missing.\n")
 
     def test_parse_args(self, fixtures: Fixtures) -> None:
         # here for completeness

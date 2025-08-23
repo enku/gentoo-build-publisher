@@ -56,9 +56,7 @@ class AddMachineTestCase(TestCase):
         exit_status = fixtures.gbpcli(cmdline)
 
         self.assertEqual(exit_status, 1)
-        self.assertEqual(
-            fixtures.console.err.file.getvalue(), "error: FileExistsError: base\n"
-        )
+        self.assertEqual(fixtures.console.stderr, "error: FileExistsError: base\n")
 
 
 class CheckParseArgs(TestCase):

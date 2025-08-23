@@ -38,8 +38,7 @@ class AddRepoTestCase(TestCase):
 
         self.assertEqual(exit_status, 1)
         self.assertEqual(
-            fixtures.console.err.file.getvalue(),
-            "error: FileExistsError: repos/gentoo\n",
+            fixtures.console.stderr, "error: FileExistsError: repos/gentoo\n"
         )
 
 

@@ -29,7 +29,7 @@ class GBPCreateTests(DjangoTestCase):
         status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 0)
-        key = console.out.file.getvalue().strip()
+        key = console.stdout.strip()
 
         record = models.ApiKey.objects.get(name="test")
         self.assertEqual(record.name, "test")
@@ -60,9 +60,7 @@ class GBPCreateTests(DjangoTestCase):
         )
 
         self.assertEqual(status, 1)
-        self.assertEqual(
-            console.err.file.getvalue(), "An API key with that name already exists.\n"
-        )
+        self.assertEqual(console.stderr, "An API key with that name already exists.\n")
         self.assertTrue(models.ApiKey.objects.filter(name="test").exists())
         self.assertFalse(models.ApiKey.objects.filter(name="TEST").exists())
 
@@ -74,7 +72,7 @@ class GBPCreateTests(DjangoTestCase):
         )
 
         self.assertEqual(status, 2)
-        self.assertEqual(console.err.file.getvalue(), "''\n")
+        self.assertEqual(console.stderr, "''\n")
 
     def test_create_badchars_in_name(self, fixtures: Fixtures) -> None:
         console = fixtures.console
@@ -84,7 +82,7 @@ class GBPCreateTests(DjangoTestCase):
         )
 
         self.assertEqual(status, 2)
-        self.assertEqual(console.err.file.getvalue(), "'b😈d'\n")
+        self.assertEqual(console.stderr, "'b😈d'\n")
 
     def test_create_name_too_long(self, fixtures: Fixtures) -> None:
         console = fixtures.console
@@ -96,7 +94,7 @@ class GBPCreateTests(DjangoTestCase):
 
         self.assertEqual(status, 2)
         self.assertEqual(
-            console.err.file.getvalue(),
+            console.stderr,
             "'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             "xxxxxxxxxxxxxxx\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n",
         )
@@ -111,7 +109,7 @@ class GBPCreateTests(DjangoTestCase):
 
         self.assertEqual(status, 0)
         self.assertFalse(models.ApiKey.objects.filter(name="root").exists())
-        self.assertEqual(console.out.file.getvalue(), "thisisatest\n")
+        self.assertEqual(console.stdout, "thisisatest\n")
 
 
 @given(testkit.console, local_timezone=testkit.patch, gbp=testkit.patch)
@@ -140,7 +138,7 @@ class GBPListTests(DjangoTestCase):
 │ this  │ Never             │
 ╰───────┴───────────────────╯
 """
-        self.assertEqual(console.out.file.getvalue(), expected)
+        self.assertEqual(console.stdout, expected)
 
     def test_with_no_keys(self, fixtures: Fixtures) -> None:
         console = fixtures.console
@@ -148,7 +146,7 @@ class GBPListTests(DjangoTestCase):
         status = apikey.handler(Namespace(action="list"), fixtures.gbp, console)
 
         self.assertEqual(status, 0)
-        self.assertEqual(console.out.file.getvalue(), "No API keys registered.\n")
+        self.assertEqual(console.stdout, "No API keys registered.\n")
 
 
 @given(testkit.tmpdir, testkit.publisher, testkit.api_keys, testkit.console)
@@ -182,7 +180,7 @@ class GBPDeleteTests(DjangoTestCase):
         status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 3)
-        self.assertEqual(console.err.file.getvalue(), "No key exists with that name.\n")
+        self.assertEqual(console.stderr, "No key exists with that name.\n")
 
 
 @given(testkit.console, gbp=testkit.patch)
@@ -194,7 +192,7 @@ class GBPAPIKeyTests(TestCase):
         status = apikey.handler(namespace, fixtures.gbp, console)
 
         self.assertEqual(status, 255)
-        self.assertEqual(console.err.file.getvalue(), "Unknown action: bogus\n")
+        self.assertEqual(console.stderr, "Unknown action: bogus\n")
 
 
 class ParseArgs(TestCase):

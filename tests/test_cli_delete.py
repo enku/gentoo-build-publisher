@@ -36,7 +36,7 @@ class GBPChkTestCase(TestCase):
         status = fixtures.gbpcli(f"gbp delete {build.machine} {build.build_id}")
 
         self.assertEqual(status, 1)
-        stderr = fixtures.console.err.file.getvalue()
+        stderr = fixtures.console.stderr
         self.assertEqual(stderr, "Cannot delete a published build.\n")
         self.assertTrue(publisher.pulled(build))
 
@@ -51,7 +51,7 @@ class GBPChkTestCase(TestCase):
         status = fixtures.gbpcli(f"gbp delete {build.machine} {build.build_id}")
 
         self.assertEqual(status, 1)
-        stderr = fixtures.console.err.file.getvalue()
+        stderr = fixtures.console.stderr
         self.assertEqual(stderr, "Cannot delete a tagged build.\n")
         self.assertTrue(publisher.pulled(build))
 

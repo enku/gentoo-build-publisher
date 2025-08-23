@@ -25,8 +25,7 @@ class WorkerTests(TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            fixtures.console.out.file.getvalue(),
-            "Working for Gentoo Build Publisher!\n",
+            fixtures.console.stdout, "Working for Gentoo Build Publisher!\n"
         )
         mock_work.assert_called_once()
 

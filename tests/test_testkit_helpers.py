@@ -16,4 +16,4 @@ class PrintCommandTests(TestCase):
         cmdline = "rm -rf /"
         print_command(cmdline, console)
 
-        self.assertEqual("$ rm -rf /\n", console.out.file.getvalue())
+        self.assertEqual("$ rm -rf /\n", console.stdout)
