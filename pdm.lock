@@ -1623,13 +1623,13 @@ files = [
 
 [[package]]
 name = "unittest-fixtures"
-version = "2.1.2"
+version = "2.2.0"
 requires_python = ">=3.11"
 summary = "A small library for loading unittest fixtures"
 groups = ["dev", "test"]
 files = [
-    {file = "unittest_fixtures-2.1.2-py3-none-any.whl", hash = "sha256:6502e049def69776c264c836a66a93cae8a26f8cc934a5a7e366ffc4b64254ab"},
-    {file = "unittest_fixtures-2.1.2.tar.gz", hash = "sha256:1d99975e8983418455f4931e6912908a11f4c63268ae0d26b7c171fb566e5760"},
+    {file = "unittest_fixtures-2.2.0-py3-none-any.whl", hash = "sha256:16e1078269c61c2e4257041d3cb20e4dc44c06fb1052a6ae8c88dfed37a84393"},
+    {file = "unittest_fixtures-2.2.0.tar.gz", hash = "sha256:634f78bb88f4bd947c02dcec86ab6f502ea2a9549758be210dcc5f189f2e97a2"},
 ]
 
 [[package]]

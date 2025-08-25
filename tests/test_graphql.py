@@ -4,7 +4,7 @@
 import datetime as dt
 from typing import Any
 
-from unittest_fixtures import Fixtures, fixture, given, parametrized, where
+from unittest_fixtures import Fixtures, fixture, given, params, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
@@ -17,7 +17,7 @@ from gentoo_build_publisher.types import Build, Content, EbuildRepo, MachineJob,
 from gentoo_build_publisher.utils import get_version, time
 from gentoo_build_publisher.worker import tasks
 
-SEARCH_PARAMS = [["NOTES", "note"], ["LOGS", "logs"]]
+SEARCH_PARAMS = {"enum": ("NOTES", "LOGS"), "field": ("note", "logs")}
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
 
 
@@ -952,7 +952,7 @@ class TagsTestCase(TestCase):
 
 
 def search_query_builds(_fixtures: Fixtures) -> list[Build]:
-    for _, field in SEARCH_PARAMS:
+    for field in SEARCH_PARAMS["field"]:
         build1 = BuildFactory()
         record = publisher.record(build1)
         publisher.repo.build_records.save(record, **{field: f"test foo {field}"})
@@ -964,9 +964,11 @@ def search_query_builds(_fixtures: Fixtures) -> list[Build]:
 
 
 @given(testkit.tmpdir, testkit.publisher, search_query_builds, testkit.client)
+@params(**SEARCH_PARAMS)
 class SearchQueryTestCase(TestCase):
     """Tests for the search query"""
 
+    unittest_fixtures_kwarg = "fx"
     query = """
     query ($machine: String!, $field: SearchField!, $key: String!) {
      search(machine: $machine, field: $field, key: $key) {
@@ -976,52 +978,47 @@ class SearchQueryTestCase(TestCase):
     }
     """
 
-    @parametrized(SEARCH_PARAMS)
-    def test_single_match(self, enum: str, field: str, fixtures: Fixtures) -> None:
+    def test_single_match(self, fx: Fixtures) -> None:
         result = graphql(
-            fixtures.client,
+            fx.client,
             self.query,
-            variables={"machine": "babette", "field": enum, "key": "foo"},
+            variables={"machine": "babette", "field": fx.enum, "key": "foo"},
         )
 
-        other = "logs" if enum == "NOTES" else "notes"
-        mine = "notes" if enum == "NOTES" else "logs"
+        other = "logs" if fx.enum == "NOTES" else "notes"
+        mine = "notes" if fx.enum == "NOTES" else "logs"
         assert_data(
-            self, result, {"search": [{mine: f"test foo {field}", other: None}]}
+            self, result, {"search": [{mine: f"test foo {fx.field}", other: None}]}
         )
 
-    @parametrized(SEARCH_PARAMS)
-    def test_multiple_match(self, enum: str, field: str, fixtures: Fixtures) -> None:
+    def test_multiple_match(self, fx: Fixtures) -> None:
         result = graphql(
-            fixtures.client,
+            fx.client,
             self.query,
-            variables={"machine": "babette", "field": enum, "key": "test"},
+            variables={"machine": "babette", "field": fx.enum, "key": "test"},
         )
 
         expected = [
             {
-                "notes" if enum == "NOTES" else "logs": f"test bar {field}",
-                "logs" if enum == "NOTES" else "notes": None,
+                ("notes" if fx.enum == "NOTES" else "logs"): f"test bar {fx.field}",
+                "logs" if fx.enum == "NOTES" else "notes": None,
             },
             {
-                "notes" if enum == "NOTES" else "logs": f"test foo {field}",
-                "logs" if enum == "NOTES" else "notes": None,
+                ("notes" if fx.enum == "NOTES" else "logs"): f"test foo {fx.field}",
+                "logs" if fx.enum == "NOTES" else "notes": None,
             },
         ]
         assert_data(self, result, {"search": expected})
 
-    @parametrized(SEARCH_PARAMS)
-    def test_only_matches_given_machine(
-        self, enum: str, field: str, fixtures: Fixtures
-    ) -> None:
+    def test_only_matches_given_machine(self, fx: Fixtures) -> None:
         build = BuildFactory(machine="lighthouse")
         record = publisher.record(build)
-        publisher.repo.build_records.save(record, **{field: "test foo"})
+        publisher.repo.build_records.save(record, **{fx.field: "test foo"})
 
         result = graphql(
-            fixtures.client,
+            fx.client,
             self.query,
-            variables={"machine": "lighthouse", "field": enum, "key": "test"},
+            variables={"machine": "lighthouse", "field": fx.enum, "key": "test"},
         )
 
         assert_data(
@@ -1030,16 +1027,16 @@ class SearchQueryTestCase(TestCase):
             {
                 "search": [
                     {
-                        "logs" if enum == "NOTES" else "notes": None,
-                        "notes" if enum == "NOTES" else "logs": "test foo",
+                        "logs" if fx.enum == "NOTES" else "notes": None,
+                        "notes" if fx.enum == "NOTES" else "logs": "test foo",
                     }
                 ]
             },
         )
 
-    def test_when_named_machine_does_not_exist(self, fixtures: Fixtures) -> None:
+    def test_when_named_machine_does_not_exist(self, fx: Fixtures) -> None:
         result = graphql(
-            fixtures.client,
+            fx.client,
             self.query,
             variables={"machine": "bogus", "field": "NOTES", "key": "test"},
         )
