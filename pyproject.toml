@@ -58,7 +58,7 @@ redis = [
 ]
 test = [
     "factory-boy>=3.3.3",
-    "unittest-fixtures",
+    "unittest-fixtures>=2.3.0",
 ]
 [build-system]
 requires = ["pdm-backend"]

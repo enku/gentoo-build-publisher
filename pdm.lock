@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:5f271390ff4e4acc62ea1984892617c527e4d1b6b5cf8a305aa721e0a82dd819"
+content_hash = "sha256:ebb243c382b732fb756848e53361987108ee0aff41ffc29dc68da80c325869b5"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -1623,13 +1623,13 @@ files = [
 
 [[package]]
 name = "unittest-fixtures"
-version = "2.2.0"
+version = "2.3.0"
 requires_python = ">=3.11"
 summary = "A small library for loading unittest fixtures"
 groups = ["dev", "test"]
 files = [
-    {file = "unittest_fixtures-2.2.0-py3-none-any.whl", hash = "sha256:16e1078269c61c2e4257041d3cb20e4dc44c06fb1052a6ae8c88dfed37a84393"},
-    {file = "unittest_fixtures-2.2.0.tar.gz", hash = "sha256:634f78bb88f4bd947c02dcec86ab6f502ea2a9549758be210dcc5f189f2e97a2"},
+    {file = "unittest_fixtures-2.3.0-py3-none-any.whl", hash = "sha256:cfd670240c4401010ca20f51bb363f181267eaea52713ab9464ad324243012d6"},
+    {file = "unittest_fixtures-2.3.0.tar.gz", hash = "sha256:aab82eb8949505340f24eb00e8be0a3f406643d5092257324302cc74a6a16898"},
 ]
 
 [[package]]
