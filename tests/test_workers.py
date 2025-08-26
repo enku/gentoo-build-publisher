@@ -1,16 +1,16 @@
 """Unit tests for the worker module"""
 
-# pylint: disable=missing-docstring,no-value-for-parameter,unused-argument
+# pylint: disable=missing-docstring
 import io
 from contextlib import redirect_stderr
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import cast
 from unittest import TestCase, mock
 
 import fakeredis
+import unittest_fixtures as uf
 from requests import HTTPError
-from unittest_fixtures import Fixtures, given, parametrized, where
 
 import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import publisher
@@ -27,8 +27,12 @@ from gentoo_build_publisher.worker.celery import CeleryWorker, celery_app
 from gentoo_build_publisher.worker.rq import RQWorker
 from gentoo_build_publisher.worker.sync import SyncWorker
 
+Fixtures = uf.Fixtures
+FC = uf.FixtureContext
 
-def get_worker(name: str) -> WorkerInterface:
+
+@uf.fixture()
+def worker_fixture(_: Fixtures, name: str = "sync") -> FC[WorkerInterface]:
     settings = Settings(
         JENKINS_BASE_URL="http://jenkins.invalid/",
         WORKER_BACKEND=name,
@@ -37,65 +41,58 @@ def get_worker(name: str) -> WorkerInterface:
         STORAGE_PATH=Path("/dev/null"),
     )
     redis_path = "gentoo_build_publisher.worker.rq.Redis.from_url"
-    mock_redis = fakeredis.FakeRedis()
-    with mock.patch(redis_path, return_value=mock_redis):
-        return Worker(settings)
+    with mock.patch(redis_path, return_value=fakeredis.FakeRedis()):
+        yield Worker(settings)
 
 
-def ifparams(*names: str) -> list[list[WorkerInterface]]:
-    return [[get_worker(name)] for name in names]
-
-
-def params(*names: str) -> Callable[..., Any]:
-    return parametrized(ifparams(*names))
-
-
-@given(testkit.publisher, logger_error=testkit.patch, pull_build=testkit.patch)
-@where(logger_error__target="gentoo_build_publisher.worker.logger.error")
-@where(pull_build__target="gentoo_build_publisher.worker.tasks.pull_build")
+@uf.params(backend=("celery", "rq", "sync", "thread"))
+@uf.given(worker_fixture)
+@uf.given(testkit.publisher, logger_error=testkit.patch, pull_build=testkit.patch)
+@uf.where(logger_error__target="gentoo_build_publisher.worker.logger.error")
+@uf.where(pull_build__target="gentoo_build_publisher.worker.tasks.pull_build")
+@uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
-    @params("celery", "rq", "sync", "thread")
-    def test_publishes_build(self, worker: WorkerInterface, fixtures: Fixtures) -> None:
+    def test_publishes_build(self, fixtures: Fixtures) -> None:
         """Should actually publish the build"""
-        worker.run(tasks.publish_build, "babette.193")
+        fixtures.worker.run(tasks.publish_build, "babette.193")
 
         build = Build("babette", "193")
         self.assertIs(publisher.published(build), True)
 
-    @params("celery", "rq", "sync", "thread")
     def test_should_give_up_when_pull_raises_httperror(
-        self, worker: WorkerInterface, fixtures: Fixtures
+        self, fixtures: Fixtures
     ) -> None:
         fixtures.pull_build.side_effect = HTTPError
 
-        worker.run(tasks.publish_build, "babette.193")
+        fixtures.worker.run(tasks.publish_build, "babette.193")
 
         fixtures.logger_error.assert_called_with(
             "Build %s failed to pull. Not publishing", "babette.193"
         )
 
 
-@given(testkit.publisher, logger_error=testkit.patch)
-@where(logger_error__target="gentoo_build_publisher.worker.logger.error")
+@uf.params(backend=("celery", "rq", "sync", "thread"))
+@uf.given(worker_fixture, testkit.publisher, logger_error=testkit.patch)
+@uf.where(logger_error__target="gentoo_build_publisher.worker.logger.error")
+@uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 
-    @params("celery", "rq", "sync", "thread")
-    def test_pulls_build(self, worker: WorkerInterface, fixtures: Fixtures) -> None:
+    def test_pulls_build(self, fixtures: Fixtures) -> None:
         """Should actually pull the build"""
-        worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
+        fixtures.worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
 
         build = Build("lima", "1012")
         self.assertIs(publisher.pulled(build), True)
 
-    @params("celery", "rq", "sync", "thread")
     def test_should_delete_db_model_when_download_fails(
-        self, worker: WorkerInterface, fixtures: Fixtures
+        self, fixtures: Fixtures
     ) -> None:
         settings = Settings.from_environ()
         records = build_records(settings)
+        worker = fixtures.worker
 
         with mock.patch(
             "gentoo_build_publisher.build_publisher.Jenkins.download_artifact"
@@ -110,23 +107,22 @@ class PullBuildTestCase(TestCase):
         self.assertFalse(records.exists(Build("oscar", "197")))
 
 
-@given(delete=testkit.patch)
-@where(delete__object=publisher, delete__target="delete")
+@uf.params(backend=("celery", "rq", "sync", "thread"))
+@uf.given(worker_fixture, delete=testkit.patch)
+@uf.where(delete__object=publisher, delete__target="delete")
+@uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""
 
-    @params("celery", "rq", "sync", "thread")
-    def test_should_delete_the_build(
-        self, worker: WorkerInterface, fixtures: Fixtures
-    ) -> None:
+    def test_should_delete_the_build(self, fixtures: Fixtures) -> None:
         fixtures.delete.reset_mock()
-        worker.run(tasks.delete_build, "zulu.56")
+        fixtures.worker.run(tasks.delete_build, "zulu.56")
 
         fixtures.delete.assert_called_once_with(Build("zulu", "56"))
 
 
-@given(testkit.environ, testkit.settings)
-@where(
+@uf.given(testkit.environ, testkit.settings)
+@uf.where(
     environ={
         "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
         "BUILD_PUBLISHER_WORKER_BACKEND": "celery",
@@ -153,8 +149,8 @@ class JobsTests(TestCase):
             Worker(settings)
 
 
-@given(testkit.settings)
-@where(
+@uf.given(testkit.settings)
+@uf.where(
     environ={
         "BUILD_PUBLISHER_JENKINS_BASE_URL": "http://jenkins.invalid/",
         "BUILD_PUBLISHER_WORKER_BACKEND": "rq",
