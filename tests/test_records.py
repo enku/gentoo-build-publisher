@@ -4,8 +4,8 @@
 import datetime as dt
 from pathlib import Path
 
+import unittest_fixtures as uf
 from django.test import TestCase
-from unittest_fixtures import Fixtures, parametrized, params
 
 from gbp_testkit.factories import BuildRecordFactory
 from gentoo_build_publisher.records import (
@@ -23,19 +23,25 @@ from gentoo_build_publisher.records.memory import RecordDB as MemoryDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import ApiKey, Build
 
+Fixtures = uf.Fixtures
 
-@params(backend=("django", "memory"))
+
+@uf.fixture()
+def build_records_fixture(_: Fixtures, backend: str = "memory") -> RecordDB:
+    settings = Settings(
+        RECORDS_BACKEND=backend,
+        STORAGE_PATH=Path("/dev/null"),
+        JENKINS_BASE_URL="http://jenkins.invalid/",
+    )
+    return build_records(settings)
+
+
+@uf.given(records=build_records_fixture)
+@uf.where(records__backend=uf.Param(lambda fixtures: fixtures.backend))
+@uf.params(backend=("django", "memory"))
 class RecordDBTestCase(TestCase):
-    def backend(self, backend_name: str) -> RecordDB:
-        settings = Settings(
-            RECORDS_BACKEND=backend_name,
-            STORAGE_PATH=Path("/dev/null"),
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-        )
-        return build_records(settings)
-
     def test_save(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
         build_record = records.save(
@@ -46,7 +52,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).completed, timestamp)
 
     def test_save_with_given_fields_updates_fields(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
 
         build_record = BuildRecord("lighthouse", "8924", completed=timestamp)
@@ -59,7 +65,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.get(Build("lighthouse", "8924")).keep, True)
 
     def test_get(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build_record = records.save(BuildRecord("lighthouse", "8924"))
 
         self.assertEqual(records.get(Build("lighthouse", "8924")), build_record)
@@ -72,7 +78,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(exception.args, (build,))
 
     def test_for_machine(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         builds: list[BuildRecord] = [
             records.save(BuildRecord("lighthouse", "8923")),
             records.save(BuildRecord("lighthouse", "8924")),
@@ -83,7 +89,7 @@ class RecordDBTestCase(TestCase):
 
     def test_delete(self, fixtures: Fixtures) -> None:
         build_record = BuildRecordFactory()
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         records.save(build_record)
         self.assertTrue(records.exists(build_record))
 
@@ -92,7 +98,7 @@ class RecordDBTestCase(TestCase):
         self.assertFalse(records.exists(build_record))
 
     def test_exists(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build_record = BuildRecord("lighthouse", "8924")
         records.save(build_record)
         bogus_build = Build("anchor", "0")
@@ -101,7 +107,7 @@ class RecordDBTestCase(TestCase):
         self.assertIs(records.exists(bogus_build), False)
 
     def test_list_machines(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         self.assertEqual(records.list_machines(), [])
 
         records.save(BuildRecord("lighthouse", "8923"))
@@ -113,7 +119,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(machines, ["anchor", "lighthouse"])
 
     def test_previous(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(
             built=dt.datetime.fromtimestamp(1662310204, dt.UTC),
             completed=dt.datetime.fromtimestamp(1662311204, dt.UTC),
@@ -127,7 +133,7 @@ class RecordDBTestCase(TestCase):
         self.assertIsNone(records.previous(BuildRecordFactory(machine="bogus")))
 
     def test_next(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
         build2 = BuildRecordFactory(
@@ -141,7 +147,7 @@ class RecordDBTestCase(TestCase):
         self.assertIsNone(records.next(BuildRecordFactory(machine="bogus")))
 
     def test_next_excludes_unbuilt(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
         build2 = BuildRecordFactory(
@@ -152,7 +158,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.next(build1), None)
 
     def test_next_second_built_before_first(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(built=dt.datetime.fromtimestamp(1662310204, dt.UTC))
         records.save(build1)
 
@@ -165,7 +171,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.next(build1), None)
 
     def test_latest_with_completed_true(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(
             machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
         )
@@ -183,7 +189,7 @@ class RecordDBTestCase(TestCase):
         self.assertEqual(records.latest("lighthouse", completed=True), None)
 
     def test_latest_with_completed_false(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(
             machine="lighthouse", built=dt.datetime.fromtimestamp(1662310204, dt.UTC)
         )
@@ -200,9 +206,9 @@ class RecordDBTestCase(TestCase):
         records.delete(build2)
         self.assertEqual(records.latest("lighthouse", completed=False).id, build1.id)
 
-    @parametrized([["logs"], ["note"]])
+    @uf.parametrized([["logs"], ["note"]])
     def test_search(self, field: str, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         build1 = BuildRecordFactory(
             **{
                 "built": dt.datetime.fromtimestamp(1662310204, dt.UTC),
@@ -235,14 +241,14 @@ class RecordDBTestCase(TestCase):
         # Assume "machine" is an unsearchable field
         unsearchable = "machine"
 
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
 
         with self.assertRaises(ValueError):
             # pylint: disable=expression-not-assigned
             [*records.search("lighthouse", unsearchable, "foo")]
 
     def test_count(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=dt.UTC)
 
         for i in reversed(range(4)):
@@ -290,18 +296,21 @@ class BuildRecordsTestCase(TestCase):
             build_records(settings)
 
 
-@params(backend=("django", "memory"))
-class ApiKeyDBTests(TestCase):
-    def backend(self, backend_name: str) -> ApiKeyDB:
-        settings = Settings(
-            RECORDS_BACKEND=backend_name,
-            STORAGE_PATH=Path("/dev/null"),
-            JENKINS_BASE_URL="http://jenkins.invalid/",
-        )
-        return api_keys(settings)
+def apikey_db_fixture(_: Fixtures, backend: str = "memory") -> ApiKeyDB:
+    settings = Settings(
+        RECORDS_BACKEND=backend,
+        STORAGE_PATH=Path("/dev/null"),
+        JENKINS_BASE_URL="http://jenkins.invalid/",
+    )
+    return api_keys(settings)
 
+
+@uf.given(records=apikey_db_fixture)
+@uf.params(backend=("django", "memory"))
+@uf.where(records__backend=uf.Param(lambda fixtures: fixtures.backend))
+class ApiKeyDBTests(TestCase):
     def test_list(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         key1 = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
         records.save(key1)
         key2 = ApiKey(name="key2", key="bar", created=dt.datetime.now(tz=dt.UTC))
@@ -312,27 +321,27 @@ class ApiKeyDBTests(TestCase):
         self.assertEqual(keys, [key1, key2])
 
     def test_get(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         key = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
         records.save(key)
 
         self.assertEqual(records.get("key1"), key)
 
     def test_get_does_not_exist(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
 
         with self.assertRaises(RecordNotFound):
             records.get("bogus")
 
     def test_save(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         key = ApiKey(name="key1", key="foo", created=dt.datetime.now(tz=dt.UTC))
         records.save(key)
 
         self.assertEqual(records.get("key1"), key)
 
     def test_delete(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
         name = "key1"
         key = ApiKey(name=name, key="foo", created=dt.datetime.now(tz=dt.UTC))
         records.save(key)
@@ -343,7 +352,7 @@ class ApiKeyDBTests(TestCase):
             records.get(name)
 
     def test_delete_when_does_not_exist(self, fixtures: Fixtures) -> None:
-        records = self.backend(fixtures.backend)
+        records = fixtures.records
 
         with self.assertRaises(RecordNotFound):
             records.delete("bogus")
@@ -371,7 +380,7 @@ class ApiKeysTests(TestCase):
             api_keys(settings)
 
 
-@params(backend=("django", "memory"))
+@uf.params(backend=("django", "memory"))
 class RepoTests(TestCase):
     def test_from_settings(self, fixtures: Fixtures) -> None:
         settings = Settings(
