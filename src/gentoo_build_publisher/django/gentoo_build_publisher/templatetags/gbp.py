@@ -72,7 +72,7 @@ def display_time(timestamp: dt.datetime) -> str:
 
 
 @register.inclusion_tag("gentoo_build_publisher/circle.html")
-def circle(number: int, name: str, color: str) -> dict[str, Any]:
+def circle(number: int, name: str) -> dict[str, Any]:
     """Render a circle with a number in it and name below"""
     if number >= 100_000:
         number_display = numberize(number, precision=0)
@@ -81,12 +81,7 @@ def circle(number: int, name: str, color: str) -> dict[str, Any]:
         number_display = str(number)
         number_hover = ""
 
-    return {
-        "color": color,
-        "name": name,
-        "number": number_hover,
-        "number_display": number_display,
-    }
+    return {"name": name, "number": number_hover, "number_display": number_display}
 
 
 @register.inclusion_tag("gentoo_build_publisher/chart.html")
@@ -128,10 +123,9 @@ def package_row(package: str, machines: list[str]) -> dict[str, Any]:
 
 
 @register.inclusion_tag("gentoo_build_publisher/roundrect.html")
-def roundrect(text: str, title: str, color: str, scale: float = 1.0) -> dict[str, Any]:
+def roundrect(text: str, title: str, scale: float = 1.0) -> dict[str, Any]:
     """Render a circle with a number in it and name below"""
     return {
-        "color": color,
         "font_size": round(scale * 50),
         "height": round(scale * 140),
         "letter_spacing": round(scale * 8),

@@ -11,11 +11,17 @@
     <link rel="stylesheet" href="{% static 'gbp/gbp.css' %}">
     <style>
       {% block style %}
+      {% if gradient_colors %}
+      :root {
+        --bs-primary: {{ gradient_colors.0 }};
+      }
+      {% endif %}
+
       body {
         padding-top: 4.5rem;
       }
       .main-header, .badge {
-        background-color: {{ gradient_colors.0 }};
+        background-color: var(--bs-primary);
       }
       .badge {
         padding: 8px;

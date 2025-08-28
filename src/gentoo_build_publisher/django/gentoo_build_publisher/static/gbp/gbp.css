@@ -1,3 +1,7 @@
+:root {
+  --bs-primary: #54487a;
+}
+
 .bd-placeholder-img {
   font-size: 1.125rem;
   text-anchor: middle;
@@ -37,7 +41,7 @@ main {
 
 .tags {
     font-size: smaller;
-    color: #493f6a;
+    color: var(--bs-primary);
 }
 
 .published {
@@ -48,4 +52,12 @@ main {
   .bd-placeholder-img-lg {
     font-size: 3.5rem;
   }
+}
+
+.main-header, .badge {
+  background-color: var(--bs-primary);
+}
+
+.roundrec, .circle {
+  fill: var(--bs-primary);
 }

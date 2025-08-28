@@ -75,26 +75,26 @@ class NumberizeTestCase(TemplateTagTests):
 
 
 class NumberedCircleTests(TemplateTagTests):
-    template = "{% circle build_count name color %}"
+    template = "{% circle build_count name %}"
 
     def test(self) -> None:
         expected = """\
 <div class="col-lg-4" align="center">
-  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#755245"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">452</text></svg>
+  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="circle" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">452</text></svg>
   <h2>Builds</h2>
 </div>
 """
-        result = self.render(build_count=452, name="Builds", color="#755245")
+        result = self.render(build_count=452, name="Builds")
         self.assertEqual(result, expected)
 
     def test_large_number(self) -> None:
         expected = """\
 <div class="col-lg-4" align="center">
-  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>212351</title><rect width="100%" height="100%" fill="#755245"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">212k</text></svg>
+  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>212351</title><rect class="circle" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">212k</text></svg>
   <h2>Packages</h2>
 </div>
 """
-        result = self.render(build_count=212351, name="Packages", color="#755245")
+        result = self.render(build_count=212351, name="Packages")
         self.assertEqual(result, expected)
 
 
@@ -172,31 +172,29 @@ class PackageRowTests(TemplateTagTests):
 
 
 class RoundRectTests(TemplateTagTests):
-    template = "{% roundrect text title color %}"
+    template = "{% roundrect text title %}"
 
     def test(self) -> None:
         expected = """
-<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#572554"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
+<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
 """
-        result = self.render(text="lighthouse", title="", color="#572554")
+        result = self.render(text="lighthouse", title="")
         self.assertEqual(result, expected)
 
     def test_with_title(self) -> None:
         expected = """
-<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>This is a test</title><rect width="100%" height="100%" fill="#572554"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
+<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>This is a test</title><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
 """
 
-        result = self.render(text="lighthouse", title="This is a test", color="#572554")
+        result = self.render(text="lighthouse", title="This is a test")
         self.assertEqual(result, expected)
 
     def test_with_scale(self) -> None:
-        template = "{% roundrect text title color scale %}"
+        template = "{% roundrect text title scale %}"
         expected = """
-<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect width="100%" height="100%" fill="#572554"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="25px" letter-spacing="4">lighthouse</text></svg></div>
+<div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="25px" letter-spacing="4">lighthouse</text></svg></div>
 """
-        result = self.render(
-            template=template, text="lighthouse", title="", color="#572554", scale=0.5
-        )
+        result = self.render(template=template, text="lighthouse", title="", scale=0.5)
 
         self.assertEqual(result, expected)
 
