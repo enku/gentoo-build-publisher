@@ -105,28 +105,25 @@ class SymlinkTestCase(TestCase):
         self.assertEqual(exception.args, (f"{target} exists but is not a symlink",))
 
 
+@given(symlink=lambda fixtures: fixtures.tmpdir / "symlink")
+@given(target=lambda fixtures: create_file(fixtures.tmpdir / "target"))
 @given(testkit.tmpdir)
 class CheckSymlink(TestCase):
     def test_good_symlink(self, fixtures: Fixtures) -> None:
-        target = create_file(fixtures.tmpdir / "target")
-        symlink = fixtures.tmpdir / "symlink"
-        os.symlink(target, symlink)
+        os.symlink(fixtures.target, fixtures.symlink)
 
-        self.assertIs(fs.check_symlink(str(symlink), str(target)), True)
+        self.assertIs(fs.check_symlink(str(fixtures.symlink), str(fixtures.target)), True)
 
     def test_symlink_points_to_different_target(self, fixtures: Fixtures) -> None:
-        target = create_file(fixtures.tmpdir / "target")
-        symlink = fixtures.tmpdir / "symlink"
-        os.symlink(target, symlink)
+        os.symlink(fixtures.target, fixtures.symlink)
         other = create_file(fixtures.tmpdir / "other")
 
-        self.assertIs(fs.check_symlink(str(symlink), str(other)), False)
+        self.assertIs(fs.check_symlink(str(fixtures.symlink), str(other)), False)
 
     def test_dangling_symlink(self, fixtures: Fixtures) -> None:
-        name = fixtures.tmpdir / "symlink"
-        os.symlink("bogus", name)
+        os.symlink("bogus", fixtures.symlink)
 
-        self.assertIs(fs.check_symlink(str(name), "bogus"), False)
+        self.assertIs(fs.check_symlink(str(fixtures.symlink), "bogus"), False)
 
 
 @given(testkit.tmpdir)
