@@ -112,7 +112,9 @@ class CheckSymlink(TestCase):
     def test_good_symlink(self, fixtures: Fixtures) -> None:
         os.symlink(fixtures.target, fixtures.symlink)
 
-        self.assertIs(fs.check_symlink(str(fixtures.symlink), str(fixtures.target)), True)
+        self.assertIs(
+            fs.check_symlink(str(fixtures.symlink), str(fixtures.target)), True
+        )
 
     def test_symlink_points_to_different_target(self, fixtures: Fixtures) -> None:
         os.symlink(fixtures.target, fixtures.symlink)
