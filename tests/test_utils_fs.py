@@ -49,42 +49,39 @@ class ExtractTestCase(TestCase):
             self.assertIs(path.is_dir(), True)
 
 
+@given(file=lambda f: str(create_file(f.tmpdir / "foo", b"test", TIMESTAMP)))
 @given(testkit.tmpdir)
 class QuickCheckTestCase(TestCase):
     """Tests for the quick_check() helper method"""
 
     def test(self, fixtures: Fixtures) -> None:
-        file1 = str(create_file(fixtures.tmpdir / "foo", b"test", TIMESTAMP))
-        file2 = str(create_file(fixtures.tmpdir / "bar", b"xxxx", TIMESTAMP))
+        other = str(create_file(fixtures.tmpdir / "bar", b"xxxx", TIMESTAMP))
 
-        result = fs.quick_check(file1, file2)
+        result = fs.quick_check(fixtures.file, other)
 
         self.assertIs(result, True)
 
     def test_should_return_false_when_file_does_not_exist(
         self, fixtures: Fixtures
     ) -> None:
-        file1 = str(create_file(fixtures.tmpdir / "foo", b"test", TIMESTAMP))
-        file2 = str(fixtures.tmpdir / "bogus")
+        other = str(fixtures.tmpdir / "bogus")
 
-        result = fs.quick_check(file1, file2)
+        result = fs.quick_check(fixtures.file, other)
 
         self.assertIs(result, False)
 
     def test_should_return_false_when_mtimes_differ(self, fixtures: Fixtures) -> None:
-        file1 = str(create_file(fixtures.tmpdir / "foo", b"test", TIMESTAMP))
         timestamp2 = dt.datetime(2021, 10, 30, 7, 10, 40)
-        file2 = str(create_file(fixtures.tmpdir / "bar", b"test", timestamp2))
+        other = str(create_file(fixtures.tmpdir / "bar", b"test", timestamp2))
 
-        result = fs.quick_check(file1, file2)
+        result = fs.quick_check(fixtures.file, other)
 
         self.assertIs(result, False)
 
     def test_should_return_false_when_sizes_differ(self, fixtures: Fixtures) -> None:
-        file1 = str(create_file(fixtures.tmpdir / "foo", b"test", TIMESTAMP))
-        file2 = str(create_file(fixtures.tmpdir / "bar", b"tst", TIMESTAMP))
+        other = str(create_file(fixtures.tmpdir / "bar", b"tst", TIMESTAMP))
 
-        result = fs.quick_check(file1, file2)
+        result = fs.quick_check(fixtures.file, other)
 
         self.assertIs(result, False)
 
