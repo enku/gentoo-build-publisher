@@ -66,6 +66,12 @@ input BuildParameter {
   value: String!
 }
 
+type Plugin {
+  name: String!
+  version: String!
+  description: String!
+}
+
 type Query {
   build(id: ID!): Build
   builds(machine: String!): [Build!]!
@@ -77,6 +83,11 @@ type Query {
   version: String!
   working: [Build!]!
   resolveBuildTag(machine: String!, tag: String!): Build
+
+  """
+  List of installed plugins
+  """
+  plugins: [Plugin!]!
 }
 
 type Mutation {

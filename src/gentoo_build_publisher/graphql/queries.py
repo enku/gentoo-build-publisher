@@ -5,7 +5,7 @@ from typing import Any, TypeAlias
 from ariadne import ObjectType
 from graphql import GraphQLError, GraphQLResolveInfo
 
-from gentoo_build_publisher import publisher, utils
+from gentoo_build_publisher import plugins, publisher, utils
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import TAG_SYM, Build
@@ -93,3 +93,8 @@ def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
         return publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
     except FileNotFoundError:
         return None
+
+
+@Query.field("plugins")
+def _(_obj: Any, _info: Info) -> list[plugins.Plugin]:
+    return plugins.get_plugins()

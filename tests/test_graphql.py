@@ -10,7 +10,7 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
-from gentoo_build_publisher import publisher
+from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Content, EbuildRepo, MachineJob, Repo
@@ -1255,3 +1255,20 @@ class CreateMachineTestCase(TestCase):
         assert_data(
             self, result, {"createMachine": {"message": "FileExistsError: babette"}}
         )
+
+
+@given(testkit.client)
+class PluginsTestCase(TestCase):
+    query = """query { plugins { name version description }}"""
+
+    def test(self, fixtures: Fixtures) -> None:
+        installed_plugins = plugins.get_plugins()
+        self.assertGreaterEqual(len(installed_plugins), 1, "No installed plugins?!")
+
+        result = graphql(fixtures.client, self.query)
+
+        expected = [
+            {"name": p.name, "version": p.version, "description": p.description}
+            for p in installed_plugins
+        ]
+        assert_data(self, result, {"plugins": expected})
