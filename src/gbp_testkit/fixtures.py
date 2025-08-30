@@ -34,7 +34,12 @@ from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import time
 
-from .factories import BuildFactory, BuildModelFactory, BuildPublisherFactory
+from .factories import (
+    BuildFactory,
+    BuildModelFactory,
+    BuildPublisherFactory,
+    BuildRecordFactory,
+)
 from .helpers import MockJenkins, TestConsole, create_user_auth, make_gbpcli, test_gbp
 
 COUNTER = 0
@@ -178,6 +183,24 @@ def build_model(
         submitted=submitted, completed=completed, built=built
     )
     return bm
+
+
+@fixture()
+def build_record(
+    _fixtures: Fixtures,
+    built: dt.datetime | None = None,
+    submitted: dt.datetime | None = None,
+    completed: dt.datetime | None = None,
+) -> BuildRecord:
+    """Record-only equivalent to build_model"""
+    built = built or now()
+    submitted = submitted or now()
+    completed = completed or now()
+
+    record: BuildRecord = BuildRecordFactory(
+        submitted=submitted, completed=completed, built=built
+    )
+    return record
 
 
 @fixture(records_db, build_model)
