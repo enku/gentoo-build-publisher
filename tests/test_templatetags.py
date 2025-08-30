@@ -229,6 +229,10 @@ class DisplayTimeTests(TemplateTagTests):
 
         self.assertEqual(self.render(timestamp=timestamp), "Jan 4")
 
+    def test_none(self, fixtures: Fixtures) -> None:
+        # old builds have no built record
+        self.assertEqual(self.render(timestamp=None), "")
+
 
 @given(testkit.record, testkit.publisher)
 @where(records_db__backend="django")

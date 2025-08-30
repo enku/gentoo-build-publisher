@@ -57,8 +57,11 @@ def numberize(val: float | int, precision: int | str = 2) -> str:
 
 
 @register.filter
-def display_time(timestamp: dt.datetime) -> str:
+def display_time(timestamp: dt.datetime | None) -> str:
     """Display the timestamp according to how long ago it was"""
+    if timestamp is None:
+        return ""
+
     timestamp = localtime(timestamp)
     now = localtime()
 
