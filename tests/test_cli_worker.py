@@ -1,5 +1,5 @@
 # pylint: disable=missing-docstring
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from unittest import TestCase, mock
 
 from unittest_fixtures import Fixtures, given, where
@@ -11,7 +11,7 @@ from gentoo_build_publisher.settings import Settings
 # pylint: disable=unused-argument
 
 
-@given(testkit.environ, testkit.tmpdir, testkit.publisher, testkit.gbp, testkit.console)
+@given(testkit.environ, testkit.tmpdir, testkit.publisher, testkit.gbpcli)
 @where(environ={"BUILD_PUBLISHER_WORKER_BACKEND": "test"})
 class WorkerTests(TestCase):
     """Tests for the worker gbpcli subcommand"""
@@ -19,23 +19,21 @@ class WorkerTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         worker_path = "gentoo_build_publisher.worker.rq.RQWorker.work"
         with mock.patch(worker_path) as mock_work:
-            status = worker.handler(
-                Namespace(type="rq"), fixtures.gbp, fixtures.console
-            )
+            cmd = "gbp worker -t rq"
+            status = fixtures.gbpcli(cmd)
 
         self.assertEqual(status, 0)
         self.assertEqual(
-            fixtures.console.stdout, "Working for Gentoo Build Publisher!\n"
+            fixtures.console.stdout, f"$ {cmd}\nWorking for Gentoo Build Publisher!\n"
         )
         mock_work.assert_called_once()
 
     def test_takes_type_from_settings_when_not_specified(
         self, fixtures: Fixtures
     ) -> None:
-        args = Namespace(type=None)
         settings = Settings.from_environ()
         with mock.patch("gentoo_build_publisher.cli.worker.Worker") as mock_worker:
-            status = worker.handler(args, fixtures.gbp, fixtures.console)
+            status = fixtures.gbpcli("gbp worker")
 
         self.assertEqual(status, 0)
         mock_worker.assert_called_once_with(settings)
