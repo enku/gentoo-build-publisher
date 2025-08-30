@@ -14,12 +14,12 @@ Plugin = plugins.Plugin
 @given(entry_points=testkit.patch)
 @where(entry_points__target="gentoo_build_publisher.plugins.entry_points")
 class GetPluginsTests(TestCase):
-    def test_with_dict(self, fixtures: Fixtures) -> None:
+    def test(self, fixtures: Fixtures) -> None:
         ep = make_entry_point(
             "foo", {"name": "test", "app": "test.apps.TestAppConfig", "throw": "away"}
         )
         entry_points = fixtures.entry_points.return_value
-        entry_points.select.return_value.__iter__.side_effect = (iter([]), iter([ep]))
+        entry_points.select.return_value.__iter__.return_value = iter([ep])
 
         result = plugins.get_plugins()
 
@@ -27,24 +27,6 @@ class GetPluginsTests(TestCase):
             name="test", app="test.apps.TestAppConfig", graphql=None, urls=None
         )
         self.assertEqual([plugin], result)
-        entry_points.select.assert_any_call(group="gentoo_build_publisher.apps")
-        entry_points.select.assert_any_call(group="gentoo_build_publisher.plugins")
-
-    def test_with_string(self, fixtures: Fixtures) -> None:
-        ep = make_entry_point("test", "test.apps.TestAppConfig")
-        entry_points = fixtures.entry_points.return_value
-        entry_points.select.return_value.__iter__.side_effect = (iter([ep]), iter([]))
-
-        result = plugins.get_plugins()
-
-        plugin = Plugin(
-            name="test",
-            app="test.apps.TestAppConfig",
-            graphql=None,
-            urls="test.apps.TestAppConfig.urls",
-        )
-        self.assertEqual([plugin], result)
-        entry_points.select.assert_any_call(group="gentoo_build_publisher.apps")
         entry_points.select.assert_any_call(group="gentoo_build_publisher.plugins")
 
     def test_priority(self, fixtures: Fixtures) -> None:
@@ -53,7 +35,7 @@ class GetPluginsTests(TestCase):
             "bar", {"name": "bar", "app": "test.apps.TestAppConfig", "priority": -10}
         )
         entry_points = fixtures.entry_points.return_value
-        entry_points.select.return_value.__iter__.side_effect = (iter([]), iter([a, b]))
+        entry_points.select.return_value.__iter__.return_value = iter([a, b])
 
         result = plugins.get_plugins()
 

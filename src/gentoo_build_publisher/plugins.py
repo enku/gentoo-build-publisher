@@ -61,27 +61,21 @@ def get_plugins() -> list[Plugin]:
     gbp = "gentoo_build_publisher"
 
     return sorted(
-        {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.plugins")}
-        | {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.apps")},
+        {ep2plugin(ep) for ep in eps.select(group=f"{gbp}.plugins")},
         key=lambda p: p.priority,
     )
 
 
 def ep2plugin(ep: EntryPoint) -> Plugin:
     """Convert EntryPoint to a Plugin"""
-    data: str | PluginDef = ep.load()
+    data: PluginDef = ep.load()
 
-    if isinstance(data, str):
-        return Plugin(name=ep.name, app=data, graphql=None, urls=f"{data}.urls")
-    if isinstance(data, dict):
-        return Plugin(
-            name=data["name"],
-            app=data["app"],
-            version=data.get("version", "?"),
-            description=data.get("description", ""),
-            graphql=data.get("graphql"),
-            urls=data.get("urls"),
-            priority=data.get("priority", 10),
-        )
-
-    raise ValueError(f"{data!r} is not a dict or string")
+    return Plugin(
+        name=data["name"],
+        app=data["app"],
+        version=data.get("version", "?"),
+        description=data.get("description", ""),
+        graphql=data.get("graphql"),
+        urls=data.get("urls"),
+        priority=data.get("priority", 10),
+    )

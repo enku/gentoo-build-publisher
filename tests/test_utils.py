@@ -267,7 +267,11 @@ class ConditionallyDecoratorTests(TestCase):
 @where(entry_points__target="gentoo_build_publisher.plugins.entry_points")
 class ForEachAppTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        apps = ("x.foo", "y.bar", "z.baz")
+        apps = (
+            {"name": "x", "app": "x.foo"},
+            {"name": "y", "app": "y.bar"},
+            {"name": "z", "app": "z.baz"},
+        )
         fixtures.callback.side_effect = apps
         mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
         fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
@@ -279,22 +283,6 @@ class ForEachAppTests(TestCase):
             [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")], any_order=True
         )
         self.assertEqual(list(apps), return_values)
-
-    def test_when_entry_point_is_not_a_string(self, fixtures: Fixtures) -> None:
-        apps = ("x.foo", 6, "z.baz")
-        fixtures.callback.side_effect = apps
-        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
-        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
-            iter(mocks)
-        )
-        with self.assertRaises(ValueError) as exc_info:
-            utils.for_each_app(fixtures.callback)
-
-        exception = exc_info.exception
-        error_message = exception.args[0]
-        self.assertTrue(
-            error_message.endswith("is not a dict or string"), error_message
-        )
 
 
 @contextmanager
