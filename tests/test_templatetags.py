@@ -114,14 +114,13 @@ class ChartTests(TemplateTagTests):
         self.assertEqual(result, expected)
 
 
-@given(testkit.record, testkit.publisher)
-@where(records_db__backend="django")
+@given(testkit.build_record, testkit.publisher)
 class BuildRowTests(TemplateTagTests):
     template = "{% build_row build build_packages %}"
 
     def test(self, fixtures: Fixtures) -> None:
         # pylint: disable=line-too-long
-        build = fixtures.record
+        build = fixtures.build_record
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
         expected = f"""\
@@ -234,11 +233,10 @@ class DisplayTimeTests(TemplateTagTests):
         self.assertEqual(self.render(timestamp=None), "")
 
 
-@given(testkit.record, testkit.publisher)
-@where(records_db__backend="django")
+@given(testkit.build_record, testkit.publisher)
 class BuildLinkTests(TemplateTagTests):
     def test_renders_link(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = fixtures.build_record
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
 
@@ -250,7 +248,7 @@ class BuildLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
     def test_with_build_note(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = fixtures.build_record
         build = publisher.repo.build_records.save(build, note="This is a test")
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
@@ -263,7 +261,7 @@ class BuildLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
     def test_with_tags(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = fixtures.build_record
         machine = build.machine
         publisher.pull(build)
         publisher.tag(build, "foo")
@@ -280,7 +278,7 @@ class BuildLinkTests(TemplateTagTests):
         self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
 
     def test_published(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = fixtures.build_record
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
         publisher.pull(build)
@@ -304,13 +302,12 @@ class BuildWithSlashTests(TemplateTagTests):
         )
 
 
-@given(testkit.record, testkit.publisher)
-@where(records_db__backend="django")
+@given(testkit.build_record, testkit.publisher)
 class MachineBuildRowTests(TemplateTagTests):
     template = "{% machine_build_row build %}"
 
     def test(self, fixtures: Fixtures) -> None:
-        b = fixtures.record
+        b = fixtures.build_record
         publisher.pull(b)
 
         # pylint: disable=line-too-long
@@ -318,36 +315,34 @@ class MachineBuildRowTests(TemplateTagTests):
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
     <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/"><span class="build_id">{b.build_id}</span></a></h6>"""
-        self.assertTrue(self.render(build=fixtures.record).startswith(expected))
+        self.assertTrue(self.render(build=fixtures.build_record).startswith(expected))
 
     def test_missing_gbp_dot_json(self, fixtures: Fixtures) -> None:
         # Older (2021-ish) builds don't have a gbp.json file
-        build = fixtures.record
+        build = fixtures.build_record
         publisher.pull(build)
         repos = publisher.storage.get_path(build, Content.BINPKGS)
         gbp_json = repos.joinpath("gbp.json")
         gbp_json.unlink()
 
         # We just want to ensure that this does not error out (LookupError).
-        self.render(build=fixtures.record)
+        self.render(build=fixtures.build_record)
 
 
-@given(testkit.record, testkit.publisher)
-@where(records_db__backend="django")
+@given(testkit.build_record, testkit.publisher)
 class BuildIDTests(TemplateTagTests):
     template = "{{ build|build_id }}"
 
     def test_not_published(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = fixtures.build_record
 
         expected = f'<span class="build_id">{build.build_id}</span>'
         self.assertEqual(expected, self.render(build=build))
 
     def test_published(self, fixtures: Fixtures) -> None:
-        build = fixtures.record
+        build = publisher.save(fixtures.build_record)
         publisher.pull(build)
         publisher.publish(build)
-        build = publisher.record(build)
 
         expected = f'<span class="build_id published">{build.build_id}</span>'
         self.assertEqual(expected, self.render(build=build))
