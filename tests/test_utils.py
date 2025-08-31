@@ -1,6 +1,6 @@
 """Tests for the gentoo_build_publisher.utils module"""
 
-# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=missing-docstring
 import base64
 from contextlib import contextmanager
 from typing import Callable, Generator
@@ -9,9 +9,7 @@ from unittest import TestCase, mock
 import requests
 import requests.api
 import requests.exceptions
-from unittest_fixtures import Fixtures, given, where
 
-import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import utils
 
 
@@ -261,41 +259,6 @@ class ConditionallyDecoratorTests(TestCase):
     @utils.conditionally(lambda: True, decorate)
     def true_callable() -> str:
         return "test"
-
-
-@given(entry_points=testkit.patch, callback=testkit.patch)
-@where(entry_points__target="gentoo_build_publisher.plugins.entry_points")
-class ForEachAppTests(TestCase):
-    def test(self, fixtures: Fixtures) -> None:
-        apps = (
-            {"name": "x", "app": "x.foo"},
-            {"name": "y", "app": "y.bar"},
-            {"name": "z", "app": "z.baz"},
-        )
-        fixtures.callback.side_effect = lambda x: x
-        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
-        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
-            iter(mocks)
-        )
-        return_values = utils.for_each_app(fixtures.callback)
-
-        fixtures.callback.assert_has_calls(
-            [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")], any_order=True
-        )
-        self.assertEqual({"y.bar", "z.baz", "x.foo"}, set(return_values))
-
-    def test_plugin_with_no_app(self, fixtures: Fixtures) -> None:
-        apps = ({"name": "x"}, {"name": "y", "app": "y.foo"})
-        fixtures.callback.side_effect = lambda x: x
-        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
-        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
-            iter(mocks)
-        )
-
-        result = utils.for_each_app(fixtures.callback)
-
-        fixtures.callback.assert_called_once_with("y.foo")
-        self.assertEqual(result, ["y.foo"])
 
 
 @contextmanager

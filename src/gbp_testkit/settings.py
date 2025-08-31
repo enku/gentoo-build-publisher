@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from gentoo_build_publisher.utils import create_secret_key, for_each_app
+from gentoo_build_publisher import plugins
+from gentoo_build_publisher.utils import create_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,8 +16,8 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    *[plugin.app for plugin in plugins.get_plugins() if plugin.app],
 ]
-for_each_app(INSTALLED_APPS.append)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

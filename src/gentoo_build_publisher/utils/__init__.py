@@ -16,8 +16,6 @@ import requests
 from cryptography.fernet import Fernet
 from yarl import URL
 
-from gentoo_build_publisher import plugins
-
 CPV = re.compile(r"(?P<cat>.*)/(?P<pkg>.*)-(?P<version>[0-9].*)")
 INVALID_IDENTIFIER_START = {".", "-"}
 VALID_IDENTIFIER_CHARS = {*stringlib.ascii_letters, *stringlib.digits, *"_.-"}
@@ -255,14 +253,5 @@ def encode_basic_auth_data(username: str, secret: str) -> str:
 
 encode = partial(str.encode, encoding="ascii")
 decode = partial(bytes.decode, encoding="ascii")
-
-
-_T = TypeVar("_T")
-
-
-def for_each_app(do: Callable[[str], _T]) -> list[_T]:
-    """For each registered GBP app, run the given callable"""
-    return [do(plugin.app) for plugin in plugins.get_plugins() if plugin.app]
-
 
 _RESOLVERS: dict[type, dict[str, Callable[[Any], Any]]] = {}
