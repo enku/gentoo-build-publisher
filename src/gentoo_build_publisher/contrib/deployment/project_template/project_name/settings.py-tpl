@@ -1,3 +1,4 @@
+"""Django settings module for Gentoo Build Publisher"""
 import os
 
 from gentoo_build_publisher import plugins
