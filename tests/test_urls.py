@@ -29,3 +29,14 @@ class PluginURLPatterns(TestCase):
             urls=None,
         )
         self.assertEqual(urls.plugin_urlpatterns(plugin), [])
+
+    def test_plugin_without_django_app(self) -> None:
+        plugin = plugins.Plugin(
+            name="test",
+            app=None,
+            version="1.0",
+            description="A test app",
+            graphql=None,
+            urls=None,
+        )
+        self.assertEqual(urls.plugin_urlpatterns(plugin), [])

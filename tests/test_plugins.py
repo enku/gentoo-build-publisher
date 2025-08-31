@@ -40,3 +40,15 @@ class GetPluginsTests(TestCase):
         result = plugins.get_plugins()
 
         self.assertEqual(["bar", "foo"], [i.name for i in result])
+
+    def test_optional_app(self, fixtures: Fixtures) -> None:
+        """Plugin.app is (now) optional"""
+        plugin_def: plugins.PluginDef = {"name": "test"}
+        ep = make_entry_point("foo", plugin_def)
+        entry_points = fixtures.entry_points.return_value
+        entry_points.select.return_value.__iter__.return_value = iter([ep])
+
+        result = plugins.get_plugins()
+
+        plugin = Plugin(name="test", app=None, graphql=None, urls=None)
+        self.assertEqual([plugin], result)

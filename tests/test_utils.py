@@ -272,7 +272,7 @@ class ForEachAppTests(TestCase):
             {"name": "y", "app": "y.bar"},
             {"name": "z", "app": "z.baz"},
         )
-        fixtures.callback.side_effect = apps
+        fixtures.callback.side_effect = lambda x: x
         mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
         fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
             iter(mocks)
@@ -282,7 +282,20 @@ class ForEachAppTests(TestCase):
         fixtures.callback.assert_has_calls(
             [mock.call("x.foo"), mock.call("y.bar"), mock.call("z.baz")], any_order=True
         )
-        self.assertEqual(list(apps), return_values)
+        self.assertEqual({"y.bar", "z.baz", "x.foo"}, set(return_values))
+
+    def test_plugin_with_no_app(self, fixtures: Fixtures) -> None:
+        apps = ({"name": "x"}, {"name": "y", "app": "y.foo"})
+        fixtures.callback.side_effect = lambda x: x
+        mocks = [mock.Mock(load=mock.Mock(return_value=app)) for app in apps]
+        fixtures.entry_points.return_value.select.return_value.__iter__.return_value = (
+            iter(mocks)
+        )
+
+        result = utils.for_each_app(fixtures.callback)
+
+        fixtures.callback.assert_called_once_with("y.foo")
+        self.assertEqual(result, ["y.foo"])
 
 
 @contextmanager

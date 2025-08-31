@@ -14,7 +14,7 @@ class Plugin:
     """A GBP Plugin"""
 
     name: str
-    app: str
+    app: str | None
     version: str = "?"
     description: str = ""
     graphql: str | None
@@ -35,7 +35,9 @@ class PluginDef(TypedDict):
     """
 
     name: str
-    app: str
+
+    app: NotRequired[str | None]
+    """Dotted path to Django app config"""
 
     version: NotRequired[str]
     """Plugin version specifier"""
@@ -72,7 +74,7 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
 
     return Plugin(
         name=data["name"],
-        app=data["app"],
+        app=data.get("app", None),
         version=data.get("version", "?"),
         description=data.get("description", ""),
         graphql=data.get("graphql"),

@@ -262,15 +262,7 @@ _T = TypeVar("_T")
 
 def for_each_app(do: Callable[[str], _T]) -> list[_T]:
     """For each registered GBP app, run the given callable"""
-    return_values: list[_T] = []
-    apps: list[str] = []
-
-    for plugin in plugins.get_plugins():
-        app = plugin.app
-        apps.append(app)
-        return_values.append(do(app))
-
-    return return_values
+    return [do(plugin.app) for plugin in plugins.get_plugins() if plugin.app]
 
 
 _RESOLVERS: dict[type, dict[str, Callable[[Any], Any]]] = {}
