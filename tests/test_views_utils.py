@@ -19,11 +19,13 @@ from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     StatsCollector,
+    ViewFinder,
     experimental,
     get_build_record_or_404,
     get_metadata,
     get_query_value_from_request,
     get_url_for_package,
+    view,
 )
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils.time import localtime
@@ -301,6 +303,35 @@ class GetPackageURLTests(DjangoTestCase):
         pkg, vb = rest.split("-", 1)
         expected = f"http://testserver/binpkgs/{build}/{cat}/{pkg}/{pkg}-{vb}.gpkg.tar"
         self.assertEqual(url, expected)
+
+
+@given(views=testkit.patch)
+@where(views__object=ViewFinder, views__target="pattern_views")
+@where(views__new_callable=list)
+class ViewFinderTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        self.assertEqual(ViewFinder.pattern_views, [])
+
+    def test_register_views(self, fixtures: Fixtures) -> None:
+        @view("/foo", name="foo")
+        def foo_view(request: HttpRequest) -> HttpResponse:
+            return HttpResponse("")
+
+        self.assertEqual(len(ViewFinder.pattern_views), 1)
+        urlpattern = ViewFinder.pattern_views[0]
+        self.assertEqual(urlpattern.name, "foo")
+        self.assertEqual(urlpattern.callback, foo_view)
+        self.assertEqual(str(urlpattern.pattern), "/foo")
+
+        @view("/bar", name="bar")
+        def bar_view(request: HttpRequest) -> HttpResponse:
+            return HttpResponse("")
+
+        self.assertEqual(len(ViewFinder.pattern_views), 2)
+        urlpattern = ViewFinder.pattern_views[1]
+        self.assertEqual(urlpattern.name, "bar")
+        self.assertEqual(urlpattern.callback, bar_view)
+        self.assertEqual(str(urlpattern.pattern), "/bar")
 
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
