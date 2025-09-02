@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import importlib.metadata
 from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import import_module
@@ -19,8 +18,6 @@ from gentoo_build_publisher.settings import Settings
 
 Info: TypeAlias = GraphQLResolveInfo
 Resolver: TypeAlias = Callable[..., Any]
-
-SCHEMA_GROUP = "gentoo_build_publisher.graphql_schema"
 
 
 class UnauthorizedError(GraphQLError):
@@ -79,9 +76,9 @@ maybe_require_apikey = utils.conditionally(
 def load_schema() -> tuple[list[str], list[ariadne.ObjectType]]:
     """Load all GraphQL schema for Gentoo Build Publisher
 
-    This function loads all entry points for the group
-    "gentoo_build_publisher.graphql_schema" and returns them all into a single list.
-    This list can be used to make_executable_schema()
+    This function loads all schema for plugins that have defined graphql schema and
+    return them all into a single list. This list can be used to
+    make_executable_schema().
     """
     all_type_defs: list[str] = []
     all_resolvers = []
@@ -91,10 +88,5 @@ def load_schema() -> tuple[list[str], list[ariadne.ObjectType]]:
             module = import_module(plugin.graphql)
             all_type_defs.append(module.type_defs)
             all_resolvers.extend(module.resolvers)
-
-    for entry_point in importlib.metadata.entry_points(group=SCHEMA_GROUP):
-        module = entry_point.load()
-        all_type_defs.append(module.type_defs)
-        all_resolvers.extend(module.resolvers)
 
     return (all_type_defs, all_resolvers)

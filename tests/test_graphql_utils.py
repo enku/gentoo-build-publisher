@@ -7,7 +7,7 @@ from typing import Any
 from unittest import mock
 
 from graphql import GraphQLResolveInfo
-from unittest_fixtures import Fixtures, given, where
+from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
@@ -175,29 +175,12 @@ class RequireAPIKeyTestCase(TestCase):
             resolver(None, fixtures.info)
 
 
-@given(entry_points=testkit.patch, plugins_entry_points=testkit.patch)
-@where(
-    entry_points__target="gentoo_build_publisher.graphql.utils.importlib.metadata.entry_points"
-)
+@given(entry_points=testkit.patch)
 class LoadSchemaTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         schema = load_schema()
 
         self.assertEqual(schema, ([type_defs], resolvers))
-
-    def test_with_entry_point(self, fixtures: Fixtures) -> None:
-        mock_module = mock.Mock()
-        mock_module.type_defs = "type_defs"
-        mock_module.resolvers = [1, 2, 3]
-        ep = make_entry_point("test", mock_module)
-        entry_points = fixtures.entry_points
-        entry_points.return_value.__iter__.return_value = iter([ep])
-
-        type_defs_, resolvers_ = load_schema()
-
-        self.assertEqual([type_defs, "type_defs"], type_defs_)
-        self.assertEqual([*resolvers, 1, 2, 3], resolvers_)
-        entry_points.assert_any_call(group="gentoo_build_publisher.graphql_schema")
 
     @mock.patch("gentoo_build_publisher.plugins.entry_points")
     def test_with_plugin(
