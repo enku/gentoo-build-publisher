@@ -1,3 +1,3 @@
-from pydispatch.dispatch import Dispatcher
+from pydispatch.dispatch import Dispatcher, DoesNotExistError, EventExistsError
 
-__all__ = ("Dispatcher",)
+__all__ = ("Dispatcher", "DoesNotExistError", "EventExistsError")
