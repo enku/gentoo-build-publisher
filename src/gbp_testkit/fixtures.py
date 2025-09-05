@@ -57,6 +57,11 @@ def tmpdir(_fixtures: Fixtures) -> FixtureContext[Path]:
 def environ(
     fixtures: Fixtures, environ: dict[str, str] | None = None, clear: bool = False
 ) -> FixtureContext[dict[str, str]]:
+    """Override os.environ
+
+    When the clear parameter is True, the os.environ is replaced with an empty Mapping.
+    Pass overrides in the environ parameter.
+    """
     environ = environ or {}
     mock_environ = {
         "BUILD_PUBLISHER_API_KEY_ENABLE": "no",
@@ -74,11 +79,24 @@ def environ(
 
 @fixture(environ)
 def settings(_fixtures: Fixtures) -> Settings:
+    """Creates a gentoo_build_publisher.settings.Settings object
+
+    This is instantiated from the environment variables. As such this fixture uses the
+    environ fixture.
+    """
     return Settings.from_environ()
 
 
 @fixture(environ)
 def publisher(_fixtures: Fixtures) -> FixtureContext[BuildPublisher]:
+    """This replaces gentoo_build_publisher.publisher with a test-able fixture
+
+    Specifically it overrides the `jenkins`, `repo`, and `storage` attributes.
+
+    The storage root points to a temporary directory (in fixtures.tmpdir).
+    The jenkins attribute is a MockJenkins instance.
+    The repo attribute is a memory backend.
+    """
     bp: BuildPublisher = BuildPublisherFactory()
 
     @contextmanager
@@ -107,6 +125,10 @@ def allowed_host(_: Fixtures, allowed_host: str = "testserver") -> FixtureContex
 
 @fixture(publisher, allowed_host)
 def gbp(_fixtures: Fixtures, user: str = "test_user") -> GBP:
+    """Returns a testable GBP instance.
+
+    This instance calls the /graphql Django view directly so no server is needed.
+    """
     return test_gbp(
         "http://gbp.invalid/", auth={"user": user, "api_key": create_user_auth(user)}
     )
@@ -114,6 +136,7 @@ def gbp(_fixtures: Fixtures, user: str = "test_user") -> GBP:
 
 @fixture()
 def console(_fixtures: Fixtures) -> FixtureContext[TestConsole]:
+    """Returns a `TestConsole` instance"""
     c = TestConsole()
 
     yield c
@@ -144,6 +167,7 @@ def gbpcli(fixtures: Fixtures) -> Callable[[str], int]:
 
 @fixture(publisher)
 def api_keys(fixtures: Fixtures, names: list[str] | None = None) -> list[ApiKey]:
+    """Given the names, returns a list of ApiKeys created in the test BuildPublisher"""
     if names is None:
         names = ["test_api_key"]
     keys: list[ApiKey] = []
@@ -160,6 +184,11 @@ def api_keys(fixtures: Fixtures, names: list[str] | None = None) -> list[ApiKey]
 
 @fixture()
 def records_db(_fixtures: Fixtures, backend: str = "memory") -> RecordDB:
+    """A RecordDB instance
+
+    Defaults to a memory backend instance. This can be overridden with the `backend`
+    parameter.
+    """
     [module] = importlib.metadata.entry_points(
         group="gentoo_build_publisher.records", name=backend
     )
@@ -192,7 +221,15 @@ def build_record(
     submitted: dt.datetime | None = None,
     completed: dt.datetime | None = None,
 ) -> BuildRecord:
-    """Record-only equivalent to build_model"""
+    """Record-only equivalent to build_model.
+
+    This is backend-independent and thus not saved to a backend.  However you can do
+    something like:
+
+        >>> @given(saved_record=lambda f: f.records_db.save(f.build_record))
+        >>> @given(build_record, records_db)
+        >>> class MyTest(TestCase): ...
+    """
     built = built or now()
     submitted = submitted or now()
     completed = completed or now()
@@ -205,6 +242,11 @@ def build_record(
 
 @fixture(records_db, build_model)
 def record(fixtures: Fixtures, logs: str = "") -> BuildRecord:
+    """A BuildRecord saved to a django backend
+
+    This is deprecated. It is recommended to use build_record and records_db fixtures
+    instead.
+    """
     bm: BuildModel = fixtures.build_model
     db: RecordDB = fixtures.records_db
 
@@ -216,11 +258,16 @@ def record(fixtures: Fixtures, logs: str = "") -> BuildRecord:
 
 @fixture()
 def clock(_fixtures: Fixtures, clock: dt.datetime | None = None) -> dt.datetime:
+    """A datetime instance
+
+    The value defaults to the .now()
+    """
     return clock if clock else now()
 
 
 @fixture(publisher)
 def client(_fixtures: Fixtures) -> Client:
+    """A Django test Client"""
     return Client()
 
 
@@ -237,6 +284,17 @@ def builds(
     num_days: int = 1,
     per_day: int = 1,
 ) -> dict[str, list[Build]] | list[Build]:
+    """Creates Builds and returns them in a list or dict of lists
+
+    If the `machines` parameter has a single entry, returns a list of Builds.
+
+    If the `machines` parameter does not have a single entry, returns a dict of
+    [machine, list[Build].
+
+    num_days are the number of days to create builds for.
+    per_day is the number of builds (per machine) to create on a given day.
+    end_time is the submitted timestamp of the last build (per machine)
+    """
     if machines is None:
         machines = ["babette"]
     end_time = end_time or now()
@@ -249,6 +307,7 @@ def builds(
 
 @fixture(builds, publisher)
 def pulled_builds(fixtures: Fixtures) -> None:
+    """Uses the builds fixture and pulls all of builds"""
     if isinstance(fixtures.builds, dict):
         builds_ = list(itertools.chain(*fixtures.builds.values()))
     else:
@@ -260,12 +319,17 @@ def pulled_builds(fixtures: Fixtures) -> None:
 
 @fixture(tmpdir)
 def storage(fixtures: Fixtures) -> Storage:
+    """A Storage instance
+
+    Uses the tmpdir fixture and roots the Storage in tmpdir/root
+    """
     root = fixtures.tmpdir / "root"
     return Storage(root)
 
 
 @fixture(tmpdir, settings)
 def jenkins(fixtures: Fixtures) -> Jenkins:
+    """A MockJenkins instance"""
     root = fixtures.tmpdir / "root"
     fixed_settings = replace(fixtures.settings, STORAGE_PATH=root)
 
@@ -276,6 +340,7 @@ def jenkins(fixtures: Fixtures) -> Jenkins:
 def plugins(
     _fixtures: Fixtures, plugins: Iterable[str] = ("foo", "bar", "baz")
 ) -> FixtureContext[list[Plugin]]:
+    """Mocks the get_plugins function to return a fake list of Plugins"""
     plist = [
         Plugin(
             app=f"test.plugin.{i}",
@@ -295,6 +360,20 @@ def plugins(
 def patch(  # pylint: disable=redefined-builtin
     _: Fixtures, target: str = "", object: Any = _NO_OBJECT, **kwargs: Any
 ) -> FixtureContext[Any]:
+    """mock.patch on steroids
+
+    This is a fixture for mock.patch, mock.patch.object and mock.Mock
+
+    All **kwargs are passed to the respective initializer.
+
+    When no target is specified, returns a Mock instance.
+
+    When target is specified, mock's the given target. The replacement depends on
+    **kwargs.
+
+    When object is specified, mock's the given target on the given object. The
+    replacement depends on **kwargs.
+    """
     if not target:
         patcher = None
         fake = mock.Mock(**kwargs)
