@@ -1,6 +1,10 @@
 """Misc string operations"""
 
-from typing import IO, Iterator
+import re
+from functools import lru_cache
+from typing import IO, Iterator, cast
+
+CPV_RE = re.compile(r"(.*)/(.*)-([0-9].*)")
 
 
 def namevalue(string: str, delim: str) -> tuple[str, str]:
@@ -43,3 +47,12 @@ def get_sections(fobject: IO[str]) -> Iterator[list[str]]:
     """Yield the set sections of fobject with non-blank lines"""
     while section := list(until_blank(fobject)):
         yield section
+
+
+@lru_cache(256)
+def split_pkg(cpv: str) -> tuple[str, str, str]:
+    """Split the given cpv into it's three parts"""
+    if pattern := CPV_RE.search(cpv):
+        return cast(tuple[str, str, str], tuple(pattern.groups()))
+
+    raise ValueError(f"Bad regex/cpv: {CPV_RE.pattern!r}/{cpv!r}")

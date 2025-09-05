@@ -12,6 +12,7 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as BaseTestCase
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.utils import string
 
 now = partial(dt.datetime.now, tz=dt.UTC)
 
@@ -188,6 +189,23 @@ class BuildViewTests(TestCase):
         self.assertEqual(200, response.status_code)
         template = response.templates[0]
         self.assertEqual("gentoo_build_publisher/build/main.html", template.name)
+
+    def test_package_links(self, fixtures: Fixtures) -> None:
+        build = fixtures.builds["lighthouse"][-1]
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+
+        response = fixtures.client.get(url)
+
+        metadata = publisher.build_metadata(build)
+        packages = metadata.packages
+        package = packages.built[-1]
+        cpv = string.split_pkg(package.cpv)
+        expected = (
+            '<a target="_blank" class="package-link" '
+            f'href="https://packages.gentoo.org/packages/{cpv[0]}/{cpv[1]}"'
+            f">{package.cpv}</a>"
+        )
+        self.assertIn(expected, response.text)
 
     def test_given_tag(self, fixtures: Fixtures) -> None:
         client = fixtures.client

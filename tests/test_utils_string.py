@@ -4,6 +4,8 @@
 import io
 import unittest
 
+from unittest_fixtures import Fixtures, params
+
 from gentoo_build_publisher.utils import string
 
 
@@ -88,3 +90,32 @@ Other
 
         with self.assertRaises(StopIteration):
             next(gen)
+
+
+@params(
+    string=[
+        "acct-group/lpadmin-0-r3",
+        "virtual/secret-service-0",
+        "dev-libs/libatomic_ops-7.8.2",
+        "dev-libs/libpcre-8.45-r4",
+        "sys-libs/libblockdev-3.3.1",
+    ]
+)
+@params(
+    cpv=[
+        ("acct-group", "lpadmin", "0-r3"),
+        ("virtual", "secret-service", "0"),
+        ("dev-libs", "libatomic_ops", "7.8.2"),
+        ("dev-libs", "libpcre", "8.45-r4"),
+        ("sys-libs", "libblockdev", "3.3.1"),
+    ]
+)
+class SplitPkg(unittest.TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        self.assertEqual(string.split_pkg(fixtures.string), fixtures.cpv)
+
+
+class SplitPkgValueError(unittest.TestCase):
+    def test(self) -> None:
+        with self.assertRaises(ValueError):
+            string.split_pkg("foo-bar/baz-r1")

@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Package
-from gentoo_build_publisher.utils import time
+from gentoo_build_publisher.utils import string, time
 
 localtime = time.localtime
 register = template.Library()
@@ -198,6 +198,18 @@ def machine_package_row(package: Package) -> dict[str, Any]:
         "package": package,
         "build_time": localtime(dt.datetime.fromtimestamp(package.build_time)),
     }
+
+
+@register.filter(is_safe=True)
+def package_link(cpv: str) -> str:
+    """Render the package's package.gentoo.org link"""
+    pgo = "https://packages.gentoo.org"
+    split = string.split_pkg(cpv)
+
+    return mark_safe(
+        '<a target="_blank" class="package-link" '
+        f'href="{pgo}/packages/{split[0]}/{split[1]}">{cpv}</a>'
+    )
 
 
 @register.inclusion_tag("gentoo_build_publisher/card_item.html")
