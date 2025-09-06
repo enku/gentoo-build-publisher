@@ -61,3 +61,7 @@ main {
 .roundrec, .circle {
   fill: var(--bs-primary);
 }
+
+.external-link {
+    text-decoration-style: dotted;
+}

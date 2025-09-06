@@ -145,7 +145,7 @@ class PackageRowTests(TemplateTagTests):
         expected = """
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div title="Machines" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='babette&lt;br/&gt;polaris' data-bs-html="true">
-    <h6 class="my-0"><a target="_blank" class="package-link" href="https://packages.gentoo.org/packages/x11-libs/libdrm">x11-libs/libdrm-2.4.118</a></h6>
+    <h6 class="my-0"><a target="_blank" class="package-link external-link" href="https://packages.gentoo.org/packages/x11-libs/libdrm">x11-libs/libdrm-2.4.118</a></h6>
     <small class="text-muted">2 machines</small>
   </div>
 </li>
@@ -159,7 +159,7 @@ class PackageRowTests(TemplateTagTests):
         expected = """
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div title="Machines" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content='babette' data-bs-html="true">
-    <h6 class="my-0"><a target="_blank" class="package-link" href="https://packages.gentoo.org/packages/x11-libs/libdrm">x11-libs/libdrm-2.4.118</a></h6>
+    <h6 class="my-0"><a target="_blank" class="package-link external-link" href="https://packages.gentoo.org/packages/x11-libs/libdrm">x11-libs/libdrm-2.4.118</a></h6>
     <small class="text-muted">1 machine</small>
   </div>
 </li>

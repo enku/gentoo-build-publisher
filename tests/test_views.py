@@ -201,7 +201,7 @@ class BuildViewTests(TestCase):
         package = packages.built[-1]
         cpv = string.split_pkg(package.cpv)
         expected = (
-            '<a target="_blank" class="package-link" '
+            '<a target="_blank" class="package-link external-link" '
             f'href="https://packages.gentoo.org/packages/{cpv[0]}/{cpv[1]}"'
             f">{package.cpv}</a>"
         )

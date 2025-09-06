@@ -207,7 +207,7 @@ def package_link(cpv: str) -> str:
     split = string.split_pkg(cpv)
 
     return mark_safe(
-        '<a target="_blank" class="package-link" '
+        '<a target="_blank" class="package-link external-link" '
         f'href="{pgo}/packages/{split[0]}/{split[1]}">{cpv}</a>'
     )
 
