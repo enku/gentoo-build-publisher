@@ -1,7 +1,15 @@
 """Plugin interface for Gentoo Build Publisher
 
-Plugins register themselves under the group "gentoo_build_publisher.plugins", but
-"gentoo_build_publisher.apps" is kept for backwards compatibility
+Plugins register themselves under the group "gentoo_build_publisher.plugins". The entry
+point should be a dictionary adhering to the PluginDef specification. For example:
+
+
+    plugin = {
+        "name": "gbp-helloworld",
+        "version": "0.1.0",
+        "description":"Hello World!"
+    }
+
 """
 
 from dataclasses import dataclass
