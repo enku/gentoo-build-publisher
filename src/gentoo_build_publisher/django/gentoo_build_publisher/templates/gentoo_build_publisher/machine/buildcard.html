@@ -3,6 +3,7 @@
     <h5 class="card-header">{{ build_count }} Build{{ build_count|pluralize }}</h5>
   <div class="card-body">
     <ul class="list-group list-group-flush">
+      {% block build-card-items %}
       {% card_item "Latest" latest_build.build_id True %}
 
       {% if published_build %}
@@ -14,6 +15,7 @@
       {% card_item "Storage" storage|numberize:"b1"|add:"B" True %}
       {% card_item "Storage/Build" average_storage|numberize:"b1"|add:"B" True %}
       {% card_item "Packages built today" packages_built_today|length True %}
+      {% endblock %}
 
       {% if published_build %}
         {% card_item "repos.conf" '<a href="repos.conf" download><i class="bi bi-download"></i></a>' %}
