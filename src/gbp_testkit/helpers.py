@@ -14,12 +14,11 @@ import rich.console
 from django.test.client import Client
 from gbpcli.config import AuthDict, Config
 from gbpcli.gbp import GBP
-from gbpcli.theme import DEFAULT_THEME
+from gbpcli.theme import get_theme_from_string
 from gbpcli.types import Console
 from requests import Response, Session
 from requests.adapters import BaseAdapter
 from requests.structures import CaseInsensitiveDict
-from rich.theme import Theme
 from yarl import URL
 
 from gentoo_build_publisher import publisher
@@ -225,7 +224,7 @@ class TestConsole:
     def __init__(self) -> None:
         out = io.StringIO()
         err = io.StringIO()
-        theme = Theme(DEFAULT_THEME)
+        theme = get_theme_from_string(os.environ.get("GBPCLI_COLORS", ""))
         c = Console(
             out=rich.console.Console(
                 file=out, width=88, theme=theme, highlight=False, record=True
