@@ -20,9 +20,14 @@ dependencies = [
 ]
 requires-python = ">=3.11"
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Django",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
+    "Topic :: System :: Operating System Kernels :: Linux",
+    "Topic :: System :: Operating System",
     "Topic :: System :: Software Distribution",
     "Topic :: System :: Systems Administration",
 ]
