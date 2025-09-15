@@ -1,4 +1,4 @@
-/* global bootstrap, Chart */
+/* global bootstrap, Chart, barBorderRadius */
 
 const gradientColors = JSON.parse(document.getElementById('gradientColors').textContent);
 const machines = JSON.parse(document.getElementById('machines').textContent);
@@ -23,12 +23,14 @@ function machineDistributionChart() {
     },
     data: {
       labels: chartLabels,
-      datasets: [{
-        label: 'Build Distribution',
-        data: chartData,
-        hoverOffset: 4,
-        backgroundColor: gradientColors,
-      }],
+      datasets: [
+        {
+          label: 'Build Distribution',
+          data: chartData,
+          hoverOffset: 4,
+          backgroundColor: gradientColors,
+        },
+      ],
     },
   };
   const ctx = document.getElementById('myChart');
@@ -42,7 +44,12 @@ function buildsOverTimeChart() {
   const datasets = [];
 
   for (let i = 0; i < bot.length; i += 1) {
-    datasets.push({ label: machines[i], data: bot[i], backgroundColor: gradientColors[i] });
+    datasets.push({
+      label: machines[i],
+      data: bot[i],
+      backgroundColor: gradientColors[i],
+      borderRadius: barBorderRadius,
+    });
   }
   const botConfig = {
     type: 'bar',
@@ -67,7 +74,13 @@ function packageSizesChart() {
     responsive: true,
     data: {
       labels: machines,
-      datasets: [{ data: sizes, backgroundColor: gradientColors }],
+      datasets: [
+        {
+          data: sizes,
+          backgroundColor: gradientColors,
+          borderRadius: barBorderRadius,
+        },
+      ],
     },
     options: {
       animations: false,

@@ -1,4 +1,4 @@
-/* global bootstrap, Chart */
+/* global bootstrap, Chart, barBorderRadius */
 
 const gradientColors = JSON.parse(document.getElementById('gradientColors').textContent);
 const machines = JSON.parse(document.getElementById('machines').textContent);
@@ -9,7 +9,12 @@ function buildsOverTimeChart() {
   const datasets = [];
 
   for (let i = 0; i < bot.length; i += 1) {
-    datasets.push({ label: machines[i], data: bot[i], backgroundColor: gradientColors[i] });
+    datasets.push({
+      label: machines[i],
+      data: bot[i],
+      backgroundColor: gradientColors[i],
+      borderRadius: barBorderRadius,
+    });
   }
   const botConfig = {
     type: 'bar',
