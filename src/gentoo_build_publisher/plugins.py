@@ -37,7 +37,7 @@ class PluginDef(TypedDict):
     """Plugin definition
 
     Plugins use this to define themselves. This gets loaded as an entry point and then
-    convertd to a Plugin dataclass.  Why do we need both? I just prefer working with
+    converted to a Plugin dataclass.  Why do we need both? I just prefer working with
     dataclasses than dicts but the definition seems to work better as a primitive (no
     need to import anything).
     """
