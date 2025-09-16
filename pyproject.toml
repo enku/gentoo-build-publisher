@@ -10,13 +10,13 @@ dependencies = [
     "ariadne_django",
     "celery[msgpack]",
     "django",
-    "python-dispatch>=0.2.1",
     "requests",
     "yarl!=1.9.1",
     "gbpcli>=3.0.0",
     "orjson>=3.9.1",
     "cryptography>=42.0.4",
     "rich>=13.7.0",
+    "blinker>=1.9.0",
 ]
 requires-python = ">=3.11"
 classifiers = [

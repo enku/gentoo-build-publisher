@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:ebb243c382b732fb756848e53361987108ee0aff41ffc29dc68da80c325869b5"
+content_hash = "sha256:b2c62a8d9cdc7467bf7a66eb03d455a235465a8a9b3d6fcec13f3ae92951a68b"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -174,6 +174,17 @@ files = [
     {file = "black-25.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:a22f402b410566e2d1c950708c77ebf5ebd5d0d88a6a2e87c86d9fb48afa0d18"},
     {file = "black-25.1.0-py3-none-any.whl", hash = "sha256:95e8176dae143ba9097f351d174fdaf0ccd29efb414b362ae3fd72bf0f710717"},
     {file = "black-25.1.0.tar.gz", hash = "sha256:33496d5cd1222ad73391352b4ae8da15253c5de89b93a80b3e2c8d9a19ec2666"},
+]
+
+[[package]]
+name = "blinker"
+version = "1.9.0"
+requires_python = ">=3.9"
+summary = "Fast, simple object-to-object and broadcast signaling"
+groups = ["default"]
+files = [
+    {file = "blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc"},
+    {file = "blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf"},
 ]
 
 [[package]]
@@ -1405,16 +1416,6 @@ dependencies = [
 files = [
     {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
     {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
-]
-
-[[package]]
-name = "python-dispatch"
-version = "0.2.2"
-summary = "Lightweight Event Handling"
-groups = ["default"]
-files = [
-    {file = "python-dispatch-0.2.2.tar.gz", hash = "sha256:d05278ff76625a53865c92ca6b5069e82c27b5741999f7ec737c64180f0123e6"},
-    {file = "python_dispatch-0.2.2-py3-none-any.whl", hash = "sha256:0305898bf011fb164bb21e0f48809cf21faee6d8ea311177bd9a43f86201b9cd"},
 ]
 
 [[package]]
