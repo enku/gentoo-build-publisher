@@ -1,8 +1,7 @@
 """Tests for the `gbp check` subcommand"""
 
-# pylint: disable=missing-docstring,unused-argument
+# pylint: disable=missing-docstring
 import shutil
-from argparse import ArgumentParser, Namespace
 
 from unittest_fixtures import Fixtures, given
 
@@ -10,17 +9,16 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.cli import check
 from gentoo_build_publisher.types import Content
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.gbp, testkit.console)
+@given(testkit.tmpdir, testkit.publisher, testkit.gbpcli)
 class GBPChkTestCase(TestCase):
     def test_empty_system(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        check.handler(Namespace(), fixtures.gbp, console)
+        fixtures.gbpcli("gbp check")
 
-        self.assertEqual(console.stdout, "0 errors, 0 warnings\n")
+        self.assertEqual(console.stdout, "$ gbp check\n0 errors, 0 warnings\n")
 
     def test_uncompleted_builds_are_warnings(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -28,10 +26,10 @@ class GBPChkTestCase(TestCase):
         publisher.repo.build_records.save(record, completed=None)
 
         console = fixtures.console
-        exit_status = check.handler(Namespace(), fixtures.gbp, console)
+        exit_status = fixtures.gbpcli("gbp check")
 
         self.assertEqual(exit_status, 0)
-        self.assertEqual(console.stdout, "0 errors, 2 warnings\n")
+        self.assertEqual(console.stdout, "$ gbp check\n0 errors, 2 warnings\n")
         # 2 warnings because also gbp.json
 
     def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
@@ -40,7 +38,7 @@ class GBPChkTestCase(TestCase):
         publisher.tag(build, "go-1.21.5")
 
         console = fixtures.console
-        exit_status = check.handler(Namespace(), fixtures.gbp, console)
+        exit_status = fixtures.gbpcli("gbp check")
 
         self.assertEqual(exit_status, 0, console.stderr)
 
@@ -61,14 +59,10 @@ class GBPChkTestCase(TestCase):
             shutil.rmtree(content_path)
 
         console = fixtures.console
-        exit_status = check.handler(Namespace(), fixtures.gbp, console)
+        exit_status = fixtures.gbpcli("gbp check")
+
         self.assertEqual(exit_status, len(Content) * 3 + 2)
 
         stderr_lines = console.stderr.split("\n")
         last_error_line = stderr_lines[-2]
         self.assertEqual(last_error_line, "gbp check: Errors were encountered")
-
-    def test_parse_args(self, fixtures: Fixtures) -> None:
-        # here for completeness
-        parser = ArgumentParser("gbp")
-        check.parse_args(parser)
