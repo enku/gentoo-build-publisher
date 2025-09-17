@@ -17,9 +17,18 @@ from importlib.metadata import EntryPoint, entry_points
 from typing import NotRequired, TypedDict
 
 
+class PluginCheckDef(TypedDict, total=False):
+    """A plugin check declaration"""
+
+    name: str
+    path: str
+
+
 @dataclass(kw_only=True, frozen=True, slots=True)
 class Plugin:
     """A GBP Plugin"""
+
+    # pylint: disable=too-many-instance-attributes
 
     name: str
     app: str | None
@@ -28,6 +37,7 @@ class Plugin:
     graphql: str | None
     urls: str | None
     priority: int = 10
+    checks: PluginCheckDef | None = None
 
     def __hash__(self) -> int:
         return hash(self.app)
@@ -62,6 +72,9 @@ class PluginDef(TypedDict):
     urls: NotRequired[str]
     """Dotted path to module containing urlpatterns"""
 
+    checks: NotRequired[PluginCheckDef]
+    """Any `gbp check` check functions that the plugin provides"""
+
     priority: NotRequired[int]
 
 
@@ -87,5 +100,6 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
         description=data.get("description", ""),
         graphql=data.get("graphql"),
         urls=data.get("urls"),
+        checks=data.get("checks"),
         priority=data.get("priority", 10),
     )

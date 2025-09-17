@@ -1,29 +1,25 @@
 """Check GBP storage and records"""
 
 import argparse
+import importlib.metadata
 import itertools
 import json
 from pathlib import Path
-from typing import Callable, TypeAlias
+from typing import Callable, TypeAlias, cast
 
 from gbpcli.gbp import GBP
 from gbpcli.types import Console
 
 import gentoo_build_publisher.django._setup  # pylint: disable=unused-import
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.plugins import get_plugins
 from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.types import Build, Content
 
 CheckResult: TypeAlias = tuple[int, int]
 Check: TypeAlias = Callable[[Console], CheckResult]
 
-_CHECK_REGISTRY: list[Check] = []
-
-
-def register(func: Check) -> Check:
-    """Register a check"""
-    _CHECK_REGISTRY.append(func)
-    return func
+CHECK_GROUP = "gentoo_build_publisher.checks"
 
 
 def parse_args(_parser: argparse.ArgumentParser) -> None:
@@ -35,11 +31,16 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     """Check GBP storage and records"""
     total_errors = 0
     total_warnings = 0
+    ep = importlib.metadata.EntryPoint
 
-    for checker in _CHECK_REGISTRY:
-        errors, warnings = checker(console)
-        total_errors += errors
-        total_warnings += warnings
+    for plugin in get_plugins():
+        checks = plugin.checks or {}
+        for name, value in checks.items():
+            check_ep = ep(name=name, group=CHECK_GROUP, value=str(value))
+            checker = cast(Check, check_ep.load())
+            errors, warnings = checker(console)
+            total_errors += errors
+            total_warnings += warnings
 
     if total_errors:
         console.err.print("[warn]gbp check: Errors were encountered[/warn]")
@@ -48,7 +49,6 @@ def handler(args: argparse.Namespace, _gbp: GBP, console: Console) -> int:
     return total_errors
 
 
-@register
 def check_build_content(console: Console) -> CheckResult:
     """Check build content"""
     errors = 0
@@ -77,7 +77,6 @@ def check_build_content(console: Console) -> CheckResult:
     return errors, warnings
 
 
-@register
 def check_orphans(console: Console) -> CheckResult:
     """Check orphans (builds with no records)"""
     errors = 0
@@ -102,7 +101,6 @@ def check_orphans(console: Console) -> CheckResult:
     return errors, warnings
 
 
-@register
 def check_inconsistent_tags(console: Console) -> CheckResult:
     """Check for tags that have inconsistent targets"""
     errors = 0
@@ -130,7 +128,6 @@ def check_inconsistent_tags(console: Console) -> CheckResult:
     return errors, warnings
 
 
-@register
 def check_dirty_temp(console: Console) -> CheckResult:
     """Warn if the temp dir is not empty"""
     errors = 0
@@ -146,7 +143,6 @@ def check_dirty_temp(console: Console) -> CheckResult:
     return errors, warnings
 
 
-@register
 def check_corrupt_gbp_json(console: Console) -> CheckResult:
     """Check that the gbp.json file is not corrupt"""
     errors = 0
