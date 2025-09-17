@@ -93,6 +93,11 @@ class ValidateIdentifierTestCase(TestCase):
         with self.assertRaises(utils.InvalidIdentifier):
             utils.validate_identifier("pròd")
 
+    def test_identifier_cannot_start_with_invalid_char(self) -> None:
+        """@foo is invalid"""
+        with self.assertRaises(utils.InvalidIdentifier):
+            utils.validate_identifier("@foo")
+
 
 class RequestAndRaiseTests(TestCase):
     """Tests for the request_and_raise function"""

@@ -117,7 +117,7 @@ def validate_identifier(name: str) -> None:
     if name[0] in INVALID_IDENTIFIER_START:
         raise error
 
-    if not set(name[1:]) <= VALID_IDENTIFIER_CHARS:
+    if not set(name) <= VALID_IDENTIFIER_CHARS:
         raise error
 
 
