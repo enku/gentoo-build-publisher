@@ -60,11 +60,11 @@ plugin = {
     "description": "Gentoo build server, binhost, ebuild repo server, and config manager",
     "graphql": "gentoo_build_publisher.graphql",
     "checks": {
-        "build-content": "gentoo_build_publisher.cli.check:check_build_content",
-        "orphans": "gentoo_build_publisher.cli.check:check_orphans",
-        "inconsistent_tags": "gentoo_build_publisher.cli.check:check_inconsistent_tags",
-        "dirty_temp": "gentoo_build_publisher.cli.check:check_dirty_temp",
-        "corrupt_gbp_json": "gentoo_build_publisher.cli.check:check_corrupt_gbp_json",
+        "build-content": "gentoo_build_publisher.checks:build_content",
+        "orphans": "gentoo_build_publisher.checks:orphans",
+        "inconsistent_tags": "gentoo_build_publisher.checks:inconsistent_tags",
+        "dirty_temp": "gentoo_build_publisher.checks:dirty_temp",
+        "corrupt_gbp_json": "gentoo_build_publisher.checks:corrupt_gbp_json",
     },
     "priority": 0,
 }
