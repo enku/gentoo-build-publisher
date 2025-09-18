@@ -14,7 +14,6 @@ function machineDistributionChart() {
   const config = {
     type: 'pie',
     options: {
-      animations: false,
       plugins: {
         legend: {
           display: false,
@@ -56,7 +55,6 @@ function buildsOverTimeChart() {
     data: { labels: chartDays, datasets },
     responsive: true,
     options: {
-      animations: false,
       plugins: { legend: { display: false } },
       scales: { x: { stacked: true }, y: { stacked: true } },
     },
@@ -83,7 +81,6 @@ function packageSizesChart() {
       ],
     },
     options: {
-      animations: false,
       plugins: {
         legend: {
           display: false,
