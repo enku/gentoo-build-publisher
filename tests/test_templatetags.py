@@ -74,14 +74,14 @@ class NumberizeTestCase(TemplateTagTests):
         self.assertEqual(result, "1k")
 
 
-class NumberedCircleTests(TemplateTagTests):
-    template = "{% circle build_count name %}"
+class MetricTests(TemplateTagTests):
+    template = "{% metric build_count name %}"
 
     def test(self) -> None:
         expected = """\
-<div class="col-lg" align="center">
-  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="circle" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">452</text></svg>
-  <h2>Builds</h2>
+<div class="col-lg metric" align="center">
+  <span class="number" title="">452</span>
+  <h2 class="label">Builds</h2>
 </div>
 """
         result = self.render(build_count=452, name="Builds")
@@ -89,13 +89,17 @@ class NumberedCircleTests(TemplateTagTests):
 
     def test_large_number(self) -> None:
         expected = """\
-<div class="col-lg" align="center">
-  <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>212351</title><rect class="circle" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px">212k</text></svg>
-  <h2>Packages</h2>
+<div class="col-lg metric" align="center">
+  <span class="number" title="212351">212k</span>
+  <h2 class="label">Packages</h2>
 </div>
 """
         result = self.render(build_count=212351, name="Packages")
         self.assertEqual(result, expected)
+
+
+class CircleTests(MetricTests):
+    template = "{% circle build_count name %}"
 
 
 class ChartTests(TemplateTagTests):

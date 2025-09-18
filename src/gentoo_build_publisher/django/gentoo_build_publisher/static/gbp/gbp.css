@@ -63,5 +63,42 @@ main {
 }
 
 .external-link {
-    text-decoration-style: dotted;
+  text-decoration-style: dotted;
+}
+
+.metrics {
+  background-color: var(--bs-primary);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 25px;
+  width: 100%;
+}
+
+.metric {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-collapse: collapse;
+  padding: 1rem;
+  user-select: none;
+}
+
+.metric:hover {
+   color: white;
+   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+
+.metric .number {
+  font-size: 50px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.metric:first-child {
+  border-radius: 25px 0 0 25px;
+}
+
+.metric:last-child {
+  border-radius: 0 25px 25px 0;
+}
+
+.metric:first-child, .metric:last-child {
+   border: none;
 }

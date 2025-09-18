@@ -1,6 +1,7 @@
 """Template tags for numerical values"""
 
 import datetime as dt
+import warnings
 from typing import Any
 
 from django import template
@@ -74,9 +75,8 @@ def display_time(timestamp: dt.datetime | None) -> str:
     return time.as_date(timestamp)
 
 
-@register.inclusion_tag("gentoo_build_publisher/circle.html")
-def circle(number: int, name: str) -> dict[str, Any]:
-    """Render a circle with a number in it and name below"""
+def metric_context(number: int, name: str) -> dict[str, Any]:
+    """Return the context for the metric tag"""
     if number >= 100_000:
         number_display = numberize(number, precision=0)
         number_hover = str(number)
@@ -85,6 +85,21 @@ def circle(number: int, name: str) -> dict[str, Any]:
         number_hover = ""
 
     return {"name": name, "number": number_hover, "number_display": number_display}
+
+
+@register.inclusion_tag("gentoo_build_publisher/metric.html")
+def metric(number: int, name: str) -> dict[str, Any]:
+    """Render a metric with a number in it and name below"""
+    return metric_context(number, name)
+
+
+@register.inclusion_tag("gentoo_build_publisher/metric.html")
+def circle(number: int, name: str) -> dict[str, Any]:
+    """Deprecated. Use metric()"""
+    message = '"circle" is deprecated. Use "metric" instead.'
+    warnings.warn(message, DeprecationWarning)
+
+    return metric_context(number, name)
 
 
 @register.inclusion_tag("gentoo_build_publisher/chart.html")
@@ -127,7 +142,7 @@ def package_row(package: str, machines: list[str]) -> dict[str, Any]:
 
 @register.inclusion_tag("gentoo_build_publisher/roundrect.html")
 def roundrect(text: str, title: str, scale: float = 1.0) -> dict[str, Any]:
-    """Render a circle with a number in it and name below"""
+    """Render a rounded rectangle the given text and title"""
     return {
         "font_size": round(scale * 50),
         "height": round(scale * 140),

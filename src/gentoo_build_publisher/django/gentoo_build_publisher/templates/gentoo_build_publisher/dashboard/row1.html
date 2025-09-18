@@ -1,10 +1,10 @@
 {% load gbp %}
 <div class="container">
-  <div class="row">
+  <div class="row metrics">
     {% block dashboard_metrics %}
-    {% circle machines|length "Machines" %}
-    {% circle build_count "Builds" %}
-    {% circle package_count "Packages" %}
+    {% metric machines|length "Machines" %}
+    {% metric build_count "Builds" %}
+    {% metric package_count "Packages" %}
     {% endblock %}
   </div>
 </div>
