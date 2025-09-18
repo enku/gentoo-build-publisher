@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from difflib import Differ
 from typing import Any, Iterable, Self
 
@@ -162,7 +162,7 @@ class BuildPublisher:
         packages: list[Package] | None = None
         gbp_metadata: GBPMetadata | None = None
         jenkins_metadata = self.jenkins.get_metadata(record)
-        built = utctime(datetime.utcfromtimestamp(jenkins_metadata.timestamp / 1000))
+        built = utctime(datetime.fromtimestamp(jenkins_metadata.timestamp / 1000, UTC))
         logs = self.jenkins.get_logs(record)
         record = self.save(record, logs=logs, completed=utctime(), built=built)
 

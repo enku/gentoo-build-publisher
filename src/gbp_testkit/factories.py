@@ -120,7 +120,7 @@ class ArtifactFactory:
         self, initial_packages: list[str] | None = None, timestamp: int | None = None
     ) -> None:
         if timestamp is None:
-            self.timestamp = int(dt.datetime.utcnow().timestamp() * 1000)
+            self.timestamp = int(dt.datetime.now(dt.UTC).timestamp() * 1000)
         else:
             self.timestamp = timestamp
 

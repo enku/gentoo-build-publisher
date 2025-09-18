@@ -85,8 +85,9 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
         record = publisher.record(build)
 
-        jenkins_timestamp = dt.datetime.utcfromtimestamp(
-            publisher.jenkins.artifact_builder.build_info(build).build_time / 1000
+        jenkins_timestamp = dt.datetime.fromtimestamp(
+            publisher.jenkins.artifact_builder.build_info(build).build_time / 1000,
+            dt.UTC,
         ).replace(tzinfo=dt.UTC)
         self.assertEqual(record.built, jenkins_timestamp)
 

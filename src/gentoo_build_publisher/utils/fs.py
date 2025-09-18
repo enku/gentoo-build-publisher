@@ -29,7 +29,7 @@ def extract(infile: Path, outdir: Path) -> None:
     logger.info("Extracting %s to %s", infile, outdir)
 
     with tarfile.open(infile, mode="r") as tar_file:
-        tar_file.extractall(outdir)
+        tar_file.extractall(outdir, filter="tar")
 
     logger.info("Extracted %s to %s", infile, outdir)
 
