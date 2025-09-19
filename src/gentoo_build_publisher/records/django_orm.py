@@ -6,6 +6,8 @@ from typing import Any, Iterable
 
 from django.conf import settings
 from django.db import models
+from django.utils.encoding import force_bytes as encode
+from django.utils.encoding import force_str as decode
 
 import gentoo_build_publisher.django._setup  # pylint: disable=unused-import
 from gentoo_build_publisher.django.gentoo_build_publisher.models import (
@@ -19,7 +21,7 @@ from gentoo_build_publisher.django.gentoo_build_publisher.models import (
 )
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import ApiKey, Build
-from gentoo_build_publisher.utils import decode, decrypt, encode, encrypt
+from gentoo_build_publisher.utils import decrypt, encrypt
 
 RELATED = ("buildlog", "buildnote", "keptbuild")
 _manager = BuildModel.objects

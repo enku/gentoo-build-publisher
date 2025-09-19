@@ -8,7 +8,7 @@ import importlib.resources
 import platform
 import re
 import string as stringlib
-from functools import partial, wraps
+from functools import wraps
 from importlib.metadata import version
 from typing import Any, Callable, Collection, NamedTuple, ParamSpec, Self, TypeVar
 
@@ -250,8 +250,5 @@ def encode_basic_auth_data(username: str, secret: str) -> str:
 
     return base64.b64encode(value).decode("ascii")
 
-
-encode = partial(str.encode, encoding="ascii")
-decode = partial(bytes.decode, encoding="ascii")
 
 _RESOLVERS: dict[type, dict[str, Callable[[Any], Any]]] = {}
