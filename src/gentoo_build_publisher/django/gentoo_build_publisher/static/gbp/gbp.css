@@ -102,3 +102,13 @@ main {
 .metric:first-child, .metric:last-child {
    border: none;
 }
+
+@media (max-width: 991.5px) {
+  .metric:first-child {
+    border-radius: 25px 25px 0 0;
+  }
+
+  .metric:last-child {
+    border-radius: 0 0 25px 25px;
+  }
+}
