@@ -239,3 +239,11 @@ def build_id(build: BuildRecord) -> str:
     cls = "build_id published" if publisher.published(build) else "build_id"
 
     return mark_safe(f'<span class="{cls}">{build.build_id}</span>')
+
+
+@register.inclusion_tag("gentoo_build_publisher/navlink.html")
+def navlink(viewname: str, title: str, active: bool = True) -> dict[str, Any]:
+    """Render a bootstrap nav link"""
+    url = reverse(viewname)
+
+    return {"url": url, "title": title, "disabled": not active}

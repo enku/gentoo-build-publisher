@@ -1,4 +1,4 @@
-<!doctype html>{% load static %}
+<!doctype html>{% load static gbp %}
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -40,7 +40,8 @@
             <img src="//www.gentoo.org/assets/img/logo/gentoo-signet.svg" width="40">
             <strong>&nbsp;Gentoo Build Publisher</strong>
           </a>
-          <a class="nav-link active" aria-current="page" href="{% url 'gbp-about' %}">About</a>
+          {% block navlinks %}{% endblock %}
+          {% navlink "gbp-about" "About" %}
         </div>
       </div>
     </header>

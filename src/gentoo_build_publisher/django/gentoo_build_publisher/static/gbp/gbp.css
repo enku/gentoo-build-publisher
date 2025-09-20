@@ -16,7 +16,7 @@ a {
   text-decoration: underline dotted;
 }
 
-.nav-link.active {
+.nav-link {
   color: var(--bs-navbar-active-color);
   font-family: var(--bs-body-font-family);
   font-weight: bolder;
