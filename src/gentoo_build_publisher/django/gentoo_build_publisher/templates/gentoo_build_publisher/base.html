@@ -40,8 +40,10 @@
             <img src="//www.gentoo.org/assets/img/logo/gentoo-signet.svg" width="40">
             <strong>&nbsp;Gentoo Build Publisher</strong>
           </a>
-          {% block navlinks %}{% endblock %}
-          {% navlink "gbp-about" "About" %}
+          <nav class="nav">
+            {% block navlinks %}{% endblock %}
+            {% navlink "gbp-about" "About" %}
+          </nav>
         </div>
       </div>
     </header>

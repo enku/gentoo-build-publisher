@@ -1,5 +1,6 @@
 :root {
   --bs-primary: #54487a;
+  --bs-navbar-active-color: #ffffff;
 }
 
 .bd-placeholder-img {
@@ -20,6 +21,10 @@ a {
   color: var(--bs-navbar-active-color);
   font-family: var(--bs-body-font-family);
   font-weight: bolder;
+}
+
+.nav-link:hover {
+  color: #ffffff;
 }
 
 header {
