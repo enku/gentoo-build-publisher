@@ -113,3 +113,6 @@ detail.
 - [Gentoo Build Publisher: Auth & API
   Keys](https://lunarcowboy.com/gentoo-build-publisher-auth-api-keys.html):
   April 2025
+- [An Introduction to Gentoo Build Publisher
+  Plugins](https://lunarcowboy.com/an-introduction-to-gentoo-build-publisher-plugins.html):
+  September 2025
