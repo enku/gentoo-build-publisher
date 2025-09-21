@@ -252,14 +252,17 @@ Gentoo repo.
 gbp addrepo --branch stable gentoo https://github.com/gentoo-mirror/gentoo.git
 ```
 
-Now that we have a Gentoo repo job. Let's give it a whirl.  From the Jenkins
-web interface, navigate to the "Gentoo" folder and then the "repos" folder.
-Click on the "gentoo" item.  This is your Gentoo ebuild repository build.
-Click on the "Build Now" link on the left.  The job should start running,
-pulling (cloning, since it's the first time), the official Gentoo repo and
-then creating an artifact. This artifact can then be used for machine builds.
-This job will run periodically, polling the git repository and building new
-artifacts.
+Now that we have a Gentoo repo job. Let's give it a whirl.  The a build for
+the rwepo job can be scheduled from the command line:
+
+```sh
+gbp build -r gentoo
+```
+
+After this, the job should start running, pulling (cloning, since it's the
+first time), the official Gentoo repo and then creating an artifact. This
+artifact can then be used for machine builds.  This job will run periodically,
+polling the git repository and building new artifacts.
 
 
 ### Create your first machine job
