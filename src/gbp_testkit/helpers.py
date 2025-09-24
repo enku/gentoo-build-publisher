@@ -6,7 +6,7 @@ import os
 import shlex
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 from unittest import mock
 
 import gbpcli
@@ -16,7 +16,7 @@ from gbpcli.config import AuthDict, Config
 from gbpcli.gbp import GBP
 from gbpcli.theme import get_theme_from_string
 from gbpcli.types import Console
-from requests import Response, Session
+from requests import PreparedRequest, Response, Session
 from requests.adapters import BaseAdapter
 from requests.structures import CaseInsensitiveDict
 from yarl import URL
@@ -172,8 +172,15 @@ class DjangoToRequestsAdapter(BaseAdapter):
     """Requests Adapter to call Django views"""
 
     def send(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None
+        self,
+        request: PreparedRequest,
+        stream: bool = False,
+        timeout: None | float | tuple[float, float] | tuple[float, None] = None,
+        verify: bool | str = True,
+        cert: None | bytes | str | tuple[bytes | str, bytes | str] = None,
+        proxies: Mapping[str, str] | None = None,
     ) -> Response:
+        assert isinstance(request.method, str)
         django_response = Client().generic(
             request.method,
             request.path_url,
