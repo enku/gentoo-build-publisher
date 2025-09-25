@@ -31,6 +31,7 @@ from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
 from gentoo_build_publisher.storage import Storage
 from gentoo_build_publisher.types import (
+    TAG_SYM,
     Build,
     Change,
     ChangeState,
@@ -107,6 +108,29 @@ class BuildPublisher:
         Does not include the empty (published) tag.
         """
         return [tag for tag in self.storage.get_tags(build) if tag]
+
+    def resolve_tag(self, tag_name: str) -> Build | None:
+        """Resolve the given tag
+
+        `tag_name` is of the format: <machine>@<tag>
+
+        `<machine>@` resolves to the published build for the given machine.
+
+        `<machine>@@` resolves to the latest build for the given machine.
+
+        If the given tag does not resolve, return `None`.
+        """
+        machine, _, tag = tag_name.partition(TAG_SYM)
+
+        if machine and tag == "@":
+            if record := self.latest_build(machine, completed=True):
+                return Build(machine=record.machine, build_id=record.build_id)
+            return None
+
+        try:
+            return self.storage.resolve_tag(tag_name)
+        except FileNotFoundError:
+            return None
 
     def published(self, build: Build) -> bool:
         """Return True if this Build is published"""

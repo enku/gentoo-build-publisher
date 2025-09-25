@@ -281,6 +281,53 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(expected, metadata)
 
 
+@given(testkit.build, testkit.publisher, build2=testkit.build)
+class BuildPublisherResolveTagTests(TestCase):
+    def test_no_tag(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        machine = build.machine
+
+        publisher.pull(build)
+
+        self.assertIsNone(publisher.resolve_tag(f"{machine}@mytag"))
+
+    def test_with_tag(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        machine = build.machine
+
+        publisher.pull(build, tags=["mytag"])
+
+        self.assertEqual(build, publisher.resolve_tag(f"{machine}@mytag"))
+
+    def test_with_published_tag(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        machine = build.machine
+
+        publisher.publish(build)
+
+        self.assertEqual(build, publisher.resolve_tag(f"{machine}@"))
+
+    def test_with_published_tag_but_none_published(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        machine = build.machine
+
+        publisher.pull(build)
+
+        self.assertIsNone(publisher.resolve_tag(f"{machine}@"))
+
+    def test_with_latest_tag(self, fixtures: Fixtures) -> None:
+        machine = fixtures.build.machine
+        build2 = fixtures.build2
+
+        publisher.pull(fixtures.build)
+        publisher.pull(build2)
+
+        self.assertEqual(build2, publisher.resolve_tag(f"{machine}@@"))
+
+    def test_with_latest_tag_none_pulled(self, fixtures: Fixtures) -> None:
+        self.assertIsNone(publisher.resolve_tag("bogus@@"))
+
+
 @fixture()
 def prepull_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []
