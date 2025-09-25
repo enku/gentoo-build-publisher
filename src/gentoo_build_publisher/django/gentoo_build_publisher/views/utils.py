@@ -280,14 +280,14 @@ def parse_tag_or_raise_404(machine_tag: str) -> tuple[Build, str, str]:
     If it's not a tagged name, the tag_name will be the empty string.
     If the actual target does not exist, raise Http404
     """
-    build: Build | None
+    build: Build | None = None
     machine, _, tag_name = machine_tag.partition(TAG_SYM)
 
     if tag_name:
         try:
-            build = publisher.storage.resolve_tag(machine_tag)
-        except (ValueError, FileNotFoundError):
-            build = None
+            build = publisher.resolve_tag(machine_tag)
+        except ValueError:
+            pass
     else:
         build = MachineInfo(machine).published_build
 
