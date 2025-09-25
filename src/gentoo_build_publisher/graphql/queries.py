@@ -89,10 +89,7 @@ def _(_obj: Any, _info: Info) -> list[BuildRecord]:
 
 @Query.field("resolveBuildTag")
 def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
-    try:
-        return publisher.storage.resolve_tag(f"{machine}{TAG_SYM}{tag}")
-    except FileNotFoundError:
-        return None
+    return publisher.resolve_tag(f"{machine}{TAG_SYM}{tag}")
 
 
 @Query.field("plugins")

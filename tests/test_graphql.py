@@ -950,6 +950,24 @@ class TagsTestCase(TestCase):
 
         assert_data(self, result, {"resolveBuildTag": None})
 
+    def test_latest_build_tag(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+
+        query = """
+        query ($machine: String!, $tag: String!) {
+         resolveBuildTag(machine: $machine, tag: $tag) {
+            id
+          }
+        }
+        """
+
+        result = graphql(
+            fixtures.client, query, variables={"machine": build.machine, "tag": "@"}
+        )
+
+        assert_data(self, result, {"resolveBuildTag": {"id": str(build)}})
+
 
 def search_query_builds(_fixtures: Fixtures) -> list[Build]:
     for field in SEARCH_PARAMS["field"]:
