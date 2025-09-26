@@ -17,7 +17,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'ariadne_django',
     *[plugin.app for plugin in plugins.get_plugins() if plugin.app],
 ]
 
