@@ -7,7 +7,6 @@ authors = [{name = "Albert Hopkins", email = "marduk@letterboxes.org"}]
 license = {text = "GPL3+"}
 dependencies = [
     "ariadne>=0.14.0",
-    "ariadne_django",
     "celery[msgpack]",
     "django",
     "requests",

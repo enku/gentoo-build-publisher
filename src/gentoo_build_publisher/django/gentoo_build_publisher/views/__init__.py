@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from ariadne_django.views import GraphQLView
+from typing import Any
+
+from ariadne.wsgi import GraphQL
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect
+from django.views.decorators.csrf import csrf_exempt
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
@@ -137,4 +140,31 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return {"machine": machine, "uri": uri}
 
 
-view("graphql")(GraphQLView.as_view(schema=schema))
+@csrf_exempt(view("graphql"))
+def _(request: HttpRequest) -> HttpResponse:
+    environ = request_to_wsgi_environ(request)
+    status = "400 Bad Request"
+    headers: list[tuple[str, str]] = []
+
+    def start_response(rstatus: str, rheaders: list[tuple[str, str]]) -> None:
+        nonlocal status, headers
+        status, headers = rstatus, rheaders
+
+    ariadne_application = GraphQL(schema, context_value={"request": request})
+    response = ariadne_application(environ, start_response)
+    status_code = int(status.split(None, 1)[0])
+
+    return HttpResponse(response, status=status_code, headers=dict(headers))
+
+
+def request_to_wsgi_environ(request: HttpRequest) -> dict[str, Any]:
+    """Convert the given Django request to a WSGI environ"""
+    updates = {
+        "PATH_INFO": request.path,
+        "wsgi.input": request,
+        "wsgi.method": request.method,
+        "wsgi.url_scheme": request.scheme,
+        "SERVER_NAME": request.get_host(),
+        "SERVER_PORT": request.get_port(),
+    }
+    return {**request.META, **updates}

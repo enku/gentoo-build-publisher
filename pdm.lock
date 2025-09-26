@@ -5,7 +5,7 @@
 groups = ["default", "dev", "redis", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:dcbad105e6f156e368b37165fa775925fee32b14111aacdb94b19b0b5e48179a"
+content_hash = "sha256:7892fa40236fa6a94ec4b50afd682f299d8971f351de2898a7906d5c8e7da0fc"
 
 [[metadata.targets]]
 requires_python = ">=3.12"
@@ -66,20 +66,6 @@ dependencies = [
 files = [
     {file = "ariadne-0.26.2-py3-none-any.whl", hash = "sha256:8d272c73a751d30a1c9c367318a317483588a51c335351d7342f23f109816a92"},
     {file = "ariadne-0.26.2.tar.gz", hash = "sha256:607617f82760c039b2137b7c1200b475ea90ccf4ca42c0994926c0d8fdede908"},
-]
-
-[[package]]
-name = "ariadne-django"
-version = "0.3.0"
-summary = "ariadne_django is a python library for integrating django with ariadne."
-groups = ["default"]
-dependencies = [
-    "ariadne>=0.13.0",
-    "django>=2.2.0",
-]
-files = [
-    {file = "ariadne_django-0.3.0-py3-none-any.whl", hash = "sha256:3c638993e2cf1d2f579ec8735a7dfdbb57d5420c8eb2ae09b93880746e2764c6"},
-    {file = "ariadne_django-0.3.0.tar.gz", hash = "sha256:19aca29d35398564ea59749a9c28b79cf11cf79f6fbb3d017d7e15d56157ae96"},
 ]
 
 [[package]]
