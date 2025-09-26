@@ -140,7 +140,8 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return {"machine": machine, "uri": uri}
 
 
-@csrf_exempt(view("graphql"))
+@view("graphql")
+@csrf_exempt
 def _(request: HttpRequest) -> HttpResponse:
     environ = request_to_wsgi_environ(request)
     status = "400 Bad Request"
