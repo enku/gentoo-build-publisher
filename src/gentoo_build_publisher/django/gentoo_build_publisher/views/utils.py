@@ -259,6 +259,19 @@ def get_query_value_from_request(
         return fallback
 
 
+def request_to_wsgi_environ(request: HttpRequest) -> dict[str, Any]:
+    """Convert the given Django request to a WSGI environ"""
+    updates = {
+        "PATH_INFO": request.path,
+        "wsgi.input": request,
+        "wsgi.method": request.method,
+        "wsgi.url_scheme": request.scheme,
+        "SERVER_NAME": request.get_host(),
+        "SERVER_PORT": request.get_port(),
+    }
+    return {**request.META, **updates}
+
+
 def get_build_record_or_404(machine: str, build_id: str) -> BuildRecord:
     """Return the BuildRecord given the machine and build_id
 

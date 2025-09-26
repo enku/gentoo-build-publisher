@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ariadne.wsgi import GraphQL
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -143,7 +141,7 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
 @view("graphql")
 @csrf_exempt
 def _(request: HttpRequest) -> HttpResponse:
-    environ = request_to_wsgi_environ(request)
+    environ = utils.request_to_wsgi_environ(request)
     status = "400 Bad Request"
     headers: list[tuple[str, str]] = []
 
@@ -156,16 +154,3 @@ def _(request: HttpRequest) -> HttpResponse:
     status_code = int(status.split(None, 1)[0])
 
     return HttpResponse(response, status=status_code, headers=dict(headers))
-
-
-def request_to_wsgi_environ(request: HttpRequest) -> dict[str, Any]:
-    """Convert the given Django request to a WSGI environ"""
-    updates = {
-        "PATH_INFO": request.path,
-        "wsgi.input": request,
-        "wsgi.method": request.method,
-        "wsgi.url_scheme": request.scheme,
-        "SERVER_NAME": request.get_host(),
-        "SERVER_PORT": request.get_port(),
-    }
-    return {**request.META, **updates}
