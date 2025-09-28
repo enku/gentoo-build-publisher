@@ -48,11 +48,15 @@
       </div>
     </header>
 
-    <main role="main">
+    <main role="main" class="main">
       {% block main %}{% endblock %}
     </main>
 
-    <footer>{% block footer %}{% endblock %}</footer>
+    <footer class="footer">{% block footer %}
+      Copyright © 2021-2025<br>
+      "Gentoo" and the Gentoo logo are trademarks of the Gentoo Foundation.<br>
+      This project is not affiliated with or endorsed by the Gentoo Foundation.
+    {% endblock %}</footer>
 
     <script type="text/javascript">
       const barBorderRadius = 3;

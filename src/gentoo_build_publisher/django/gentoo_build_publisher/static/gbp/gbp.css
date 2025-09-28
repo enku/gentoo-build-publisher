@@ -12,9 +12,23 @@
   user-select: none;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 a {
   color: #4a4a4a;
   text-decoration: underline dotted;
+}
+
+.main {
+  flex: 1;
 }
 
 .nav-link {
@@ -106,6 +120,14 @@ main {
 
 .metric:first-child, .metric:last-child {
    border: none;
+}
+
+.footer {
+  background-color: var(--bs-primary);
+  color: #ffffff;
+  padding: 1rem;
+  font-size: smaller;
+  text-align: center;
 }
 
 @media (max-width: 991.5px) {
