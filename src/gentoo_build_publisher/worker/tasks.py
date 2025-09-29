@@ -33,6 +33,7 @@ def pull_build(build_id: str, *, note: str | None, tags: list[str] | None) -> No
     """Pull the build into storage
 
     If `note` is given, then the build record will be saved with the given note.
+    If `tags` is given, then the build will be assigned the given tags.
     """
     from gentoo_build_publisher import publisher
     from gentoo_build_publisher.types import Build
