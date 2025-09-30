@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 from functools import lru_cache, wraps
-from typing import Any, Callable, Mapping, TypeAlias
+from typing import Any, Callable, Mapping, TypeAlias, cast
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
@@ -228,8 +228,7 @@ def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata:
 
         return metadata
 
-    metadata = cached
-    return metadata
+    return cast(GBPMetadata, cached)
 
 
 def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
