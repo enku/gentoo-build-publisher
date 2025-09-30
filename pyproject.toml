@@ -116,9 +116,7 @@ version = { source = "scm" }
 dev = [
     "black>=22.6.0",
     "coverage[toml]>=6.4.2",
-    "mypy==1.7.1",
-    # pylint-django fails with 2.15.0. See bug #370
-    # https://github.com/PyCQA/pylint-django/issues/370
+    "mypy>=1.18.2",
     "pylint>=2.14.5,!=2.15.0",
     "pylint-django>=2.5.3",
     "django-stubs>=1.12.0",
