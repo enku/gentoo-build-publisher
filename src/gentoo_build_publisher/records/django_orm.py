@@ -222,7 +222,7 @@ class ApiKeyDB:
         return [
             ApiKey(
                 name=obj.name,
-                key=decode(decrypt(obj.apikey, encode(settings.SECRET_KEY))),
+                key=decode(decrypt(bytes(obj.apikey), encode(settings.SECRET_KEY))),
                 created=obj.created,
                 last_used=obj.last_used,
             )
@@ -235,7 +235,7 @@ class ApiKeyDB:
 
         return ApiKey(
             name=model.name,
-            key=decode(decrypt(model.apikey, encode(settings.SECRET_KEY))),
+            key=decode(decrypt(bytes(model.apikey), encode(settings.SECRET_KEY))),
             created=model.created,
         )
 
