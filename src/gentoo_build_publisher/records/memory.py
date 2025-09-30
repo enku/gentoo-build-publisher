@@ -127,7 +127,7 @@ class RecordDB:
         if not records:
             return None
 
-        records.sort()
+        records.sort(key=record_key)
 
         return records[0]
 
