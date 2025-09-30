@@ -1,6 +1,6 @@
 """Resolvers for the MachineSummary GraphQL type"""
 
-from typing import TypeAlias
+# pylint: disable=missing-function-docstring
 
 from ariadne import ObjectType
 from graphql import GraphQLResolveInfo
@@ -8,10 +8,9 @@ from graphql import GraphQLResolveInfo
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.types import Build
 
-MachineSummary = ObjectType("MachineSummary")
-Info: TypeAlias = GraphQLResolveInfo
+type Info = GraphQLResolveInfo
 
-# pylint: disable=missing-function-docstring
+MachineSummary = ObjectType("MachineSummary")
 
 
 @MachineSummary.field("buildCount")

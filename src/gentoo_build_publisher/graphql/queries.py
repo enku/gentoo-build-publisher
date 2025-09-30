@@ -1,6 +1,6 @@
 """Resolvers for the GraphQL Query type"""
 
-from typing import Any, TypeAlias
+from typing import Any
 
 from ariadne import ObjectType
 from graphql import GraphQLError, GraphQLResolveInfo
@@ -10,9 +10,10 @@ from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import TAG_SYM, Build
 
+type Info = GraphQLResolveInfo
+type Object = dict[str, Any]
+
 Query = ObjectType("Query")
-Info: TypeAlias = GraphQLResolveInfo
-Object: TypeAlias = dict[str, Any]
 
 # pylint: disable=redefined-builtin,missing-function-docstring
 

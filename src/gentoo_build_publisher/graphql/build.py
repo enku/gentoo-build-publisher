@@ -1,7 +1,8 @@
 """Resolvers for the GraphQL Build type"""
 
+# pylint: disable=missing-function-docstring
+
 import datetime as dt
-from typing import TypeAlias
 
 from ariadne import ObjectType, convert_kwargs_to_snake_case
 from graphql import GraphQLResolveInfo
@@ -9,10 +10,9 @@ from graphql import GraphQLResolveInfo
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Package
 
-BuildType = ObjectType("Build")
-Info: TypeAlias = GraphQLResolveInfo
+type Info = GraphQLResolveInfo
 
-# pylint: disable=missing-function-docstring
+BuildType = ObjectType("Build")
 
 
 @BuildType.field("built")

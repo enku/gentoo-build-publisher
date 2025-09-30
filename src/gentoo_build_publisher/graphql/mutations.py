@@ -1,6 +1,8 @@
 """Resolvers for the GraphQL Mutation type"""
 
-from typing import Any, TypeAlias, TypedDict
+# pylint: disable=redefined-builtin,missing-function-docstring
+
+from typing import Any, TypedDict
 
 from ariadne import ObjectType, convert_kwargs_to_snake_case
 from graphql import GraphQLResolveInfo
@@ -13,12 +15,10 @@ from gentoo_build_publisher.worker import tasks
 
 from .utils import Error, maybe_require_apikey
 
+type Info = GraphQLResolveInfo
+type Object = dict[str, Any]
+
 Mutation = ObjectType("Mutation")
-
-Info: TypeAlias = GraphQLResolveInfo
-Object: TypeAlias = dict[str, Any]
-
-# pylint: disable=redefined-builtin,missing-function-docstring
 
 
 class BuildParameterInput(TypedDict):

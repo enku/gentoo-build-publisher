@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 from functools import lru_cache, wraps
-from typing import Any, Callable, Mapping, TypeAlias, cast
+from typing import Any, Callable, Mapping, cast
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
@@ -24,13 +24,13 @@ from gentoo_build_publisher.types import (
 from gentoo_build_publisher.utils import Color
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
 
-BuildID: TypeAlias = str  # pylint: disable=invalid-name
-CPV: TypeAlias = str  # pylint: disable=invalid-name
-Gradient: TypeAlias = list[str]
-MachineName: TypeAlias = str
-View: TypeAlias = Callable[..., HttpResponse]
-ViewContext: TypeAlias = Mapping[str, Any]
-TemplateView: TypeAlias = Callable[..., ViewContext]
+type BuildID = str  # pylint: disable=invalid-name
+type CPV = str  # pylint: disable=invalid-name
+type Gradient = list[str]
+type MachineName = str
+type View = Callable[..., HttpResponse]
+type ViewContext = Mapping[str, Any]
+type TemplateView = Callable[..., ViewContext]
 
 
 _NOT_FOUND = object()

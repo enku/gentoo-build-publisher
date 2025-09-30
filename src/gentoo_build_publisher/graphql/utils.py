@@ -6,7 +6,7 @@ import datetime as dt
 from dataclasses import dataclass, replace
 from functools import wraps
 from importlib import import_module
-from typing import Any, Callable, TypeAlias
+from typing import Any, Callable
 
 import ariadne
 from graphql import GraphQLError, GraphQLResolveInfo
@@ -16,8 +16,8 @@ from gentoo_build_publisher.plugins import get_plugins
 from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.settings import Settings
 
-Info: TypeAlias = GraphQLResolveInfo
-Resolver: TypeAlias = Callable[..., Any]
+type Info = GraphQLResolveInfo
+type Resolver = Callable[..., Any]
 
 
 class UnauthorizedError(GraphQLError):

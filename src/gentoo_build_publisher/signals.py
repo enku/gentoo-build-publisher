@@ -1,12 +1,13 @@
 """Signal dispatcher for Gentoo Build Publisher"""
 
-from typing import Any, Callable, ParamSpec, TypeAlias
+from typing import Any, Callable, Concatenate, ParamSpec, TypeAlias
 
 from blinker import Signal, signal
 
+type PyDispatchHandler = Callable[..., Any]
+
 P = ParamSpec("P")
-PyDispatchHandler: TypeAlias = Callable[..., Any]
-BlinkerHandler: TypeAlias = Callable[[Any, P.kwargs], Any]
+BlinkerHandler: TypeAlias = Callable[Concatenate[Any, P], Any]
 
 CORE_EVENTS = ["predelete", "postdelete", "published", "prepull", "postpull"]
 

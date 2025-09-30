@@ -3,7 +3,7 @@
 import itertools
 import json
 from pathlib import Path
-from typing import Callable, TypeAlias
+from typing import Callable
 
 from gbpcli.types import Console
 
@@ -11,8 +11,8 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import RecordNotFound
 from gentoo_build_publisher.types import Build, Content
 
-CheckResult: TypeAlias = tuple[int, int]
-Check: TypeAlias = Callable[[Console], CheckResult]
+type CheckResult = tuple[int, int]
+type Check = Callable[[Console], CheckResult]
 
 
 def build_content(console: Console) -> CheckResult:
