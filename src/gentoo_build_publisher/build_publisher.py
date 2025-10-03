@@ -94,6 +94,7 @@ class BuildPublisher:
         Unlike publish(), does not auto-pull the build
         """
         self.storage.tag(build, tag_name)
+        dispatcher.emit("tagged", build=build, tag=tag_name)
 
     def untag(self, machine: str, tag_name: str) -> None:
         """Remove the given tag name from the machine

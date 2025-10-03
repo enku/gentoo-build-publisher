@@ -416,6 +416,41 @@ class DispatcherTestCase(TestCase):
         record = publisher.record(new_build)
         self.assertEqual(fixtures.publish_events, [record])
 
+    def test_tag(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+        called = False
+        tag_given: str | None = None
+
+        def tag_handler(build: Build, tag: str) -> None:
+            nonlocal called, tag_given
+
+            called = True
+            tag_given = tag
+
+        dispatcher.bind(tagged=tag_handler)
+
+        publisher.tag(build, "test")
+
+        self.assertTrue(called)
+        self.assertEqual(tag_given, "test")
+
+    def test_publish_does_not_emit_tagged_signal(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build)
+        called = False
+
+        def tag_handler(build: Build, tag: str) -> None:
+            nonlocal called
+
+            called = True
+
+        dispatcher.bind(tagged=tag_handler)
+
+        publisher.publish(build)
+
+        self.assertFalse(called)
+
 
 @given(testkit.publisher)
 class ScheduleBuildTestCase(TestCase):

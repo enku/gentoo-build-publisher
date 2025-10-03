@@ -9,7 +9,7 @@ type PyDispatchHandler = Callable[..., Any]
 P = ParamSpec("P")
 BlinkerHandler: TypeAlias = Callable[Concatenate[Any, P], Any]
 
-CORE_EVENTS = ["predelete", "postdelete", "published", "prepull", "postpull"]
+CORE_EVENTS = ["postdelete", "postpull", "predelete", "prepull", "published", "tagged"]
 
 
 class DoesNotExistError(LookupError):
