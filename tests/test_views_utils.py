@@ -9,12 +9,7 @@ from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
-from gbp_testkit.factories import (
-    ArtifactFactory,
-    BuildFactory,
-    BuildRecordFactory,
-    package_factory,
-)
+from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
@@ -27,8 +22,10 @@ from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     get_url_for_package,
     view,
 )
-from gentoo_build_publisher.types import Build, Content
+from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
+
+from .lib import create_builds_and_packages
 
 
 @given(testkit.publisher)
@@ -336,17 +333,3 @@ class ViewFinderTests(TestCase):
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
     return HttpResponse("Hi!")
-
-
-def create_builds_and_packages(
-    machine: str, number_of_builds: int, pkgs_per_build: int, builder: ArtifactFactory
-) -> list[Build]:
-    builds: list[Build] = BuildFactory.build_batch(number_of_builds, machine=machine)
-    pf = package_factory()
-
-    for build in builds:
-        for _ in range(pkgs_per_build):
-            package = next(pf)
-            builder.build(build, package)
-
-    return builds

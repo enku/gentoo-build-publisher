@@ -4,6 +4,9 @@
 from typing import Any
 from unittest import mock
 
+from gbp_testkit.factories import ArtifactFactory, BuildFactory, package_factory
+from gentoo_build_publisher.types import Build
+
 PACKAGE_LINES: list[str] = [
     "BDEPEND: >=sys-devel/gettext-0.19.8 app-arch/xz-utils >=dev-util/meson-0.62.2",
     "BUILD_ID: 3",
@@ -29,3 +32,17 @@ def make_entry_point(name: str, loaded_value: Any) -> mock.Mock:
     ep.name = name
     ep.load.return_value = loaded_value
     return ep
+
+
+def create_builds_and_packages(
+    machine: str, number_of_builds: int, pkgs_per_build: int, builder: ArtifactFactory
+) -> list[Build]:
+    builds: list[Build] = BuildFactory.build_batch(number_of_builds, machine=machine)
+    pf = package_factory()
+
+    for build in builds:
+        for _ in range(pkgs_per_build):
+            package = next(pf)
+            builder.build(build, package)
+
+    return builds
