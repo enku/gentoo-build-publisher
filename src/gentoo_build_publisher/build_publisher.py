@@ -101,7 +101,9 @@ class BuildPublisher:
 
         Can also be used to unpublish builds if tag_name is the empty string.
         """
-        self.storage.untag(machine, tag_name)
+        if build := self.resolve_tag(f"{machine}{TAG_SYM}{tag_name}"):
+            self.storage.untag(machine, tag_name)
+            dispatcher.emit("untagged", build=build, tag=tag_name)
 
     def tags(self, build: Build) -> list[str]:
         """Return the list of tags for the given build

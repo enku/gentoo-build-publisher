@@ -451,6 +451,84 @@ class DispatcherTestCase(TestCase):
 
         self.assertFalse(called)
 
+    def test_untag(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.pull(build, tags=["test"])
+        called = False
+        tag_given: str | None = None
+        build_given: Build | None = None
+
+        def untag_handler(build: Build, tag: str) -> None:
+            nonlocal called, tag_given, build_given
+
+            called = True
+            tag_given = tag
+            build_given = build
+
+        dispatcher.bind(untagged=untag_handler)
+
+        publisher.untag(build.machine, "test")
+
+        self.assertTrue(called)
+        self.assertEqual(tag_given, "test")
+        self.assertEqual(build_given, build)
+
+    def test_untag_unpublish(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher.publish(build)
+        called = False
+        tag_given: str | None = None
+        build_given: Build | None = None
+
+        def untag_handler(build: Build, tag: str) -> None:
+            nonlocal called, tag_given, build_given
+
+            called = True
+            tag_given = tag
+            build_given = build
+
+        dispatcher.bind(untagged=untag_handler)
+
+        publisher.untag(build.machine, "")
+
+        self.assertTrue(called)
+        self.assertEqual(tag_given, "")
+        self.assertEqual(build_given, build)
+
+    def test_untag_not_tagged(self, fixtures: Fixtures) -> None:
+        """Untagging a machine that doesn't have the tag doesn't emit the signal"""
+        build = BuildFactory()
+        publisher.pull(build)
+        called = False
+
+        def untag_handler(build: Build, tag: str) -> None:
+            nonlocal called
+
+            called = True
+
+        dispatcher.bind(untagged=untag_handler)
+
+        publisher.untag(build.machine, "test")
+
+        self.assertFalse(called)
+
+    def test_republish_does_not_emit_untagged_signal(self, fixtures: Fixtures) -> None:
+        build1 = BuildFactory()
+        publisher.publish(build1)
+        called = False
+
+        def untag_handler(build: Build, tag: str) -> None:
+            nonlocal called
+
+            called = True
+
+        dispatcher.bind(untagged=untag_handler)
+
+        build2 = BuildFactory()
+        publisher.publish(build2)
+
+        self.assertFalse(called)
+
 
 @given(testkit.publisher)
 class ScheduleBuildTestCase(TestCase):
