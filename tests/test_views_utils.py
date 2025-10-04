@@ -287,7 +287,7 @@ class ExperimentalMarkerTests(DjangoTestCase):
 
 
 @given(testkit.publisher)
-class GetPackageURLTests(DjangoTestCase):
+class GetPackageURLTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         builder = publisher.jenkins.artifact_builder  # type: ignore
         [build] = create_builds_and_packages("babette", 1, 1, builder)

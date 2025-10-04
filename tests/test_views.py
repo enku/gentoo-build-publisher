@@ -3,17 +3,18 @@
 # pylint: disable=missing-class-docstring,missing-function-docstring,too-many-ancestors
 import datetime as dt
 from functools import partial
+from unittest import TestCase as BaseTestCase
 
 from django import urls
 from django.http import HttpResponse
 from unittest_fixtures import Fixtures, fixture, given, where
 
 import gbp_testkit.fixtures as testkit
-from gbp_testkit import DjangoTestCase as BaseTestCase
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import string
 
+__unittest = True  # pylint: disable=invalid-name
 now = partial(dt.datetime.now, tz=dt.UTC)
 
 
@@ -42,16 +43,19 @@ def artifacts(fixtures: Fixtures) -> dict[str, Build]:
 
 @given(testkit.publisher, testkit.builds)
 @where(
-    records_db__backend="memory",
     builds__machines=["babette", "lighthouse", "web"],
     builds__num_days=3,
     builds__per_day=2,
 )
 class TestCase(BaseTestCase):
-    pass
+    def assert_template_used(self, name: str, response: HttpResponse) -> None:
+        self.assertIn(name, [i.name for i in response.templates])  # type: ignore[attr-defined]
+
+    def assert_contains(self, expected: str, response: HttpResponse) -> None:
+        self.assertIn(expected, response.text)
 
 
-@given()
+@given(testkit.client)
 class DashboardTestCase(TestCase):
     """Tests for the dashboard view"""
 
@@ -61,33 +65,35 @@ class DashboardTestCase(TestCase):
         # pull the latest web
         publisher.pull(latest_build(fixtures.builds, "web"))
 
-        response = self.client.get("/")
+        response = fixtures.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "gentoo_build_publisher/dashboard/main.html")
+        self.assert_template_used(
+            "gentoo_build_publisher/dashboard/main.html", response
+        )
 
     def test_can_retrieve_view_by_name(self, fixtures: Fixtures) -> None:
         view = urls.reverse("dashboard")
         self.assertEqual(view, "/")
 
 
-@given()
+@given(testkit.client)
 class ReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self, fixtures: Fixtures) -> None:
         publisher.publish(latest_build(fixtures.builds, "lighthouse"))
 
-        response = self.client.get("/machines/lighthouse/repos.conf")
+        response = fixtures.client.get("/machines/lighthouse/repos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
-        self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
+        self.assert_template_used("gentoo_build_publisher/repos.conf", response)
 
     def test_non_published(self, fixtures: Fixtures) -> None:
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
-        response = self.client.get("/machines/lighthouse/repos.conf")
+        response = fixtures.client.get("/machines/lighthouse/repos.conf")
 
         self.assertEqual(response.status_code, 404)
 
@@ -97,43 +103,43 @@ class ReposDotConfTestCase(TestCase):
         publisher.pull(build := latest_build(fixtures.builds, "lighthouse"))
         publisher.tag(build, "prod")
 
-        response = self.client.get("/machines/lighthouse@prod/repos.conf")
+        response = fixtures.client.get("/machines/lighthouse@prod/repos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
-        self.assertTemplateUsed(response, "gentoo_build_publisher/repos.conf")
+        self.assert_template_used("gentoo_build_publisher/repos.conf", response)
         self.assertTrue(b"/repos/lighthouse@prod/" in response.content)
 
     def test_nonexistent_tags_should_return_404(self, fixtures: Fixtures) -> None:
-        response = self.client.get("/machines/lighthouse@prod/repos.conf")
+        response = fixtures.client.get("/machines/lighthouse@prod/repos.conf")
 
         self.assertEqual(response.status_code, 404)
 
 
-@given()
+@given(testkit.client)
 class BinReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self, fixtures: Fixtures) -> None:
         publisher.publish(latest_build(fixtures.builds, "lighthouse"))
 
-        response = self.client.get("/machines/lighthouse/binrepos.conf")
+        response = fixtures.client.get("/machines/lighthouse/binrepos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
-        self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
+        self.assert_template_used("gentoo_build_publisher/binrepos.conf", response)
 
     def test_non_published(self, fixtures: Fixtures) -> None:
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
-        response = self.client.get("/machines/lighthouse/binrepos.conf")
+        response = fixtures.client.get("/machines/lighthouse/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
     def test_when_no_such_tag_exists_gives_404(self, fixtures: Fixtures) -> None:
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
-        response = self.client.get("/machines/lighthouse@bogus/binrepos.conf")
+        response = fixtures.client.get("/machines/lighthouse@bogus/binrepos.conf")
 
         self.assertEqual(response.status_code, 404)
 
@@ -143,11 +149,11 @@ class BinReposDotConfTestCase(TestCase):
         publisher.pull(build := latest_build(fixtures.builds, "lighthouse"))
         publisher.tag(build, "prod")
 
-        response = self.client.get("/machines/lighthouse@prod/binrepos.conf")
+        response = fixtures.client.get("/machines/lighthouse@prod/binrepos.conf")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["Content-Type"], "text/plain")
-        self.assertTemplateUsed(response, "gentoo_build_publisher/binrepos.conf")
+        self.assert_template_used("gentoo_build_publisher/binrepos.conf", response)
         self.assertTrue(b"/binpkgs/lighthouse@prod/" in response.content)
 
 
@@ -160,16 +166,16 @@ class MachineViewTests(TestCase):
             'Latest <span class="badge badge-primary badge-pill">'
             f"{latest_build(fixtures.builds, 'lighthouse').build_id}</span>"
         )
-        self.assertContains(fixtures.lighthouse, latest_str)
+        self.assert_contains(latest_str, fixtures.lighthouse)
 
         published_str = (
             'Published <span class="badge badge-primary badge-pill">'
             f"{fixtures.artifacts['published'].build_id}</span>"
         )
-        self.assertContains(fixtures.lighthouse, published_str)
+        self.assert_contains(published_str, fixtures.lighthouse)
 
     def test_returns_404_on_nonbuild_machines(self, fixtures: Fixtures) -> None:
-        response = self.client.get("/machines/bogus/")
+        response = fixtures.client.get("/machines/bogus/")
 
         self.assertEqual(response.status_code, 404)
 
@@ -357,11 +363,11 @@ class LogsTests(TestCase):
         )
 
 
-@given(artifacts)
+@given(artifacts, testkit.client)
 class BinPkgViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         package = fixtures.artifacts["latest"]
-        client = self.client
+        client = fixtures.client
         url = (
             f"/machines/lighthouse/builds/{package.build_id}/"
             "packages/sys-libs/pam/pam-1.5.3-1"
@@ -377,7 +383,7 @@ class BinPkgViewTests(TestCase):
         self.assertTrue(response["Location"].endswith(expected), response["Location"])
 
     def test_when_build_does_not_exist(self, fixtures: Fixtures) -> None:
-        client = self.client
+        client = fixtures.client
         url = "/machines/bogus/builds/2/packages/x11-apps/xhost/xhost-1.0.10-1"
 
         response = client.get(url)
@@ -387,7 +393,7 @@ class BinPkgViewTests(TestCase):
     def test_when_pkg_does_not_exist(self, fixtures: Fixtures) -> None:
         package = fixtures.artifacts["latest"]
 
-        client = self.client
+        client = fixtures.client
         url = (
             f"/machines/lighthouse/builds/{package.build_id}/"
             "packages/x11-apps/xhost/xhost-1.0.10-1"
@@ -397,17 +403,17 @@ class BinPkgViewTests(TestCase):
         self.assertEqual(response.status_code, 404, response.content)
 
 
-@given(testkit.plugins)
+@given(testkit.plugins, testkit.client)
 class AboutViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        client = self.client
+        client = fixtures.client
         response = client.get("/about/")
 
         for plugin in fixtures.plugins:
             with self.subTest(plugin=plugin.name):
-                self.assertContains(response, f'<th scope="row">{plugin.name}</th>')
+                self.assertIn(f'<th scope="row">{plugin.name}</th>', response.text)
 
-        self.assertTemplateUsed(response, "gentoo_build_publisher/about/main.html")
+        self.assert_template_used("gentoo_build_publisher/about/main.html", response)
 
 
 def first_build(build_dict: dict[str, list[Build]], name: str) -> Build:
