@@ -161,8 +161,7 @@ class PyDispatcherAdapterTests(TestCase):
     def test_unbind_not_registered(self) -> None:
         d = signals.PublisherDispatcher()
 
-        def handler(**kwargs: Any) -> None:
-            pass
+        def handler(**kwargs: Any) -> None: ...
 
         with self.assertRaises(signals.NotBoundError):
             d.unbind(handler)

@@ -72,6 +72,10 @@ class PublishBuildTestCase(TestCase):
             "Build %s failed to pull. Not publishing", "babette.193"
         )
 
+    def test_repr(self, fixtures: Fixtures) -> None:
+        # for coverage
+        repr(fixtures.worker)
+
 
 @uf.params(backend=("celery", "rq", "sync", "thread"))
 @uf.given(worker_fixture, testkit.publisher, logger_error=testkit.patch)
