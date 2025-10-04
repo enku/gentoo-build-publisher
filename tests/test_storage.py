@@ -30,7 +30,7 @@ from gentoo_build_publisher.types import (
     PackageMetadata,
 )
 
-from . import data
+from . import lib
 
 TEST_SETTINGS = Settings(
     STORAGE_PATH=Path("/dev/null"), JENKINS_BASE_URL="https://jenkins.invalid/"
@@ -682,12 +682,12 @@ class MakePackageFromLinesTestCase(TestCase):
     """Tests for the make_package_from_lines method"""
 
     def test(self) -> None:
-        result = make_package_from_lines(data.PACKAGE_LINES)
+        result = make_package_from_lines(lib.PACKAGE_LINES)
 
         self.assertIsInstance(result, Package)
 
     def test_when_line_missing(self) -> None:
-        lines = [line for line in data.PACKAGE_LINES if not line.startswith("CPV:")]
+        lines = [line for line in lib.PACKAGE_LINES if not line.startswith("CPV:")]
 
         with self.assertRaises(ValueError) as context:
             make_package_from_lines(lines)
