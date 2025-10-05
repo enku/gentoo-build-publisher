@@ -6,7 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 from unittest import TestCase, mock
 
 import requests
@@ -184,54 +184,30 @@ class JenkinsTestCase(TestCase):
 
 
 class ProjectPathExistsTestCase(TestCase):
-    def test_should_return_false_when_does_not_exist(self) -> None:
-        def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
-            status_code = 404
-            if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
-                status_code = 200
-
-            response = requests.Response()
-            response.status_code = status_code
-
-            return response
-
-        jenkins = Jenkins(JENKINS_CONFIG)
-        project_path = ProjectPath("Gentoo/repos/marduk")
-
-        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
-            self.assertEqual(jenkins.project_exists(project_path), True)
+    url = "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk"
 
     def test_should_return_true_when_exists(self) -> None:
-        def mock_head(url: str, *args: Any, **kwargs: Any) -> requests.Response:
-            status_code = 200
-            if url == "https://jenkins.invalid/job/Gentoo/job/repos/job/marduk":
-                status_code = 404
-
-            response = requests.Response()
-            response.status_code = status_code
-
-            return response
-
         jenkins = Jenkins(JENKINS_CONFIG)
-
         project_path = ProjectPath("Gentoo/repos/marduk")
+        head = make_response(self.url)
 
-        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
+        with mock.patch.object(jenkins.session, "head", side_effect=head):
+            self.assertEqual(jenkins.project_exists(project_path), True)
+
+    def test_should_return_false_when_does_not_exist(self) -> None:
+        jenkins = Jenkins(JENKINS_CONFIG)
+        project_path = ProjectPath("Gentoo/repos/marduk")
+        head = make_response(self.url, 404, "Not Found")
+
+        with mock.patch.object(jenkins.session, "head", side_effect=head):
             self.assertEqual(jenkins.project_exists(project_path), False)
 
     def test_should_return_true_when_error_response(self) -> None:
-        def mock_head(_url: str, *args: Any, **kwargs: Any) -> requests.Response:
-            response = requests.Response()
-            response.status_code = 401
-            response.reason = "Unauthorized"
-
-            return response
-
         jenkins = Jenkins(JENKINS_CONFIG)
-
         project_path = ProjectPath("Gentoo/repos/marduk")
+        head = make_response(self.url, 401, "Unauthorized")
 
-        with mock.patch.object(jenkins.session, "head", side_effect=mock_head):
+        with mock.patch.object(jenkins.session, "head", side_effect=head):
             with self.assertRaises(requests.exceptions.HTTPError):
                 jenkins.project_exists(project_path)
 
@@ -684,3 +660,45 @@ class URLBuilderTestCase(TestCase):
     def test_getattr_raises_attribute_error(self) -> None:
         with self.assertRaises(AttributeError):
             self.builder.bogus  # pylint: disable=pointless-statement
+
+
+class MakeResponseTests(TestCase):
+    """Test make_response"""
+
+    def test(self) -> None:
+        request = make_response("https://test.invalid/", 666, "Evil")
+        response = request("https://test.invalid/")
+
+        self.assertEqual(response.status_code, 666)
+        self.assertEqual(response.reason, "Evil")
+
+    def test_unexpected_url(self) -> None:
+        request = make_response("https://test.invalid/", 666, "Evil")
+        response = request("https://test.invalid/bogus")
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.reason, "Internal Server Error")
+
+
+# Once again, Callable fails me
+class MockRequest(Protocol):
+    # pylint: disable=too-few-public-methods
+    @staticmethod
+    def __call__(url: str, *args: Any, **kwargs: Any) -> requests.Response: ...
+
+
+def make_response(url: str, status_code: int = 200, reason: str = "OK") -> MockRequest:
+    expected_url = url
+
+    def mock_request(url: str, *args: Any, **kwargs: Any) -> requests.Response:
+        response = requests.Response()
+        if url == expected_url:
+            response.status_code = status_code
+            response.reason = reason
+        else:
+            response.status_code = 500
+            response.reason = "Internal Server Error"
+
+        return response
+
+    return mock_request
