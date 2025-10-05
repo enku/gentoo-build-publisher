@@ -4,9 +4,13 @@ As opposed to a particular build
 """
 
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build
+
+if TYPE_CHECKING:
+    from gentoo_build_publisher.build_publisher import BuildPublisher
 
 
 class MachineInfo:
@@ -21,12 +25,7 @@ class MachineInfo:
     """
 
     def __init__(self, machine: str) -> None:
-        # Avoid circular import
-        # pylint: disable=cyclic-import,import-outside-toplevel
-        from gentoo_build_publisher import publisher
-
         self.machine = machine
-        self.publisher = publisher
 
     @cached_property
     def build_count(self) -> int:
@@ -55,3 +54,12 @@ class MachineInfo:
         """All the machines build tags"""
         publisher = self.publisher
         return sorted(tag for build in self.builds for tag in publisher.tags(build))
+
+    @cached_property
+    def publisher(self) -> "BuildPublisher":
+        """Return the BuildPublisher"""
+        # Avoid circular import
+        # pylint: disable=cyclic-import,import-outside-toplevel
+        from gentoo_build_publisher import publisher
+
+        return publisher
