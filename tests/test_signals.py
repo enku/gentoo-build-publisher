@@ -86,6 +86,15 @@ class PyDispatcherAdapterTests(TestCase):
 
         self.assertTrue(called)
 
+    def test_emit_unbound(self) -> None:
+        d = signals.PublisherDispatcher()
+
+        with self.assertRaises(signals.DoesNotExistError) as context:
+            d.emit("test_event", this="that", the="other")
+
+        exception = context.exception
+        self.assertEqual(str(exception), 'Event "test_event" not registered')
+
     def test_same_handler_multiple_events(self) -> None:
         handled_event1 = False
         handled_event2 = False
