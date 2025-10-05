@@ -23,8 +23,11 @@ class DispatcherTests(TestCase):
 
 class BindNotExistsTest(TestCase):
     def test(self) -> None:
-        with self.assertRaises(signals.DoesNotExistError):
+        with self.assertRaises(signals.DoesNotExistError) as context:
             dispatcher.bind(bogus=lambda: None)
+
+        exception = context.exception
+        self.assertEqual(str(exception), 'Event "bogus" not registered')
 
 
 class RegisterTests(TestCase):
@@ -34,8 +37,11 @@ class RegisterTests(TestCase):
 
         # There doesn't appear to be an "unregister"
 
-        with self.assertRaises(signals.EventExistsError):
+        with self.assertRaises(signals.EventExistsError) as context:
             dispatcher.register_event("test_event")
+
+        exception = context.exception
+        self.assertEqual(str(exception), '"test_event" already exists')
 
 
 class PyDispatcherAdapterTests(TestCase):
@@ -163,8 +169,11 @@ class PyDispatcherAdapterTests(TestCase):
 
         def handler(**kwargs: Any) -> None: ...
 
-        with self.assertRaises(signals.NotBoundError):
+        with self.assertRaises(signals.NotBoundError) as context:
             d.unbind(handler)
+
+        exception = context.exception
+        self.assertEqual(str(exception), '"handler" is not bound to an event')
 
     def test_get_dispatcher_event(self) -> None:
         d = signals.PublisherDispatcher()
