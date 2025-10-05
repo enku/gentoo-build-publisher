@@ -312,7 +312,7 @@ class ViewFinderTests(TestCase):
     def test_register_views(self, fixtures: Fixtures) -> None:
         @view("/foo", name="foo")
         def foo_view(request: HttpRequest) -> HttpResponse:
-            return HttpResponse("")
+            return HttpResponse("")  # pragma: no cover
 
         self.assertEqual(len(ViewFinder.pattern_views), 1)
         urlpattern = ViewFinder.pattern_views[0]
@@ -322,7 +322,7 @@ class ViewFinderTests(TestCase):
 
         @view("/bar", name="bar")
         def bar_view(request: HttpRequest) -> HttpResponse:
-            return HttpResponse("")
+            return HttpResponse("")  # pragma: no cover
 
         self.assertEqual(len(ViewFinder.pattern_views), 2)
         urlpattern = ViewFinder.pattern_views[1]
