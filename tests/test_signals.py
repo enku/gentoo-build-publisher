@@ -4,8 +4,9 @@
 from typing import Any
 from unittest import TestCase
 
-from unittest_fixtures import Fixtures, params
+from unittest_fixtures import Fixtures, given, params, where
 
+from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import signals
 from gentoo_build_publisher.types import Build
 
@@ -197,3 +198,25 @@ class PyDispatcherAdapterTests(TestCase):
 
         with self.assertRaises(signals.DoesNotExistError):
             d.get_dispatcher_event("bogus")
+
+
+@params(event=["postdelete", "postpull", "published", "tagged", "untagged"])
+@params(
+    kwargs=[
+        (("build", BUILD),),
+        (("build", BUILD), ("gbp_metadata", None), ("packages", ())),
+        (("build", BUILD),),
+        (("build", BUILD), ("tag", "foo")),
+        (("build", BUILD), ("tag", "foo")),
+    ]
+)
+@given(testkit.build, task=testkit.patch)
+@where(
+    task__target="gentoo_build_publisher.django.gentoo_build_publisher.signals.update_stats_cache"
+)
+class DjangoSignalsTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        dispatcher.emit(fixtures.event, **dict(fixtures.kwargs))
+
+        task = fixtures.task
+        task.assert_called()
