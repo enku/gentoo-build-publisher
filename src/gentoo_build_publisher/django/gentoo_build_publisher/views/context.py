@@ -9,12 +9,12 @@ from django.utils import timezone
 
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.stats import StatsCollector
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 
 from .utils import (
     Gradient,
-    StatsCollector,
     color_range_from_settings,
     days_strings,
     get_chart_days,
@@ -92,7 +92,7 @@ class ViewInputContext:
 
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    sc = StatsCollector(input_context.cache)
+    sc = StatsCollector()
     chart_days = get_chart_days(input_context.now, input_context.days)
 
     recent_packages: dict[str, set[str]] = {}
@@ -157,7 +157,7 @@ class MachineInputContext(ViewInputContext):
 
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    sc = StatsCollector(input_context.cache)
+    sc = StatsCollector()
     now = input_context.now
     chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine
