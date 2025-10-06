@@ -11,9 +11,10 @@ def update_stats_cache() -> None:
     # pylint: disable=import-outside-toplevel
     from django.core.cache import cache
 
+    from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
+        STATS_KEY,
+    )
     from gentoo_build_publisher.stats import Stats
-
-    from .views.context import STATS_KEY
 
     stats = Stats.collect()
     cache.set(STATS_KEY, stats, timeout=None)
