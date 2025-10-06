@@ -11,6 +11,7 @@ from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
 from gentoo_build_publisher import plugins, publisher
+from gentoo_build_publisher.graphql import scalars
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Content, EbuildRepo, MachineJob, Repo
@@ -19,6 +20,9 @@ from gentoo_build_publisher.worker import tasks
 
 SEARCH_PARAMS = {"enum": ("NOTES", "LOGS"), "field": ("note", "logs")}
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
+TIMESTAMP = dt.datetime(
+    2025, 7, 14, 15, 45, 30, tzinfo=dt.timezone(dt.timedelta(hours=5, minutes=30))
+)
 
 
 def assert_data(
@@ -1290,3 +1294,17 @@ class PluginsTestCase(TestCase):
             for p in installed_plugins
         ]
         assert_data(self, result, {"plugins": expected})
+
+
+class DateTimeScalarTests(TestCase):
+    def test_from_string(self) -> None:
+        value = "2025-07-14T15:45:30+05:30"
+
+        parsed = scalars.parse_datetime_value(value)
+
+        self.assertEqual(parsed, TIMESTAMP)
+
+    def test_to_string(self) -> None:
+        serialized = scalars.serialize_datetime(TIMESTAMP)
+
+        self.assertEqual(serialized, "2025-07-14T15:45:30+05:30")
