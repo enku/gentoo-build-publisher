@@ -138,7 +138,7 @@ def _(request: HttpRequest, machine: str) -> ViewContext:
     return {"machine": machine, "uri": uri}
 
 
-@view("graphql")
+@view("graphql", name="graphql")
 @csrf_exempt
 def _(request: HttpRequest) -> HttpResponse:
     environ = utils.request_to_wsgi_environ(request)
