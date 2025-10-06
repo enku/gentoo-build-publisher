@@ -2,14 +2,14 @@
 
 import datetime as dt
 from dataclasses import dataclass, field
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from django.core.cache import cache as django_cache
 from django.utils import timezone
 
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.stats import StatsCollector
+from gentoo_build_publisher.stats import Stats
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 
@@ -22,6 +22,7 @@ from .utils import (
 )
 
 MAX_DISPLAYED_PKGS = 12
+STATS_KEY = "gbp-stats"  # Cache key for storing/retrieving Stats
 
 
 class DashboardContext(TypedDict):
@@ -92,58 +93,62 @@ class ViewInputContext:
 
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    sc = StatsCollector()
+    stats = get_stats(input_context.cache)
     chart_days = get_chart_days(input_context.now, input_context.days)
 
     recent_packages: dict[str, set[str]] = {}
-    for machine in sc.machines:
-        if record := sc.latest_build(machine):
-            for package in sc.build_packages(record):
+    for machine in stats.machines:
+        if record := stats.latest_build[machine]:
+            for package in stats.build_packages[record]:
                 if len(recent_packages) < MAX_DISPLAYED_PKGS:
                     recent_packages.setdefault(package, set()).add(machine)
 
     return {
         "chart_days": days_strings(input_context.now, input_context.days),
-        "build_count": sum(sc.machine_info(m).build_count for m in sc.machines),
+        "build_count": sum(stats.machine_info[m].build_count for m in stats.machines),
         "build_packages": {
-            latest.id: sc.build_packages(latest)
-            for machine in sc.machines
-            if (latest := sc.latest_build(machine))
+            latest.id: stats.build_packages[latest]
+            for machine in stats.machines
+            if (latest := stats.latest_build[machine])
         },
         "builds_over_time": [
-            [sc.builds_by_day(machine).get(day, 0) for day in chart_days]
-            for machine in sc.machines
+            [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
+            for machine in stats.machines
         ],
         "built_recently": [
             latest
-            for machine in sc.machines
-            if (latest := sc.latest_build(machine))
+            for machine in stats.machines
+            if (latest := stats.latest_build[machine])
             and latest.completed
             and lapsed(latest.completed, input_context.now) < SECONDS_PER_DAY
         ],
         "latest_builds": [
-            build for machine in sc.machines if (build := sc.latest_build(machine))
+            build
+            for machine in stats.machines
+            if (build := stats.latest_build[machine])
         ],
         "latest_published": set(
-            lp for machine in sc.machines if (lp := sc.latest_published(machine))
+            lp for machine in stats.machines if (lp := stats.latest_published[machine])
         ),
         "gradient_colors": gradient_colors(
-            *color_range_from_settings(), len(sc.machines)
+            *color_range_from_settings(), len(stats.machines)
         ),
         "builds_per_machine": [
-            sc.machine_info(machine).build_count for machine in sc.machines
+            stats.machine_info[machine].build_count for machine in stats.machines
         ],
-        "machines": sc.machines,
+        "machines": stats.machines,
         "now": input_context.now,
-        "package_count": sum(sc.package_count(machine) for machine in sc.machines),
+        "package_count": sum(
+            stats.package_counts[machine] for machine in stats.machines
+        ),
         "recent_packages": recent_packages,
         "total_package_size_per_machine": {
-            machine: sc.total_package_size(machine) for machine in sc.machines
+            machine: stats.total_package_size[machine] for machine in stats.machines
         },
         "unpublished_builds_count": sum(
             not publisher.published(build)
-            for machine in sc.machines
-            if (build := sc.latest_build(machine))
+            for machine in stats.machines
+            if (build := stats.latest_build[machine])
         ),
     }
 
@@ -157,13 +162,13 @@ class MachineInputContext(ViewInputContext):
 
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    sc = StatsCollector()
+    stats = get_stats(input_context.cache)
     now = input_context.now
     chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine
-    machine_info = sc.machine_info(machine)
-    latest_build = sc.latest_build(machine)
-    storage = sc.total_package_size(machine)
+    machine_info = stats.machine_info[machine]
+    latest_build = stats.latest_build[machine]
+    storage = stats.total_package_size[machine]
 
     assert latest_build
 
@@ -173,15 +178,15 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
         "build_count": machine_info.build_count,
         "builds": machine_info.builds,
         "builds_over_time": [
-            [sc.builds_by_day(machine).get(day, 0) for day in chart_days]
+            [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
         ],
         "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
         "latest_build": latest_build,
         "machine": machine,
         "machines": [machine],
-        "packages_built_today": sc.packages_by_day(machine).get(now.date(), []),
+        "packages_built_today": stats.packages_by_day[machine].get(now.date(), []),
         "published_build": machine_info.published_build,
-        "recent_packages": sc.recent_packages(machine),
+        "recent_packages": stats.recent_packages[machine],
         "storage": storage,
     }
 
@@ -215,3 +220,17 @@ def create_about_context() -> AboutContext:
         "gradient_colors": gradient_colors(*color_range_from_settings(), 2),
         "plugins": plugins.get_plugins(),
     }
+
+
+def get_stats(cache: CacheProtocol) -> Stats:
+    """Get the GBP Stats
+
+    Check the cache and if the value is cached return the cached value.
+    Otherwise collect the Stats and store it in the cache.
+    """
+    if stats := cache.get(STATS_KEY, None):
+        return cast(Stats, stats)
+
+    stats = Stats.collect()
+    cache.set(STATS_KEY, stats)
+    return stats
