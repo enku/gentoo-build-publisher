@@ -10,7 +10,6 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.stats import StatsCollector
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
@@ -22,6 +21,7 @@ from .lib import create_builds_and_packages
 @given(stats_collector=lambda _: StatsCollector())
 class StatsCollectorTests(TestCase):
     def test_init(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(BuildFactory(machine="lighthouse"))
         publisher.pull(BuildFactory(machine="babette"))
         sc = fixtures.stats_collector
@@ -29,7 +29,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.machines, ["babette", "lighthouse"])
 
     def test_package_count(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         for build in [
             *create_builds_and_packages("babette", 5, 2, builder),
             *create_builds_and_packages("lighthouse", 3, 4, builder),
@@ -45,7 +46,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.package_count("lighthouse"), 36)
 
     def test_build_packages(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         [build] = create_builds_and_packages("lighthouse", 1, 4, builder)
         publisher.pull(build)
 
@@ -60,7 +62,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.build_packages(build), expected)
 
     def test_latest_published(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         build = None
         for build in [
             *create_builds_and_packages("babette", 5, 2, builder),
@@ -79,7 +82,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.latest_published("lighthouse"), None)
 
     def test_recent_packages(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
 
@@ -94,7 +98,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(recent_packages, pkgs_sorted)
 
     def test_total_package_size(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
 
@@ -104,7 +109,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(sc.total_package_size("bogus"), 0)
 
     def test_latest_build(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         build = None
         for build in create_builds_and_packages("babette", 3, 4, builder):
             publisher.pull(build)
@@ -118,6 +124,7 @@ class StatsCollectorTests(TestCase):
     def test_built_recently(self, fixtures: Fixtures) -> None:
         day = dt.timedelta(days=1)
         now = timezone.localtime()
+        publisher = fixtures.publisher
         b1 = publisher.save(BuildRecordFactory(machine="babette"))
         b2 = publisher.save(BuildRecordFactory(machine="babette"), built=now - day)
         b3 = publisher.save(BuildRecordFactory(machine="babette"), built=now)
@@ -130,6 +137,7 @@ class StatsCollectorTests(TestCase):
         self.assertTrue(sc.built_recently(b3, now))
 
     def test_builds_by_day(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         for hour in range(2):
             publisher.save(
                 BuildRecordFactory(machine="babette"),
@@ -158,7 +166,8 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(bbd, expected)
 
     def test_packages_by_day(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         d1 = dt.datetime(2021, 4, 13, 9, 5)
         builder.timer = int(d1.timestamp())
         [build] = create_builds_and_packages("babette", 1, 3, builder)
