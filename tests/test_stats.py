@@ -10,7 +10,7 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gentoo_build_publisher.stats import StatsCollector
+from gentoo_build_publisher.stats import Stats, StatsCollector
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
 
@@ -185,3 +185,24 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(list(pbd.keys()), [d2.date(), d1.date()])
 
         self.assertEqual(len(pbd[d2.date()]), 6)
+
+
+@given(testkit.publisher)
+class StatsTests(TestCase):
+    # pylint: disable=unused-argument
+    def test_collect(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
+        for build in [
+            *create_builds_and_packages("babette", 5, 2, builder),
+            *create_builds_and_packages("lighthouse", 3, 4, builder),
+        ]:
+            publisher.pull(build)
+
+        stats = Stats.collect()
+
+        self.assertEqual(stats.machines, ["babette", "lighthouse"])
+        self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
+        self.assertEqual(
+            stats.total_package_size, {"babette": 22554, "lighthouse": 15941}
+        )

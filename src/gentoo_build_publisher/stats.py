@@ -1,5 +1,7 @@
 # pylint: disable=missing-docstring
 import datetime as dt
+from dataclasses import dataclass
+from typing import Self
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
@@ -8,6 +10,58 @@ from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
 
 type MachineName = str
+
+
+@dataclass(kw_only=True, frozen=True)
+class Stats:
+    # pylint: disable=too-many-instance-attributes
+
+    machines: list[MachineName]
+    machine_info: dict[MachineName, MachineInfo]
+    package_counts: dict[MachineName, int]
+    build_packages: dict[BuildRecord, list[str]]
+    latest_build: dict[MachineName, BuildRecord | None]
+    latest_published: dict[MachineName, BuildRecord | None]
+    recent_packages: dict[MachineName, list[Package]]
+    total_package_size: dict[MachineName, int]
+    builds_by_day: dict[MachineName, dict[dt.date, int]]
+    packages_by_day: dict[MachineName, dict[dt.date, list[Package]]]
+
+    @classmethod
+    def collect(cls) -> Self:
+        sc = StatsCollector()
+        machines = sc.machines
+        machine_info = {machine: sc.machine_info(machine) for machine in machines}
+        package_counts = {machine: sc.package_count(machine) for machine in machines}
+        total_package_size = {
+            machine: sc.total_package_size(machine) for machine in machines
+        }
+        recent_packages = {machine: sc.recent_packages(machine) for machine in machines}
+
+        build_packages = {
+            latest: sc.build_packages(latest)
+            for machine in machines
+            if (latest := sc.latest_build(machine))
+        }
+        packages_by_day = {machine: sc.packages_by_day(machine) for machine in machines}
+        latest_published = {
+            machine: sc.latest_published(machine) for machine in machines
+        }
+        latest_build = {machine: sc.latest_build(machine) for machine in machines}
+        builds_by_day = {machine: sc.builds_by_day(machine) for machine in machines}
+
+        return cls(
+            machines=machines,
+            machine_info=machine_info,
+            package_counts=package_counts,
+            build_packages=build_packages,
+            total_package_size=total_package_size,
+            recent_packages=recent_packages,
+            packages_by_day=packages_by_day,
+            latest_published=latest_published,
+            latest_build=latest_build,
+            builds_by_day=builds_by_day,
+        )
 
 
 class StatsCollector:
