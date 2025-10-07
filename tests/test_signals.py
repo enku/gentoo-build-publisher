@@ -4,10 +4,12 @@
 from typing import Any
 from unittest import TestCase
 
-from unittest_fixtures import Fixtures, given, params, where
+from django.core.cache import cache as django_cache
+from unittest_fixtures import Fixtures, given, params
 
 from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import signals
+from gentoo_build_publisher.django.gentoo_build_publisher.views.context import STATS_KEY
 from gentoo_build_publisher.types import Build
 
 BUILD = Build(machine="babette", build_id="test")
@@ -200,6 +202,7 @@ class PyDispatcherAdapterTests(TestCase):
             d.get_dispatcher_event("bogus")
 
 
+@given(clear_cache=lambda _: django_cache.clear())
 @params(event=["postdelete", "postpull", "published", "tagged", "untagged"])
 @params(
     kwargs=[
@@ -210,13 +213,13 @@ class PyDispatcherAdapterTests(TestCase):
         (("build", BUILD), ("tag", "foo")),
     ]
 )
-@given(testkit.build, task=testkit.patch)
-@where(
-    task__target="gentoo_build_publisher.django.gentoo_build_publisher.signals.update_stats_cache"
-)
+@given(testkit.build)
 class DjangoSignalsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
+        stats = django_cache.get(STATS_KEY)
+        self.assertIsNone(stats)
+
         dispatcher.emit(fixtures.event, **dict(fixtures.kwargs))
 
-        task = fixtures.task
-        task.assert_called()
+        stats = django_cache.get(STATS_KEY)
+        self.assertIsNotNone(stats)
