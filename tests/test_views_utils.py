@@ -7,44 +7,17 @@ from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
-from gbp_testkit.factories import BuildFactory
-from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     ViewFinder,
     experimental,
     get_build_record_or_404,
-    get_metadata,
     get_query_value_from_request,
     get_url_for_package,
     view,
 )
 
 from .lib import create_builds_and_packages
-
-
-@given(testkit.publisher)
-class GetMetadataTestCase(TestCase):
-    """This is just cached Storage.get_metadata()"""
-
-    def test(self, fixtures: Fixtures) -> None:
-        build = BuildFactory()
-        cache = QuickCache()
-        publisher.pull(build)
-
-        metadata = get_metadata(build, cache)
-
-        self.assertEqual(metadata, publisher.storage.get_metadata(build))
-        self.assertEqual(cache.cache, {f"metadata-{build}": metadata})
-
-    def test_when_cached_return_cache(self, fixtures: Fixtures) -> None:
-        build = BuildFactory()
-        cache = QuickCache()
-        cache.set(f"metadata-{build}", [1, 2, 3])  # not real metadata
-
-        metadata = get_metadata(build, cache)
-
-        self.assertEqual(metadata, [1, 2, 3])
 
 
 @given(request=testkit.patch)

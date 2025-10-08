@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 from functools import wraps
-from typing import Any, Callable, Mapping, cast
+from typing import Any, Callable, Mapping
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
@@ -14,13 +14,7 @@ from django.urls import URLPattern, path
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord, RecordNotFound
-from gentoo_build_publisher.types import (
-    TAG_SYM,
-    Build,
-    CacheProtocol,
-    GBPMetadata,
-    Package,
-)
+from gentoo_build_publisher.types import TAG_SYM, Build, Package
 from gentoo_build_publisher.utils import Color
 
 type BuildID = str  # pylint: disable=invalid-name
@@ -100,23 +94,6 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
     """Return list of datetimes from start as strings"""
     fmt = "%A" if days <= 7 else "%x"
     return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
-
-
-def get_metadata(build: Build, cache: CacheProtocol) -> GBPMetadata:
-    """Return the GBPMetadata for a package.
-
-    This call may be cashed for performance.
-    """
-    cache_key = f"metadata-{build}"
-
-    if (cached := cache.get(cache_key, _NOT_FOUND)) is _NOT_FOUND:
-        metadata = publisher.build_metadata(build)
-
-        cache.set(cache_key, metadata)
-
-        return metadata
-
-    return cast(GBPMetadata, cached)
 
 
 def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
