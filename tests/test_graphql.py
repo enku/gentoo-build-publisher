@@ -472,6 +472,7 @@ class MachinesQueryTestCase(TestCase):
             builds {
               id
             }
+            packageCount
           }
         }
         """
@@ -485,6 +486,7 @@ class MachinesQueryTestCase(TestCase):
                 "builds": [{"id": i.id} for i in reversed(babette_builds)],
                 "latestBuild": {"id": build.id},
                 "publishedBuild": {"id": build.id},
+                "packageCount": 12,
             },
             {
                 "machine": "lighthouse",
@@ -492,6 +494,7 @@ class MachinesQueryTestCase(TestCase):
                 "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
                 "latestBuild": {"id": lighthouse_builds[-1].id},
                 "publishedBuild": None,
+                "packageCount": 12,
             },
         ]
         assert_data(self, result, {"machines": expected})
