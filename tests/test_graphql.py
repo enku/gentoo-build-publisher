@@ -20,6 +20,7 @@ from gentoo_build_publisher.worker import tasks
 
 SEARCH_PARAMS = {"enum": ("NOTES", "LOGS"), "field": ("note", "logs")}
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
+DATE = dt.date(2025, 10, 8)
 TIMESTAMP = dt.datetime(
     2025, 7, 14, 15, 45, 30, tzinfo=dt.timezone(dt.timedelta(hours=5, minutes=30))
 )
@@ -1296,6 +1297,20 @@ class PluginsTestCase(TestCase):
             for p in installed_plugins
         ]
         assert_data(self, result, {"plugins": expected})
+
+
+class DateScalarTests(TestCase):
+    def test_from_string(self) -> None:
+        value = "2025-10-08"
+
+        parsed = scalars.parse_date_value(value)
+
+        self.assertEqual(parsed, DATE)
+
+    def test_to_string(self) -> None:
+        serialized = scalars.serialize_date(DATE)
+
+        self.assertEqual(serialized, "2025-10-08")
 
 
 class DateTimeScalarTests(TestCase):

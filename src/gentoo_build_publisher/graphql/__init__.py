@@ -10,7 +10,7 @@ from .build import BuildType
 from .machine_summary import MachineSummary
 from .mutations import Mutation
 from .queries import Query
-from .scalars import datetime_scalar
+from .scalars import date_scalar, datetime_scalar
 from .utils import load_schema
 
 ChangeStateEnum = ariadne.EnumType("ChangeStateEnum", ChangeState)
@@ -24,6 +24,7 @@ resolvers = [
     MachineSummary,
     Mutation,
     Query,
+    date_scalar,
     datetime_scalar,
 ]
 
