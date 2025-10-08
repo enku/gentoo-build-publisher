@@ -6,12 +6,12 @@ from functools import partial
 from unittest import TestCase as BaseTestCase
 
 from django import urls
-from django.core.cache import cache as django_cache
 from django.http import HttpResponse
 from unittest_fixtures import Fixtures, fixture, given, where
 
 import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import string
 
@@ -159,7 +159,7 @@ class BinReposDotConfTestCase(TestCase):
 
 
 @given(testkit.publisher, testkit.client, testkit.builds, artifacts, lighthouse)
-@given(clear_cache=lambda _: django_cache.clear())
+@given(clear_cache=lambda _: site_cache.clear())
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 

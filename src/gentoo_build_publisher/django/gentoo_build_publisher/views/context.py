@@ -4,10 +4,10 @@ import datetime as dt
 from dataclasses import dataclass, field
 from typing import TypedDict, cast
 
-from django.core.cache import cache as django_cache
 from django.utils import timezone
 
 from gentoo_build_publisher import plugins, publisher
+from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.stats import Stats
 from gentoo_build_publisher.types import Build, CacheProtocol, Package
@@ -87,7 +87,7 @@ class ViewInputContext:
     """Input context to generate output context"""
 
     days: int
-    cache: CacheProtocol = field(default_factory=lambda: django_cache)
+    cache: CacheProtocol = field(default_factory=lambda: site_cache)
     now: dt.datetime = field(default_factory=timezone.localtime)
 
 
