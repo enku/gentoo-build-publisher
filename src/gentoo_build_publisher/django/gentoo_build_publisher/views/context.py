@@ -7,6 +7,7 @@ from typing import TypedDict, cast
 from django.utils import timezone
 
 from gentoo_build_publisher import plugins, publisher
+from gentoo_build_publisher.cache import STATS_KEY
 from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.stats import Stats
@@ -22,7 +23,6 @@ from .utils import (
 )
 
 MAX_DISPLAYED_PKGS = 12
-STATS_KEY = "gbp-stats"  # Cache key for storing/retrieving Stats
 
 
 class DashboardContext(TypedDict):

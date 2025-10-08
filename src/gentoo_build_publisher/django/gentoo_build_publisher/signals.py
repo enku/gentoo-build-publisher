@@ -9,10 +9,7 @@ from gentoo_build_publisher.signals import dispatcher
 def update_stats_cache() -> None:
     """Update the stats cache"""
     # pylint: disable=import-outside-toplevel
-    from gentoo_build_publisher.cache import cache
-    from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
-        STATS_KEY,
-    )
+    from gentoo_build_publisher.cache import STATS_KEY, cache
     from gentoo_build_publisher.stats import Stats
 
     stats = Stats.collect()

@@ -8,6 +8,8 @@ from typing import Any
 
 from django.core.cache import cache as django_cache
 
+STATS_KEY = "gbp-stats"  # Cache key for storing/retrieving Stats
+
 
 class GBPSiteCache:
     """The site-wide cache (class) for Gentoo Build Publisher"""

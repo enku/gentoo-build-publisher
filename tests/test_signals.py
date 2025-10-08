@@ -8,8 +8,7 @@ from unittest_fixtures import Fixtures, given, params
 
 from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import signals
-from gentoo_build_publisher.cache import cache
-from gentoo_build_publisher.django.gentoo_build_publisher.views.context import STATS_KEY
+from gentoo_build_publisher.cache import STATS_KEY, cache
 from gentoo_build_publisher.types import Build
 
 BUILD = Build(machine="babette", build_id="test")
