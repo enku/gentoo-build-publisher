@@ -1,12 +1,14 @@
 # pylint: disable=missing-docstring
 import datetime as dt
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self, cast
 
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.cache import STATS_KEY
+from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
-from gentoo_build_publisher.types import Build, Package
+from gentoo_build_publisher.types import Build, CacheProtocol, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed, localtime
 
 type MachineName = str
@@ -62,6 +64,21 @@ class Stats:
             latest_build=latest_build,
             builds_by_day=builds_by_day,
         )
+
+    @classmethod
+    def with_cache(
+        cls, cache: CacheProtocol = site_cache, key: str = STATS_KEY, **kwargs: Any
+    ) -> Self:
+        """Get or create Stats from the given cache
+
+        If the item is in the given cache with the given key, return it.
+        Otherwise collect the stats and cache it. Then return it.
+        """
+        if (stats := cache.get(key)) is None:
+            stats = cls.collect()
+            cache.set(key, stats, **kwargs)
+
+        return cast(Self, stats)
 
 
 class StatsCollector:

@@ -10,6 +10,8 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
+from gbp_testkit.helpers import QuickCache
+from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.stats import Stats, StatsCollector
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
@@ -198,6 +200,7 @@ class StatsTests(TestCase):
             *create_builds_and_packages("lighthouse", 3, 4, builder),
         ]:
             publisher.pull(build)
+        site_cache.clear()
 
         stats = Stats.collect()
 
@@ -206,3 +209,31 @@ class StatsTests(TestCase):
         self.assertEqual(
             stats.total_package_size, {"babette": 22554, "lighthouse": 15941}
         )
+
+    def test_with_cache_creates_cache_entry(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
+        for build in [
+            *create_builds_and_packages("babette", 5, 2, builder),
+            *create_builds_and_packages("lighthouse", 3, 4, builder),
+        ]:
+            publisher.pull(build)
+            # because of signals this should populate the cache
+
+        cache = QuickCache()
+        stats = Stats.with_cache(cache, "test")
+
+        self.assertEqual(stats.machines, ["babette", "lighthouse"])
+        self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
+        self.assertEqual(
+            stats.total_package_size, {"babette": 22554, "lighthouse": 15941}
+        )
+
+    def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:
+        cache = QuickCache()
+        stats = Stats.collect()
+        cache.set("test", stats)
+
+        with_cache = Stats.with_cache(cache, "test")
+
+        self.assertIs(stats, with_cache)

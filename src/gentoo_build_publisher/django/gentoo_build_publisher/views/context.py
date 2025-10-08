@@ -2,12 +2,11 @@
 
 import datetime as dt
 from dataclasses import dataclass, field
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from django.utils import timezone
 
 from gentoo_build_publisher import plugins, publisher
-from gentoo_build_publisher.cache import STATS_KEY
 from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.stats import Stats
@@ -93,7 +92,7 @@ class ViewInputContext:
 
 def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
     """Initialize and return DashboardContext"""
-    stats = get_stats(input_context.cache)
+    stats = Stats.with_cache(cache=input_context.cache)
     chart_days = get_chart_days(input_context.now, input_context.days)
 
     recent_packages: dict[str, set[str]] = {}
@@ -162,7 +161,7 @@ class MachineInputContext(ViewInputContext):
 
 def create_machine_context(input_context: MachineInputContext) -> MachineContext:
     """Return context for the machine view"""
-    stats = get_stats(input_context.cache)
+    stats = Stats.with_cache(cache=input_context.cache)
     now = input_context.now
     chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine
@@ -220,17 +219,3 @@ def create_about_context() -> AboutContext:
         "gradient_colors": gradient_colors(*color_range_from_settings(), 2),
         "plugins": plugins.get_plugins(),
     }
-
-
-def get_stats(cache: CacheProtocol) -> Stats:
-    """Get the GBP Stats
-
-    Check the cache and if the value is cached return the cached value.
-    Otherwise collect the Stats and store it in the cache.
-    """
-    if stats := cache.get(STATS_KEY, None):
-        return cast(Stats, stats)
-
-    stats = Stats.collect()
-    cache.set(STATS_KEY, stats)
-    return stats
