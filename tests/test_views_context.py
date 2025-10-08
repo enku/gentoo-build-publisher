@@ -16,7 +16,6 @@ from gbp_testkit.factories import (
     BuildRecordFactory,
     package_factory,
 )
-from gbp_testkit.helpers import QuickCache
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
     BuildInputContext,
@@ -40,11 +39,7 @@ class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
 
     def input_context(self, **kwargs: Any) -> ViewInputContext:
-        defaults: dict[str, Any] = {
-            "cache": QuickCache(),
-            "days": 2,
-            "now": timezone.localtime(),
-        }
+        defaults: dict[str, Any] = {"days": 2, "now": timezone.localtime()}
         defaults |= kwargs
         return ViewInputContext(**defaults)
 
@@ -135,11 +130,7 @@ def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
 @given(testkit.publisher, pf_fixture)
 class CreateMachineContextTests(TestCase):
     def input_context(self, **kwargs: Any) -> MachineInputContext:
-        defaults: dict[str, Any] = {
-            "cache": QuickCache(),
-            "days": 2,
-            "now": timezone.localtime(),
-        }
+        defaults: dict[str, Any] = {"days": 2, "now": timezone.localtime()}
         defaults |= kwargs
         return MachineInputContext(**defaults)
 
