@@ -375,10 +375,11 @@ class DispatcherTestCase(TestCase):
     def test_pull_single(self, fixtures: Fixtures) -> None:
         new_build = BuildFactory()
         publisher.pull(new_build)
+        record = publisher.record(new_build)
 
-        packages = publisher.storage.get_packages(new_build)
+        packages = publisher.storage.get_packages(record)
         expected = (
-            publisher.record(new_build),
+            record,
             packages,
             publisher.gbp_metadata(publisher.jenkins.get_metadata(new_build), packages),
         )

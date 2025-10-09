@@ -354,6 +354,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=841,
                         build_time=fixtures.timestamp + 10,
+                        build=fixtures.build,
                     ),
                     Package(
                         cpv="net-libs/nghttp2-1.47.0",
@@ -362,6 +363,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=529,
                         build_time=fixtures.timestamp + 20,
+                        build=fixtures.build,
                     ),
                     Package(
                         cpv="sys-libs/glibc-2.34-r9",
@@ -370,6 +372,7 @@ class StorageGetMetadataTestCase(TestCase):
                         build_id=1,
                         size=484,
                         build_time=fixtures.timestamp + 30,
+                        build=fixtures.build,
                     ),
                 ],
             ),
@@ -417,6 +420,7 @@ class StorageSetMetadataTestCase(TestCase):
                     build_id=1,
                     size=666,
                     build_time=0,
+                    build=fixtures.build,
                 )
             ],
         )
@@ -439,6 +443,10 @@ class StorageSetMetadataTestCase(TestCase):
                         "path": "",
                         "repo": "marduk",
                         "size": 666,
+                        "build": {
+                            "build_id": fixtures.build.build_id,
+                            "machine": fixtures.build.machine,
+                        },
                     }
                 ],
                 "size": 666,
@@ -678,24 +686,25 @@ class StorageResolveTagTestCase(TestCase):
         self.assertEqual(target, build)
 
 
+@given(testkit.build)
 class MakePackageFromLinesTestCase(TestCase):
     """Tests for the make_package_from_lines method"""
 
-    def test(self) -> None:
-        result = make_package_from_lines(lib.PACKAGE_LINES)
+    def test(self, fixtures: Fixtures) -> None:
+        result = make_package_from_lines(lib.PACKAGE_LINES, fixtures.build)
 
         self.assertIsInstance(result, Package)
 
-    def test_when_line_missing(self) -> None:
+    def test_when_line_missing(self, fixtures: Fixtures) -> None:
         lines = [line for line in lib.PACKAGE_LINES if not line.startswith("CPV:")]
 
         with self.assertRaises(ValueError) as context:
-            make_package_from_lines(lines)
+            make_package_from_lines(lines, fixtures.build)
 
         self.assertEqual(context.exception.args[0], "Package lines missing CPV value")
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, testkit.build)
 class MakePackagesTestCase(TestCase):
     """Tests for the make_packages method"""
 
@@ -707,6 +716,6 @@ class MakePackagesTestCase(TestCase):
         with index_file.open(encoding="UTF-8") as opened_index_file:
             while opened_index_file.readline().strip():  # skip preamble
                 pass
-            packages = [*make_packages(opened_index_file)]
+            packages = [*make_packages(opened_index_file, fixtures.build)]
 
         self.assertEqual(len(packages), 4)

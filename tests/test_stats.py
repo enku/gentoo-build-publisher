@@ -179,8 +179,11 @@ class StatsCollectorTests(TestCase):
 
         d2 = dt.datetime(2024, 1, 14, 9, 5)
         builder.timer = int(d2.timestamp())
-        for build in create_builds_and_packages("babette", 2, 3, builder):
-            publisher.pull(build)
+
+        [build] = create_builds_and_packages("babette", 1, 3, builder)
+        publisher.pull(build)
+        [build] = create_builds_and_packages("babette", 1, 3, builder)
+        publisher.pull(build)
 
         pbd = fixtures.stats_collector.packages_by_day("babette")
 
