@@ -320,7 +320,7 @@ class Storage:
                         path=built["path"],
                         repo=built["repo"],
                         size=built["size"],
-                        build=build,
+                        build=Build(machine=build.machine, build_id=build.build_id),
                     )
                     for built in json["packages"]["built"]
                 ],
@@ -348,7 +348,7 @@ def make_package_from_lines(lines: Iterable[str], build: Build) -> Package:
             build_id=int(package_info["build_id"]),
             size=int(package_info["size"]),
             build_time=int(package_info["build_time"]),
-            build=build,
+            build=Build(machine=build.machine, build_id=build.build_id),
         )
     except KeyError as error:
         raise ValueError(

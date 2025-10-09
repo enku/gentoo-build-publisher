@@ -1,7 +1,5 @@
 """Common data types for Gentoo Build Publisher"""
 
-from __future__ import annotations
-
 import datetime as dt
 from dataclasses import dataclass, field
 from enum import Enum, unique
@@ -82,11 +80,22 @@ class Package:
     """Unix time that the package was built"""
 
     build: Build
-    """Build that the package belongs to"""
+    """Build that the package belongs to
+
+    This is a Build, not a BuildRecord
+    """
 
     def cpvb(self) -> str:
         """return cpv + build id"""
         return f"{self.cpv}-{self.build_id}"
+
+    def __post_init__(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        from gentoo_build_publisher.records import BuildRecord
+
+        if isinstance(self.build, BuildRecord):
+            errmsg = "build field must not be a BuildRecord instance"
+            raise TypeError(errmsg)
 
 
 class ChangeState(Enum):

@@ -15,6 +15,7 @@ from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
 from gbp_testkit.helpers import MockJenkins
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.jenkins import Jenkins
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import (
     INVALID_TEST_PATH,
@@ -392,6 +393,15 @@ class StorageGetMetadataTestCase(TestCase):
         self.assertEqual(
             exception.args, (f"gbp.json does not exist for {fixtures.build}",)
         )
+
+    def test_packages_built_do_not_contain_build_records(
+        self, fixtures: Fixtures
+    ) -> None:
+        record = publisher.record(fixtures.build)
+        metadata = publisher.storage.get_metadata(record)
+
+        metadata_build = metadata.packages.built[0].build
+        self.assertNotIsInstance(metadata_build, BuildRecord)
 
 
 @fixture(testkit.publisher, testkit.build)
