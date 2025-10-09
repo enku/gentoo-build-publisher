@@ -72,6 +72,7 @@ class BuildQueryTestCase(TestCase):
             logs
             packagesBuilt {
               cpv
+              path
             }
           }
         }
@@ -90,8 +91,14 @@ class BuildQueryTestCase(TestCase):
                 "built": "2022-03-01T06:28:44+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
-                    {"cpv": "acct-group/sgx-0"},
-                    {"cpv": "x11-wm/mutter-41.3"},
+                    {
+                        "cpv": "acct-group/sgx-0",
+                        "path": "acct-group/sgx/sgx-0-1.gpkg.tar",
+                    },
+                    {
+                        "cpv": "x11-wm/mutter-41.3",
+                        "path": "x11-wm/mutter/mutter-41.3-1.gpkg.tar",
+                    },
                 ],
             }
         }

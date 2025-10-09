@@ -6,6 +6,7 @@ type Package {
    repo: String!
    size: Int!
    buildTime: Int!
+   path: String!
 }
 
 type Build {
