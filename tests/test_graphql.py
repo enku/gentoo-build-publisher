@@ -73,6 +73,7 @@ class BuildQueryTestCase(TestCase):
             packagesBuilt {
               cpv
               path
+              buildId
             }
           }
         }
@@ -94,10 +95,12 @@ class BuildQueryTestCase(TestCase):
                     {
                         "cpv": "acct-group/sgx-0",
                         "path": "acct-group/sgx/sgx-0-1.gpkg.tar",
+                        "buildId": "1",
                     },
                     {
                         "cpv": "x11-wm/mutter-41.3",
                         "path": "x11-wm/mutter/mutter-41.3-1.gpkg.tar",
+                        "buildId": "1",
                     },
                 ],
             }
