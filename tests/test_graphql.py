@@ -998,8 +998,9 @@ class TagsTestCase(TestCase):
           }
         }
         """
+
         result = graphql(
-            fixtures.client, query, variables={"machine": build.machine, "tag": "!"}
+            fixtures.client, query, variables={"machine": build.machine, "tag": "@"}
         )
 
         assert_data(self, result, {"resolveBuildTag": {"id": str(build)}})

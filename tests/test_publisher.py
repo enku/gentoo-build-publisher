@@ -322,10 +322,10 @@ class BuildPublisherResolveTagTests(TestCase):
         publisher.pull(fixtures.build)
         publisher.pull(build2)
 
-        self.assertEqual(build2, publisher.resolve_tag(f"{machine}@!"))
+        self.assertEqual(build2, publisher.resolve_tag(f"{machine}@@"))
 
     def test_with_latest_tag_none_pulled(self, fixtures: Fixtures) -> None:
-        self.assertIsNone(publisher.resolve_tag("bogus@!"))
+        self.assertIsNone(publisher.resolve_tag("bogus@@"))
 
 
 @fixture()

@@ -119,13 +119,13 @@ class BuildPublisher:
 
         `<machine>@` resolves to the published build for the given machine.
 
-        `<machine>@!` resolves to the latest build for the given machine.
+        `<machine>@@` resolves to the latest build for the given machine.
 
         If the given tag does not resolve, return `None`.
         """
         machine, _, tag = tag_name.partition(TAG_SYM)
 
-        if machine and tag == "!":
+        if machine and tag == "@":
             if record := self.latest_build(machine, completed=True):
                 return Build(machine=record.machine, build_id=record.build_id)
             return None
