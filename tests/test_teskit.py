@@ -13,10 +13,11 @@ from gbp_testkit.factories import (
     ArtifactFactory,
     BuildFactory,
     BuildInfo,
+    CICDPackage,
     PackageStatus,
 )
 from gbp_testkit.helpers import MockJenkinsSession, Tree
-from gentoo_build_publisher.types import Content, Package
+from gentoo_build_publisher.types import Content
 
 
 @fixture()
@@ -53,7 +54,7 @@ class ArtifactFactoryTestCase(TestCase):
             build, "app-vim/gentoo-syntax-1", repo="marduk", build_id=35
         )
 
-        expected = Package(
+        expected = CICDPackage(
             cpv="app-vim/gentoo-syntax-1",
             repo="marduk",
             path="app-vim/gentoo-syntax/gentoo-syntax-1-35.gpkg.tar",
@@ -122,7 +123,7 @@ class ArtifactFactoryTestCase(TestCase):
             build_time=(fixtures.builder.timer - 10) * 1000,
             package_info=[
                 (
-                    Package(
+                    CICDPackage(
                         cpv="app-vim/gentoo-syntax-1",
                         repo="gentoo",
                         path="app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",

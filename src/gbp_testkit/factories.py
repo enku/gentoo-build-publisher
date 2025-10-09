@@ -17,7 +17,7 @@ from gentoo_build_publisher.django.gentoo_build_publisher.models import BuildMod
 from gentoo_build_publisher.records import BuildRecord, Repo
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.storage import Storage
-from gentoo_build_publisher.types import Build, Content, Package
+from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import cpv_to_path
 
 from .helpers import MockJenkins
@@ -28,10 +28,27 @@ class PackageStatus(Enum):
     REMOVED = auto()
 
 
+@dataclass(frozen=True, kw_only=True)
+class CICDPackage:
+    """A package build on the Jenkins server.
+
+    We distinguish this from types.Package as there is no BuildRecord to associate it
+    with.
+    """
+
+    # pylint: disable=duplicate-code
+    cpv: str
+    repo: str
+    path: str
+    build_id: int
+    size: int
+    build_time: int
+
+
 @dataclass(frozen=True)
 class BuildInfo:
     build_time: int
-    package_info: list[tuple[Package, PackageStatus]] = field(default_factory=list)
+    package_info: list[tuple[CICDPackage, PackageStatus]] = field(default_factory=list)
 
 
 class BuildModelFactory(factory.django.DjangoModelFactory):
@@ -140,7 +157,7 @@ class ArtifactFactory:
         repo: str = "gentoo",
         build_id: int = 1,
         build_time: int | None = None,
-    ) -> Package:
+    ) -> CICDPackage:
         """Pretend we've built a package and add it to the package index"""
         build_info = self.build_info(build)
 
@@ -149,7 +166,7 @@ class ArtifactFactory:
 
         path = cpv_to_path(cpv, build_id)
         size = len(cpv) ** 2
-        package = Package(
+        package = CICDPackage(
             cpv=cpv,
             repo=repo,
             path=path,
@@ -165,7 +182,7 @@ class ArtifactFactory:
         """Return the BuildInfo for the given build"""
         return self._builds.setdefault(build.id, BuildInfo(self.timer * 1000, []))
 
-    def remove(self, build: Build, package: Package) -> None:
+    def remove(self, build: Build, package: CICDPackage) -> None:
         """Remove a package from the build"""
         build_info = self.build_info(build)
 
@@ -209,11 +226,11 @@ class ArtifactFactory:
 
         return tar_file
 
-    def get_packages_for_build(self, build: Build) -> list[Package]:
+    def get_packages_for_build(self, build: Build) -> list[CICDPackage]:
         # First construct the list from the initially installed packages and give them a
         # build time of 0
         packages = [
-            Package(
+            CICDPackage(
                 cpv=i,
                 repo="gentoo",
                 path=cpv_to_path(i),
@@ -244,7 +261,7 @@ class ArtifactFactory:
         return packages
 
     @staticmethod
-    def index(packages: list[Package]) -> str:
+    def index(packages: list[CICDPackage]) -> str:
         """Return the package index a-la Packages"""
         strings = [
             (
