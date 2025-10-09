@@ -8,7 +8,12 @@ from unittest_fixtures import Fixtures, fixture, given, params, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
-from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
+from gbp_testkit.factories import (
+    PACKAGE_INDEX,
+    BuildFactory,
+    BuildRecordFactory,
+    package_factory,
+)
 from gbp_testkit.helpers import BUILD_LOGS, graphql
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.graphql import scalars
@@ -451,8 +456,10 @@ class MachinesQueryTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         babette_builds = BuildFactory.create_batch(3, machine="babette")
         lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
+        pf = package_factory()
 
         for build in babette_builds + lighthouse_builds:
+            publisher.jenkins.artifact_builder.build(build, next(pf))
             publisher.pull(build)
 
         # publish a build
@@ -474,12 +481,14 @@ class MachinesQueryTestCase(TestCase):
               id
             }
             packageCount
+            packagesByDay { date packages { cpv } }
           }
         }
         """
 
         result = graphql(fixtures.client, query)
 
+        today = dt.date.today()
         expected = [
             {
                 "machine": "babette",
@@ -487,7 +496,17 @@ class MachinesQueryTestCase(TestCase):
                 "builds": [{"id": i.id} for i in reversed(babette_builds)],
                 "latestBuild": {"id": build.id},
                 "publishedBuild": {"id": build.id},
-                "packageCount": 12,
+                "packageCount": 18,
+                "packagesByDay": [
+                    {
+                        "date": today.isoformat(),
+                        "packages": [
+                            {"cpv": "dev-python/markdown-1.0"},
+                            {"cpv": "dev-python/mesa-1.0"},
+                            {"cpv": "dev-python/pycups-1.0"},
+                        ],
+                    }
+                ],
             },
             {
                 "machine": "lighthouse",
@@ -495,7 +514,17 @@ class MachinesQueryTestCase(TestCase):
                 "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
                 "latestBuild": {"id": lighthouse_builds[-1].id},
                 "publishedBuild": None,
-                "packageCount": 12,
+                "packageCount": 18,
+                "packagesByDay": [
+                    {
+                        "date": today.isoformat(),
+                        "packages": [
+                            {"cpv": "dev-python/ffmpeg-1.0"},
+                            {"cpv": "dev-python/gcc-1.0"},
+                            {"cpv": "media-libs/markdown-1.0"},
+                        ],
+                    }
+                ],
             },
         ]
         assert_data(self, result, {"machines": expected})

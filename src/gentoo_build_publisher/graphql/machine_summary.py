@@ -1,17 +1,24 @@
 """Resolvers for the MachineSummary GraphQL type"""
 
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-docstring
+import datetime as dt
+from typing import TypedDict
 
 from ariadne import ObjectType
 from graphql import GraphQLResolveInfo
 
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.stats import Stats
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import Build, Package
 
 type Info = GraphQLResolveInfo
 
 MachineSummary = ObjectType("MachineSummary")
+
+
+class DaysPackages(TypedDict):
+    date: dt.date
+    packages: list[Package]
 
 
 @MachineSummary.field("buildCount")
@@ -35,3 +42,15 @@ def _(machine_info: MachineInfo, _info: Info) -> int:
     stats = Stats.with_cache()
 
     return stats.package_counts[machine]
+
+
+@MachineSummary.field("packagesByDay")
+def _(machine_info: MachineInfo, _info: Info) -> list[DaysPackages]:
+    machine = machine_info.machine
+    stats = Stats.with_cache()
+    packages_by_day = stats.packages_by_day[machine]
+
+    return [
+        {"date": date, "packages": sorted(packages, key=lambda p: p.cpv)}
+        for date, packages in packages_by_day.items()
+    ]

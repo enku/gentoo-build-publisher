@@ -24,6 +24,14 @@ type Build {
   packagesBuilt: [Package!]
 }
 
+"""
+Packages built on the particular date
+"""
+type DaysPackages {
+  date: Date
+  packages: [Package!]!
+}
+
 type MachineSummary {
   machine: String!
   buildCount: Int
@@ -32,6 +40,7 @@ type MachineSummary {
   publishedBuild: Build
   tags: [String!]!
   packageCount: Int!
+  packagesByDay: [DaysPackages!]!
 }
 
 """
