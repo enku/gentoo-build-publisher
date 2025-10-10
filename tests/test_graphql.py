@@ -184,6 +184,47 @@ class BuildQueryTestCase(TestCase):
         # Then none is returned
         assert_data(self, result, {"build": {"packages": None}})
 
+    def test_package_detail(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+        build = BuildFactory()
+        publisher.pull(build)
+
+        query = """
+        query ($id: ID!) {
+          build(id: $id) {
+            packageDetail {
+               cpv
+               size
+               path
+            }
+          }
+        }
+        """
+        result = graphql(client, query, {"id": build.id})
+        expected = [
+            {
+                "cpv": "acct-group/sgx-0",
+                "path": "acct-group/sgx/sgx-0-1.gpkg.tar",
+                "size": 256,
+            },
+            {
+                "cpv": "app-admin/perl-cleaner-2.30",
+                "path": "app-admin/perl-cleaner/perl-cleaner-2.30-1.gpkg.tar",
+                "size": 729,
+            },
+            {
+                "cpv": "app-arch/unzip-6.0_p26",
+                "path": "app-arch/unzip/unzip-6.0_p26-1.gpkg.tar",
+                "size": 484,
+            },
+            {
+                "cpv": "app-crypt/gpgme-1.14.0",
+                "path": "app-crypt/gpgme/gpgme-1.14.0-1.gpkg.tar",
+                "size": 484,
+            },
+        ]
+        assert_data(self, result, {"build": {"packageDetail": expected}})
+
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client)
 class BuildsQueryTestCase(TestCase):

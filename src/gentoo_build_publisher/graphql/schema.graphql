@@ -24,6 +24,7 @@ type Build {
   keep: Boolean!
   logs: String
   packages(buildId: Boolean = false): [String!]
+  packageDetail: [Package!]!
   packagesBuilt: [Package!]
 }
 

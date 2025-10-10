@@ -81,3 +81,10 @@ def _(build: Build, _info: Info) -> dt.datetime:
 @BuildType.field("tags")
 def _(build: Build, _info: Info) -> list[str]:
     return publisher.tags(build)
+
+
+@BuildType.field("packageDetail")
+def _(build: Build, _info: Info) -> list[Package]:
+    build_record = publisher.record(build)
+
+    return publisher.get_packages(build_record)
