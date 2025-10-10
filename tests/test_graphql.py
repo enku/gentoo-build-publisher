@@ -491,7 +491,13 @@ class MachinesQueryTestCase(TestCase):
               id
             }
             packageCount
-            packagesByDay { date packages { cpv } }
+            packagesByDay {
+              date
+              packages {
+                cpv
+                build { id }
+              }
+            }
           }
         }
         """
@@ -511,9 +517,18 @@ class MachinesQueryTestCase(TestCase):
                     {
                         "date": today.isoformat(),
                         "packages": [
-                            {"cpv": "dev-python/markdown-1.0"},
-                            {"cpv": "dev-python/mesa-1.0"},
-                            {"cpv": "dev-python/pycups-1.0"},
+                            {
+                                "cpv": "dev-python/markdown-1.0",
+                                "build": {"id": str(babette_builds[0])},
+                            },
+                            {
+                                "cpv": "dev-python/mesa-1.0",
+                                "build": {"id": str(babette_builds[1])},
+                            },
+                            {
+                                "cpv": "dev-python/pycups-1.0",
+                                "build": {"id": str(babette_builds[2])},
+                            },
                         ],
                     }
                 ],
@@ -529,9 +544,18 @@ class MachinesQueryTestCase(TestCase):
                     {
                         "date": today.isoformat(),
                         "packages": [
-                            {"cpv": "dev-python/ffmpeg-1.0"},
-                            {"cpv": "dev-python/gcc-1.0"},
-                            {"cpv": "media-libs/markdown-1.0"},
+                            {
+                                "cpv": "dev-python/ffmpeg-1.0",
+                                "build": {"id": str(lighthouse_builds[1])},
+                            },
+                            {
+                                "cpv": "dev-python/gcc-1.0",
+                                "build": {"id": str(lighthouse_builds[0])},
+                            },
+                            {
+                                "cpv": "media-libs/markdown-1.0",
+                                "build": {"id": str(lighthouse_builds[2])},
+                            },
                         ],
                     }
                 ],

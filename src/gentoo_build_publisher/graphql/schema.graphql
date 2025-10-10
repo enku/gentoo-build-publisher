@@ -8,6 +8,7 @@ type Package {
    buildTime: Int!
    path: String!
    buildId: ID!
+   build: Build
 }
 
 type Build {
