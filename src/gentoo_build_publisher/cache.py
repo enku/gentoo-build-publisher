@@ -17,7 +17,6 @@ class GBPSiteCache:
     DEFAULT_PREFIX = "gbp"
 
     def __init__(self, prefix: str = DEFAULT_PREFIX) -> None:
-        object.__setattr__(self, "_cache", django_cache)
         object.__setattr__(self, "_prefix", prefix)
         set_timeout(self, None)
 
@@ -28,14 +27,14 @@ class GBPSiteCache:
         if "/" in key:
             raise ValueError('Values must not contain "/"')
 
-        self._cache.set(f"{self._prefix}.{key}", value, timeout=self._timeout)
+        django_cache.set(f"{self._prefix}.{key}", value, timeout=self._timeout)
 
     def __getattr__(self, key: str) -> Any:
         """Return the value in the cache given the key
 
         If the key does not exist in the cache, return the default.
         """
-        value = self._cache.get(f"{self._prefix}.{key}", _NOT_SET)
+        value = django_cache.get(f"{self._prefix}.{key}", _NOT_SET)
 
         if value is _NOT_SET:
             raise AttributeError(key)
@@ -47,10 +46,10 @@ class GBPSiteCache:
 
         Silently ignore non-existent keys.
         """
-        self._cache.delete(f"{self._prefix}.{key}")
+        django_cache.delete(f"{self._prefix}.{key}")
 
     def __contains__(self, key: str) -> bool:
-        return f"{self._prefix}.{key}" in self._cache
+        return f"{self._prefix}.{key}" in django_cache
 
     def __truediv__(self, prefix: str) -> Self:
         """Return the sub-cache
@@ -61,13 +60,13 @@ class GBPSiteCache:
         return type(self)(prefix=f"{self._prefix}/{prefix}")
 
 
-def clear(cache_: GBPSiteCache) -> None:
+def clear() -> None:
     """Clear the cache
 
     Note: this clears all the underlying cache and not just the keys starting with
     the prefix.
     """
-    cache_._cache.clear()  # pylint: disable=protected-access
+    django_cache.clear()
 
 
 def set_timeout(cache_: GBPSiteCache, seconds: int | None) -> None:

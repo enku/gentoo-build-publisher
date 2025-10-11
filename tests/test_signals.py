@@ -203,7 +203,7 @@ class PyDispatcherAdapterTests(TestCase):
             d.get_dispatcher_event("bogus")
 
 
-@given(clear_cache=lambda _: clear_cache(cache))
+@given(clear_cache=lambda _: clear_cache())
 @params(event=["postdelete", "postpull", "published", "tagged", "untagged"])
 @params(
     kwargs=[

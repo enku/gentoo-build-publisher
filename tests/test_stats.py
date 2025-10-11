@@ -203,7 +203,7 @@ class StatsTests(TestCase):
             *create_builds_and_packages("lighthouse", 3, 4, builder),
         ]:
             publisher.pull(build)
-        clear_cache(site_cache)
+        clear_cache()
 
         stats = Stats.collect()
 
@@ -223,7 +223,7 @@ class StatsTests(TestCase):
             publisher.pull(build)
             # because of signals this should populate the cache
 
-        clear_cache(site_cache)
+        clear_cache()
         stats = Stats.with_cache()
 
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
@@ -233,7 +233,7 @@ class StatsTests(TestCase):
         )
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:
-        clear_cache(site_cache)
+        clear_cache()
         site_cache.stats = "not really stats"
 
         with_cache = Stats.with_cache()

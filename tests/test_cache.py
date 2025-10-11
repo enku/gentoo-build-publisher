@@ -19,34 +19,34 @@ class GBPSiteCacheTests(TestCase):
         cache.foo = "bar"
 
         self.assertEqual(cache.foo, "bar")
-        self.assertEqual(cache._cache.get("test.foo"), "bar")
+        self.assertEqual(django_cache.get("test.foo"), "bar")
 
     def test_get(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
-        cache._cache.set("test.foo", "bar")
+        django_cache.set("test.foo", "bar")
 
         self.assertEqual(cache.foo, "bar")
 
     def test_delete(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
-        cache._cache.set("test.foo", "bar")
+        django_cache.set("test.foo", "bar")
 
         del cache.foo
 
         self.assertNotIn("foo", cache)
-        self.assertEqual(cache._cache.get("test.foo"), None)
+        self.assertEqual(django_cache.get("test.foo"), None)
 
     def test_clear(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
 
-        cache._cache.set("test.foo", "bar")
-        cache._cache.set("bar", "baz")
+        django_cache.set("test.foo", "bar")
+        django_cache.set("bar", "baz")
 
-        clear(cache)
+        clear()
 
         self.assertNotIn("foo", cache)
-        self.assertEqual(cache._cache.get("test.foo"), None)
-        self.assertEqual(cache._cache.get("bar"), None)
+        self.assertEqual(django_cache.get("test.foo"), None)
+        self.assertEqual(django_cache.get("bar"), None)
 
     def test_subcache(self, fixtures: Fixtures) -> None:
         root = GBPSiteCache(prefix="root")
@@ -55,7 +55,7 @@ class GBPSiteCacheTests(TestCase):
         sub.foo = "bar"
 
         self.assertEqual(sub.foo, "bar")
-        self.assertEqual(root._cache.get("root/sub.foo"), "bar")
+        self.assertEqual(django_cache.get("root/sub.foo"), "bar")
         self.assertEqual((root / "sub").foo, "bar")
 
         subsub = sub / "sub"
@@ -63,7 +63,7 @@ class GBPSiteCacheTests(TestCase):
         subsub.bar = "baz"
 
         self.assertEqual(subsub.bar, "baz")
-        self.assertEqual(root._cache.get("root/sub/sub.bar"), "baz")
+        self.assertEqual(django_cache.get("root/sub/sub.bar"), "baz")
 
     def test_contains(self, fixtures: Fixtures) -> None:
         root = GBPSiteCache(prefix="root")
@@ -90,7 +90,7 @@ class GBPSiteCacheTests(TestCase):
         sub = root / "sub"
         set_timeout(sub, 300)
 
-        with mock.patch.object(root._cache, "set") as cache_set:
+        with mock.patch.object(django_cache, "set") as cache_set:
             sub.key = 1
             cache_set.assert_called_with("test/sub.key", 1, timeout=300)
 

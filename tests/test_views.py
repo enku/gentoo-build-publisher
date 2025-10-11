@@ -11,7 +11,6 @@ from unittest_fixtures import Fixtures, fixture, given, where
 
 import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.cache import clear as cache_clear
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import string
@@ -160,7 +159,7 @@ class BinReposDotConfTestCase(TestCase):
 
 
 @given(testkit.publisher, testkit.client, testkit.builds, artifacts, lighthouse)
-@given(clear_cache=lambda _: cache_clear(site_cache))
+@given(clear_cache=lambda _: cache_clear())
 class MachineViewTests(TestCase):
     """Tests for the machine view"""
 
