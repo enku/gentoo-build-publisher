@@ -4,7 +4,7 @@ This here is the "global" systems cache for Gentoo Build Publisher. It supports 
 CacheProtocol interface.
 """
 
-from typing import Any
+from typing import Any, Self
 
 from django.core.cache import cache as django_cache
 
@@ -15,7 +15,7 @@ _NOT_SET = object()
 class GBPSiteCache:
     """The site-wide cache (class) for Gentoo Build Publisher"""
 
-    DEFAULT_PREFIX = "gbp-"
+    DEFAULT_PREFIX = "gbp"
 
     def __init__(self, prefix: str = DEFAULT_PREFIX) -> None:
         object.__setattr__(self, "_cache", django_cache)
@@ -25,15 +25,17 @@ class GBPSiteCache:
         """Assign the given cache key the given value"""
         if key.startswith("_"):
             raise ValueError('Values must not being with "_"')
+        if "/" in key:
+            raise ValueError('Values must not contain "/"')
 
-        self._cache.set(f"{self._prefix}{key}", value, timeout=None)
+        self._cache.set(f"{self._prefix}.{key}", value, timeout=None)
 
     def __getattr__(self, key: str) -> Any:
         """Return the value in the cache given the key
 
         If the key does not exist in the cache, return the default.
         """
-        value = self._cache.get(f"{self._prefix}{key}", _NOT_SET)
+        value = self._cache.get(f"{self._prefix}.{key}", _NOT_SET)
 
         if value is _NOT_SET:
             raise AttributeError(key)
@@ -45,10 +47,18 @@ class GBPSiteCache:
 
         Silently ignore non-existent keys.
         """
-        self._cache.delete(f"{self._prefix}{key}")
+        self._cache.delete(f"{self._prefix}.{key}")
 
     def __contains__(self, key: str) -> bool:
         return key in self._cache
+
+    def __truediv__(self, prefix: str) -> Self:
+        """Return the sub-cache
+
+        The sub-cache is a cache whose prefix with the parent prefix prepended to the
+        given prefix.
+        """
+        return type(self)(prefix=f"{self._prefix}/{prefix}")
 
 
 def clear(cache_: GBPSiteCache) -> None:
