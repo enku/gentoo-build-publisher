@@ -65,6 +65,18 @@ class GBPSiteCacheTests(TestCase):
         self.assertEqual(subsub.bar, "baz")
         self.assertEqual(root._cache.get("root/sub/sub.bar"), "baz")
 
+    def test_contains(self, fixtures: Fixtures) -> None:
+        root = GBPSiteCache(prefix="root")
+        sub = root / "sub"
+
+        root.foo = "bar"
+        sub.baz = "bar"
+
+        self.assertTrue("foo" in root)
+        self.assertFalse("baz" in root)
+        self.assertTrue("baz" in sub)
+        self.assertFalse("foo" in sub)
+
     def test_cache_key_with_slash_not_allowed(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
 

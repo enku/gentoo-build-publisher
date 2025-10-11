@@ -49,7 +49,7 @@ class GBPSiteCache:
         self._cache.delete(f"{self._prefix}.{key}")
 
     def __contains__(self, key: str) -> bool:
-        return key in self._cache
+        return f"{self._prefix}.{key}" in self._cache
 
     def __truediv__(self, prefix: str) -> Self:
         """Return the sub-cache
