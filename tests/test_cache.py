@@ -2,12 +2,12 @@
 
 # pylint: disable=missing-docstring
 
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from django.core.cache import cache as django_cache
 from unittest_fixtures import Fixtures, given
 
-from gentoo_build_publisher.cache import GBPSiteCache, clear
+from gentoo_build_publisher.cache import GBPSiteCache, clear, set_timeout
 
 
 @given(clear_cache=lambda _: django_cache.clear())
@@ -84,3 +84,15 @@ class GBPSiteCacheTests(TestCase):
             setattr(cache, "/foo", "bar")
 
         self.assertEqual(str(context.exception), 'Values must not contain "/"')
+
+    def test_with_timeout(self, fixtures: Fixtures) -> None:
+        root = GBPSiteCache(prefix="test")
+        sub = root / "sub"
+        set_timeout(sub, 300)
+
+        with mock.patch.object(root._cache, "set") as cache_set:
+            sub.key = 1
+            cache_set.assert_called_with("test/sub.key", 1, timeout=300)
+
+            root.key = 2
+            cache_set.assert_called_with("test.key", 2, timeout=None)

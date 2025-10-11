@@ -19,6 +19,7 @@ class GBPSiteCache:
     def __init__(self, prefix: str = DEFAULT_PREFIX) -> None:
         object.__setattr__(self, "_cache", django_cache)
         object.__setattr__(self, "_prefix", prefix)
+        set_timeout(self, None)
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Assign the given cache key the given value"""
@@ -27,7 +28,7 @@ class GBPSiteCache:
         if "/" in key:
             raise ValueError('Values must not contain "/"')
 
-        self._cache.set(f"{self._prefix}.{key}", value, timeout=None)
+        self._cache.set(f"{self._prefix}.{key}", value, timeout=self._timeout)
 
     def __getattr__(self, key: str) -> Any:
         """Return the value in the cache given the key
@@ -67,6 +68,11 @@ def clear(cache_: GBPSiteCache) -> None:
     the prefix.
     """
     cache_._cache.clear()  # pylint: disable=protected-access
+
+
+def set_timeout(cache_: GBPSiteCache, seconds: int | None) -> None:
+    """Set the (sub) cache item timeout"""
+    object.__setattr__(cache_, "_timeout", seconds)
 
 
 cache = GBPSiteCache()
