@@ -7,7 +7,7 @@ from unittest import TestCase
 from django.core.cache import cache as django_cache
 from unittest_fixtures import Fixtures, given
 
-from gentoo_build_publisher.cache import GBPSiteCache
+from gentoo_build_publisher.cache import GBPSiteCache, clear
 
 
 @given(clear_cache=lambda _: django_cache.clear())
@@ -16,29 +16,24 @@ class GBPSiteCacheTests(TestCase):
     def test_set(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test-")
 
-        cache.set("foo", "bar")
+        cache.foo = "bar"
 
-        self.assertEqual(cache.get("foo"), "bar")
+        self.assertEqual(cache.foo, "bar")
         self.assertEqual(cache._cache.get("test-foo"), "bar")
 
     def test_get(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test-")
         cache._cache.set("test-foo", "bar")
 
-        self.assertEqual(cache.get("foo"), "bar")
-
-    def test_get_with_default(self, fixtures: Fixtures) -> None:
-        cache = GBPSiteCache(prefix="test-")
-
-        self.assertEqual(cache.get("foo", "baz"), "baz")
+        self.assertEqual(cache.foo, "bar")
 
     def test_delete(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test-")
         cache._cache.set("test-foo", "bar")
 
-        cache.delete("foo")
+        del cache.foo
 
-        self.assertIs(cache.get("foo"), None)
+        self.assertNotIn("foo", cache)
         self.assertEqual(cache._cache.get("test-foo"), None)
 
     def test_clear(self, fixtures: Fixtures) -> None:
@@ -47,8 +42,8 @@ class GBPSiteCacheTests(TestCase):
         cache._cache.set("test-foo", "bar")
         cache._cache.set("bar", "baz")
 
-        cache.clear()
+        clear(cache)
 
-        self.assertIs(cache.get("foo"), None)
+        self.assertNotIn("foo", cache)
         self.assertEqual(cache._cache.get("test-foo"), None)
         self.assertEqual(cache._cache.get("bar"), None)

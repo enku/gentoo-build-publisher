@@ -13,7 +13,7 @@ def update_stats_cache() -> None:
     from gentoo_build_publisher.stats import Stats
 
     stats = Stats.collect()
-    cache.set(STATS_KEY, stats)
+    setattr(cache, STATS_KEY, stats)
 
 
 def background_update_stats_cache(**_kwargs: Any) -> None:

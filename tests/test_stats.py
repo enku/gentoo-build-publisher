@@ -10,8 +10,9 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gbp_testkit.helpers import QuickCache
+from gentoo_build_publisher.cache import GBPSiteCache
 from gentoo_build_publisher.cache import cache as site_cache
+from gentoo_build_publisher.cache import clear as clear_cache
 from gentoo_build_publisher.stats import Stats, StatsCollector
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
@@ -203,7 +204,7 @@ class StatsTests(TestCase):
             *create_builds_and_packages("lighthouse", 3, 4, builder),
         ]:
             publisher.pull(build)
-        site_cache.clear()
+        clear_cache(site_cache)
 
         stats = Stats.collect()
 
@@ -223,7 +224,7 @@ class StatsTests(TestCase):
             publisher.pull(build)
             # because of signals this should populate the cache
 
-        cache = QuickCache()
+        cache = GBPSiteCache("test_with_cache_creates_cache_entry-")
         stats = Stats.with_cache(cache, "test")
 
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
@@ -233,10 +234,10 @@ class StatsTests(TestCase):
         )
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:
-        cache = QuickCache()
+        cache = GBPSiteCache("test_with_cache_and_exists_in_cache-")
         stats = Stats.collect()
-        cache.set("test", stats)
+        cache.test = stats
 
         with_cache = Stats.with_cache(cache, "test")
 
-        self.assertIs(stats, with_cache)
+        self.assertEqual(stats, with_cache)
