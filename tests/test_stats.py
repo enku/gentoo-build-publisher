@@ -10,7 +10,6 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gentoo_build_publisher.cache import GBPSiteCache
 from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.cache import clear as clear_cache
 from gentoo_build_publisher.stats import Stats, StatsCollector
@@ -224,8 +223,8 @@ class StatsTests(TestCase):
             publisher.pull(build)
             # because of signals this should populate the cache
 
-        cache = GBPSiteCache("test_with_cache_creates_cache_entry-")
-        stats = Stats.with_cache(cache)
+        clear_cache(site_cache)
+        stats = Stats.with_cache()
 
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
@@ -234,10 +233,9 @@ class StatsTests(TestCase):
         )
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:
-        cache = GBPSiteCache("test_with_cache_and_exists_in_cache-")
-        stats = Stats.collect()
-        cache.test = stats
+        clear_cache(site_cache)
+        site_cache.stats = "not really stats"
 
-        with_cache = Stats.with_cache(cache)
+        with_cache = Stats.with_cache()
 
-        self.assertEqual(stats, with_cache)
+        self.assertEqual("not really stats", with_cache)
