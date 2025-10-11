@@ -8,7 +8,7 @@ from unittest_fixtures import Fixtures, given, params
 
 from gbp_testkit import fixtures as testkit
 from gentoo_build_publisher import signals
-from gentoo_build_publisher.cache import STATS_KEY, cache
+from gentoo_build_publisher.cache import cache
 from gentoo_build_publisher.cache import clear as clear_cache
 from gentoo_build_publisher.stats import Stats
 from gentoo_build_publisher.types import Build
@@ -217,9 +217,9 @@ class PyDispatcherAdapterTests(TestCase):
 @given(testkit.build)
 class DjangoSignalsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        self.assertNotIn(STATS_KEY, cache)
+        self.assertFalse(hasattr(cache, "stats"))
 
         dispatcher.emit(fixtures.event, **dict(fixtures.kwargs))
 
-        stats = getattr(cache, STATS_KEY)
+        stats = cache.stats
         self.assertIsInstance(stats, Stats)

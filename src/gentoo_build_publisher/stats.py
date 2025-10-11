@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Self, cast
 
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.cache import STATS_KEY, GBPSiteCache
+from gentoo_build_publisher.cache import GBPSiteCache
 from gentoo_build_publisher.cache import cache as site_cache
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
@@ -66,16 +66,14 @@ class Stats:
         )
 
     @classmethod
-    def with_cache(
-        cls, cache: GBPSiteCache = site_cache, key: str = STATS_KEY, **kwargs: Any
-    ) -> Self:
+    def with_cache(cls, cache: GBPSiteCache = site_cache, **kwargs: Any) -> Self:
         """Get or create Stats from the given cache
 
         If the item is in the given cache with the given key, return it.
         Otherwise collect the stats and cache it. Then return it.
         """
-        if (stats := getattr(cache, key, None)) is None:
-            setattr(cache, key, stats := cls.collect())
+        if (stats := getattr(cache, "stats", None)) is None:
+            stats = cache.stats = cls.collect()
 
         return cast(Self, stats)
 

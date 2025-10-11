@@ -8,7 +8,6 @@ from typing import Any, Self
 
 from django.core.cache import cache as django_cache
 
-STATS_KEY = "gbp-stats"  # Cache key for storing/retrieving Stats
 _NOT_SET = object()
 
 

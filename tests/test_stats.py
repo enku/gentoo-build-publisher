@@ -225,7 +225,7 @@ class StatsTests(TestCase):
             # because of signals this should populate the cache
 
         cache = GBPSiteCache("test_with_cache_creates_cache_entry-")
-        stats = Stats.with_cache(cache, "test")
+        stats = Stats.with_cache(cache)
 
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
@@ -238,6 +238,6 @@ class StatsTests(TestCase):
         stats = Stats.collect()
         cache.test = stats
 
-        with_cache = Stats.with_cache(cache, "test")
+        with_cache = Stats.with_cache(cache)
 
         self.assertEqual(stats, with_cache)
