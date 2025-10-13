@@ -19,17 +19,17 @@ class GBPSiteCacheTests(TestCase):
         cache.foo = "bar"
 
         self.assertEqual(cache.foo, "bar")
-        self.assertEqual(django_cache.get("test.foo"), "bar")
+        self.assertEqual(django_cache.get("test:foo"), "bar")
 
     def test_get(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
-        django_cache.set("test.foo", "bar")
+        django_cache.set("test:foo", "bar")
 
         self.assertEqual(cache.foo, "bar")
 
     def test_delete(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
-        django_cache.set("test.foo", "bar")
+        django_cache.set("test:foo", "bar")
 
         del cache.foo
 
@@ -55,7 +55,7 @@ class GBPSiteCacheTests(TestCase):
         sub.foo = "bar"
 
         self.assertEqual(sub.foo, "bar")
-        self.assertEqual(django_cache.get("root/sub.foo"), "bar")
+        self.assertEqual(django_cache.get("root/sub:foo"), "bar")
         self.assertEqual((root / "sub").foo, "bar")
 
         subsub = sub / "sub"
@@ -63,7 +63,7 @@ class GBPSiteCacheTests(TestCase):
         subsub.bar = "baz"
 
         self.assertEqual(subsub.bar, "baz")
-        self.assertEqual(django_cache.get("root/sub/sub.bar"), "baz")
+        self.assertEqual(django_cache.get("root/sub/sub:bar"), "baz")
 
     def test_contains(self, fixtures: Fixtures) -> None:
         root = GBPSiteCache(prefix="root")
@@ -83,7 +83,7 @@ class GBPSiteCacheTests(TestCase):
         with self.assertRaises(ValueError) as context:
             setattr(cache, "/foo", "bar")
 
-        self.assertEqual(str(context.exception), 'Values must not contain "/"')
+        self.assertEqual(str(context.exception), "Values must not contain '/'")
 
     def test_with_timeout(self, fixtures: Fixtures) -> None:
         root = GBPSiteCache(prefix="test")
@@ -92,7 +92,7 @@ class GBPSiteCacheTests(TestCase):
 
         with mock.patch.object(django_cache, "set") as cache_set:
             sub.key = 1
-            cache_set.assert_called_with("test/sub.key", 1, timeout=300)
+            cache_set.assert_called_with("test/sub:key", 1, timeout=300)
 
             root.key = 2
-            cache_set.assert_called_with("test.key", 2, timeout=None)
+            cache_set.assert_called_with("test:key", 2, timeout=None)

@@ -9,6 +9,8 @@ from typing import Any, Self
 from django.core.cache import cache as django_cache
 
 _NOT_SET = object()
+ATTR_DELIM = ":"
+CACHE_DELIM = "/"
 
 
 class GBPSiteCache:
@@ -24,17 +26,17 @@ class GBPSiteCache:
         """Assign the given cache key the given value"""
         if key.startswith("_"):
             raise ValueError('Values must not being with "_"')
-        if "/" in key:
-            raise ValueError('Values must not contain "/"')
+        if CACHE_DELIM in key:
+            raise ValueError(f"Values must not contain {CACHE_DELIM!r}")
 
-        django_cache.set(f"{self._prefix}.{key}", value, timeout=self._timeout)
+        django_cache.set(self._get_key(key), value, timeout=self._timeout)
 
     def __getattr__(self, key: str) -> Any:
         """Return the value in the cache given the key
 
         If the key does not exist in the cache, return the default.
         """
-        value = django_cache.get(f"{self._prefix}.{key}", _NOT_SET)
+        value = django_cache.get(self._get_key(key), _NOT_SET)
 
         if value is _NOT_SET:
             raise AttributeError(key)
@@ -46,10 +48,10 @@ class GBPSiteCache:
 
         Silently ignore non-existent keys.
         """
-        django_cache.delete(f"{self._prefix}.{key}")
+        django_cache.delete(self._get_key(key))
 
     def __contains__(self, key: str) -> bool:
-        return f"{self._prefix}.{key}" in django_cache
+        return self._get_key(key) in django_cache
 
     def __truediv__(self, prefix: str) -> Self:
         """Return the sub-cache
@@ -58,6 +60,9 @@ class GBPSiteCache:
         given prefix.
         """
         return type(self)(prefix=f"{self._prefix}/{prefix}")
+
+    def _get_key(self, key: str) -> str:
+        return f"{self._prefix}{ATTR_DELIM}{key}"
 
 
 def clear() -> None:
