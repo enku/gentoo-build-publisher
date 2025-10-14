@@ -11,6 +11,7 @@ from .machine_summary import MachineSummary
 from .mutations import Mutation
 from .queries import Query
 from .scalars import date_scalar, datetime_scalar
+from .stats import BuildPublisherStats
 from .utils import load_schema
 
 ChangeStateEnum = ariadne.EnumType("ChangeStateEnum", ChangeState)
@@ -19,6 +20,7 @@ type_defs = ariadne.gql(
     resources.read_text("gentoo_build_publisher.graphql", "schema.graphql")
 )
 resolvers = [
+    BuildPublisherStats,
     BuildType,
     ChangeStateEnum,
     MachineSummary,

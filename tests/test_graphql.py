@@ -16,6 +16,7 @@ from gbp_testkit.factories import (
 )
 from gbp_testkit.helpers import BUILD_LOGS, graphql
 from gentoo_build_publisher import plugins, publisher
+from gentoo_build_publisher.cache import clear as cache_clear
 from gentoo_build_publisher.graphql import scalars
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
@@ -539,6 +540,7 @@ class MachinesQueryTestCase(TestCase):
                 build { id }
               }
             }
+            totalPackageSize
           }
         }
         """
@@ -573,6 +575,7 @@ class MachinesQueryTestCase(TestCase):
                         ],
                     }
                 ],
+                "totalPackageSize": "8609",
             },
             {
                 "machine": "lighthouse",
@@ -600,6 +603,7 @@ class MachinesQueryTestCase(TestCase):
                         ],
                     }
                 ],
+                "totalPackageSize": "8242",
             },
         ]
         assert_data(self, result, {"machines": expected})
@@ -1402,6 +1406,73 @@ class PluginsTestCase(TestCase):
             for p in installed_plugins
         ]
         assert_data(self, result, {"plugins": expected})
+
+
+@given(
+    testkit.client,
+    testkit.builds,
+    testkit.publisher,
+    clear_cache=lambda _: cache_clear(),
+)
+@where(builds__machines=["babette", "lighthouse", "polaris"], builds__per_day=3)
+class StatsTests(TestCase):
+    query = """query {
+      stats {
+        machines
+        machineInfo {
+          machine
+          buildCount
+          builds { id }
+          latestBuild {
+            id
+            packages(buildId: true)
+          }
+          publishedBuild { id }
+          tags
+          packageCount
+        }
+      }
+    }"""
+
+    def test(self, fixtures: Fixtures) -> None:
+        # pylint: disable=undefined-loop-variable
+        records: dict[str, list[BuildRecord]] = {}
+        for machine, builds in fixtures.builds.items():
+            records[machine] = []
+            for build in builds:
+                publisher.pull(build)
+                records[machine].append(publisher.record(build))
+            publisher.publish(build)
+            publisher.tag(build, f"{build.machine}-test")
+
+        result = graphql(fixtures.client, self.query)
+
+        expected = {
+            "machines": list(records),
+            "machineInfo": [
+                {
+                    "buildCount": 3,
+                    "builds": [
+                        {"id": str(build)}
+                        for build in sorted(
+                            mrecords, key=lambda b: b.completed or 0, reverse=True
+                        )
+                    ],
+                    "latestBuild": {
+                        "id": str(mrecords[-1]),
+                        "packages": [
+                            p.cpvb() for p in publisher.get_packages(mrecords[-1])
+                        ],
+                    },
+                    "machine": machine,
+                    "publishedBuild": {"id": str(mrecords[-1])},
+                    "tags": [f"{machine}-test"],
+                    "packageCount": 12,
+                }
+                for machine, mrecords in records.items()
+            ],
+        }
+        assert_data(self, result, {"stats": expected})
 
 
 class DateScalarTests(TestCase):

@@ -45,6 +45,7 @@ type MachineSummary {
   tags: [String!]!
   packageCount: Int!
   packagesByDay: [DaysPackages!]!
+  totalPackageSize: String!
 }
 
 """
@@ -87,6 +88,17 @@ type Plugin {
   description: String!
 }
 
+type PackageCount {
+  machine: String!
+  count: Int!
+}
+
+type BuildPublisherStats {
+  machines: [String!]!
+  machineInfo: [MachineSummary!]!
+  builds: [Build!]!
+}
+
 type Query {
   build(id: ID!): Build
   builds(machine: String!): [Build!]!
@@ -103,6 +115,7 @@ type Query {
   List of installed plugins
   """
   plugins: [Plugin!]!
+  stats: BuildPublisherStats!
 }
 
 type Mutation {

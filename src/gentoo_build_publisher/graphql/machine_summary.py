@@ -54,3 +54,10 @@ def _(machine_info: MachineInfo, _info: Info) -> list[DaysPackages]:
         {"date": date, "packages": sorted(packages, key=lambda p: p.cpv)}
         for date, packages in packages_by_day.items()
     ]
+
+@MachineSummary.field("totalPackageSize")
+def _(machine_info: MachineInfo, _info: Info) -> str:
+    machine = machine_info.machine
+    stats = Stats.with_cache()
+
+    return str(stats.total_package_size.get(machine, 0))

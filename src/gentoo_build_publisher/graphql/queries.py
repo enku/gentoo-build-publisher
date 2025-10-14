@@ -8,6 +8,7 @@ from graphql import GraphQLError, GraphQLResolveInfo
 from gentoo_build_publisher import plugins, publisher, utils
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.records import BuildRecord
+from gentoo_build_publisher.stats import Stats
 from gentoo_build_publisher.types import TAG_SYM, Build
 
 type Info = GraphQLResolveInfo
@@ -96,3 +97,8 @@ def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
 @Query.field("plugins")
 def _(_obj: Any, _info: Info) -> list[plugins.Plugin]:
     return plugins.get_plugins()
+
+
+@Query.field("stats")
+def _(_obj: Any, _info: Info) -> Stats:
+    return Stats.with_cache()
