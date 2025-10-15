@@ -116,3 +116,5 @@ detail.
 - [An Introduction to Gentoo Build Publisher
   Plugins](https://lunarcowboy.com/an-introduction-to-gentoo-build-publisher-plugins.html):
   September 2025
+- [Gentoo Build Publisher: GraphQL Interface](https://lunarcowboy.com/gentoo-build-publisher-graphql-interface.html)
+  October 2025
