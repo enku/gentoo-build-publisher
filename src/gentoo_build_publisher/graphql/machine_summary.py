@@ -55,6 +55,7 @@ def _(machine_info: MachineInfo, _info: Info) -> list[DaysPackages]:
         for date, packages in packages_by_day.items()
     ]
 
+
 @MachineSummary.field("totalPackageSize")
 def _(machine_info: MachineInfo, _info: Info) -> str:
     machine = machine_info.machine

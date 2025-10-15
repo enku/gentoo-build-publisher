@@ -6,7 +6,7 @@ import ariadne
 
 from gentoo_build_publisher.types import ChangeState
 
-from .build import BuildType
+from .build import BuildType, PackageType
 from .machine_summary import MachineSummary
 from .mutations import Mutation
 from .queries import Query
@@ -25,6 +25,7 @@ resolvers = [
     ChangeStateEnum,
     MachineSummary,
     Mutation,
+    PackageType,
     Query,
     date_scalar,
     datetime_scalar,

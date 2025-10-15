@@ -75,6 +75,7 @@ class BuildQueryTestCase(TestCase):
               cpv
               path
               buildId
+              url
             }
           }
         }
@@ -93,15 +94,18 @@ class BuildQueryTestCase(TestCase):
                 "built": "2022-03-01T06:28:44+00:00",
                 "submitted": "2022-03-01T06:28:44+00:00",
                 "packagesBuilt": [
+                    # pylint: disable=line-too-long
                     {
                         "cpv": "acct-group/sgx-0",
                         "path": "acct-group/sgx/sgx-0-1.gpkg.tar",
                         "buildId": "1",
+                        "url": f"/machines/{build.machine}/builds/{build.build_id}/packages/acct-group/sgx/sgx-0-1",
                     },
                     {
                         "cpv": "x11-wm/mutter-41.3",
                         "path": "x11-wm/mutter/mutter-41.3-1.gpkg.tar",
                         "buildId": "1",
+                        "url": f"/machines/{build.machine}/builds/{build.build_id}/packages/x11-wm/mutter/mutter-41.3-1",
                     },
                 ],
             }
