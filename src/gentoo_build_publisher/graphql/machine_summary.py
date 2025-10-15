@@ -2,7 +2,7 @@
 
 # pylint: disable=missing-docstring
 import datetime as dt
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from ariadne import ObjectType
 from graphql import GraphQLResolveInfo
@@ -62,3 +62,11 @@ def _(machine_info: MachineInfo, _info: Info) -> str:
     stats = Stats.with_cache()
 
     return str(stats.total_package_size.get(machine, 0))
+
+
+@MachineSummary.field("tagInfo")
+def _(machine_info: MachineInfo, _info: Info) -> list[dict[str, Any]]:
+    machine = machine_info.machine
+    tags = machine_info.tags
+
+    return [{"tag": tag, "build": None, "machine": machine} for tag in tags]

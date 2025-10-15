@@ -9,7 +9,7 @@ from gentoo_build_publisher.types import ChangeState
 from .build import BuildType, PackageType
 from .machine_summary import MachineSummary
 from .mutations import Mutation
-from .queries import Query
+from .queries import Query, TagInfoType
 from .scalars import date_scalar, datetime_scalar
 from .stats import BuildPublisherStats
 from .utils import load_schema
@@ -27,6 +27,7 @@ resolvers = [
     Mutation,
     PackageType,
     Query,
+    TagInfoType,
     date_scalar,
     datetime_scalar,
 ]

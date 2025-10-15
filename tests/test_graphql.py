@@ -1432,7 +1432,7 @@ class StatsTests(TestCase):
             packages(buildId: true)
           }
           publishedBuild { id }
-          tags
+          tagInfo { tag build { id } }
           packageCount
         }
       }
@@ -1470,7 +1470,9 @@ class StatsTests(TestCase):
                     },
                     "machine": machine,
                     "publishedBuild": {"id": str(mrecords[-1])},
-                    "tags": [f"{machine}-test"],
+                    "tagInfo": [
+                        {"tag": f"{machine}-test", "build": {"id": str(mrecords[-1])}}
+                    ],
                     "packageCount": 12,
                 }
                 for machine, mrecords in records.items()

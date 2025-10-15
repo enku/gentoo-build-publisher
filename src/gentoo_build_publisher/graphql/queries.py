@@ -15,6 +15,7 @@ type Info = GraphQLResolveInfo
 type Object = dict[str, Any]
 
 Query = ObjectType("Query")
+TagInfoType = ObjectType("TagInfo")
 
 # pylint: disable=redefined-builtin,missing-function-docstring
 
@@ -102,3 +103,8 @@ def _(_obj: Any, _info: Info) -> list[plugins.Plugin]:
 @Query.field("stats")
 def _(_obj: Any, _info: Info) -> Stats:
     return Stats.with_cache()
+
+
+@TagInfoType.field("build")
+def _(context: dict[str, Any], _info: Info) -> Build | None:
+    return publisher.resolve_tag(f"{context['machine']}{TAG_SYM}{context['tag']}")

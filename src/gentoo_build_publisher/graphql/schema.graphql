@@ -29,6 +29,11 @@ type Build {
   packagesBuilt: [Package!]
 }
 
+type TagInfo {
+  tag: String!
+  build: Build!
+}
+
 """
 Packages built on the particular date
 """
@@ -44,6 +49,7 @@ type MachineSummary {
   latestBuild: Build
   publishedBuild: Build
   tags: [String!]!
+  tagInfo: [TagInfo!]!
   packageCount: Int!
   packagesByDay: [DaysPackages!]!
   totalPackageSize: String!
