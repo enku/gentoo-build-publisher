@@ -36,7 +36,6 @@ from __future__ import annotations
 import importlib
 import importlib.metadata
 import os
-import warnings
 from functools import cache
 from typing import TYPE_CHECKING, Any
 
@@ -80,12 +79,5 @@ def __getattr__(name: str) -> Any:
         return build_publisher.BuildPublisher.from_settings(
             settings.Settings.from_environ()
         )
-    if name == "fs":
-        warnings.warn(
-            "The fs module has moved to utils (gentoo_build_publisher.utils.fs). "
-            "Please import it from there.",
-            category=DeprecationWarning,
-        )
-        return importlib.import_module("gentoo_build_publisher.utils.fs")
 
     raise AttributeError(name)
