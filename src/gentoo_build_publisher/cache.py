@@ -19,7 +19,7 @@ class GBPSiteCache:
 
     def __init__(self, prefix: str = DEFAULT_PREFIX) -> None:
         self._prefix = prefix
-        self._timeout = None
+        self._timeout: float | None = None
 
     def set(self, key: str, value: Any) -> None:
         """Assign the given cache key the given value"""
@@ -56,6 +56,10 @@ class GBPSiteCache:
         """
         return type(self)(prefix=f"{self._prefix}/{prefix}")
 
+    def set_timeout(self, seconds: int | None) -> None:
+        """Set the (sub) cache item timeout"""
+        self._timeout = seconds
+
     def _get_key(self, key: str) -> str:
         return f"{self._prefix}{ATTR_DELIM}{key}"
 
@@ -67,11 +71,6 @@ def clear() -> None:
     the prefix.
     """
     django_cache.clear()
-
-
-def set_timeout(cache_: GBPSiteCache, seconds: int | None) -> None:
-    """Set the (sub) cache item timeout"""
-    object.__setattr__(cache_, "_timeout", seconds)
 
 
 cache = GBPSiteCache()
