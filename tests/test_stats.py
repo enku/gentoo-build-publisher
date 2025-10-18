@@ -234,7 +234,7 @@ class StatsTests(TestCase):
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:
         clear_cache()
-        site_cache.stats = "not really stats"
+        site_cache.set("stats", "not really stats")
 
         with_cache = Stats.with_cache()
 

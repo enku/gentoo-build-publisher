@@ -71,8 +71,8 @@ class Stats:
         If the item is in the given cache with the given key, return it.
         Otherwise collect the stats and cache it. Then return it.
         """
-        if (stats := getattr(cache, "stats", None)) is None:
-            stats = cache.stats = cls.collect()
+        if (stats := cache.get("stats", None)) is None:
+            cache.set("stats", stats := cls.collect())
 
         return cast(Self, stats)
 

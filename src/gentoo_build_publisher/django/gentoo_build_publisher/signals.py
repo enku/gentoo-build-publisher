@@ -12,7 +12,7 @@ def update_stats_cache() -> None:
     from gentoo_build_publisher.cache import cache
     from gentoo_build_publisher.stats import Stats
 
-    cache.stats = Stats.collect()
+    cache.set("stats", Stats.collect())
 
 
 def background_update_stats_cache(**_kwargs: Any) -> None:

@@ -217,9 +217,9 @@ class PyDispatcherAdapterTests(TestCase):
 @given(testkit.build)
 class DjangoSignalsTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        self.assertFalse(hasattr(cache, "stats"))
+        self.assertFalse(cache.contains("stats"))
 
         dispatcher.emit(fixtures.event, **dict(fixtures.kwargs))
 
-        stats = cache.stats
+        stats = cache.get("stats")
         self.assertIsInstance(stats, Stats)

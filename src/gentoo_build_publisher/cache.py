@@ -8,7 +8,6 @@ from typing import Any, Self
 
 from django.core.cache import cache as django_cache
 
-_NOT_SET = object()
 ATTR_DELIM = ":"
 CACHE_DELIM = "/"
 
@@ -19,10 +18,10 @@ class GBPSiteCache:
     DEFAULT_PREFIX = "gbp"
 
     def __init__(self, prefix: str = DEFAULT_PREFIX) -> None:
-        object.__setattr__(self, "_prefix", prefix)
-        set_timeout(self, None)
+        self._prefix = prefix
+        self._timeout = None
 
-    def __setattr__(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any) -> None:
         """Assign the given cache key the given value"""
         if key.startswith("_"):
             raise ValueError('Values must not being with "_"')
@@ -31,26 +30,22 @@ class GBPSiteCache:
 
         django_cache.set(self._get_key(key), value, timeout=self._timeout)
 
-    def __getattr__(self, key: str) -> Any:
+    def get(self, key: str, default: Any = None) -> Any:
         """Return the value in the cache given the key
 
         If the key does not exist in the cache, return the default.
         """
-        value = django_cache.get(self._get_key(key), _NOT_SET)
+        return django_cache.get(self._get_key(key), default)
 
-        if value is _NOT_SET:
-            raise AttributeError(key)
-
-        return value
-
-    def __delattr__(self, key: str) -> None:
+    def delete(self, key: str) -> None:
         """Delete the value associated with the given key.
 
         Silently ignore non-existent keys.
         """
         django_cache.delete(self._get_key(key))
 
-    def __contains__(self, key: str) -> bool:
+    def contains(self, key: str) -> bool:
+        """Tell whether the cache contains the given key"""
         return self._get_key(key) in django_cache
 
     def __truediv__(self, prefix: str) -> Self:

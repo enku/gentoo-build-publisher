@@ -16,24 +16,24 @@ class GBPSiteCacheTests(TestCase):
     def test_set(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
 
-        cache.foo = "bar"
+        cache.set("foo", "bar")
 
-        self.assertEqual(cache.foo, "bar")
+        self.assertEqual(cache.get("foo"), "bar")
         self.assertEqual(django_cache.get("test:foo"), "bar")
 
     def test_get(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
         django_cache.set("test:foo", "bar")
 
-        self.assertEqual(cache.foo, "bar")
+        self.assertEqual(cache.get("foo"), "bar")
 
     def test_delete(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
         django_cache.set("test:foo", "bar")
 
-        del cache.foo
+        cache.delete("foo")
 
-        self.assertNotIn("foo", cache)
+        self.assertFalse(cache.contains("foo"))
         self.assertEqual(django_cache.get("test.foo"), None)
 
     def test_clear(self, fixtures: Fixtures) -> None:
@@ -44,7 +44,7 @@ class GBPSiteCacheTests(TestCase):
 
         clear()
 
-        self.assertNotIn("foo", cache)
+        self.assertFalse(cache.contains("foo"))
         self.assertEqual(django_cache.get("test.foo"), None)
         self.assertEqual(django_cache.get("bar"), None)
 
@@ -52,36 +52,36 @@ class GBPSiteCacheTests(TestCase):
         root = GBPSiteCache(prefix="root")
         sub = root / "sub"
 
-        sub.foo = "bar"
+        sub.set("foo", "bar")
 
-        self.assertEqual(sub.foo, "bar")
+        self.assertEqual(sub.get("foo"), "bar")
         self.assertEqual(django_cache.get("root/sub:foo"), "bar")
-        self.assertEqual((root / "sub").foo, "bar")
+        self.assertEqual((root / "sub").get("foo"), "bar")
 
         subsub = sub / "sub"
 
-        subsub.bar = "baz"
+        subsub.set("bar", "baz")
 
-        self.assertEqual(subsub.bar, "baz")
+        self.assertEqual(subsub.get("bar"), "baz")
         self.assertEqual(django_cache.get("root/sub/sub:bar"), "baz")
 
     def test_contains(self, fixtures: Fixtures) -> None:
         root = GBPSiteCache(prefix="root")
         sub = root / "sub"
 
-        root.foo = "bar"
-        sub.baz = "bar"
+        root.set("foo", "bar")
+        sub.set("baz", "bar")
 
-        self.assertTrue("foo" in root)
-        self.assertFalse("baz" in root)
-        self.assertTrue("baz" in sub)
-        self.assertFalse("foo" in sub)
+        self.assertTrue(root.contains("foo"))
+        self.assertFalse(root.contains("baz"))
+        self.assertTrue(sub.contains("baz"))
+        self.assertFalse(sub.contains("foo"))
 
     def test_cache_key_with_slash_not_allowed(self, fixtures: Fixtures) -> None:
         cache = GBPSiteCache(prefix="test")
 
         with self.assertRaises(ValueError) as context:
-            setattr(cache, "/foo", "bar")
+            cache.set("/foo", "bar")
 
         self.assertEqual(str(context.exception), "Values must not contain '/'")
 
@@ -91,8 +91,8 @@ class GBPSiteCacheTests(TestCase):
         set_timeout(sub, 300)
 
         with mock.patch.object(django_cache, "set") as cache_set:
-            sub.key = 1
+            sub.set("key", 1)
             cache_set.assert_called_with("test/sub:key", 1, timeout=300)
 
-            root.key = 2
+            root.set("key", 2)
             cache_set.assert_called_with("test:key", 2, timeout=None)
