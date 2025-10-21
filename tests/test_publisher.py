@@ -297,7 +297,9 @@ class BuildPublisherResolveTagTests(TestCase):
 
         publisher.pull(build, tags=["mytag"])
 
-        self.assertEqual(build, publisher.resolve_tag(f"{machine}@mytag"))
+        self.assertEqual(
+            publisher.record(build), publisher.resolve_tag(f"{machine}@mytag")
+        )
 
     def test_with_published_tag(self, fixtures: Fixtures) -> None:
         build = fixtures.build
@@ -305,7 +307,7 @@ class BuildPublisherResolveTagTests(TestCase):
 
         publisher.publish(build)
 
-        self.assertEqual(build, publisher.resolve_tag(f"{machine}@"))
+        self.assertEqual(publisher.record(build), publisher.resolve_tag(f"{machine}@"))
 
     def test_with_published_tag_but_none_published(self, fixtures: Fixtures) -> None:
         build = fixtures.build
@@ -322,10 +324,103 @@ class BuildPublisherResolveTagTests(TestCase):
         publisher.pull(fixtures.build)
         publisher.pull(build2)
 
-        self.assertEqual(build2, publisher.resolve_tag(f"{machine}@@"))
+        self.assertEqual(
+            publisher.record(build2), publisher.resolve_tag(f"{machine}@@")
+        )
 
     def test_with_latest_tag_none_pulled(self, fixtures: Fixtures) -> None:
         self.assertIsNone(publisher.resolve_tag("bogus@@"))
+
+    def test_published_plus(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build
+        next_build = fixtures.build2
+        machine = fixtures.build.machine
+
+        publisher.publish(published_build)
+        publisher.pull(next_build)
+
+        self.assertEqual(
+            publisher.record(next_build), publisher.resolve_tag(f"{machine}@+1")
+        )
+
+    def test_published_plus_zero(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.publish(published_build)
+
+        self.assertEqual(
+            publisher.record(published_build), publisher.resolve_tag(f"{machine}@+0")
+        )
+
+    def test_published_plus_with_no_next(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.publish(published_build)
+
+        self.assertEqual(None, publisher.resolve_tag(f"{machine}@+2"))
+
+    def test_published_minus(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build2
+        previous_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.pull(previous_build)
+        publisher.publish(published_build)
+
+        self.assertEqual(
+            publisher.record(previous_build), publisher.resolve_tag(f"{machine}@-1")
+        )
+
+    def test_published_minus_zero(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.publish(published_build)
+
+        self.assertEqual(
+            publisher.record(published_build), publisher.resolve_tag(f"{machine}@-0")
+        )
+
+    def test_published_minus_with_no_previous(self, fixtures: Fixtures) -> None:
+        published_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.publish(published_build)
+
+        self.assertEqual(None, publisher.resolve_tag(f"{machine}@-2"))
+
+    def test_tagged_plus(self, fixtures: Fixtures) -> None:
+        tagged_build = fixtures.build
+        next_build = fixtures.build2
+        machine = fixtures.build.machine
+
+        publisher.pull(tagged_build, tags=["test"])
+        publisher.pull(next_build)
+
+        resolved = publisher.resolve_tag(f"{machine}@test+1")
+
+        self.assertEqual(publisher.record(next_build), resolved)
+
+    def test_tagged_minus(self, fixtures: Fixtures) -> None:
+        tagged_build = fixtures.build2
+        previous_build = fixtures.build
+        machine = fixtures.build.machine
+
+        publisher.pull(previous_build)
+        publisher.pull(tagged_build, tags=["test"])
+
+        self.assertEqual(
+            publisher.record(previous_build), publisher.resolve_tag(f"{machine}@test-1")
+        )
+
+    def test_no_tag_sym(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        publisher.pull(build)
+        machine = fixtures.build.machine
+
+        self.assertEqual(None, publisher.resolve_tag(machine))
 
 
 @fixture()
@@ -472,7 +567,7 @@ class DispatcherTestCase(TestCase):
 
         self.assertTrue(called)
         self.assertEqual(tag_given, "test")
-        self.assertEqual(build_given, build)
+        self.assertEqual(build_given, publisher.record(build))
 
     def test_untag_unpublish(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
@@ -494,7 +589,7 @@ class DispatcherTestCase(TestCase):
 
         self.assertTrue(called)
         self.assertEqual(tag_given, "")
-        self.assertEqual(build_given, build)
+        self.assertEqual(build_given, publisher.record(build))
 
     def test_untag_not_tagged(self, fixtures: Fixtures) -> None:
         """Untagging a machine that doesn't have the tag doesn't emit the signal"""

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from datetime import UTC, datetime
 from difflib import Differ
 from typing import Any, Iterable, Self
@@ -42,6 +43,8 @@ from gentoo_build_publisher.types import (
 from gentoo_build_publisher.utils.time import utctime
 
 logger = logging.getLogger(__name__)
+
+TAGGED_PLUS_OR_MINUS_N = re.compile(r"(.+|)?([+-])(\d+$)")
 
 
 class BuildPublisher:
@@ -112,7 +115,7 @@ class BuildPublisher:
         """
         return [tag for tag in self.storage.get_tags(build) if tag]
 
-    def resolve_tag(self, tag_name: str) -> Build | None:
+    def resolve_tag(self, tag_name: str) -> BuildRecord | None:
         """Resolve the given tag
 
         `tag_name` is of the format: <machine>@<tag>
@@ -121,17 +124,42 @@ class BuildPublisher:
 
         `<machine>@@` resolves to the latest build for the given machine.
 
+        `<machine>@+n resolves to the nth build since the published build
+
+        `<machine>@-n resolves to the nth build before the published build
+
+        `<machine>@tag+n resolves to the nth build since the tagged build
+
+        `<machine>@tag-n resolves to the nth build before the tagged build
+
         If the given tag does not resolve, return `None`.
         """
-        machine, _, tag = tag_name.partition(TAG_SYM)
+        records = self.repo.build_records
+        machine, tag_sym, tag = tag_name.partition(TAG_SYM)
+        record: BuildRecord | None = None
 
-        if machine and tag == "@":
-            if record := self.latest_build(machine, completed=True):
-                return Build(machine=record.machine, build_id=record.build_id)
+        if not tag_sym:
             return None
 
+        if machine and tag == TAG_SYM:
+            if record := self.latest_build(machine, completed=True):
+                return record
+            return None
+
+        if match := TAGGED_PLUS_OR_MINUS_N.match(tag):
+            tag, sign, offset_str = match.groups()
+            offset = int(offset_str)
+            adjacent = records.next if sign == "+" else records.previous
+
+            if record := self.resolve_tag(f"{machine}{TAG_SYM}{tag}"):
+                if record := self.record(record):
+                    for _ in range(offset):
+                        if (record := adjacent(record)) is None:
+                            break
+            return record
+
         try:
-            return self.storage.resolve_tag(tag_name)
+            return self.record(self.storage.resolve_tag(tag_name))
         except FileNotFoundError:
             return None
 
