@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-docstring,unused-argument
 import datetime as dt
-import os
 from typing import Any
 from unittest import mock
 
@@ -33,14 +32,16 @@ class MaybeRequiresAPIKeyTests(TestCase):
     query = 'mutation { scheduleBuild(machine: "babette") }'
 
     def test_enabled(self, fixtures: Fixtures) -> None:
-        os.environ["BUILD_PUBLISHER_API_KEY_ENABLE"] = "yes"
+        environ = fixtures.environ
+        environ["BUILD_PUBLISHER_API_KEY_ENABLE"] = "yes"
 
         error = graphql(fixtures.client, self.query)["errors"][0]["message"]
 
         self.assertEqual(error, "Unauthorized to resolve scheduleBuild")
 
     def test_disabled(self, fixtures: Fixtures) -> None:
-        os.environ["BUILD_PUBLISHER_API_KEY_ENABLE"] = "no"
+        environ = fixtures.environ
+        environ["BUILD_PUBLISHER_API_KEY_ENABLE"] = "no"
 
         response = graphql(fixtures.client, self.query)
 

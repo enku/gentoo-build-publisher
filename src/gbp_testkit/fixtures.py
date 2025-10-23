@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, MutableMapping
 from unittest import mock
 
 from cryptography.fernet import Fernet
@@ -56,7 +56,7 @@ def tmpdir(_fixtures: Fixtures) -> FixtureContext[Path]:
 @fixture(tmpdir)
 def environ(
     fixtures: Fixtures, environ: dict[str, str] | None = None, clear: bool = False
-) -> FixtureContext[dict[str, str]]:
+) -> FixtureContext[MutableMapping[str, str]]:
     """Override os.environ
 
     When the clear parameter is True, the os.environ is replaced with an empty Mapping.
@@ -74,7 +74,7 @@ def environ(
         **environ,
     }
     with mock.patch.dict(os.environ, mock_environ, clear=clear):
-        yield mock_environ
+        yield os.environ
 
 
 @fixture(environ)
