@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.graphql import schema
-from gentoo_build_publisher.types import Build
+from gentoo_build_publisher.types import Build, MachineNotFoundError
 
 from . import context as ctx
 from . import utils
@@ -33,12 +33,13 @@ def _(request: HttpRequest) -> ViewContext:
 @render("gentoo_build_publisher/machine/main.html")
 def _(request: HttpRequest, machine: str) -> ViewContext:
     """Response for the machines page"""
-    if not next(iter(publisher.repo.build_records.for_machine(machine)), None):
-        raise Http404("No builds for this machine")
-
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
     input_context = ctx.MachineInputContext(days=days, machine=machine)
-    return ctx.create_machine_context(input_context)
+
+    try:
+        return ctx.create_machine_context(input_context)
+    except MachineNotFoundError:
+        raise Http404("No builds for this machine") from None
 
 
 @view("machines/<str:machine>/builds/@/")

@@ -9,7 +9,7 @@ from django.utils import timezone
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.stats import Stats
-from gentoo_build_publisher.types import Build, Package
+from gentoo_build_publisher.types import Build, MachineNotFoundError, Package
 from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 
 from .utils import (
@@ -163,7 +163,10 @@ def create_machine_context(input_context: MachineInputContext) -> MachineContext
     now = input_context.now
     chart_days = get_chart_days(now, input_context.days)
     machine = input_context.machine
-    machine_info = stats.machine_info[machine]
+
+    if (machine_info := stats.machine_info.get(machine)) is None:
+        raise MachineNotFoundError(machine)
+
     latest_build = stats.latest_build[machine]
     storage = stats.total_package_size[machine]
 

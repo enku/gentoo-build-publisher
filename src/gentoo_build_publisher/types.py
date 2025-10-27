@@ -15,6 +15,10 @@ class InvalidBuild(ValueError):
     """Build not in machine.build_id format"""
 
 
+class MachineNotFoundError(LookupError):
+    """To raise when the given machine is not found"""
+
+
 @dataclass(frozen=True)
 class Build:
     """A build ID (machine.build_id)"""
