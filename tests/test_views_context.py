@@ -54,13 +54,16 @@ class CreateDashboardContextTests(TestCase):
         polaris2 = BuildFactory(machine="polaris")
         publisher.pull(polaris2)
 
+        # Save a record. This doesn't do a pull, so won't emit the signal to update the
+        # stats cache. This happens, e.g. when a pull request comes in however the task
+        # has yet to complete the request.
         polaris3 = BuildRecordFactory(machine="polaris")
         publisher.repo.build_records.save(polaris3)
 
         input_context = self.input_context()
         ctx = create_dashboard_context(input_context)
         self.assertEqual(len(ctx["chart_days"]), 2)
-        self.assertEqual(ctx["build_count"], 4)
+        self.assertEqual(ctx["build_count"], 3)
         self.assertEqual(
             ctx["build_packages"],
             {
@@ -72,7 +75,7 @@ class CreateDashboardContextTests(TestCase):
             },
         )
         self.assertEqual(ctx["gradient_colors"], ["#504575", "#dddaec"])
-        self.assertEqual(ctx["builds_per_machine"], [3, 1])
+        self.assertEqual(ctx["builds_per_machine"], [2, 1])
         self.assertEqual(ctx["machines"], ["polaris", "lighthouse"])
         self.assertEqual(ctx["now"], input_context.now)
         self.assertEqual(ctx["package_count"], 14)

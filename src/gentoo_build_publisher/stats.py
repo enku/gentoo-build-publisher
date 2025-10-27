@@ -14,11 +14,26 @@ type MachineName = str
 
 
 @dataclass(kw_only=True, frozen=True)
+class MachineInfoDataClass:
+    """MachineInfo as a dataclass
+
+    MachineInfo is lazy. But when we cache stats we don't want to be lazy.
+    """
+
+    machine: str
+    build_count: int
+    builds: list[BuildRecord]
+    latest_build: BuildRecord | None
+    published_build: Build | None
+    tags: list[str]
+
+
+@dataclass(kw_only=True, frozen=True)
 class Stats:
     # pylint: disable=too-many-instance-attributes
 
     machines: list[MachineName]
-    machine_info: dict[MachineName, MachineInfo]
+    machine_info: dict[MachineName, MachineInfoDataClass]
     package_counts: dict[MachineName, int]
     build_packages: dict[BuildRecord, list[str]]
     latest_build: dict[MachineName, BuildRecord | None]
@@ -80,9 +95,18 @@ class Stats:
 class StatsCollector:
     """Interface to collect statistics about the Publisher"""
 
-    def machine_info(self, machine: MachineName) -> MachineInfo:
+    def machine_info(self, machine: MachineName) -> MachineInfoDataClass:
         """Return the MachineInfo object for the given machine"""
-        return MachineInfo(machine)
+        m = MachineInfo(machine)
+
+        return MachineInfoDataClass(
+            machine=m.machine,
+            builds=m.builds,
+            build_count=m.build_count,
+            latest_build=m.latest_build,
+            published_build=m.published_build,
+            tags=m.tags,
+        )
 
     @property
     def machines(self) -> list[MachineName]:
