@@ -147,15 +147,13 @@ class BuildPublisher:
             return None
 
         if match := TAGGED_PLUS_OR_MINUS_N.match(tag):
-            tag, sign, offset_str = match.groups()
-            offset = int(offset_str)
+            tag, sign, offset = match.groups()
             adjacent = records.next if sign == "+" else records.previous
 
             if record := self.resolve_tag(f"{machine}{TAG_SYM}{tag}"):
-                if record := self.record(record):
-                    for _ in range(offset):
-                        if (record := adjacent(record)) is None:
-                            break
+                for _ in range(int(offset)):
+                    if (record := adjacent(record)) is None:
+                        break
             return record
 
         try:
