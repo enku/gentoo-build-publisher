@@ -23,8 +23,8 @@ from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import ApiKey, Build
 from gentoo_build_publisher.utils import decrypt, encrypt
 
-RELATED = ("buildlog", "buildnote", "keptbuild")
 _manager = BuildModel.objects
+RELATED = _manager.select_related("buildlog", "buildnote", "keptbuild")
 
 
 class RecordDB:
@@ -67,11 +67,10 @@ class RecordDB:
         if isinstance(build, BuildRecord):
             return build
 
-        query = _manager.select_related(*RELATED)
+        query = RELATED.filter(machine=build.machine, build_id=build.build_id)
+
         try:
-            build_model: BuildModel = query.get(
-                machine=build.machine, build_id=build.build_id
-            )
+            build_model: BuildModel = query.get()
         except BuildModel.DoesNotExist:
             raise RecordNotFound(build) from None
 
@@ -81,8 +80,7 @@ class RecordDB:
     def for_machine(machine: str) -> Iterable[BuildRecord]:
         """Return BuildRecords for the given machine"""
         built = models.F("built")
-        query = _manager.select_related(*RELATED)
-        query = query.filter(machine=machine)
+        query = RELATED.filter(machine=machine)
         query = query.order_by(built.desc(nulls_last=True), "-submitted")
 
         return (build_model.record() for build_model in query)
@@ -121,9 +119,7 @@ class RecordDB:
         if completed:
             field_lookups["completed__isnull"] = False
 
-        query = (
-            _manager.filter(**field_lookups).select_related(*RELATED).order_by("-built")
-        )
+        query = RELATED.filter(**field_lookups).order_by("-built")
 
         try:
             build_model: BuildModel = query[0]
@@ -142,8 +138,7 @@ class RecordDB:
         if completed:
             field_lookups["completed__isnull"] = False
 
-        query = _manager.filter(**field_lookups)
-        query = query.select_related(*RELATED).order_by("built")
+        query = RELATED.filter(**field_lookups).order_by("built")
 
         try:
             build_model: BuildModel = query[0]
@@ -170,9 +165,8 @@ class RecordDB:
         else:
             built = "-build_id"  # backwards compat
 
-        query = _manager.filter(**field_lookups)
-        query = query.order_by(built)
-        query = query.select_related(*RELATED)
+        query = RELATED.filter(**field_lookups).order_by(built)
+
         try:
             build_model: BuildModel = query[0]
         except IndexError:
@@ -195,8 +189,7 @@ class RecordDB:
             "note": "buildnote__note__icontains",
         }.get(field, f"{field}__icontains")
 
-        query = _manager.select_related(*RELATED)
-        query = query.filter(**{"machine": machine, field_filter: key})
+        query = RELATED.filter(**{"machine": machine, field_filter: key})
         query = query.order_by("-submitted")
 
         return (build_model.record() for build_model in query)
