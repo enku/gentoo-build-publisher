@@ -200,9 +200,9 @@ def build_with_slash(build: Build) -> str:
 def logs_link(build: Build) -> str:
     """Render the build logs link"""
     path = reverse(
-        "gbp-logs", kwargs={"machine": build.machine, "build_id": build.build_id}
+        "gbp-logs-fancy", kwargs={"machine": build.machine, "build_id": build.build_id}
     )
-    return f'<a class="logs-link" href="{path}"><i class="bi bi-download"></i></a>'
+    return f'<a class="logs-link" href="{path}"><i class="bi bi-arrow-right-square"></i></a>'
 
 
 @register.inclusion_tag("gentoo_build_publisher/machine/package_row.html")

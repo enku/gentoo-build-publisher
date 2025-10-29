@@ -7,7 +7,7 @@ from unittest import TestCase as BaseTestCase
 
 from django import urls
 from django.http import HttpResponse
-from unittest_fixtures import Fixtures, fixture, given, where
+from unittest_fixtures import Fixtures, fixture, given, params, where
 
 import gbp_testkit.fixtures as testkit
 from gentoo_build_publisher import publisher
@@ -303,23 +303,31 @@ class BuildViewTests(TestCase):
 
 
 @given(artifacts, testkit.client)
+@params(view=("logs.txt", "logs/"))
 class LogsTests(TestCase):
     def test_gets_logs(self, fixtures: Fixtures) -> None:
         build = fixtures.artifacts["latest"]
         record = publisher.repo.build_records.get(build)
 
-        url = f"/machines/{build.machine}/builds/{build.build_id}/logs.txt"
+        url = f"/machines/{build.machine}/builds/{build.build_id}/{fixtures.view}"
         client = fixtures.client
         response = client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.text, record.logs)
-        self.assertEqual(response["Content-Type"], "text/plain")
+
+        if fixtures.view == "logs.txt":
+            self.assertEqual(response.text, record.logs)
+            self.assertEqual(response["Content-Type"], "text/plain")
+        else:
+            self.assertIn(
+                "gentoo_build_publisher/build/logs.html",
+                [i.name for i in response.templates],
+            )
 
     def test_404(self, fixtures: Fixtures) -> None:
         client = fixtures.client
 
-        response = client.get("/machines/bogus/builds/123/logs.txt")
+        response = client.get(f"/machines/bogus/builds/123/{fixtures.view}")
 
         self.assertEqual(response.status_code, 404)
 
@@ -327,7 +335,7 @@ class LogsTests(TestCase):
         client = fixtures.client
         build = fixtures.artifacts["latest"]
         publisher.tag(build, "test")
-        url = "/machines/lighthouse/builds/@test/logs.txt"
+        url = f"/machines/lighthouse/builds/@test/{fixtures.view}"
 
         response = client.get(url)
 
@@ -335,7 +343,7 @@ class LogsTests(TestCase):
             302, response.status_code, "Did not respond with temporary redirect"
         )
         self.assertEqual(
-            f"/machines/lighthouse/builds/{build.build_id}/logs.txt",
+            f"/machines/lighthouse/builds/{build.build_id}/{fixtures.view}",
             response["Location"],
             "Redirect was not the expected URL",
         )
@@ -343,7 +351,7 @@ class LogsTests(TestCase):
     def test_given_tag_does_not_exist(self, fixtures: Fixtures) -> None:
         client = fixtures.client
 
-        response = client.get("/machines/lighthouse/builds/@bogus/logs.txt")
+        response = client.get(f"/machines/lighthouse/builds/@bogus/{fixtures.view}")
 
         self.assertEqual(404, response.status_code, "Did not respond with 404")
 
@@ -351,7 +359,7 @@ class LogsTests(TestCase):
         client = fixtures.client
         build = fixtures.artifacts["latest"]
         publisher.publish(build)
-        url = "/machines/lighthouse/builds/@/logs.txt"
+        url = f"/machines/lighthouse/builds/@/{fixtures.view}"
 
         response = client.get(url)
 
@@ -359,7 +367,7 @@ class LogsTests(TestCase):
             302, response.status_code, "Did not respond with temporary redirect"
         )
         self.assertEqual(
-            f"/machines/lighthouse/builds/{build.build_id}/logs.txt",
+            f"/machines/lighthouse/builds/{build.build_id}/{fixtures.view}",
             response["Location"],
             "Redirect was not the expected URL",
         )

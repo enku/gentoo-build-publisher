@@ -76,6 +76,24 @@ def _(request: HttpRequest, machine: str, build_id: str) -> HttpResponse:
     return HttpResponse(build.logs or "", content_type="text/plain")
 
 
+@view("machines/<str:machine>/builds/@/logs/")
+@view("machines/<str:machine>/builds/@<str:tag>/logs/")
+def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+    """logs page by @tag"""
+    build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
+
+    return redirect("gbp-logs-fancy", machine=machine, build_id=build.build_id)
+
+
+@view("machines/<str:machine>/builds/<str:build_id>/logs/", name="gbp-logs-fancy")
+@render("gentoo_build_publisher/build/logs.html")
+def _(request: HttpRequest, machine: str, build_id: str) -> ctx.LogsContext:
+    """Fancy logs page"""
+    build = utils.get_build_record_or_404(machine, build_id)
+
+    return ctx.create_build_logs_context(ctx.LogsInputContext(build=build))
+
+
 @view("about/", name="gbp-about")
 @render("gentoo_build_publisher/about/main.html")
 def _(request: HttpRequest) -> ViewContext:

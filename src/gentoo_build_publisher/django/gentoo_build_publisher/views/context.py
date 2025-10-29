@@ -73,6 +73,13 @@ class BuildContext(TypedDict):
     tags: list[str]
 
 
+class LogsContext(TypedDict):
+    """gbp-logs-fancy context"""
+
+    build: BuildRecord
+    gradient_colors: Gradient
+
+
 class AboutContext(TypedDict):
     """Context for the about view"""
 
@@ -198,6 +205,13 @@ class BuildInputContext:
     build: BuildRecord
 
 
+@dataclass(frozen=True, kw_only=True)
+class LogsInputContext:
+    """ViewInputContext for the gbp-logs-fancy view"""
+
+    build: BuildRecord
+
+
 def create_build_context(input_context: BuildInputContext) -> BuildContext:
     """Return context for the build view"""
     build = input_context.build
@@ -211,6 +225,14 @@ def create_build_context(input_context: BuildInputContext) -> BuildContext:
         "packages_built": packages_built,
         "published": publisher.published(build),
         "tags": publisher.tags(build),
+    }
+
+
+def create_build_logs_context(input_context: LogsInputContext) -> LogsContext:
+    """Return context for the gbp-logs-fancy view"""
+    return {
+        "build": input_context.build,
+        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
     }
 
 

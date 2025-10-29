@@ -1,0 +1,41 @@
+{% extends "gentoo_build_publisher/base.html" %}
+{% load gbp static %}
+{% block title %}Gentoo Build Publisher: {{ build }} Logs{% endblock %}
+
+{% block style %}
+{{ block.super }}
+      .log-area {
+        font-size: 16px;
+        line-height: 1.5;
+        height: calc(24 * 1.5 * 16px);
+        overflow-y: auto;
+        font-family: monospace;
+        padding: 15px;
+      }
+{% endblock %}
+
+{% block main %}
+  <div class="row">
+    {% roundrect build|build_with_slash|add:" logs" "" 0.5 %}
+  </div>
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-header text-end">
+        <a href="{% url 'gbp-builds' machine=build.machine build_id=build.build_id %}"><i class="bi bi-arrow-up-square"></i></a>
+        &nbsp;
+        <a href="{% url 'gbp-logs' machine=build.machine build_id=build.build_id %}" download><i class="bi bi-download"></i></a>
+      </div>
+      <div class="card-body">
+        <div class="log-area">
+<pre>
+{{ build.logs }}
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ gradient_colors|json_script:'gradientColors' }}
+{% endblock %}
