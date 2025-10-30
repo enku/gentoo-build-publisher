@@ -107,7 +107,7 @@ class StatsCollectorTests(TestCase):
 
         sc = fixtures.stats_collector
 
-        self.assertEqual(sc.total_package_size("babette"), 15941)
+        self.assertEqual(sc.total_package_size("babette"), 16279)
         self.assertEqual(sc.total_package_size("bogus"), 0)
 
     def test_latest_build(self, fixtures: Fixtures) -> None:
@@ -210,7 +210,7 @@ class StatsTests(TestCase):
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
         self.assertEqual(
-            stats.total_package_size, {"babette": 22554, "lighthouse": 15941}
+            stats.total_package_size, {"babette": 22730, "lighthouse": 16279}
         )
 
     def test_with_cache_creates_cache_entry(self, fixtures: Fixtures) -> None:
@@ -229,7 +229,7 @@ class StatsTests(TestCase):
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
         self.assertEqual(
-            stats.total_package_size, {"babette": 22554, "lighthouse": 15941}
+            stats.total_package_size, {"babette": 22730, "lighthouse": 16279}
         )
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:

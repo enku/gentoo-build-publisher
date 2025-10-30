@@ -645,7 +645,7 @@ class MachinesQueryTestCase(TestCase):
                                 "build": {"id": str(lighthouse_builds[0])},
                             },
                             {
-                                "cpv": "media-libs/markdown-1.0",
+                                "cpv": "dev-python/xwayland-1.0",
                                 "build": {"id": str(lighthouse_builds[2])},
                             },
                         ],
