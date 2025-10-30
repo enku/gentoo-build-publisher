@@ -298,11 +298,11 @@ class BuildLinkTests(TemplateTagTests):
 
 
 @given(testkit.build)
-class BuildWithSlashTests(TemplateTagTests):
+class BuildWithSpaceTests(TemplateTagTests):
     def test(self, fixtures: Fixtures) -> None:
         self.assertEqual(
-            self.render("{{ build|build_with_slash }}", build=fixtures.build),
-            f"babette/{fixtures.build.build_id}",
+            self.render("{{ build|build_with_space }}", build=fixtures.build),
+            f"babette {fixtures.build.build_id}",
         )
 
 

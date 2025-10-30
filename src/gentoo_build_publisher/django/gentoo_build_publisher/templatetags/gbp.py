@@ -191,9 +191,9 @@ def build_link(build: BuildRecord) -> str:
 
 
 @register.filter
-def build_with_slash(build: Build) -> str:
-    """Return build with slash between machine name and build ID"""
-    return f"{build.machine}/{build.build_id}"
+def build_with_space(build: Build) -> str:
+    """Return build with space between machine name and build ID"""
+    return f"{build.machine} {build.build_id}"
 
 
 @register.filter(is_safe=True)
