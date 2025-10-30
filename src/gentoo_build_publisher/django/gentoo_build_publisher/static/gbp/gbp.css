@@ -64,7 +64,7 @@ main {
 }
 
 .published {
-    font-weight: 800;
+    font-weight: 600;
 }
 
 @media (min-width: 768px) {
