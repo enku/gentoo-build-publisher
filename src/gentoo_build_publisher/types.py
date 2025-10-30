@@ -116,6 +116,7 @@ class Change:
 
     item: str
     status: ChangeState
+    package: Package
 
 
 @dataclass(frozen=True)

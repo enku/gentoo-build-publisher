@@ -71,6 +71,7 @@ enum ChangeStateEnum {
 
 type Change {
   item: String!
+  package: Package!
   status: ChangeStateEnum!
 }
 

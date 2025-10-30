@@ -502,6 +502,50 @@ class DiffQueryTestCase(TestCase):
             result["errors"][0]["message"], "Build does not exist: bogus.1"
         )
 
+    def test_diff_with_package(self, fixtures: Fixtures) -> None:
+        query = """
+        query Diff($left: ID!, $right: ID!) {
+          diff(left: $left, right: $right) {
+            items {
+              package {
+                build { id }
+                cpv
+                buildId
+              }
+              status
+            }
+          }
+        }
+        """
+        left = fixtures.diff_query_builds["left"]
+        right = fixtures.diff_query_builds["right"]
+        variables = {"left": left.id, "right": right.id}
+        result = graphql(fixtures.client, query, variables=variables)
+
+        expected = {
+            "diff": {
+                "items": [
+                    {
+                        "package": {
+                            "build": {"id": left.id},
+                            "cpv": "app-arch/tar-1.34",
+                            "buildId": "1",
+                        },
+                        "status": "REMOVED",
+                    },
+                    {
+                        "package": {
+                            "build": {"id": right.id},
+                            "cpv": "app-arch/tar-1.35",
+                            "buildId": "1",
+                        },
+                        "status": "ADDED",
+                    },
+                ]
+            }
+        }
+        assert_data(self, result, expected)
+
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client)
 class MachinesQueryTestCase(TestCase):
