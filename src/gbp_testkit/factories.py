@@ -296,7 +296,7 @@ class ArtifactFactory:
 
         return self.timer
 
-    def _get_build_id(self, build: Build, cpv: str, build_id: int|None) -> int:
+    def _get_build_id(self, build: Build, cpv: str, build_id: int | None) -> int:
         if build_id is not None:
             return build_id
 
