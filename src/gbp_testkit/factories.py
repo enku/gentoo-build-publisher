@@ -155,11 +155,12 @@ class ArtifactFactory:
         build: Build,
         cpv: str,
         repo: str = "gentoo",
-        build_id: int = 1,
+        build_id: int | None = None,
         build_time: int | None = None,
     ) -> CICDPackage:
         """Pretend we've built a package and add it to the package index"""
         build_info = self.build_info(build)
+        build_id = self._get_build_id(build, cpv, build_id)
 
         if build_time is None:
             build_time = self.advance()
@@ -294,6 +295,23 @@ class ArtifactFactory:
         self.timer += seconds
 
         return self.timer
+
+    def _get_build_id(self, build: Build, cpv: str, build_id: int|None) -> int:
+        if build_id is not None:
+            return build_id
+
+        if len(self._builds) < 2:
+            return 1
+
+        build_list = list(self._builds)
+        previous_build = Build.from_id(build_list[build_list.index(build.id) - 1])
+        packages = self.get_packages_for_build(previous_build)
+        packages = [p for p in packages if p.cpv == cpv]
+
+        if not packages:
+            return 1
+
+        return packages[-1].build_id + 1
 
 
 def package_factory() -> Generator[str, None, None]:

@@ -67,6 +67,17 @@ class ArtifactFactoryTestCase(TestCase):
         added = [i[0] for i in build_info.package_info if i[1] is PackageStatus.ADDED]
         self.assertEqual(added, [expected])
 
+    def test_build_on_same_package_bumps_buildid(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        fixtures.builder.build(
+            build, "app-vim/gentoo-syntax-1", repo="marduk", build_id=35
+        )
+        build = BuildFactory()
+        package = fixtures.builder.build(
+            build, "app-vim/gentoo-syntax-1", repo="marduk"
+        )
+        self.assertEqual(package.build_id, 36)
+
     def test_remove_should_remove_package(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         builder = ArtifactFactory()
