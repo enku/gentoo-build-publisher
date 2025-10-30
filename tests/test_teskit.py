@@ -79,6 +79,33 @@ class ArtifactFactoryTestCase(TestCase):
         )
         self.assertEqual(package.build_id, 36)
 
+    def test_build_on_same_package_and_slot_removes_previous(
+        self, fixtures: Fixtures
+    ) -> None:
+        builder: ArtifactFactory = fixtures.builder
+        build1 = BuildFactory()
+        builder.build(build1, "app-vim/gentoo-syntax-1")
+        build2 = BuildFactory()
+        builder.build(build2, "app-vim/gentoo-syntax-2")
+
+        packages = builder.get_packages_for_build(build2)
+
+        self.assertEqual(len(packages), 1)
+        package = packages[0]
+        self.assertEqual(
+            (package.cpv, package.build_id), ("app-vim/gentoo-syntax-2", 1)
+        )
+
+        build3 = BuildFactory()
+        builder.build(build3, "app-vim/gentoo-syntax-3", slot=3)
+        packages = builder.get_packages_for_build(build3)
+
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(
+            [(p.cpv, p.build_id) for p in packages],
+            [("app-vim/gentoo-syntax-2", 1), ("app-vim/gentoo-syntax-3", 1)],
+        )
+
     def test_remove_should_remove_package(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
         builder = ArtifactFactory()

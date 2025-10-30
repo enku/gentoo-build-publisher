@@ -3,12 +3,13 @@
 # pylint: disable=missing-docstring,too-few-public-methods
 import datetime as dt
 import io
+import re
 import tarfile
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import product
-from typing import Generator
+from typing import Generator, Self
 
 import factory
 
@@ -21,6 +22,8 @@ from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import cpv_to_path
 
 from .helpers import MockJenkins
+
+CPV = re.compile(r"(.*)-(\d.*)")
 
 
 class PackageStatus(Enum):
@@ -44,6 +47,17 @@ class CICDPackage:
     size: int
     slot: int
     build_time: int
+
+    def cp(self) -> str:
+        """Return the cp portion of the cpv"""
+        if match := CPV.match(self.cpv):
+            return match.group(1)
+
+        raise ValueError(self.cpv)
+
+    def replaces(self, other: Self) -> bool:
+        """Return True if other package can replace me"""
+        return (self.cp(), self.slot) == (other.cp(), other.slot)
 
 
 @dataclass(frozen=True)
@@ -178,6 +192,12 @@ class ArtifactFactory:
             slot=slot,
             build_time=build_time,
         )
+        if previous_build := self.get_previous_build(build):
+            package_info = previous_build.package_info
+            previous_packages = [p[0] for p in package_info if package.replaces(p[0])]
+            for previous_pkg in previous_packages:
+                build_info.package_info.append((previous_pkg, PackageStatus.REMOVED))
+
         build_info.package_info.append((package, PackageStatus.ADDED))
 
         return package
@@ -185,6 +205,19 @@ class ArtifactFactory:
     def build_info(self, build: Build) -> BuildInfo:
         """Return the BuildInfo for the given build"""
         return self._builds.setdefault(build.id, BuildInfo(self.timer * 1000, []))
+
+    def get_previous_build(self, build: Build) -> BuildInfo | None:
+        """Return the given build's previous build's BuildInfo
+
+        If there is no previous build, return None
+        """
+        for build_id, build_info in reversed(self._builds.items()):
+            b = Build.from_id(build_id)
+            if build == b:
+                continue
+            if build.machine == b.machine:
+                return build_info
+        return None
 
     def remove(self, build: Build, package: CICDPackage) -> None:
         """Remove a package from the build"""
@@ -258,7 +291,10 @@ class ArtifactFactory:
                 if status is PackageStatus.ADDED:
                     packages.append(package)
                 else:
-                    packages.remove(package)
+                    try:
+                        packages.remove(package)
+                    except ValueError:
+                        pass
 
             if build_id == build.id:
                 break
