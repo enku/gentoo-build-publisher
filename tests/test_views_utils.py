@@ -89,11 +89,11 @@ class ExperimentalMarkerTests(DjangoTestCase):
             self.assertEqual(response.status_code, 200)
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, pf=testkit.cpv_generator)
 class GetPackageURLTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         builder = publisher.jenkins.artifact_builder  # type: ignore
-        [build] = create_builds_and_packages("babette", 1, 1, builder)
+        [build] = create_builds_and_packages("babette", 1, 1, builder, fixtures.pf)
         publisher.pull(build)
         package = publisher.get_packages(build)[-1]
         request = HttpRequest()

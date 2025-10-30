@@ -8,12 +8,7 @@ from unittest_fixtures import Fixtures, fixture, given, params, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
-from gbp_testkit.factories import (
-    PACKAGE_INDEX,
-    BuildFactory,
-    BuildRecordFactory,
-    package_factory,
-)
+from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
 from gentoo_build_publisher import plugins, publisher
 from gentoo_build_publisher.cache import clear as cache_clear
@@ -547,7 +542,7 @@ class DiffQueryTestCase(TestCase):
         assert_data(self, result, expected)
 
 
-@given(testkit.tmpdir, testkit.publisher, testkit.client)
+@given(testkit.tmpdir, testkit.publisher, testkit.client, pf=testkit.cpv_generator)
 class MachinesQueryTestCase(TestCase):
     """Tests for the machines query"""
 
@@ -556,10 +551,9 @@ class MachinesQueryTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         babette_builds = BuildFactory.create_batch(3, machine="babette")
         lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
-        pf = package_factory()
 
         for build in babette_builds + lighthouse_builds:
-            publisher.jenkins.artifact_builder.build(build, next(pf))
+            publisher.jenkins.artifact_builder.build(build, next(fixtures.pf))
             publisher.pull(build)
 
         # publish a build

@@ -1,10 +1,10 @@
 """helpers for writing tests"""
 
 # pylint: disable=missing-docstring
-from typing import Any
+from typing import Any, Generator
 from unittest import mock
 
-from gbp_testkit.factories import ArtifactFactory, BuildFactory, package_factory
+from gbp_testkit.factories import ArtifactFactory, BuildFactory
 from gentoo_build_publisher.types import Build
 
 PACKAGE_LINES: list[str] = [
@@ -35,14 +35,17 @@ def make_entry_point(name: str, loaded_value: Any) -> mock.Mock:
 
 
 def create_builds_and_packages(
-    machine: str, number_of_builds: int, pkgs_per_build: int, builder: ArtifactFactory
+    machine: str,
+    number_of_builds: int,
+    pkgs_per_build: int,
+    builder: ArtifactFactory,
+    package_factory: Generator[str, None, None],
 ) -> list[Build]:
     builds: list[Build] = BuildFactory.build_batch(number_of_builds, machine=machine)
-    pf = package_factory()
 
     for build in builds:
         for _ in range(pkgs_per_build):
-            package = next(pf)
+            package = next(package_factory)
             builder.build(build, package)
 
     return builds

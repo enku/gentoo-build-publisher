@@ -19,7 +19,7 @@ from gentoo_build_publisher.utils.time import localtime
 from .lib import create_builds_and_packages
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, pf=testkit.cpv_generator)
 @given(stats_collector=lambda _: StatsCollector())
 class StatsCollectorTests(TestCase):
     def test_init(self, fixtures: Fixtures) -> None:
@@ -34,8 +34,8 @@ class StatsCollectorTests(TestCase):
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
         for build in [
-            *create_builds_and_packages("babette", 5, 2, builder),
-            *create_builds_and_packages("lighthouse", 3, 4, builder),
+            *create_builds_and_packages("babette", 5, 2, builder, fixtures.pf),
+            *create_builds_and_packages("lighthouse", 3, 4, builder, fixtures.pf),
         ]:
             publisher.pull(build)
 
@@ -50,7 +50,7 @@ class StatsCollectorTests(TestCase):
     def test_build_packages(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
-        [build] = create_builds_and_packages("lighthouse", 1, 4, builder)
+        [build] = create_builds_and_packages("lighthouse", 1, 4, builder, fixtures.pf)
         publisher.pull(build)
 
         sc = fixtures.stats_collector
@@ -68,9 +68,9 @@ class StatsCollectorTests(TestCase):
         builder = publisher.jenkins.artifact_builder
         build = None
         for build in [
-            *create_builds_and_packages("babette", 5, 2, builder),
-            *create_builds_and_packages("lighthouse", 3, 4, builder),
-            *create_builds_and_packages("polaris", 3, 1, builder),
+            *create_builds_and_packages("babette", 5, 2, builder, fixtures.pf),
+            *create_builds_and_packages("lighthouse", 3, 4, builder, fixtures.pf),
+            *create_builds_and_packages("polaris", 3, 1, builder, fixtures.pf),
         ]:
             publisher.pull(build)
         assert build
@@ -86,7 +86,7 @@ class StatsCollectorTests(TestCase):
     def test_recent_packages(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
-        for build in create_builds_and_packages("babette", 3, 4, builder):
+        for build in create_builds_and_packages("babette", 3, 4, builder, fixtures.pf):
             publisher.pull(build)
 
         sc = fixtures.stats_collector
@@ -102,7 +102,7 @@ class StatsCollectorTests(TestCase):
     def test_total_package_size(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
-        for build in create_builds_and_packages("babette", 3, 4, builder):
+        for build in create_builds_and_packages("babette", 3, 4, builder, fixtures.pf):
             publisher.pull(build)
 
         sc = fixtures.stats_collector
@@ -114,7 +114,7 @@ class StatsCollectorTests(TestCase):
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
         build = None
-        for build in create_builds_and_packages("babette", 3, 4, builder):
+        for build in create_builds_and_packages("babette", 3, 4, builder, fixtures.pf):
             publisher.pull(build)
         assert build
 
@@ -172,7 +172,7 @@ class StatsCollectorTests(TestCase):
         builder = publisher.jenkins.artifact_builder
         d1 = dt.datetime(2021, 4, 13, 9, 5)
         builder.timer = int(d1.timestamp())
-        [build] = create_builds_and_packages("babette", 1, 3, builder)
+        [build] = create_builds_and_packages("babette", 1, 3, builder, fixtures.pf)
         publisher.pull(build)
         gbp_json_path = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
         gbp_json_path.unlink()
@@ -180,9 +180,9 @@ class StatsCollectorTests(TestCase):
         d2 = dt.datetime(2024, 1, 14, 9, 5)
         builder.timer = int(d2.timestamp())
 
-        [build] = create_builds_and_packages("babette", 1, 3, builder)
+        [build] = create_builds_and_packages("babette", 1, 3, builder, fixtures.pf)
         publisher.pull(build)
-        [build] = create_builds_and_packages("babette", 1, 3, builder)
+        [build] = create_builds_and_packages("babette", 1, 3, builder, fixtures.pf)
         publisher.pull(build)
 
         pbd = fixtures.stats_collector.packages_by_day("babette")
@@ -192,15 +192,15 @@ class StatsCollectorTests(TestCase):
         self.assertEqual(len(pbd[d2.date()]), 6)
 
 
-@given(testkit.publisher)
+@given(testkit.publisher, pf=testkit.cpv_generator)
 class StatsTests(TestCase):
     # pylint: disable=unused-argument
     def test_collect(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
         for build in [
-            *create_builds_and_packages("babette", 5, 2, builder),
-            *create_builds_and_packages("lighthouse", 3, 4, builder),
+            *create_builds_and_packages("babette", 5, 2, builder, fixtures.pf),
+            *create_builds_and_packages("lighthouse", 3, 4, builder, fixtures.pf),
         ]:
             publisher.pull(build)
         clear_cache()
@@ -210,15 +210,15 @@ class StatsTests(TestCase):
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
         self.assertEqual(
-            stats.total_package_size, {"babette": 22730, "lighthouse": 16279}
+            stats.total_package_size, {"babette": 22730, "lighthouse": 15410}
         )
 
     def test_with_cache_creates_cache_entry(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         builder = publisher.jenkins.artifact_builder
         for build in [
-            *create_builds_and_packages("babette", 5, 2, builder),
-            *create_builds_and_packages("lighthouse", 3, 4, builder),
+            *create_builds_and_packages("babette", 5, 2, builder, fixtures.pf),
+            *create_builds_and_packages("lighthouse", 3, 4, builder, fixtures.pf),
         ]:
             publisher.pull(build)
             # because of signals this should populate the cache
@@ -229,7 +229,7 @@ class StatsTests(TestCase):
         self.assertEqual(stats.machines, ["babette", "lighthouse"])
         self.assertEqual(stats.package_counts, {"babette": 50, "lighthouse": 36})
         self.assertEqual(
-            stats.total_package_size, {"babette": 22730, "lighthouse": 16279}
+            stats.total_package_size, {"babette": 22730, "lighthouse": 15410}
         )
 
     def test_with_cache_and_exists_in_cache(self, fixtures: Fixtures) -> None:

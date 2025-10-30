@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Iterable, MutableMapping
+from typing import Any, Callable, Generator, Iterable, MutableMapping
 from unittest import mock
 
 from cryptography.fernet import Fernet
@@ -39,6 +39,7 @@ from .factories import (
     BuildModelFactory,
     BuildPublisherFactory,
     BuildRecordFactory,
+    package_factory,
 )
 from .helpers import MockJenkins, TestConsole, create_user_auth, make_gbpcli, test_gbp
 
@@ -388,3 +389,9 @@ def patch(  # pylint: disable=redefined-builtin
 
     if patcher:
         patcher.stop()
+
+
+@fixture()
+def cpv_generator(_: Fixtures) -> Generator[str, None, None]:
+    """A package factory (cpv string generator)"""
+    return package_factory()
