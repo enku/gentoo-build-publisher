@@ -60,6 +60,7 @@ class ArtifactFactoryTestCase(TestCase):
             path="app-vim/gentoo-syntax/gentoo-syntax-1-35.gpkg.tar",
             build_id=35,
             size=529,
+            slot=0,
             build_time=timer + 10,
         )
         self.assertEqual(package, expected)
@@ -140,6 +141,7 @@ class ArtifactFactoryTestCase(TestCase):
                         path="app-vim/gentoo-syntax/gentoo-syntax-1-1.gpkg.tar",
                         build_id=1,
                         size=529,
+                        slot=0,
                         build_time=fixtures.builder.timer,
                     ),
                     PackageStatus.ADDED,

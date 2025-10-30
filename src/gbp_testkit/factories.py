@@ -42,6 +42,7 @@ class CICDPackage:
     path: str
     build_id: int
     size: int
+    slot: int
     build_time: int
 
 
@@ -155,6 +156,7 @@ class ArtifactFactory:
         build: Build,
         cpv: str,
         repo: str = "gentoo",
+        slot: int = 0,
         build_id: int | None = None,
         build_time: int | None = None,
     ) -> CICDPackage:
@@ -173,6 +175,7 @@ class ArtifactFactory:
             path=path,
             build_id=build_id,
             size=size,
+            slot=slot,
             build_time=build_time,
         )
         build_info.package_info.append((package, PackageStatus.ADDED))
@@ -237,6 +240,7 @@ class ArtifactFactory:
                 path=cpv_to_path(i),
                 build_id=1,
                 size=len(i) ** 2,
+                slot=0,
                 build_time=0,
             )
             for i in self.initial_packages
@@ -270,6 +274,7 @@ class ArtifactFactory:
                 f"BUILD_ID: {package.build_id}\n"
                 f"CPV: {package.cpv}\n"
                 f"SIZE: {package.size}\n"
+                f"SLOT: {package.slot}\n"
                 f"REPO: {package.repo}\n"
                 f"PATH: {cpv_to_path(package.cpv, package.build_id)}\n"
                 f"BUILD_TIME: {package.build_time}\n"
