@@ -91,7 +91,7 @@ class MetricTests(TemplateTagTests):
     def test(self) -> None:
         expected = """\
 <div class="col-lg metric" align="center">
-  <span class="number" title="">452</span>
+  <span class="number" title="" data-target="452">0</span><span class="suffix"></span>
   <h2 class="label">Builds</h2>
 </div>
 """
@@ -101,7 +101,7 @@ class MetricTests(TemplateTagTests):
     def test_large_number(self) -> None:
         expected = """\
 <div class="col-lg metric" align="center">
-  <span class="number" title="212351">212k</span>
+  <span class="number" title="212351" data-target="212">0</span><span class="suffix">k</span>
   <h2 class="label">Packages</h2>
 </div>
 """

@@ -87,13 +87,13 @@ def display_time(timestamp: dt.datetime | None) -> str:
 def metric_context(number: int, name: str) -> dict[str, Any]:
     """Return the context for the metric tag"""
     if number >= 100_000:
-        number_display = numberize(number, precision=0)
+        target, suffix = split_numberize(number, precision=0)
         number_hover = str(number)
     else:
-        number_display = str(number)
+        target, suffix = str(number), ""
         number_hover = ""
 
-    return {"name": name, "number": number_hover, "number_display": number_display}
+    return {"name": name, "number": number_hover, "target": target, "suffix": suffix}
 
 
 @register.inclusion_tag("gentoo_build_publisher/metric.html")

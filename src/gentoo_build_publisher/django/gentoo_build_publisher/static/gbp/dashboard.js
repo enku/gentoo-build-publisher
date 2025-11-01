@@ -102,6 +102,31 @@ function packageSizesChart() {
   return new Chart(pkgSizesCtx, pkgSizesConfig);
 }
 
+function animateNumbers() {
+  const numbers = document.querySelectorAll('.number');
+  const frames = 50;
+  let frame = 0;
+
+  function upDate() {
+    numbers.forEach((number) => {
+      const element = number;
+      const target = Number(element.getAttribute('data-target'));
+      const ratio = frame / frames;
+
+      if (frame < frames) {
+        element.innerText = Math.ceil(ratio * target);
+      } else {
+        element.innerText = target;
+      }
+    });
+    frame += 1;
+    if (frame <= frames) {
+      setTimeout(upDate, 15);
+    }
+  }
+  upDate();
+}
+
 /* Initialize the dashboard */
 function initialize() {
   const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
@@ -112,6 +137,7 @@ function initialize() {
   machineDistributionChart();
   buildsOverTimeChart();
   packageSizesChart();
+  animateNumbers();
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
