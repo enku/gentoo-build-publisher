@@ -72,6 +72,9 @@ class DashboardTestCase(TestCase):
         self.assert_template_used(
             "gentoo_build_publisher/dashboard/main.html", response
         )
+        self.assert_template_used(
+            "gentoo_build_publisher/footerlink.html", response
+        )
 
     def test_can_retrieve_view_by_name(self, fixtures: Fixtures) -> None:
         view = urls.reverse("dashboard")

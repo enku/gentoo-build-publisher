@@ -247,3 +247,9 @@ def navlink(viewname: str, title: str, active: bool = True) -> dict[str, Any]:
     url = reverse(viewname)
 
     return {"url": url, "title": title, "disabled": not active}
+
+
+@register.inclusion_tag("gentoo_build_publisher/footerlink.html")
+def footer_link(title: str, url: str) -> dict[str, str]:
+    """Render the link for the footer"""
+    return {"url": url, "title": title}

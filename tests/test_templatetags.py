@@ -350,3 +350,16 @@ class BuildIDTests(TemplateTagTests):
 
         expected = f'<span class="build_id published">{build.build_id}</span>'
         self.assertEqual(expected, self.render(build=build))
+
+
+class FooterLinkTests(TemplateTagTests):
+    template = "{% footer_link title url %}"
+
+    def test(self) -> None:
+        result = self.render(title="Google", url="https://www.google.com/")
+        expected = """\
+<div class="col text-center">
+  <a href="https://www.google.com/">Google</a>
+</div>
+"""
+        self.assertEqual(result, expected)

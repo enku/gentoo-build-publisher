@@ -53,9 +53,22 @@
     </main>
 
     <footer class="footer">{% block footer %}
-      Copyright © 2021-2025<br>
-      "Gentoo" and the Gentoo logo are trademarks of the Gentoo Foundation.<br>
-      This project is not affiliated with or endorsed by the Gentoo Foundation.
+      <div class="row footerlinks">
+        {% block footerlinks %}
+        {% footer_link "Blog" "https://lunarcowboy.com/tag/gentoo-build-publisher.html" %}
+        {% footer_link "GitHub" "https://github.com/enku/gentoo-build-publisher" %}
+        {% footer_link "PyPI" "https://pypi.org/project/gentoo-build-publisher/" %}
+        {% footer_link "Gentoo Packages" "https://packages.gentoo.org/" %}
+        {% footer_link "Gentoo News Items" "https://www.gentoo.org/support/news-items/" %}
+        {% endblock %}
+      </div>
+      <div class="row">
+        <div class="col disclaimer">
+          Copyright © 2021-2025 |
+          "Gentoo" and the Gentoo logo are trademarks of the Gentoo Foundation |
+          This project is not affiliated with or endorsed by the Gentoo Foundation
+        </div>
+      </div>
     {% endblock %}</footer>
 
     <script type="text/javascript">
