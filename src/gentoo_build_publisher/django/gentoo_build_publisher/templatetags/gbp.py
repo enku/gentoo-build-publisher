@@ -23,12 +23,11 @@ def rstrip(val: Any) -> str:
     return str(val).rstrip()
 
 
-@register.filter(is_safe=False)
-def numberize(val: float | int, precision: int | str = 2) -> str:
-    """Format number, `val` as a string.
+def split_numberize(val: float | int, precision: int | str = 2) -> tuple[str, str]:
+    """Format number, `val` as a string with suffix
 
-    E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precision
-    2) etc.
+    E.g. `1000` is returned as `"1", "k"` (precision 0), `123000000` as `"1.23", "M"`
+    (precision 2) etc.
     """
     if not isinstance(val, (float, int)):
         raise template.TemplateSyntaxError(
@@ -52,9 +51,19 @@ def numberize(val: float | int, precision: int | str = 2) -> str:
         unit = ""
 
     if float(x).is_integer():
-        return f"{int(x)}{unit}"
+        return str(int(x)), unit
 
-    return f"{x:.{precision}f}{unit}"
+    return f"{x:.{precision}f}", unit
+
+
+@register.filter(is_safe=False)
+def numberize(val: float | int, precision: int | str = 2) -> str:
+    """Format number, `val` as a string.
+
+    E.g. `1000` is returned as `"1k"` (precision 0), `123000000` as `"1.23M"` (precision
+    2) etc.
+    """
+    return "".join(split_numberize(val, precision))
 
 
 @register.filter

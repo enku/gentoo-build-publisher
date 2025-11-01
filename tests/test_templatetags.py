@@ -11,6 +11,9 @@ from unittest_fixtures import Fixtures, given, where
 from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
 from gentoo_build_publisher import publisher
+from gentoo_build_publisher.django.gentoo_build_publisher.templatetags.gbp import (
+    split_numberize,
+)
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils.time import localtime
 
@@ -27,51 +30,59 @@ class TemplateTagTests(TestCase):
         return Template(f"{{% load {self.library} %}}{template}").render(context)
 
 
+class SplitNumberizeTests(TestCase):
+
+    def test_should_return_whole_number_when_precision_0(self) -> None:
+        result = split_numberize(96_858_412, precision=0)
+
+        self.assertEqual(result, ("97", "M"))
+
+    def test_number_less_than_1000(self) -> None:
+        result = split_numberize(968, precision=2)
+
+        self.assertEqual(result, ("968", ""))
+
+    def test_number_less_than_1_000_000(self) -> None:
+        result = split_numberize(968_584, precision=1)
+
+        self.assertEqual(result, ("968.6", "k"))
+
+    def test_number_less_than_1_000_000_000(self) -> None:
+        result = split_numberize(96_858_412, precision=2)
+
+        self.assertEqual(result, ("96.86", "M"))
+
+    def test_number_greater_than_1_000_000_000(self) -> None:
+        result = split_numberize(6_123_000_548, precision=2)
+
+        self.assertEqual(result, ("6.12", "G"))
+
+    def test_number_greater_than_1_000_000_000_binary(self) -> None:
+        result = split_numberize(6_123_000_548, precision="b2")
+        self.assertEqual(result, ("5.70", "G"))
+
+        result = split_numberize(6_123_000_548, precision="b")
+        self.assertEqual(result, ("6", "G"))
+
+    def test_1024_binary_vs_decimal(self) -> None:
+        result = split_numberize(1024, precision=3)
+        self.assertEqual(result, ("1.024", "k"))
+
+        result = split_numberize(1024, precision="b3")
+        self.assertEqual(result, ("1", "k"))
+
+
 class NumberizeTestCase(TemplateTagTests):
     template = "{{ number|numberize:precision }}"
 
     def test_should_return_whole_number_when_precision_0(self) -> None:
-        result = self.render(number=96_858_412, precision=0)
+        result = self.render(number=96_858_412, precision=0, delim=None)
 
         self.assertEqual(result, "97M")
 
-    def test_number_less_than_1000(self) -> None:
-        result = self.render(number=968, precision=2)
-
-        self.assertEqual(result, "968")
-
-    def test_number_less_than_1_000_000(self) -> None:
-        result = self.render(number=968_584, precision=1)
-
-        self.assertEqual(result, "968.6k")
-
-    def test_number_less_than_1_000_000_000(self) -> None:
-        result = self.render(number=96_858_412, precision=2)
-
-        self.assertEqual(result, "96.86M")
-
-    def test_number_greater_than_1_000_000_000(self) -> None:
-        result = self.render(number=6_123_000_548, precision=2)
-
-        self.assertEqual(result, "6.12G")
-
     def test_invalid_value(self) -> None:
         with self.assertRaises(TemplateSyntaxError):
-            self.render(number="this is not a number", precision=2)
-
-    def test_number_greater_than_1_000_000_000_binary(self) -> None:
-        result = self.render(number=6_123_000_548, precision="b2")
-        self.assertEqual(result, "5.70G")
-
-        result = self.render(number=6_123_000_548, precision="b")
-        self.assertEqual(result, "6G")
-
-    def test_1024_binary_vs_decimal(self) -> None:
-        result = self.render(number=1024, precision=3)
-        self.assertEqual(result, "1.024k")
-
-        result = self.render(number=1024, precision="b3")
-        self.assertEqual(result, "1k")
+            self.render(number="this is not a number", precision=2, delim=None)
 
 
 class MetricTests(TemplateTagTests):
