@@ -1,8 +1,22 @@
-"""GBP View Context Utilities"""
+"""Template Context
+
+GBP Django views with the @render decorator return a template context type. This is a
+dataclass that is first converted to a dict (non-recursively) and then passed to the
+template target given to @render.
+
+The purpose of the template context dataclasses is to serve as a type-hinted, documented
+template context.
+
+Each template context dataclass has a create() classmethod that takes zero or more
+keyword arguments and returns the template context. These the kwargs are input variables
+for which the create() method uses to instantiate the template context instance.
+Typically these input variables are extracted from the Django request, but .create()
+shouldn't be passed the request object itself.
+"""
 
 import datetime as dt
-from dataclasses import dataclass, field
-from typing import TypedDict
+from dataclasses import dataclass
+from typing import Self
 
 from django.utils import timezone
 
@@ -23,7 +37,8 @@ from .utils import (
 MAX_DISPLAYED_PKGS = 12
 
 
-class DashboardContext(TypedDict):
+@dataclass(kw_only=True, frozen=True)
+class Dashboard:  # pylint: disable=too-many-instance-attributes
     """Definition for the Dashboard context"""
 
     chart_days: list[str]
@@ -42,8 +57,74 @@ class DashboardContext(TypedDict):
     builds_over_time: list[list[int]]
     unpublished_builds_count: int
 
+    @classmethod
+    def create(cls, *, days: int, now: dt.datetime | None = None) -> Self:
+        """Create a template context given the input variables"""
+        now = now or timezone.localtime()
+        stats = Stats.with_cache()
+        chart_days = get_chart_days(now, days)
 
-class MachineContext(TypedDict):
+        recent_packages: dict[str, set[str]] = {}
+        for machine in stats.machines:
+            if record := stats.latest_build[machine]:
+                for package in stats.build_packages[record]:
+                    if len(recent_packages) < MAX_DISPLAYED_PKGS:
+                        recent_packages.setdefault(package, set()).add(machine)
+
+        return cls(
+            chart_days=days_strings(now, days),
+            build_count=sum(stats.machine_info[m].build_count for m in stats.machines),
+            build_packages={
+                latest.id: stats.build_packages[latest]
+                for machine in stats.machines
+                if (latest := stats.latest_build[machine])
+            },
+            builds_over_time=[
+                [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
+                for machine in stats.machines
+            ],
+            built_recently=[
+                latest
+                for machine in stats.machines
+                if (latest := stats.latest_build[machine])
+                and latest.completed
+                and lapsed(latest.completed, now) < SECONDS_PER_DAY
+            ],
+            latest_builds=[
+                build
+                for machine in stats.machines
+                if (build := stats.latest_build[machine])
+            ],
+            latest_published=set(
+                lp
+                for machine in stats.machines
+                if (lp := stats.latest_published[machine])
+            ),
+            gradient_colors=gradient_colors(
+                *color_range_from_settings(), len(stats.machines)
+            ),
+            builds_per_machine=[
+                stats.machine_info[machine].build_count for machine in stats.machines
+            ],
+            machines=stats.machines,
+            now=now,
+            package_count=sum(
+                stats.package_counts[machine] for machine in stats.machines
+            ),
+            recent_packages=recent_packages,
+            total_package_size_per_machine={
+                machine: stats.total_package_size[machine] for machine in stats.machines
+            },
+            unpublished_builds_count=sum(
+                not publisher.published(build)
+                for machine in stats.machines
+                if (build := stats.latest_build[machine])
+            ),
+        )
+
+
+@dataclass(kw_only=True, frozen=True)
+class Machine:  # pylint: disable=too-many-instance-attributes
     """machine view context"""
 
     average_storage: float
@@ -59,9 +140,45 @@ class MachineContext(TypedDict):
     published_build: Build | None
     recent_packages: list[Package]
     storage: int
+    days: int
+
+    @classmethod
+    def create(cls, *, machine: str, days: int, now: dt.datetime | None = None) -> Self:
+        """Create a template context given the input variables"""
+        now = now or timezone.localtime()
+        stats = Stats.with_cache()
+        chart_days = get_chart_days(now, days)
+
+        if (machine_info := stats.machine_info.get(machine)) is None:
+            raise MachineNotFoundError(machine)
+
+        latest_build = stats.latest_build[machine]
+        storage = stats.total_package_size[machine]
+
+        assert latest_build
+
+        return cls(
+            days=days,
+            average_storage=storage / machine_info.build_count,
+            chart_days=days_strings(now, days),
+            build_count=machine_info.build_count,
+            builds=machine_info.builds,
+            builds_over_time=[
+                [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
+            ],
+            gradient_colors=gradient_colors(*color_range_from_settings(), 10),
+            latest_build=latest_build,
+            machine=machine,
+            machines=[machine],
+            packages_built_today=stats.packages_by_day[machine].get(now.date(), []),
+            published_build=machine_info.published_build,
+            recent_packages=stats.recent_packages[machine],
+            storage=storage,
+        )
 
 
-class BuildContext(TypedDict):
+@dataclass(kw_only=True, frozen=True)
+class BuildView:
     """build view context"""
 
     build: BuildRecord
@@ -72,173 +189,76 @@ class BuildContext(TypedDict):
     published: bool
     tags: list[str]
 
+    @classmethod
+    def create(cls, *, build: BuildRecord) -> Self:
+        """Create a template context given the input variables"""
+        packages_built = publisher.build_metadata(build).packages.built
 
-class LogsContext(TypedDict):
+        return cls(
+            build=build,
+            build_id=build.build_id,
+            gradient_colors=gradient_colors(*color_range_from_settings(), 10),
+            machine=build.machine,
+            packages_built=packages_built,
+            published=publisher.published(build),
+            tags=publisher.tags(build),
+        )
+
+
+@dataclass(kw_only=True, frozen=True)
+class Logs:
     """gbp-logs-fancy context"""
 
     build: BuildRecord
     gradient_colors: Gradient
 
+    @classmethod
+    def create(cls, *, build: BuildRecord) -> Self:
+        """Create a template context given the input variables"""
+        return cls(
+            build=build,
+            gradient_colors=gradient_colors(*color_range_from_settings(), 10),
+        )
 
-class AboutContext(TypedDict):
+
+@dataclass(kw_only=True, frozen=True)
+class About:
     """Context for the about view"""
 
     gradient_colors: Gradient
     plugins: list[plugins.Plugin]
 
-
-@dataclass(frozen=True, kw_only=True)
-class ViewInputContext:
-    """Input context to generate output context"""
-
-    days: int
-    now: dt.datetime = field(default_factory=timezone.localtime)
-
-
-def create_dashboard_context(input_context: ViewInputContext) -> DashboardContext:
-    """Initialize and return DashboardContext"""
-    stats = Stats.with_cache()
-    chart_days = get_chart_days(input_context.now, input_context.days)
-
-    recent_packages: dict[str, set[str]] = {}
-    for machine in stats.machines:
-        if record := stats.latest_build[machine]:
-            for package in stats.build_packages[record]:
-                if len(recent_packages) < MAX_DISPLAYED_PKGS:
-                    recent_packages.setdefault(package, set()).add(machine)
-
-    return {
-        "chart_days": days_strings(input_context.now, input_context.days),
-        "build_count": sum(stats.machine_info[m].build_count for m in stats.machines),
-        "build_packages": {
-            latest.id: stats.build_packages[latest]
-            for machine in stats.machines
-            if (latest := stats.latest_build[machine])
-        },
-        "builds_over_time": [
-            [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
-            for machine in stats.machines
-        ],
-        "built_recently": [
-            latest
-            for machine in stats.machines
-            if (latest := stats.latest_build[machine])
-            and latest.completed
-            and lapsed(latest.completed, input_context.now) < SECONDS_PER_DAY
-        ],
-        "latest_builds": [
-            build
-            for machine in stats.machines
-            if (build := stats.latest_build[machine])
-        ],
-        "latest_published": set(
-            lp for machine in stats.machines if (lp := stats.latest_published[machine])
-        ),
-        "gradient_colors": gradient_colors(
-            *color_range_from_settings(), len(stats.machines)
-        ),
-        "builds_per_machine": [
-            stats.machine_info[machine].build_count for machine in stats.machines
-        ],
-        "machines": stats.machines,
-        "now": input_context.now,
-        "package_count": sum(
-            stats.package_counts[machine] for machine in stats.machines
-        ),
-        "recent_packages": recent_packages,
-        "total_package_size_per_machine": {
-            machine: stats.total_package_size[machine] for machine in stats.machines
-        },
-        "unpublished_builds_count": sum(
-            not publisher.published(build)
-            for machine in stats.machines
-            if (build := stats.latest_build[machine])
-        ),
-    }
+    @classmethod
+    def create(cls) -> Self:
+        """Create a template context given the input variables"""
+        return cls(
+            gradient_colors=gradient_colors(*color_range_from_settings(), 2),
+            plugins=plugins.get_plugins(),
+        )
 
 
 @dataclass(frozen=True, kw_only=True)
-class MachineInputContext(ViewInputContext):
-    """ViewInputContext for the machine view"""
+class ReposDotConf:
+    """The repos.conf view template context"""
+
+    dirname: str
+    hostname: str
+    repos: set[str]
+
+    @classmethod
+    def create(cls, *, dirname: str, hostname: str, repos: set[str]) -> Self:
+        """Create a template context given the input variables"""
+        return cls(dirname=dirname, hostname=hostname, repos=repos)
+
+
+@dataclass(kw_only=True, frozen=True)
+class BinReposDotConf:
+    """Context for the binrepos.conf view"""
 
     machine: str
+    uri: str
 
-
-def create_machine_context(input_context: MachineInputContext) -> MachineContext:
-    """Return context for the machine view"""
-    stats = Stats.with_cache()
-    now = input_context.now
-    chart_days = get_chart_days(now, input_context.days)
-    machine = input_context.machine
-
-    if (machine_info := stats.machine_info.get(machine)) is None:
-        raise MachineNotFoundError(machine)
-
-    latest_build = stats.latest_build[machine]
-    storage = stats.total_package_size[machine]
-
-    assert latest_build
-
-    return {
-        "average_storage": storage / machine_info.build_count,
-        "chart_days": days_strings(now, input_context.days),
-        "build_count": machine_info.build_count,
-        "builds": machine_info.builds,
-        "builds_over_time": [
-            [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
-        ],
-        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
-        "latest_build": latest_build,
-        "machine": machine,
-        "machines": [machine],
-        "packages_built_today": stats.packages_by_day[machine].get(now.date(), []),
-        "published_build": machine_info.published_build,
-        "recent_packages": stats.recent_packages[machine],
-        "storage": storage,
-    }
-
-
-@dataclass(frozen=True, kw_only=True)
-class BuildInputContext:
-    """ViewInputContext for the build view"""
-
-    build: BuildRecord
-
-
-@dataclass(frozen=True, kw_only=True)
-class LogsInputContext:
-    """ViewInputContext for the gbp-logs-fancy view"""
-
-    build: BuildRecord
-
-
-def create_build_context(input_context: BuildInputContext) -> BuildContext:
-    """Return context for the build view"""
-    build = input_context.build
-    packages_built = publisher.build_metadata(build).packages.built
-
-    return {
-        "build": build,
-        "build_id": build.build_id,
-        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
-        "machine": build.machine,
-        "packages_built": packages_built,
-        "published": publisher.published(build),
-        "tags": publisher.tags(build),
-    }
-
-
-def create_build_logs_context(input_context: LogsInputContext) -> LogsContext:
-    """Return context for the gbp-logs-fancy view"""
-    return {
-        "build": input_context.build,
-        "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
-    }
-
-
-def create_about_context() -> AboutContext:
-    """Return AboutContext for the plugins view"""
-    return {
-        "gradient_colors": gradient_colors(*color_range_from_settings(), 2),
-        "plugins": plugins.get_plugins(),
-    }
+    @classmethod
+    def create(cls, *, machine: str, uri: str) -> Self:
+        """Create a template context given the input variables"""
+        return cls(machine=machine, uri=uri)

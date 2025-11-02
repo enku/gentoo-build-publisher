@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import datetime as dt
+from dataclasses import dataclass, fields, is_dataclass
 from functools import wraps
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Protocol
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
@@ -17,13 +18,18 @@ from gentoo_build_publisher.records import BuildRecord, RecordNotFound
 from gentoo_build_publisher.types import TAG_SYM, Build, Package
 from gentoo_build_publisher.utils import Color
 
+
+@dataclass(frozen=True)
+class TemplateContext(Protocol):  # pylint: disable=too-few-public-methods
+    """Any of the context dataclasses defined in .context"""
+
+
 type BuildID = str  # pylint: disable=invalid-name
 type CPV = str  # pylint: disable=invalid-name
 type Gradient = list[str]
 type MachineName = str
 type View = Callable[..., HttpResponse]
-type ViewContext = Mapping[str, Any]
-type TemplateView = Callable[..., ViewContext]
+type TemplateView[T: TemplateContext | Mapping[str, Any]] = Callable[..., T]
 
 
 _NOT_FOUND = object()
@@ -58,16 +64,21 @@ class ViewFinder:
 
 def render(
     template_name: str, content_type: str | None = None
-) -> Callable[[TemplateView], View]:
+) -> Callable[[TemplateView[Any]], View]:
     """Instruct a view to render the given template
 
-    The view should return a context mapping
+    The view should return a dataclass
     """
 
-    def dec(view_func: TemplateView) -> View:
+    def dec(view_func: TemplateView[Any]) -> View:
         @wraps(view_func)
         def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-            context = view_func(request, *args, **kwargs)
+            value = view_func(request, *args, **kwargs)
+            context = (
+                {f.name: getattr(value, f.name) for f in fields(value)}
+                if is_dataclass(value)
+                else value  # backwards compat
+            )
             return _render(request, template_name, context, content_type=content_type)
 
         return wrapper

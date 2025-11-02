@@ -17,14 +17,7 @@ from gbp_testkit.factories import (
     package_factory,
 )
 from gentoo_build_publisher import publisher
-from gentoo_build_publisher.django.gentoo_build_publisher.views.context import (
-    BuildInputContext,
-    MachineInputContext,
-    ViewInputContext,
-    create_build_context,
-    create_dashboard_context,
-    create_machine_context,
-)
+from gentoo_build_publisher.django.gentoo_build_publisher.views import context as ctx
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     color_range_from_settings,
     gradient_colors,
@@ -38,10 +31,10 @@ from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctim
 class CreateDashboardContextTests(TestCase):
     """Tests for create_dashboard_context()"""
 
-    def input_context(self, **kwargs: Any) -> ViewInputContext:
+    def input_context(self, **kwargs: Any) -> dict[str, Any]:
         defaults: dict[str, Any] = {"days": 2, "now": timezone.localtime()}
         defaults |= kwargs
-        return ViewInputContext(**defaults)
+        return defaults
 
     def test(self, fixtures: Fixtures) -> None:
         lighthouse1 = BuildFactory(machine="lighthouse")
@@ -61,11 +54,11 @@ class CreateDashboardContextTests(TestCase):
         publisher.repo.build_records.save(polaris3)
 
         input_context = self.input_context()
-        ctx = create_dashboard_context(input_context)
-        self.assertEqual(len(ctx["chart_days"]), 2)
-        self.assertEqual(ctx["build_count"], 3)
+        context = ctx.Dashboard.create(**input_context)
+        self.assertEqual(len(context.chart_days), 2)
+        self.assertEqual(context.build_count, 3)
         self.assertEqual(
-            ctx["build_packages"],
+            context.build_packages,
             {
                 str(lighthouse1): [
                     "app-portage/gentoolkit-0.5.1-r1",
@@ -74,17 +67,18 @@ class CreateDashboardContextTests(TestCase):
                 str(polaris2): [],
             },
         )
-        self.assertEqual(ctx["gradient_colors"], ["#504575", "#dddaec"])
-        self.assertEqual(ctx["builds_per_machine"], [2, 1])
-        self.assertEqual(ctx["machines"], ["polaris", "lighthouse"])
-        self.assertEqual(ctx["now"], input_context.now)
-        self.assertEqual(ctx["package_count"], 14)
-        self.assertEqual(ctx["unpublished_builds_count"], 2)
+        self.assertEqual(context.gradient_colors, ["#504575", "#dddaec"])
+        self.assertEqual(context.builds_per_machine, [2, 1])
+        self.assertEqual(context.machines, ["polaris", "lighthouse"])
+        self.assertEqual(context.now, input_context["now"])
+        self.assertEqual(context.package_count, 14)
+        self.assertEqual(context.unpublished_builds_count, 2)
         self.assertEqual(
-            ctx["total_package_size_per_machine"], {"lighthouse": 3238, "polaris": 3906}
+            context.total_package_size_per_machine,
+            {"lighthouse": 3238, "polaris": 3906},
         )
         self.assertEqual(
-            ctx["recent_packages"],
+            context.recent_packages,
             {
                 "app-portage/gentoolkit-0.5.1-r1": {"lighthouse"},
                 "dev-vcs/git-2.34.1": {"lighthouse"},
@@ -97,9 +91,9 @@ class CreateDashboardContextTests(TestCase):
         publisher.pull(BuildFactory(machine="lighthouse"))
         publisher.pull(BuildFactory(machine="polaris"))
 
-        ctx = create_dashboard_context(self.input_context())
-        self.assertEqual(ctx["latest_published"], set([publisher.record(babette)]))
-        self.assertEqual(ctx["unpublished_builds_count"], 2)
+        context = ctx.Dashboard.create(**self.input_context())
+        self.assertEqual(context.latest_published, set([publisher.record(babette)]))
+        self.assertEqual(context.unpublished_builds_count, 2)
 
     def test_builds_over_time_and_build_recently(self, fixtures: Fixtures) -> None:
         now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.UTC)
@@ -114,10 +108,10 @@ class CreateDashboardContextTests(TestCase):
                     if day == 0:
                         break
 
-        ctx = create_dashboard_context(self.input_context(now=localtime(now)))
+        context = ctx.Dashboard.create(**self.input_context(now=localtime(now)))
 
-        self.assertEqual(ctx["builds_over_time"], [[3, 1], [3, 1]])
-        self.assertEqual(len(ctx["built_recently"]), 2)
+        self.assertEqual(context.builds_over_time, [[3, 1], [3, 1]])
+        self.assertEqual(len(context.built_recently), 2)
 
 
 @fixture(testkit.publisher)
@@ -132,10 +126,10 @@ def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
 
 @given(testkit.publisher, pf_fixture)
 class CreateMachineContextTests(TestCase):
-    def input_context(self, **kwargs: Any) -> MachineInputContext:
+    def input_context(self, **kwargs: Any) -> dict[str, Any]:
         defaults: dict[str, Any] = {"days": 2, "now": timezone.localtime()}
         defaults |= kwargs
-        return MachineInputContext(**defaults)
+        return defaults
 
     def test_average_storage(self, fixtures: Fixtures) -> None:
         total_size = 0
@@ -157,9 +151,9 @@ class CreateMachineContextTests(TestCase):
             dt.datetime.fromtimestamp(publisher.jenkins.artifact_builder.timer)
         )
         input_context = self.input_context(now=now, machine=build.machine)
-        ctx = create_machine_context(input_context)
+        context = ctx.Machine.create(**input_context)
 
-        self.assertEqual(ctx["average_storage"], total_size / 3)
+        self.assertEqual(context.average_storage, total_size / 3)
 
     def test_packages_built_today(self, fixtures: Fixtures) -> None:
         for day in [1, 1, 1, 0]:
@@ -174,9 +168,9 @@ class CreateMachineContextTests(TestCase):
             dt.datetime.fromtimestamp(publisher.jenkins.artifact_builder.timer)
         )
         input_context = self.input_context(now=now, machine=build.machine)
-        ctx = create_machine_context(input_context)
+        context = ctx.Machine.create(**input_context)
 
-        self.assertEqual(len(ctx["packages_built_today"]), 6)
+        self.assertEqual(len(context.packages_built_today), 6)
 
     def test_packages_built_today_when_build_built_is_none(
         self, fixtures: Fixtures
@@ -201,13 +195,13 @@ class CreateMachineContextTests(TestCase):
         )
         now = localtime(dt.datetime(2024, 1, 19, 7, 38))
         input_context = self.input_context(now=now, machine=build.machine)
-        ctx = create_machine_context(input_context)
+        context = ctx.Machine.create(**input_context)
 
-        self.assertEqual(len(ctx["packages_built_today"]), 0)
+        self.assertEqual(len(context.packages_built_today), 0)
 
 
 @given(testkit.publisher, pf_fixture)
-class CreateBuildContextTests(TestCase):
+class CreateBuildViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
 
@@ -216,21 +210,20 @@ class CreateBuildContextTests(TestCase):
             publisher.jenkins.artifact_builder.build(build, cpv)
         publisher.pull(build)
         record = publisher.repo.build_records.get(build)
-        input_context = BuildInputContext(build=record)
 
-        context = create_build_context(input_context)
+        context = ctx.BuildView.create(build=record)
 
-        expected = {
-            "build": record,
-            "build_id": build.build_id,
-            "gradient_colors": gradient_colors(*color_range_from_settings(), 10),
-            "machine": build.machine,
-            "packages_built": publisher.storage.get_metadata(record).packages.built,
-            "published": False,
-            "tags": [],
-        }
+        expected = ctx.BuildView(
+            build=record,
+            build_id=record.build_id,
+            gradient_colors=gradient_colors(*color_range_from_settings(), 10),
+            machine=build.machine,
+            packages_built=publisher.storage.get_metadata(record).packages.built,
+            published=False,
+            tags=[],
+        )
         self.assertEqual(expected, context)
 
         publisher.publish(build)
-        context = create_build_context(input_context)
-        self.assertTrue(context["published"])
+        context = ctx.BuildView.create(build=record)
+        self.assertTrue(context.published)

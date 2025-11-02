@@ -16,28 +16,25 @@ from . import utils
 
 render = utils.render
 view = utils.view
-ViewContext = utils.ViewContext
 
 
 @view("", name="dashboard")
 @render("gentoo_build_publisher/dashboard/main.html")
-def _(request: HttpRequest) -> ViewContext:
+def _(request: HttpRequest) -> ctx.Dashboard:
     """Dashboard view"""
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ctx.ViewInputContext(days=days)
 
-    return ctx.create_dashboard_context(input_context)
+    return ctx.Dashboard.create(days=days)
 
 
 @view("machines/<str:machine>/", name="gbp-machines")
 @render("gentoo_build_publisher/machine/main.html")
-def _(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ctx.Machine:
     """Response for the machines page"""
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
-    input_context = ctx.MachineInputContext(days=days, machine=machine)
 
     try:
-        return ctx.create_machine_context(input_context)
+        return ctx.Machine.create(days=days, machine=machine)
     except MachineNotFoundError:
         raise Http404("No builds for this machine") from None
 
@@ -53,10 +50,10 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 
 @view("machines/<str:machine>/builds/<str:build_id>/", name="gbp-builds")
 @render("gentoo_build_publisher/build/main.html")
-def _(request: HttpRequest, machine: str, build_id: str) -> ViewContext:
+def _(request: HttpRequest, machine: str, build_id: str) -> ctx.BuildView:
     build = utils.get_build_record_or_404(machine, build_id)
 
-    return ctx.create_build_context(ctx.BuildInputContext(build=build))
+    return ctx.BuildView.create(build=build)
 
 
 @view("machines/<str:machine>/builds/@/logs.txt")
@@ -87,17 +84,17 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 
 @view("machines/<str:machine>/builds/<str:build_id>/logs/", name="gbp-logs-fancy")
 @render("gentoo_build_publisher/build/logs.html")
-def _(request: HttpRequest, machine: str, build_id: str) -> ctx.LogsContext:
+def _(request: HttpRequest, machine: str, build_id: str) -> ctx.Logs:
     """Fancy logs page"""
     build = utils.get_build_record_or_404(machine, build_id)
 
-    return ctx.create_build_logs_context(ctx.LogsInputContext(build=build))
+    return ctx.Logs.create(build=build)
 
 
 @view("about/", name="gbp-about")
 @render("gentoo_build_publisher/about/main.html")
-def _(request: HttpRequest) -> ViewContext:
-    return ctx.create_about_context()
+def _(request: HttpRequest) -> ctx.About:
+    return ctx.About.create()
 
 
 @view(
@@ -138,23 +135,23 @@ def _(  # pylint: disable=too-many-arguments
 
 @view("machines/<str:machine>/repos.conf")
 @render("gentoo_build_publisher/repos.conf", content_type="text/plain")
-def _(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ctx.ReposDotConf:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = utils.parse_tag_or_raise_404(machine)
     hostname = request.headers.get("Host", "localhost").partition(":")[0]
     repos = publisher.storage.repos(build)
 
-    return {"dirname": dirname, "hostname": hostname, "repos": repos}
+    return ctx.ReposDotConf.create(dirname=dirname, hostname=hostname, repos=repos)
 
 
 @view("machines/<str:machine>/binrepos.conf")
 @render("gentoo_build_publisher/binrepos.conf", content_type="text/plain")
-def _(request: HttpRequest, machine: str) -> ViewContext:
+def _(request: HttpRequest, machine: str) -> ctx.BinReposDotConf:
     """Create a binrepos.conf entry for the given machine"""
     dirname = utils.parse_tag_or_raise_404(machine)[2]
     uri = request.build_absolute_uri(f"/binpkgs/{dirname}/")
 
-    return {"machine": machine, "uri": uri}
+    return ctx.BinReposDotConf.create(machine=machine, uri=uri)
 
 
 @view("graphql", name="graphql")
