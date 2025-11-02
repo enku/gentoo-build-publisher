@@ -75,6 +75,41 @@ class StorageFromSettings(TestCase):
         self.assertEqual(storage.root, fixtures.tmpdir)
 
 
+@given(record=lambda f: f.publisher.record(f.build))
+@given(pulled_build=lambda f: f.publisher.pull(f.build))
+@given(testkit.publisher, testkit.build)
+class StorageProfileTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        record = fixtures.record
+        storage = fixtures.publisher.storage
+
+        profile = storage.profile(record)
+
+        self.assertEqual(profile, "default/linux/amd64/23.0")
+
+    def test_no_profile_link(self, fixtures: Fixtures) -> None:
+        # This should never happen, but...
+        record = fixtures.record
+        storage = fixtures.publisher.storage
+
+        make_profile = storage.get_path(record, Content.ETC_PORTAGE) / "make.profile"
+        make_profile.unlink()
+
+        with self.assertRaises(FileNotFoundError):
+            storage.profile(record)
+
+    def test_unknown_link_target(self, fixtures: Fixtures) -> None:
+        record = fixtures.record
+        storage = fixtures.publisher.storage
+
+        make_profile = storage.get_path(record, Content.ETC_PORTAGE) / "make.profile"
+        make_profile.unlink()
+        make_profile.symlink_to("/dev/bogus")
+
+        with self.assertRaises(FileNotFoundError):
+            storage.profile(record)
+
+
 @fixture(testkit.tmpdir)
 def storage_fixture(fixtures: Fixtures) -> Storage:
     root = fixtures.tmpdir / "root"

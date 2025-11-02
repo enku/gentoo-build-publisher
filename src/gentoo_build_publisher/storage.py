@@ -244,6 +244,18 @@ class Storage:
         """
         return self.check_symlinks(build, build.machine)
 
+    def profile(self, build: Build) -> str:
+        """Return the Gentoo profile the build was built on"""
+        path = self.get_path(build, Content.ETC_PORTAGE) / "make.profile"
+
+        if path.exists(follow_symlinks=False):
+            path = path.resolve()
+            _, delim, profile = str(path).rpartition("/profiles/")
+            if delim:
+                return profile
+
+        raise FileNotFoundError("Profile for {build} could not be located")
+
     def check_symlinks(self, build: Build, name: str) -> bool:
         """Return True if the given symlinks point to the given build
 
