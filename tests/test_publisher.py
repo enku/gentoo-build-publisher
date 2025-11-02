@@ -423,6 +423,15 @@ class BuildPublisherResolveTagTests(TestCase):
         self.assertEqual(None, publisher.resolve_tag(machine))
 
 
+@given(testkit.build, testkit.publisher)
+class BuildPublisherPortageProfileTests(TestCase):
+    def test(self, fixtures: Fixtures) -> None:
+        build = fixtures.build
+        publisher.pull(build)
+
+        self.assertEqual(publisher.portage_profile(build), "default/linux/amd64/23.0")
+
+
 @fixture()
 def prepull_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:
     events: list[Build] = []

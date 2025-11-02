@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 TAGGED_PLUS_OR_MINUS_N = re.compile(r"(.+|)?([+-])(\d+$)")
 
 
-class BuildPublisher:
+class BuildPublisher:  # pylint: disable=too-many-public-methods
     """Pulls a build's db, jenkins and storage all together"""
 
     def __init__(self, *, jenkins: Jenkins, storage: Storage, repo: Repo):
@@ -283,6 +283,10 @@ class BuildPublisher:
     def latest_build(self, machine: str, completed: bool = False) -> BuildRecord | None:
         """Return the latest completed build for the given machine name"""
         return self.repo.build_records.latest(machine, completed)
+
+    def portage_profile(self, build: Build) -> str:
+        """Return the Gentoo profile for the given Build"""
+        return self.storage.profile(build)
 
     @staticmethod
     def gbp_metadata(
