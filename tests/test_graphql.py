@@ -573,6 +573,7 @@ class MachinesQueryTestCase(TestCase):
             }
             builds {
               id
+              profile
             }
             packageCount
             packagesByDay {
@@ -594,7 +595,10 @@ class MachinesQueryTestCase(TestCase):
             {
                 "machine": "babette",
                 "buildCount": 3,
-                "builds": [{"id": i.id} for i in reversed(babette_builds)],
+                "builds": [
+                    {"id": i.id, "profile": "default/linux/amd64/23.0"}
+                    for i in reversed(babette_builds)
+                ],
                 "latestBuild": {"id": build.id},
                 "publishedBuild": {"id": build.id},
                 "packageCount": 18,
@@ -622,7 +626,10 @@ class MachinesQueryTestCase(TestCase):
             {
                 "machine": "lighthouse",
                 "buildCount": 3,
-                "builds": [{"id": i.id} for i in reversed(lighthouse_builds)],
+                "builds": [
+                    {"id": i.id, "profile": "default/linux/amd64/23.0"}
+                    for i in reversed(lighthouse_builds)
+                ],
                 "latestBuild": {"id": lighthouse_builds[-1].id},
                 "publishedBuild": None,
                 "packageCount": 18,

@@ -27,6 +27,7 @@ type Build {
   packages(buildId: Boolean = false): [String!]
   packageDetail: [Package!]!
   packagesBuilt: [Package!]
+  profile: String
 }
 
 type TagInfo {

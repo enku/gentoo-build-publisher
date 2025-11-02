@@ -93,6 +93,14 @@ def _(build: Build, _info: Info) -> list[Package]:
     return publisher.get_packages(build_record)
 
 
+@BuildType.field("profile")
+def _(build: Build, _info: Info) -> str | None:
+    try:
+        return publisher.portage_profile(build)
+    except FileNotFoundError:
+        return None
+
+
 @PackageType.field("url")
 def _(package: Package, _info: Info) -> str:
     # circular-import workaround
