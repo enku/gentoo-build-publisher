@@ -114,10 +114,9 @@ def _(  # pylint: disable=too-many-arguments
 ) -> HttpResponse:
     """Redirect to the URL of the given build's given package"""
     build = Build(machine=machine, build_id=build_id)
-    storage = publisher.storage
 
     try:
-        packages = storage.get_packages(build)
+        packages = publisher.get_packages(build)
     except LookupError as error:
         raise Http404 from error
 

@@ -220,7 +220,7 @@ class BuildPublisher:
         record = self.save(record, logs=logs, completed=utctime(), built=built)
 
         try:
-            packages = self.storage.get_packages(record)
+            packages = self.get_packages(record)
         except LookupError:
             pass
         else:
@@ -318,7 +318,7 @@ class BuildPublisher:
         # Really old builds, or corrupt builds, don't have a gbp.json file. We can still
         # generate the GBPMetadata however.
         try:
-            packages = self.storage.get_packages(build)
+            packages = self.get_packages(build)
         except LookupError:
             packages = []
 
