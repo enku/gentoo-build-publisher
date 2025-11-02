@@ -98,8 +98,7 @@ class Package:
         from gentoo_build_publisher.records import BuildRecord
 
         if isinstance(self.build, BuildRecord):
-            errmsg = "build field must not be a BuildRecord instance"
-            raise TypeError(errmsg)
+            raise TypeError("build field must not be a BuildRecord instance")
 
 
 class ChangeState(Enum):
