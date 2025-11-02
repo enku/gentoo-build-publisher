@@ -64,6 +64,7 @@ class CICDPackage:
 class BuildInfo:
     build_time: int
     package_info: list[tuple[CICDPackage, PackageStatus]] = field(default_factory=list)
+    profile: str = "default/linux/amd64/23.0"
 
 
 class BuildModelFactory(factory.django.DjangoModelFactory):
@@ -257,6 +258,14 @@ class ArtifactFactory:
                         tar_info.type = tarfile.DIRTYPE
                         tar_info.mode = 0o0755
                         tarchive.addfile(tar_info)
+                elif item is Content.ETC_PORTAGE:
+                    build_info = self.build_info(build)
+                    profile = build_info.profile
+                    tar_info = tarfile.TarInfo(f"{item.value}/make.profile")
+                    tar_info.type = tarfile.SYMTYPE
+                    tar_info.linkname = f"../../var/db/repos/gentoo/profiles/{profile}"
+                    tar_info.mode = 0o0777
+                    tarchive.addfile(tar_info)
 
         tar_file.seek(0)
         self.timestamp = self.timer * 1000
