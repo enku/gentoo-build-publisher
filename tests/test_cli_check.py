@@ -8,7 +8,6 @@ from unittest_fixtures import Fixtures, given
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Content
 
 
@@ -22,6 +21,7 @@ class GBPChkTestCase(TestCase):
 
     def test_uncompleted_builds_are_warnings(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         record = publisher.record(build)
         publisher.repo.build_records.save(record, completed=None)
 
@@ -34,6 +34,7 @@ class GBPChkTestCase(TestCase):
 
     def test_check_tag_with_dots(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.tag(build, "go-1.21.5")
 
@@ -43,6 +44,7 @@ class GBPChkTestCase(TestCase):
         self.assertEqual(exit_status, 0, console.stderr)
 
     def test_error_count_in_exit_status(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         for _ in range(2):
             good_build = BuildFactory()
             publisher.pull(good_build)

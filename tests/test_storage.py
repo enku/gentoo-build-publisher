@@ -13,7 +13,7 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory
 from gbp_testkit.helpers import MockJenkins
-from gentoo_build_publisher import publisher, utils
+from gentoo_build_publisher import utils
 from gentoo_build_publisher.jenkins import Jenkins
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.settings import Settings
@@ -327,6 +327,7 @@ class StorageGetPackagesTestCase(TestCase):
     def test_should_return_list_of_packages_from_index(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         publisher.pull(fixtures.build)
         packages = publisher.storage.get_packages(fixtures.build)
 
@@ -342,6 +343,7 @@ class StorageGetPackagesTestCase(TestCase):
     def test_should_raise_lookuperror_when_index_file_missing(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         publisher.pull(fixtures.build)
         index_file = (
             publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "Packages"
@@ -354,11 +356,13 @@ class StorageGetPackagesTestCase(TestCase):
 
 @fixture(testkit.publisher)
 def timestamp_fixture(fixtures: Fixtures) -> int:
+    publisher = fixtures.publisher
     return int(publisher.jenkins.artifact_builder.timestamp / 1000)
 
 
 @fixture(testkit.publisher)
 def artifacts(fixtures: Fixtures) -> list[Package]:
+    publisher = fixtures.publisher
     artifact_builder = publisher.jenkins.artifact_builder
     a1 = artifact_builder.build(fixtures.build, "dev-libs/cyrus-sasl-2.1.28-r1")
     a2 = artifact_builder.build(fixtures.build, "net-libs/nghttp2-1.47.0")
@@ -375,6 +379,7 @@ class StorageGetMetadataTestCase(TestCase):
     def test_should_return_gbpmetadata_when_gbp_json_exists(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         metadata = publisher.storage.get_metadata(fixtures.build)
 
         expected = GBPMetadata(
@@ -418,6 +423,7 @@ class StorageGetMetadataTestCase(TestCase):
     def test_should_raise_lookuperror_when_file_does_not_exist(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         path = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
         path.unlink()
 
@@ -432,6 +438,7 @@ class StorageGetMetadataTestCase(TestCase):
     def test_packages_built_do_not_contain_build_records(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         record = publisher.record(fixtures.build)
         metadata = publisher.storage.get_metadata(record)
 
@@ -441,6 +448,7 @@ class StorageGetMetadataTestCase(TestCase):
 
 @fixture(testkit.publisher, testkit.build)
 def path_fixture(fixtures: Fixtures) -> Path:
+    publisher = fixtures.publisher
     publisher.pull(fixtures.build)
     metadata = publisher.storage.get_path(fixtures.build, Content.BINPKGS) / "gbp.json"
 
@@ -454,6 +462,7 @@ class StorageSetMetadataTestCase(TestCase):
     """tests for the Storage.set_metadata() method"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         package_metadata = PackageMetadata(
             total=666,
             size=666,
@@ -505,6 +514,7 @@ class StorageSetMetadataTestCase(TestCase):
 class StorageReposTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         repos = publisher.storage.repos(build)
@@ -513,6 +523,7 @@ class StorageReposTestCase(TestCase):
 
     def test_raise_exception_when_not_pulled(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
 
         with self.assertRaises(FileNotFoundError) as context:
             publisher.storage.repos(build)
@@ -524,6 +535,7 @@ class StorageReposTestCase(TestCase):
 class StorageTaggingTestCase(TestCase):
     def test_can_create_tagged_directory_symlinks(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         publisher.storage.tag(build, "prod")
@@ -537,6 +549,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_can_retag(self, fixtures: Fixtures) -> None:
         build1 = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build1)
         publisher.storage.tag(build1, "prod")
 
@@ -553,6 +566,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_can_untag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
 
@@ -568,11 +582,13 @@ class StorageTaggingTestCase(TestCase):
     def test_can_untag_if_no_such_tag_exists(self, fixtures: Fixtures) -> None:
         """Removing a non-existent tag should fail silently"""
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.untag(build, "prod")
 
     def test_non_published_builds_have_no_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         tags = publisher.storage.get_tags(build)
@@ -581,6 +597,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_builds_can_have_multiple_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
         publisher.storage.tag(build, "albert")
@@ -596,6 +613,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_published_builds_have_the_empty_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.publish(build)
 
         tags = publisher.storage.get_tags(build)
@@ -604,6 +622,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_unpulled_builds_have_no_tags(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
 
         tags = publisher.storage.get_tags(build)
 
@@ -613,6 +632,7 @@ class StorageTaggingTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
         publisher.storage.tag(build, "albert")
@@ -627,6 +647,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_get_path(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         storage = publisher.storage
 
         path = storage.get_path(build, Content.BINPKGS)
@@ -636,6 +657,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_get_path_with_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         storage = publisher.storage
 
         path = storage.get_path(build, Content.BINPKGS, tag="prod")
@@ -645,6 +667,7 @@ class StorageTaggingTestCase(TestCase):
 
     def test_get_path_with_published_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         storage = publisher.storage
 
         path = storage.get_path(build, Content.BINPKGS, tag="")
@@ -661,6 +684,7 @@ class StorageResolveTagTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
 
@@ -672,6 +696,7 @@ class StorageResolveTagTestCase(TestCase):
     def test_resolve_tag_raises_exception_when_given_invalid_tag(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         with self.assertRaises(ValueError) as context:
             publisher.storage.resolve_tag("notatag")
 
@@ -681,6 +706,7 @@ class StorageResolveTagTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build = BuildFactory(machine="lighthouse")
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
 
@@ -697,6 +723,7 @@ class StorageResolveTagTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build1 = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build1)
         build2 = BuildFactory()
         publisher.pull(build2)
@@ -712,6 +739,7 @@ class StorageResolveTagTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.storage.tag(build, "prod")
         symlink = publisher.storage.root / "repos" / f"{build.machine}@prod"
@@ -723,6 +751,7 @@ class StorageResolveTagTestCase(TestCase):
 
     def test_resolve_published_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.publish(build)
 
@@ -755,6 +784,7 @@ class MakePackagesTestCase(TestCase):
 
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         index_file = publisher.storage.get_path(build, Content.BINPKGS) / "Packages"
 

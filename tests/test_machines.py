@@ -6,7 +6,7 @@ from unittest_fixtures import Fixtures, fixture, given, where
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
-from gentoo_build_publisher import publisher
+from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.machines import MachineInfo
 from gentoo_build_publisher.types import Build
 
@@ -18,6 +18,7 @@ class MachineInfoTestCase(TestCase):
     """Tests for the MachineInfo thingy"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         # Given the "foo" builds, one of which is published
         first_build = fixtures.build1
         publisher.publish(first_build)
@@ -48,6 +49,7 @@ class MachineInfoTestCase(TestCase):
         self.assertEqual(machine_info.published_build, None)
 
     def test_builds_property(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         # Given the "foo" builds
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
@@ -65,6 +67,7 @@ class MachineInfoTestCase(TestCase):
     def test_tags_property_shows_tags_across_machines_builds(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         # Given the tagged builds for "foo"
         builds = BuildFactory.create_batch(3, machine="foo")
         for build in builds:
@@ -88,10 +91,13 @@ def builds_fixture(_fixtures: Fixtures, count: int = 4) -> list[Build]:
 
 @fixture(testkit.publisher, builds_fixture)
 def machine_info_fixture(fixtures: Fixtures) -> MachineInfo:
+    publisher = fixtures.publisher
     machine = fixtures.builds[0].machine
 
     for build in fixtures.builds:
-        MachineInfoLegacyBuiltTestCase.pull_build_with_no_built_timestamp(build)
+        MachineInfoLegacyBuiltTestCase.pull_build_with_no_built_timestamp(
+            build, publisher
+        )
 
     publisher.publish(fixtures.builds[2])
 
@@ -107,7 +113,9 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
     """Test case for MachineInfo where built field is not always populated"""
 
     @staticmethod
-    def pull_build_with_no_built_timestamp(build: Build) -> None:
+    def pull_build_with_no_built_timestamp(
+        build: Build, publisher: BuildPublisher
+    ) -> None:
         publisher.pull(build)
         publisher.repo.build_records.save(publisher.record(build), built=None)
 
@@ -116,6 +124,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
 
     def test_builds(self, fixtures: Fixtures) -> None:
         builds = fixtures.machine_info.builds
+        publisher = fixtures.publisher
 
         expected = list(reversed([publisher.record(i) for i in fixtures.builds]))
         self.assertEqual(expected, builds)
@@ -123,6 +132,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
     def test_latest_build(self, fixtures: Fixtures) -> None:
         build4 = fixtures.builds[3]
         latest_build = fixtures.machine_info.latest_build
+        publisher = fixtures.publisher
 
         self.assertEqual(publisher.record(build4), latest_build)
 
@@ -130,6 +140,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
         self, fixtures: Fixtures
     ) -> None:
         build5 = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build5)
 
         latest_build = fixtures.machine_info.latest_build
@@ -139,6 +150,7 @@ class MachineInfoLegacyBuiltTestCase(TestCase):
     def test_published_build(self, fixtures: Fixtures) -> None:
         build3 = fixtures.builds[2]
         published_build = fixtures.machine_info.published_build
+        publisher = fixtures.publisher
 
         self.assertEqual(build3, published_build)
         self.assertTrue(publisher.published(build3))

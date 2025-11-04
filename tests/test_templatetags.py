@@ -10,7 +10,6 @@ from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import fixtures as testkit
 from gbp_testkit.helpers import LOCAL_TIMEZONE
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.templatetags.gbp import (
     split_numberize,
 )
@@ -264,6 +263,7 @@ class BuildLinkTests(TemplateTagTests):
 
     def test_with_build_note(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
+        publisher = fixtures.publisher
         build = publisher.repo.build_records.save(build, note="This is a test")
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
@@ -278,6 +278,7 @@ class BuildLinkTests(TemplateTagTests):
     def test_with_tags(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
         machine = build.machine
+        publisher = fixtures.publisher
         publisher.pull(build)
         publisher.tag(build, "foo")
         publisher.tag(build, "bar")
@@ -294,6 +295,7 @@ class BuildLinkTests(TemplateTagTests):
 
     def test_published(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
+        publisher = fixtures.publisher
         machine = build.machine
         id = build.build_id  # pylint: disable=redefined-builtin
         publisher.pull(build)
@@ -323,6 +325,7 @@ class MachineBuildRowTests(TemplateTagTests):
 
     def test(self, fixtures: Fixtures) -> None:
         b = fixtures.build_record
+        publisher = fixtures.publisher
         publisher.pull(b)
 
         # pylint: disable=line-too-long
@@ -335,6 +338,7 @@ class MachineBuildRowTests(TemplateTagTests):
     def test_missing_gbp_dot_json(self, fixtures: Fixtures) -> None:
         # Older (2021-ish) builds don't have a gbp.json file
         build = fixtures.build_record
+        publisher = fixtures.publisher
         publisher.pull(build)
         repos = publisher.storage.get_path(build, Content.BINPKGS)
         gbp_json = repos.joinpath("gbp.json")
@@ -355,6 +359,7 @@ class BuildIDTests(TemplateTagTests):
         self.assertEqual(expected, self.render(build=build))
 
     def test_published(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = publisher.save(fixtures.build_record)
         publisher.pull(build)
         publisher.publish(build)

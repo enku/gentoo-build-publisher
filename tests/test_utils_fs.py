@@ -9,7 +9,6 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
 from gbp_testkit.helpers import create_file
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import fs
 
@@ -32,6 +31,7 @@ class EnsureStorageRootTestCase(TestCase):
 @given(testkit.tmpdir, testkit.publisher)
 class ExtractTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         byte_stream = publisher.jenkins.artifact_builder.get_artifact(build)
 

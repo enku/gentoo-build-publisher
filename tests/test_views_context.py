@@ -16,7 +16,6 @@ from gbp_testkit.factories import (
     BuildRecordFactory,
     package_factory,
 )
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views import context as ctx
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     color_range_from_settings,
@@ -37,6 +36,7 @@ class CreateDashboardContextTests(TestCase):
         return defaults
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         lighthouse1 = BuildFactory(machine="lighthouse")
         for cpv in ["dev-vcs/git-2.34.1", "app-portage/gentoolkit-0.5.1-r1"]:
             publisher.jenkins.artifact_builder.build(lighthouse1, cpv)
@@ -87,6 +87,7 @@ class CreateDashboardContextTests(TestCase):
 
     def test_latest_published(self, fixtures: Fixtures) -> None:
         babette = BuildFactory(machine="babette")
+        publisher = fixtures.publisher
         publisher.publish(babette)
         publisher.pull(BuildFactory(machine="lighthouse"))
         publisher.pull(BuildFactory(machine="polaris"))
@@ -96,6 +97,7 @@ class CreateDashboardContextTests(TestCase):
         self.assertEqual(context.unpublished_builds_count, 2)
 
     def test_builds_over_time_and_build_recently(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.UTC)
         for machine in ["babette", "lighthouse"]:
             for day in range(2):
@@ -116,6 +118,7 @@ class CreateDashboardContextTests(TestCase):
 
 @fixture(testkit.publisher)
 def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
+    publisher = fixtures.publisher
     pf = package_factory()
     ab: ArtifactFactory = publisher.jenkins.artifact_builder
     ab.initial_packages = []
@@ -132,6 +135,7 @@ class CreateMachineContextTests(TestCase):
         return defaults
 
     def test_average_storage(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         total_size = 0
         build_size = 0
         artifact_builder = publisher.jenkins.artifact_builder
@@ -156,6 +160,7 @@ class CreateMachineContextTests(TestCase):
         self.assertEqual(context.average_storage, total_size / 3)
 
     def test_packages_built_today(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         for day in [1, 1, 1, 0]:
             publisher.jenkins.artifact_builder.advance(day * SECONDS_PER_DAY)
             build = BuildFactory()
@@ -179,6 +184,7 @@ class CreateMachineContextTests(TestCase):
         submitted = utctime(dt.datetime(2021, 4, 25, 7, 56, 2))
         completed = utctime(dt.datetime(2021, 4, 25, 7, 56, 36))
         build = BuildFactory()
+        publisher = fixtures.publisher
 
         cpv = "dev-build/autoconf-2.71-r6"
         publisher.jenkins.artifact_builder.timer = int(built.timestamp())
@@ -204,6 +210,7 @@ class CreateMachineContextTests(TestCase):
 class CreateBuildViewTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
 
         for _ in range(3):
             cpv = next(fixtures.pf)

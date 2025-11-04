@@ -7,7 +7,6 @@ from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     ViewFinder,
     experimental,
@@ -92,7 +91,8 @@ class ExperimentalMarkerTests(DjangoTestCase):
 @given(testkit.publisher, pf=testkit.cpv_generator)
 class GetPackageURLTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        builder = publisher.jenkins.artifact_builder  # type: ignore
+        publisher = fixtures.publisher
+        builder = publisher.jenkins.artifact_builder
         [build] = create_builds_and_packages("babette", 1, 1, builder, fixtures.pf)
         publisher.pull(build)
         package = publisher.get_packages(build)[-1]

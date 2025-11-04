@@ -12,7 +12,6 @@ from yarl import URL
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
@@ -44,12 +43,14 @@ class BuildPublisherFromSettingsTestCase(TestCase):
 class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-methods
     def test_publish(self, fixtures: Fixtures) -> None:
         """.publish should publish the build artifact"""
+        publisher = fixtures.publisher
         publisher.publish(fixtures.build)
 
         self.assertIs(publisher.storage.published(fixtures.build), True)
 
     def test_pull_without_db(self, fixtures: Fixtures) -> None:
         """pull creates db record and pulls from jenkins"""
+        publisher = fixtures.publisher
         publisher.pull(fixtures.build)
 
         self.assertIs(publisher.storage.pulled(fixtures.build), True)
@@ -57,6 +58,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_pull_stores_build_logs(self, fixtures: Fixtures) -> None:
         """Should store the logs of the build"""
+        publisher = fixtures.publisher
         publisher.pull(fixtures.build)
 
         url = str(publisher.jenkins.url.logs(fixtures.build))
@@ -69,6 +71,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self, fixtures: Fixtures
     ) -> None:
         """Should update the completed field with the current timestamp"""
+        publisher = fixtures.publisher
         now = utctime()
 
         with mock.patch("gentoo_build_publisher.build_publisher.utctime") as mock_now:
@@ -80,6 +83,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_pull_updates_build_models_built_field(self, fixtures: Fixtures) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.pull(build)
 
@@ -95,6 +99,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self, fixtures: Fixtures
     ) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.pull(build)
         assert publisher.pulled(build)
@@ -108,6 +113,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         # record.completed field is None.  In this case Publisher.pulled(build) should
         # be False
         build = fixtures.build
+        publisher = fixtures.publisher
 
         with mock.patch.object(
             publisher, "_update_build_metadata"
@@ -121,6 +127,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
     def test_build_timestamps(self, fixtures: Fixtures) -> None:
         datetime = dt.datetime
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
+        publisher = fixtures.publisher
 
         with mock.patch(localtimezone, new=ZoneInfo("America/New_York")):
             submitted = datetime(2024, 1, 19, 11, 5, 49, tzinfo=dt.UTC)
@@ -139,6 +146,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(record.completed, datetime(2024, 1, 19, 5, 5, 49, tzinfo=ct))
 
     def test_pull_with_note(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(fixtures.build, note="This is a test")
 
         self.assertIs(publisher.storage.pulled(fixtures.build), True)
@@ -148,6 +156,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
     def test_pull_with_tags(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         tags = {"this", "is", "a", "test"}
+        publisher = fixtures.publisher
 
         publisher.pull(build, tags=tags)
 
@@ -156,6 +165,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_update_build_metadata(self, fixtures: Fixtures) -> None:
         # pylint: disable=protected-access
+        publisher = fixtures.publisher
         record = publisher.record(fixtures.build)
 
         publisher._update_build_metadata(record)
@@ -168,6 +178,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self, fixtures: Fixtures
     ) -> None:
         left = fixtures.build
+        publisher = fixtures.publisher
         publisher.get_packages = mock.Mock(wraps=publisher.get_packages)
         right = left
 
@@ -182,6 +193,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self, fixtures: Fixtures
     ) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.publish(build)
         publisher.storage.tag(build, "prod")
@@ -191,6 +203,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_tag_tags_the_build_at_the_storage_layer(self, fixtures: Fixtures) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.pull(build)
         publisher.tag(build, "prod")
@@ -200,6 +213,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_untag_removes_tag_from_the_build(self, fixtures: Fixtures) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.pull(build)
         publisher.tag(build, "prod")
@@ -211,6 +225,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
 
     def test_untag_with_empty_unpublishes_the_build(self, fixtures: Fixtures) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
 
         publisher.publish(build)
         self.assertTrue(publisher.published(build))
@@ -220,6 +235,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertFalse(publisher.published(build))
 
     def test_save(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         r1 = BuildRecordFactory()
         r2 = publisher.save(r1, note="This is a test")
 
@@ -229,6 +245,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(r2, r3)
 
     def test_machines(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         builds = [
             *BuildFactory.create_batch(3, machine="foo"),
             *BuildFactory.create_batch(2, machine="bar"),
@@ -242,6 +259,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual(len(machines), 3)
 
     def test_machines_with_filter(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         builds = [
             *BuildFactory.create_batch(3, machine="foo"),
             *BuildFactory.create_batch(2, machine="bar"),
@@ -256,6 +274,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
     def test_build_metadata(self, fixtures: Fixtures) -> None:
         """Get a build's GBPMetadata"""
         build = fixtures.build
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         metadata = publisher.build_metadata(build)
@@ -266,6 +285,7 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
     def test_build_metadata_without_json(self, fixtures: Fixtures) -> None:
         """GBPMetadata without a gbp.json file"""
         build = fixtures.build
+        publisher = fixtures.publisher
         publisher.pull(build)
         build = publisher.record(build)
         assert build.completed and build.built
@@ -286,6 +306,7 @@ class BuildPublisherResolveTagTests(TestCase):
     def test_no_tag(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         machine = build.machine
+        publisher = fixtures.publisher
 
         publisher.pull(build)
 
@@ -294,6 +315,7 @@ class BuildPublisherResolveTagTests(TestCase):
     def test_with_tag(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         machine = build.machine
+        publisher = fixtures.publisher
 
         publisher.pull(build, tags=["mytag"])
 
@@ -304,6 +326,7 @@ class BuildPublisherResolveTagTests(TestCase):
     def test_with_published_tag(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         machine = build.machine
+        publisher = fixtures.publisher
 
         publisher.publish(build)
 
@@ -312,6 +335,7 @@ class BuildPublisherResolveTagTests(TestCase):
     def test_with_published_tag_but_none_published(self, fixtures: Fixtures) -> None:
         build = fixtures.build
         machine = build.machine
+        publisher = fixtures.publisher
 
         publisher.pull(build)
 
@@ -320,6 +344,7 @@ class BuildPublisherResolveTagTests(TestCase):
     def test_with_latest_tag(self, fixtures: Fixtures) -> None:
         machine = fixtures.build.machine
         build2 = fixtures.build2
+        publisher = fixtures.publisher
 
         publisher.pull(fixtures.build)
         publisher.pull(build2)
@@ -329,9 +354,11 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_with_latest_tag_none_pulled(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         self.assertIsNone(publisher.resolve_tag("bogus@@"))
 
     def test_published_plus(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build
         next_build = fixtures.build2
         machine = fixtures.build.machine
@@ -344,6 +371,7 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_published_plus_zero(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build
         machine = fixtures.build.machine
 
@@ -354,6 +382,7 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_published_plus_with_no_next(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build
         machine = fixtures.build.machine
 
@@ -362,6 +391,7 @@ class BuildPublisherResolveTagTests(TestCase):
         self.assertEqual(None, publisher.resolve_tag(f"{machine}@+2"))
 
     def test_published_minus(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build2
         previous_build = fixtures.build
         machine = fixtures.build.machine
@@ -374,6 +404,7 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_published_minus_zero(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build
         machine = fixtures.build.machine
 
@@ -384,6 +415,7 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_published_minus_with_no_previous(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         published_build = fixtures.build
         machine = fixtures.build.machine
 
@@ -392,6 +424,7 @@ class BuildPublisherResolveTagTests(TestCase):
         self.assertEqual(None, publisher.resolve_tag(f"{machine}@-2"))
 
     def test_tagged_plus(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         tagged_build = fixtures.build
         next_build = fixtures.build2
         machine = fixtures.build.machine
@@ -404,6 +437,7 @@ class BuildPublisherResolveTagTests(TestCase):
         self.assertEqual(publisher.record(next_build), resolved)
 
     def test_tagged_minus(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         tagged_build = fixtures.build2
         previous_build = fixtures.build
         machine = fixtures.build.machine
@@ -416,6 +450,7 @@ class BuildPublisherResolveTagTests(TestCase):
         )
 
     def test_no_tag_sym(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = fixtures.build
         publisher.pull(build)
         machine = fixtures.build.machine
@@ -427,6 +462,7 @@ class BuildPublisherResolveTagTests(TestCase):
 class BuildPublisherPortageProfileTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         build = fixtures.build
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         self.assertEqual(publisher.portage_profile(build), "default/linux/amd64/23.0")
@@ -478,6 +514,7 @@ class DispatcherTestCase(TestCase):
 
     def test_pull_single(self, fixtures: Fixtures) -> None:
         new_build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(new_build)
         record = publisher.record(new_build)
 
@@ -493,6 +530,7 @@ class DispatcherTestCase(TestCase):
     def test_pull_multi(self, fixtures: Fixtures) -> None:
         build1 = BuildFactory()
         build2 = BuildFactory(machine="fileserver")
+        publisher = fixtures.publisher
         publisher.pull(build1)
         publisher.pull(build2)
 
@@ -516,6 +554,7 @@ class DispatcherTestCase(TestCase):
 
     def test_publish(self, fixtures: Fixtures) -> None:
         new_build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.publish(new_build)
 
         record = publisher.record(new_build)
@@ -523,6 +562,7 @@ class DispatcherTestCase(TestCase):
 
     def test_tag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         called = False
         tag_given: str | None = None
@@ -542,6 +582,7 @@ class DispatcherTestCase(TestCase):
 
     def test_publish_does_not_emit_tagged_signal(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         called = False
 
@@ -558,6 +599,7 @@ class DispatcherTestCase(TestCase):
 
     def test_untag(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build, tags=["test"])
         called = False
         tag_given: str | None = None
@@ -580,6 +622,7 @@ class DispatcherTestCase(TestCase):
 
     def test_untag_unpublish(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.publish(build)
         called = False
         tag_given: str | None = None
@@ -603,6 +646,7 @@ class DispatcherTestCase(TestCase):
     def test_untag_not_tagged(self, fixtures: Fixtures) -> None:
         """Untagging a machine that doesn't have the tag doesn't emit the signal"""
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         called = False
 
@@ -619,6 +663,7 @@ class DispatcherTestCase(TestCase):
 
     def test_republish_does_not_emit_untagged_signal(self, fixtures: Fixtures) -> None:
         build1 = BuildFactory()
+        publisher = fixtures.publisher
         publisher.publish(build1)
         called = False
 
@@ -640,6 +685,7 @@ class ScheduleBuildTestCase(TestCase):
     """Tests for the schedule_build function"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         response = publisher.schedule_build("babette")
 
         self.assertEqual("https://jenkins.invalid/job/babette/build", response)

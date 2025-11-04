@@ -10,7 +10,7 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS, graphql
-from gentoo_build_publisher import plugins, publisher
+from gentoo_build_publisher import plugins
 from gentoo_build_publisher.cache import clear as cache_clear
 from gentoo_build_publisher.graphql import scalars
 from gentoo_build_publisher.jenkins import ProjectPath
@@ -47,6 +47,7 @@ class BuildQueryTestCase(TestCase):
 
     def test(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         artifact_builder = publisher.jenkins.artifact_builder
         artifact_builder.timer = 1646115094
         artifact_builder.build(build, "x11-wm/mutter-41.3")
@@ -111,6 +112,7 @@ class BuildQueryTestCase(TestCase):
     def test_packages(self, fixtures: Fixtures) -> None:
         # given the pulled build with packages
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         # when we query the build's packages
@@ -128,6 +130,7 @@ class BuildQueryTestCase(TestCase):
 
     def test_packages_build_id(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         # when we query the build's packages
@@ -147,6 +150,7 @@ class BuildQueryTestCase(TestCase):
     def test_packages_when_not_pulled_returns_none(self, fixtures: Fixtures) -> None:
         # given the unpulled package
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.repo.build_records.save(publisher.record(build))
 
         # when we query the build's packages
@@ -167,6 +171,7 @@ class BuildQueryTestCase(TestCase):
     ) -> None:
         # given the pulled build with index file missing
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         (publisher.storage.get_path(build, Content.BINPKGS) / "Packages").unlink()
@@ -187,6 +192,8 @@ class BuildQueryTestCase(TestCase):
     def test_package_detail(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         build = BuildFactory()
+        publisher = fixtures.publisher
+
         publisher.pull(build)
 
         query = """
@@ -235,6 +242,7 @@ class BuildsQueryTestCase(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.UTC)
         builds = BuildFactory.create_batch(3)
+        publisher = fixtures.publisher
 
         for build in builds:
             record = publisher.record(build)
@@ -264,6 +272,7 @@ class BuildsQueryTestCase(TestCase):
     def test_older_build_pulled_after_newer_should_not_sort_before(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         # Build first build
         first_build = BuildFactory(machine="lighthouse", build_id="10000")
         publisher.jenkins.artifact_builder.build_info(first_build)
@@ -299,7 +308,8 @@ class BuildsQueryTestCase(TestCase):
 
 
 @fixture(testkit.publisher)
-def latest(_fixtures: Fixtures) -> Build:
+def latest(fixtures: Fixtures) -> Build:
+    publisher = fixtures.publisher
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
             built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
@@ -356,6 +366,7 @@ class LatestQueryTestCase(TestCase):
 
 @fixture(testkit.publisher)
 def diff_query_builds(fixtures: Fixtures) -> dict[str, Build]:
+    publisher = fixtures.publisher
     # Given the first build with tar-1.34
     left = BuildFactory()
     artifact_builder = publisher.jenkins.artifact_builder
@@ -549,6 +560,7 @@ class MachinesQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         babette_builds = BuildFactory.create_batch(3, machine="babette")
         lighthouse_builds = BuildFactory.create_batch(3, machine="lighthouse")
 
@@ -660,6 +672,7 @@ class MachinesQueryTestCase(TestCase):
     def test_only_machine(self, fixtures: Fixtures) -> None:
         # basically test that only selecting the name doesn't query other infos
         # (coverage.py)
+        publisher = fixtures.publisher
         for build in BuildFactory.create_batch(
             2, machine="babette"
         ) + BuildFactory.create_batch(3, machine="lighthouse"):
@@ -682,6 +695,7 @@ class MachinesQueryTestCase(TestCase):
 
     def test_latest_build_is_published(self, fixtures: Fixtures) -> None:
         build = BuildFactory.create()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         query = """
@@ -705,6 +719,7 @@ class MachinesQueryTestCase(TestCase):
         self.assertTrue(result["data"]["machines"][0]["latestBuild"]["published"])
 
     def test_with_names_filter(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         builds = [
             *BuildFactory.create_batch(3, machine="foo"),
             *BuildFactory.create_batch(2, machine="bar"),
@@ -733,6 +748,7 @@ class PublishMutationTestCase(TestCase):
     def test_publish_when_pulled(self, fixtures: Fixtures) -> None:
         """Should publish builds"""
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         query = """
@@ -830,8 +846,7 @@ class PullMutationTestCase(TestCase):
 
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client, schedule_build=testkit.patch)
-@where(schedule_build__object=publisher)
-@where(schedule_build__target="schedule_build")
+@where(schedule_build__target="gentoo_build_publisher.publisher.schedule_build")
 @where(schedule_build__return_value="https://jenkins.invalid/queue/item/31528/")
 class ScheduleBuildMutationTestCase(TestCase):
     """Tests for the build mutation"""
@@ -908,6 +923,7 @@ class KeepBuildMutationTestCase(TestCase):
 
     def test_should_keep_existing_build(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         query = """
         mutation ($id: ID!) {
@@ -941,6 +957,7 @@ class ReleaseBuildMutationTestCase(TestCase):
     """Tests for the releaseBuild mutation"""
 
     def test_should_release_existing_build(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         record = publisher.record(build)
         publisher.repo.build_records.save(record, keep=True)
@@ -979,6 +996,7 @@ class CreateNoteMutationTestCase(TestCase):
 
     def test_set_text(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         note_text = "Hello, world!"
         query = """
@@ -998,6 +1016,7 @@ class CreateNoteMutationTestCase(TestCase):
         self.assertEqual(record.note, note_text)
 
     def test_set_none(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         publisher.pull(build)
 
@@ -1040,6 +1059,7 @@ class CreateNoteMutationTestCase(TestCase):
 class TagsTestCase(TestCase):
     def test_createbuildtag_mutation_tags_the_build(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         query = """
         mutation ($id: ID!, $tag: String!) {
@@ -1058,6 +1078,7 @@ class TagsTestCase(TestCase):
     def test_removebuildtag_mutation_removes_tag_from_the_build(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         publisher.pull(build)
         publisher.tag(build, "prod")
@@ -1077,6 +1098,7 @@ class TagsTestCase(TestCase):
         assert_data(self, result, {"removeBuildTag": {"tags": []}})
 
     def test_resolvetag_query_resolves_tag(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         publisher.pull(build)
         publisher.tag(build, "prod")
@@ -1098,6 +1120,7 @@ class TagsTestCase(TestCase):
     def test_resolvetag_query_resolves_to_none_when_tag_does_not_exist(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         publisher.pull(build)
 
@@ -1116,6 +1139,7 @@ class TagsTestCase(TestCase):
         assert_data(self, result, {"resolveBuildTag": None})
 
     def test_latest_build_tag(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory()
         publisher.pull(build)
 
@@ -1134,7 +1158,8 @@ class TagsTestCase(TestCase):
         assert_data(self, result, {"resolveBuildTag": {"id": str(build)}})
 
 
-def search_query_builds(_fixtures: Fixtures) -> list[Build]:
+def search_query_builds(fixtures: Fixtures) -> list[Build]:
+    publisher = fixtures.publisher
     for field in SEARCH_PARAMS["field"]:
         build1 = BuildFactory()
         record = publisher.record(build1)
@@ -1194,6 +1219,7 @@ class SearchQueryTestCase(TestCase):
         assert_data(self, result, {"search": expected})
 
     def test_only_matches_given_machine(self, fx: Fixtures) -> None:
+        publisher = fx.publisher
         build = BuildFactory(machine="lighthouse")
         record = publisher.record(build)
         publisher.repo.build_records.save(record, **{fx.field: "test foo"})
@@ -1228,7 +1254,8 @@ class SearchQueryTestCase(TestCase):
 
 
 @fixture(testkit.publisher)
-def search_notes_query_builds(_fixtures: Fixtures) -> list[Build]:
+def search_notes_query_builds(fixtures: Fixtures) -> list[Build]:
+    publisher = fixtures.publisher
     build1 = BuildFactory()
     record = publisher.record(build1)
     publisher.repo.build_records.save(record, note="test foo")
@@ -1280,6 +1307,7 @@ class SearchNotesQueryTestCase(TestCase):
         )
 
     def test_only_matches_given_machine(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         build = BuildFactory(machine="lighthouse")
         publisher.pull(build)
         record = publisher.record(build)
@@ -1314,11 +1342,12 @@ class WorkingTestCase(TestCase):
     """
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(BuildFactory())
         publisher.pull(BuildFactory(machine="lighthouse"))
         working = BuildFactory()
         publisher.repo.build_records.save(
-            BuildRecord(working.machine, working.build_id)
+            BuildRecord(working.machine, str(working.build_id))
         )
 
         result = graphql(fixtures.client, self.query)
@@ -1351,6 +1380,7 @@ class CreateRepoTestCase(TestCase):
     """
 
     def test_creates_repo_when_does_not_exist(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         result = graphql(
             fixtures.client,
             self.query,
@@ -1365,6 +1395,7 @@ class CreateRepoTestCase(TestCase):
         self.assertTrue(publisher.jenkins.project_exists(ProjectPath("repos/gentoo")))
 
     def test_returns_error_when_already_exists(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.jenkins.make_folder(ProjectPath("repos"))
         publisher.jenkins.create_repo_job(
             EbuildRepo(name="gentoo", url="foo", branch="master")
@@ -1402,6 +1433,7 @@ class CreateMachineTestCase(TestCase):
     """
 
     def test_creates_machine_when_does_not_exist(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         result = graphql(
             fixtures.client,
             self.query,
@@ -1417,6 +1449,7 @@ class CreateMachineTestCase(TestCase):
         self.assertTrue(publisher.jenkins.project_exists(ProjectPath("babette")))
 
     def test_returns_error_when_already_exists(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         job = MachineJob(
             name="babette",
             repo=Repo(url="https://github.com/enku/gbp-machines.git", branch="master"),
@@ -1485,6 +1518,7 @@ class StatsTests(TestCase):
 
     def test(self, fixtures: Fixtures) -> None:
         # pylint: disable=undefined-loop-variable
+        publisher = fixtures.publisher
         records: dict[str, list[BuildRecord]] = {}
         for machine, builds in fixtures.builds.items():
             records[machine] = []

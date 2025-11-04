@@ -10,7 +10,6 @@ from django.http import HttpResponse
 from unittest_fixtures import Fixtures, fixture, given, params, where
 
 import gbp_testkit.fixtures as testkit
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cache import clear as cache_clear
 from gentoo_build_publisher.types import Build, Content
 from gentoo_build_publisher.utils import string
@@ -28,6 +27,7 @@ def lighthouse(fixtures: Fixtures) -> HttpResponse:
 # pylint: disable=unused-argument
 @fixture(testkit.publisher, testkit.builds)
 def artifacts(fixtures: Fixtures) -> dict[str, Build]:
+    publisher = fixtures.publisher
     artifact_builder = publisher.jenkins.artifact_builder
     published = first_build(fixtures.builds, "lighthouse")
     artifact_builder.advance(-86400)
@@ -61,6 +61,7 @@ class DashboardTestCase(TestCase):
     """Tests for the dashboard view"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.publish(latest_build(fixtures.builds, "lighthouse"))
 
         # pull the latest web
@@ -84,6 +85,7 @@ class ReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.publish(latest_build(fixtures.builds, "lighthouse"))
 
         response = fixtures.client.get("/machines/lighthouse/repos.conf")
@@ -93,6 +95,7 @@ class ReposDotConfTestCase(TestCase):
         self.assert_template_used("gentoo_build_publisher/repos.conf", response)
 
     def test_non_published(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
         response = fixtures.client.get("/machines/lighthouse/repos.conf")
@@ -102,6 +105,7 @@ class ReposDotConfTestCase(TestCase):
     def test_tagged_builds_should_have_a_repos_dot_conf(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         publisher.pull(build := latest_build(fixtures.builds, "lighthouse"))
         publisher.tag(build, "prod")
 
@@ -123,6 +127,7 @@ class BinReposDotConfTestCase(TestCase):
     """Tests for the repos_dot_conf view"""
 
     def test(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.publish(latest_build(fixtures.builds, "lighthouse"))
 
         response = fixtures.client.get("/machines/lighthouse/binrepos.conf")
@@ -132,6 +137,7 @@ class BinReposDotConfTestCase(TestCase):
         self.assert_template_used("gentoo_build_publisher/binrepos.conf", response)
 
     def test_non_published(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
         response = fixtures.client.get("/machines/lighthouse/binrepos.conf")
@@ -139,6 +145,7 @@ class BinReposDotConfTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_when_no_such_tag_exists_gives_404(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         publisher.pull(latest_build(fixtures.builds, "lighthouse"))
 
         response = fixtures.client.get("/machines/lighthouse@bogus/binrepos.conf")
@@ -148,6 +155,7 @@ class BinReposDotConfTestCase(TestCase):
     def test_tagged_builds_should_have_a_binrepos_dot_conf(
         self, fixtures: Fixtures
     ) -> None:
+        publisher = fixtures.publisher
         publisher.pull(build := latest_build(fixtures.builds, "lighthouse"))
         publisher.tag(build, "prod")
 
@@ -202,6 +210,7 @@ class BuildViewTests(TestCase):
     def test_package_links(self, fixtures: Fixtures) -> None:
         build = fixtures.builds["lighthouse"][-1]
         url = f"/machines/lighthouse/builds/{build.build_id}/"
+        publisher = fixtures.publisher
 
         response = fixtures.client.get(url)
 
@@ -220,6 +229,7 @@ class BuildViewTests(TestCase):
         client = fixtures.client
         builds = fixtures.builds
         build = builds["lighthouse"][-1]
+        publisher = fixtures.publisher
         publisher.tag(build, "test")
         url = "/machines/lighthouse/builds/@test/"
 
@@ -245,6 +255,7 @@ class BuildViewTests(TestCase):
         client = fixtures.client
         builds = fixtures.builds
         build = builds["lighthouse"][-1]
+        publisher = fixtures.publisher
         publisher.publish(build)
         url = "/machines/lighthouse/builds/@/"
 
@@ -263,6 +274,7 @@ class BuildViewTests(TestCase):
         client = fixtures.client
         builds = fixtures.builds
         build = builds["lighthouse"][-1]
+        publisher = fixtures.publisher
         record = publisher.repo.build_records.get(build)
         publisher.repo.build_records.save(record, note="This is a build note")
         url = f"/machines/lighthouse/builds/{build.build_id}/"
@@ -294,6 +306,7 @@ class BuildViewTests(TestCase):
         client = fixtures.client
         builds = fixtures.builds
         build = builds["lighthouse"][-1]
+        publisher = fixtures.publisher
         url = f"/machines/lighthouse/builds/{build.build_id}/"
         gbp_json = publisher.storage.get_path(build, Content.BINPKGS) / "gbp.json"
         gbp_json.unlink()
@@ -308,6 +321,7 @@ class BuildViewTests(TestCase):
 class LogsTests(TestCase):
     def test_gets_logs(self, fixtures: Fixtures) -> None:
         build = fixtures.artifacts["latest"]
+        publisher = fixtures.publisher
         record = publisher.repo.build_records.get(build)
 
         url = f"/machines/{build.machine}/builds/{build.build_id}/{fixtures.view}"
@@ -335,6 +349,7 @@ class LogsTests(TestCase):
     def test_given_tag(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         build = fixtures.artifacts["latest"]
+        publisher = fixtures.publisher
         publisher.tag(build, "test")
         url = f"/machines/lighthouse/builds/@test/{fixtures.view}"
 
@@ -359,6 +374,7 @@ class LogsTests(TestCase):
     def test_published_tag(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         build = fixtures.artifacts["latest"]
+        publisher = fixtures.publisher
         publisher.publish(build)
         url = f"/machines/lighthouse/builds/@/{fixtures.view}"
 

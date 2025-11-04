@@ -11,7 +11,6 @@ from unittest_fixtures import Fixtures, given
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.helpers import graphql
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.graphql import resolvers, type_defs
 from gentoo_build_publisher.graphql.utils import (
@@ -71,6 +70,7 @@ class RequireAPIKeyTestCase(TestCase):
             key=apikey.create_api_key(),
             created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
         )
+        publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
         encoded = encode_basic_auth_data(name, api_key.key)
         fixtures.request.headers = {"Authorization": f"Basic {encoded}"}
@@ -89,6 +89,7 @@ class RequireAPIKeyTestCase(TestCase):
             key=apikey.create_api_key(),
             created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
         )
+        publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
         encoded = encode_basic_auth_data(name, api_key.key)
         fixtures.request.headers = {"Authorization": f"Basic {encoded}"}
@@ -126,6 +127,7 @@ class RequireAPIKeyTestCase(TestCase):
             key=apikey.create_api_key(),
             created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
         )
+        publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
         encoded = encode_basic_auth_data(name, "bogus")
         fixtures.request.headers = {"Authorization": f"Basic {encoded}"}
@@ -164,6 +166,7 @@ class RequireAPIKeyTestCase(TestCase):
             key=apikey.create_api_key(),
             created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
         )
+        publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
         encoded = encode_basic_auth_data(name, api_key.key)
         fixtures.request.headers = {"Authorization": f"Basic {encoded}"}

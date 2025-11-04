@@ -13,7 +13,6 @@ import unittest_fixtures as uf
 from requests import HTTPError
 
 import gbp_testkit.fixtures as testkit
-from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import build_records
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.types import Build
@@ -56,6 +55,7 @@ class PublishBuildTestCase(TestCase):
 
     def test_publishes_build(self, fixtures: Fixtures) -> None:
         """Should actually publish the build"""
+        publisher = fixtures.publisher
         fixtures.worker.run(tasks.publish_build, "babette.193")
 
         build = Build("babette", "193")
@@ -86,6 +86,7 @@ class PullBuildTestCase(TestCase):
 
     def test_pulls_build(self, fixtures: Fixtures) -> None:
         """Should actually pull the build"""
+        publisher = fixtures.publisher
         fixtures.worker.run(tasks.pull_build, "lima.1012", note=None, tags=None)
 
         build = Build("lima", "1012")
@@ -113,7 +114,7 @@ class PullBuildTestCase(TestCase):
 
 @uf.params(backend=("celery", "rq", "sync", "thread"))
 @uf.given(worker_fixture, delete=testkit.patch)
-@uf.where(delete__object=publisher, delete__target="delete")
+@uf.where(delete__target="gentoo_build_publisher.publisher.delete")
 @uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
 class DeleteBuildTestCase(TestCase):
     """Unit tests for tasks_delete_build"""

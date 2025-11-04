@@ -11,7 +11,8 @@ from unittest_fixtures import Fixtures, given
 
 from gbp_testkit import fixtures as testkit
 from gbp_testkit.factories import BuildFactory
-from gentoo_build_publisher import checks, publisher
+from gentoo_build_publisher import checks
+from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.types import Build, Content
 
 
@@ -19,9 +20,10 @@ from gentoo_build_publisher.types import Build, Content
 class BuildContentTests(TestCase):
     def test_build_content(self, fixtures: Fixtures) -> None:
         good_build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(good_build)
 
-        bad_build = build_with_missing_content(Content.BINPKGS)
+        bad_build = build_with_missing_content(Content.BINPKGS, publisher)
 
         console = fixtures.console
         result = checks.build_content(console)
@@ -36,6 +38,7 @@ class BuildContentTests(TestCase):
 class MissingGBPJsonTests(TestCase):
     def test_missing_gbp_json(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         storage = publisher.storage
 
@@ -50,6 +53,7 @@ class MissingGBPJsonTests(TestCase):
 
     def test_check_corrupt_gbp_json(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
         storage = publisher.storage
 
@@ -68,6 +72,7 @@ class InconsistentTagsTests(TestCase):
     def test_inconsistent_tags(self, fixtures: Fixtures) -> None:
         # More than one build is represented by a tag
         good_build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(good_build)
 
         build1 = BuildFactory(machine="larry")
@@ -94,9 +99,10 @@ class InconsistentTagsTests(TestCase):
 class OrphansTests(TestCase):
     def test_check_orphans(self, fixtures: Fixtures) -> None:
         good_build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(good_build)
 
-        bad_build = orphan_build()
+        bad_build = orphan_build(publisher)
         binpkg_path = publisher.storage.get_path(bad_build, Content.BINPKGS)
 
         console = fixtures.console
@@ -109,6 +115,7 @@ class OrphansTests(TestCase):
 
     def test_check_orphans_dangling_symlinks(self, fixtures: Fixtures) -> None:
         build = BuildFactory()
+        publisher = fixtures.publisher
         publisher.pull(build)
 
         publisher.tag(build, "broken_tag")
@@ -132,6 +139,7 @@ class OrphansTests(TestCase):
 @given(testkit.console, testkit.publisher)
 class DirtyTempTests(TestCase):
     def test_check_tmpdir_nonempty(self, fixtures: Fixtures) -> None:
+        publisher = fixtures.publisher
         storage = publisher.storage
         root = storage.root
         tmp = root / "tmp"
@@ -145,7 +153,7 @@ class DirtyTempTests(TestCase):
         self.assertEqual(console.stderr, f"Warning: {tmp} is not empty.\n")
 
 
-def build_with_missing_content(content: Content) -> Build:
+def build_with_missing_content(content: Content, publisher: BuildPublisher) -> Build:
     build = BuildFactory()
     publisher.pull(build)
     content_path = publisher.storage.get_path(build, content)
@@ -154,7 +162,7 @@ def build_with_missing_content(content: Content) -> Build:
     return build
 
 
-def orphan_build() -> Build:
+def orphan_build(publisher: BuildPublisher) -> Build:
     build = BuildFactory()
     publisher.pull(build)
 
