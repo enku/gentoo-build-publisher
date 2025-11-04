@@ -23,7 +23,7 @@ from gentoo_build_publisher.types import (
 )
 from gentoo_build_publisher.utils import fs, string
 
-INVALID_TEST_PATH = "__testing__"
+INVALID_TEST_PATH = Path("__testing__")
 GBP_METADATA_FILENAME = "gbp.json"
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class Storage:
     """
 
     def __init__(self, root: Path):
-        if str(root) != INVALID_TEST_PATH:
+        if root != INVALID_TEST_PATH:
             fs.init_root(root, ["tmp", *(content.value for content in Content)])
         self.root = root
 
