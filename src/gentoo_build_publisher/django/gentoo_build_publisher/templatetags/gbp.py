@@ -2,7 +2,7 @@
 
 import datetime as dt
 import warnings
-from typing import Any
+from typing import Any, Iterable
 
 from django import template
 from django.urls import reverse
@@ -12,6 +12,8 @@ from gentoo_build_publisher import publisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Package
 from gentoo_build_publisher.utils import string, time
+
+from . import FOOTER_LINKS
 
 localtime = time.localtime
 register = template.Library()
@@ -262,3 +264,9 @@ def navlink(viewname: str, title: str, active: bool = True) -> dict[str, Any]:
 def footer_link(title: str, url: str) -> dict[str, str]:
     """Render the link for the footer"""
     return {"url": url, "title": title}
+
+
+@register.simple_tag
+def footer_links() -> Iterable[tuple[str, str]]:
+    """Return FOOTER_LINKS items"""
+    return FOOTER_LINKS.items()

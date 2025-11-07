@@ -55,11 +55,10 @@
     <footer class="footer">{% block footer %}
       <div class="row footerlinks">
         {% block footerlinks %}
-        {% footer_link "Blog" "https://lunarcowboy.com/tag/gentoo-build-publisher.html" %}
-        {% footer_link "GitHub" "https://github.com/enku/gentoo-build-publisher" %}
-        {% footer_link "PyPI" "https://pypi.org/project/gentoo-build-publisher/" %}
-        {% footer_link "Gentoo Packages" "https://packages.gentoo.org/" %}
-        {% footer_link "Gentoo News Items" "https://www.gentoo.org/support/news-items/" %}
+        {% footer_links as links %}
+        {% for name, link in links %}
+        {% footer_link name link %}
+        {% endfor %}
         {% endblock %}
       </div>
       <div class="row">

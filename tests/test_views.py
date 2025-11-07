@@ -443,6 +443,29 @@ class AboutViewTests(TestCase):
         self.assert_template_used("gentoo_build_publisher/about/main.html", response)
 
 
+@given(testkit.client)
+@given(links=testkit.patch)
+@where(
+    links__target=(
+        "gentoo_build_publisher.django."
+        "gentoo_build_publisher.templatetags.gbp.FOOTER_LINKS"
+    )
+)
+@where(links__new={"Google": "https://www.google.com/", "Test": "http://test.com/"})
+class FooterTests(TestCase):
+    def test_footer_links_from_settings(self, fixtures: Fixtures) -> None:
+        client = fixtures.client
+
+        response = client.get("/")
+        html = response.text
+
+        expected = """<a href="https://www.google.com/">Google</a>"""
+        self.assertIn(expected, html)
+
+        expected = """<a href="http://test.com/">Test</a>"""
+        self.assertIn(expected, html)
+
+
 def first_build(build_dict: dict[str, list[Build]], name: str) -> Build:
     return build_dict[name][0]
 
