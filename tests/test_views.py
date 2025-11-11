@@ -225,6 +225,19 @@ class BuildViewTests(TestCase):
         )
         self.assertIn(expected, response.text)
 
+    def test_total_size(self, fixtures: Fixtures) -> None:
+        build = fixtures.builds["lighthouse"][-1]
+        url = f"/machines/lighthouse/builds/{build.build_id}/"
+
+        response = fixtures.client.get(url)
+
+        expected = """\
+<li class="list-group-item d-flex justify-content-between">
+    <span>Total</span>
+    <span>676B</span>
+  </li>"""
+        self.assert_contains(expected, response)
+
     def test_given_tag(self, fixtures: Fixtures) -> None:
         client = fixtures.client
         builds = fixtures.builds

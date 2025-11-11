@@ -226,6 +226,9 @@ class CreateBuildViewTests(TestCase):
             gradient_colors=gradient_colors(*color_range_from_settings(), 10),
             machine=build.machine,
             packages_built=publisher.storage.get_metadata(record).packages.built,
+            total_package_size=sum(
+                i.size for i in publisher.storage.get_metadata(record).packages.built
+            ),
             published=False,
             tags=[],
         )

@@ -37,8 +37,9 @@ from .utils import (
 MAX_DISPLAYED_PKGS = 12
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(kw_only=True, frozen=True)
-class Dashboard:  # pylint: disable=too-many-instance-attributes
+class Dashboard:
     """Definition for the Dashboard context"""
 
     chart_days: list[str]
@@ -186,6 +187,7 @@ class BuildView:
     build_id: str
     gradient_colors: Gradient
     packages_built: list[Package]
+    total_package_size: int
     published: bool
     tags: list[str]
 
@@ -200,6 +202,7 @@ class BuildView:
             gradient_colors=gradient_colors(*color_range_from_settings(), 10),
             machine=build.machine,
             packages_built=packages_built,
+            total_package_size=sum(p.size for p in packages_built),
             published=publisher.published(build),
             tags=publisher.tags(build),
         )

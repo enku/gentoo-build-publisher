@@ -7,5 +7,9 @@
   {% for package in packages_built %}
     {% machine_package_row package %}
   {% endfor %}
+  <li class="list-group-item d-flex justify-content-between">
+    <span>Total</span>
+    <span>{{ total_package_size|numberize:"b1" }}B</span>
+  </li>
   </ul>
 </div>
