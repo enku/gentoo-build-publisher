@@ -111,12 +111,6 @@ class StorageProfileTests(TestCase):
 
 
 @fixture(testkit.tmpdir)
-def storage_fixture(fixtures: Fixtures) -> Storage:
-    root = fixtures.tmpdir / "root"
-    return Storage(root)
-
-
-@fixture(testkit.tmpdir)
 def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"
     settings = replace(TEST_SETTINGS, STORAGE_PATH=root)
@@ -124,7 +118,7 @@ def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     return MockJenkins.from_settings(settings)
 
 
-@given(testkit.build, storage_fixture, jenkins_fixture)
+@given(testkit.build, testkit.storage, jenkins_fixture)
 class StorageDownloadArtifactTestCase(TestCase):
     """Tests for Storage.download_artifact"""
 
