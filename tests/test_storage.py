@@ -110,6 +110,20 @@ class StorageProfileTests(TestCase):
             storage.profile(record)
 
 
+@given(testkit.storage)
+class StorageTempTests(TestCase):
+    def test_has_temp_attribute(self, fixtures: Fixtures) -> None:
+        storage = fixtures.storage
+
+        self.assertEqual(storage.temp, storage.root / "tmp")
+
+    def test_temp_exists(self, fixtures: Fixtures) -> None:
+        storage = fixtures.storage
+
+        self.assertTrue(storage.temp.exists())
+        self.assertTrue(storage.temp.is_dir())
+
+
 @fixture(testkit.tmpdir)
 def jenkins_fixture(fixtures: Fixtures) -> Jenkins:
     root = fixtures.tmpdir / "root"

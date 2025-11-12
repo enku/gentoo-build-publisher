@@ -74,6 +74,11 @@ class Storage:
         """Instantiate from settings"""
         return cls(settings.STORAGE_PATH)
 
+    @property
+    def temp(self) -> Path:
+        """Return the path of the temporary files directory in Storage"""
+        return self.root / "tmp"
+
     @lru_cache(maxsize=256 * len(Content))
     def get_path(
         self, build: Build, content: Content, *, tag: str | None = None
