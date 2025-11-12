@@ -99,8 +99,7 @@ def dirty_temp(console: Console) -> CheckResult:
     errors = 0
     warnings = 0
     storage = publisher.storage
-    root = storage.root
-    tmp = root / "tmp"
+    tmp = storage.temp
 
     if next(tmp.iterdir(), None):
         warnings += 1

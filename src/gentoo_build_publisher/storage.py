@@ -110,9 +110,8 @@ class Storage:
 
         logger.info("Extracting build: %s", build)
 
-        tmpdir = self.root / "tmp"
-        artifact_file = tempfile.NamedTemporaryFile(dir=tmpdir, suffix=".tar.gz")
-        artifact_dir = tempfile.TemporaryDirectory(dir=tmpdir)
+        artifact_file = tempfile.NamedTemporaryFile(dir=self.temp, suffix=".tar.gz")
+        artifact_dir = tempfile.TemporaryDirectory(dir=self.temp)
         with artifact_file, artifact_dir:
             dirpath = Path(artifact_dir.name)
 

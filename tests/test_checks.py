@@ -141,8 +141,7 @@ class DirtyTempTests(TestCase):
     def test_check_tmpdir_nonempty(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
         storage = publisher.storage
-        root = storage.root
-        tmp = root / "tmp"
+        tmp = storage.temp
         dirty_file = tmp / ".keep"
         dirty_file.write_bytes(b"")
 
