@@ -13,6 +13,7 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
 from gbp_testkit.helpers import BUILD_LOGS
 from gentoo_build_publisher.build_publisher import BuildPublisher
+from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.records.memory import RecordDB
 from gentoo_build_publisher.settings import Settings
 from gentoo_build_publisher.signals import dispatcher
@@ -466,6 +467,38 @@ class BuildPublisherPortageProfileTests(TestCase):
         publisher.pull(build)
 
         self.assertEqual(publisher.portage_profile(build), "default/linux/amd64/23.0")
+
+
+@given(testkit.publisher, record=testkit.build_record)
+class BuildPublisherPublishTests(TestCase):
+    def test_publishes_build(self, fixtures: Fixtures) -> None:
+        publisher: BuildPublisher = fixtures.publisher
+        record: BuildRecord = fixtures.record
+
+        self.assertFalse(publisher.published(record))
+
+        publisher.publish(record)
+
+        self.assertTrue(publisher.published(record))
+
+    def test_emits_signal(self, fixtures: Fixtures) -> None:
+        publisher: BuildPublisher = fixtures.publisher
+        record: BuildRecord = fixtures.record
+        called = False
+
+        def handler(build: Build) -> None:
+            nonlocal called
+
+            called = True
+
+        dispatcher.bind(published=handler)
+
+        try:
+            publisher.publish(record)
+        finally:
+            dispatcher.unbind(handler)
+
+        self.assertTrue(called)
 
 
 @fixture()
