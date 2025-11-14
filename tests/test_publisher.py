@@ -500,6 +500,26 @@ class BuildPublisherPublishTests(TestCase):
 
         self.assertTrue(called)
 
+    def test_already_published_does_not_emit_signal(self, fixtures: Fixtures) -> None:
+        publisher: BuildPublisher = fixtures.publisher
+        record: BuildRecord = fixtures.record
+        called = False
+
+        def handler(build: Build) -> None:
+            nonlocal called
+
+            called = True
+
+        publisher.publish(record)
+        dispatcher.bind(published=handler)
+
+        try:
+            publisher.publish(record)
+        finally:
+            dispatcher.unbind(handler)
+
+        self.assertFalse(called)
+
 
 @fixture()
 def prepull_events(_fixtures: Fixtures) -> FixtureContext[list[Build]]:

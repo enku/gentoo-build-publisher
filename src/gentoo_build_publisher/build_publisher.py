@@ -85,6 +85,9 @@ class BuildPublisher:  # pylint: disable=too-many-public-methods
 
     def publish(self, build: Build) -> None:
         """Publish the build"""
+        if self.published(build):
+            return
+
         if not self.pulled(build):
             self.pull(build)
 
