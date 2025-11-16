@@ -192,6 +192,8 @@ class MachineViewTests(TestCase):
 
 
 @given(testkit.publisher, testkit.client, testkit.builds, artifacts)
+@given(mute_signals=testkit.patch)
+@where(mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit")
 class BuildViewTests(TestCase):
     """Tests for the build view"""
 
@@ -331,6 +333,8 @@ class BuildViewTests(TestCase):
 
 @given(artifacts, testkit.client)
 @params(view=("logs.txt", "logs/"))
+@given(mute_signals=testkit.patch)
+@where(mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit")
 class LogsTests(TestCase):
     def test_gets_logs(self, fixtures: Fixtures) -> None:
         build = fixtures.artifacts["latest"]

@@ -50,6 +50,10 @@ def worker_fixture(_: Fixtures, name: str = "sync") -> FC[WorkerInterface]:
 @uf.where(logger_error__target="gentoo_build_publisher.worker.logger.error")
 @uf.where(pull_build__target="gentoo_build_publisher.worker.tasks.pull_build")
 @uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
+@uf.given(mute_signals=testkit.patch)
+@uf.where(
+    mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit"
+)
 class PublishBuildTestCase(TestCase):
     """Unit tests for tasks.publish_build"""
 
@@ -81,6 +85,10 @@ class PublishBuildTestCase(TestCase):
 @uf.given(worker_fixture, testkit.publisher, logger_error=testkit.patch)
 @uf.where(logger_error__target="gentoo_build_publisher.worker.logger.error")
 @uf.where(worker__name=uf.Param(lambda fixtures: fixtures.backend))
+@uf.given(mute_signals=testkit.patch)
+@uf.where(
+    mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit"
+)
 class PullBuildTestCase(TestCase):
     """Tests for the pull_build task"""
 

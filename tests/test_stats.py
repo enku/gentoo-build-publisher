@@ -6,7 +6,7 @@ import datetime as dt
 from unittest import TestCase
 
 from django.utils import timezone
-from unittest_fixtures import Fixtures, given
+from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
@@ -21,6 +21,8 @@ from .lib import create_builds_and_packages
 
 @given(testkit.publisher, pf=testkit.cpv_generator)
 @given(stats_collector=lambda _: StatsCollector())
+@given(mute_signals=testkit.patch)
+@where(mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit")
 class StatsCollectorTests(TestCase):
     def test_init(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher

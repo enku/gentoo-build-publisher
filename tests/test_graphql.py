@@ -1495,8 +1495,10 @@ class PluginsTestCase(TestCase):
     testkit.builds,
     testkit.publisher,
     clear_cache=lambda _: cache_clear(),
+    mute_signals=testkit.patch,
 )
 @where(builds__machines=["babette", "lighthouse", "polaris"], builds__per_day=3)
+@where(mute_signals__target="gentoo_build_publisher.signals.PyDispatcherAdapter.emit")
 class StatsTests(TestCase):
     query = """query {
       stats {
