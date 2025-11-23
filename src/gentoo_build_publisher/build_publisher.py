@@ -318,27 +318,29 @@ class BuildPublisher:  # pylint: disable=too-many-public-methods
         try:
             return self.storage.get_metadata(build)
         except LookupError:
-            pass
+            # Really old builds, or corrupt builds, don't have a gbp.json file. We can
+            # still generate the GBPMetadata however.
+            return self.get_legacy_metadata(build)
 
-        # Really old builds, or corrupt builds, don't have a gbp.json file. We can still
-        # generate the GBPMetadata however.
+    def get_legacy_metadata(self, build: Build) -> GBPMetadata:
+        """Given a build with no gbp.json, return an adapted GBPMetadata object"""
+        record = self.record(build)
         try:
-            packages = self.get_packages(build)
+            packages = self.get_packages(record)
         except LookupError:
             packages = []
 
-        # build_duration comes from Jenkins, but we may not have this build in Jenkins
-        # anymore. Instead we calculate it (estimate) based on the BuildRecord. But only
-        # for completed builds.
-        build = self.record(build)
-        timestamp, duration = (
-            (
-                build.built.timestamp() * 1000,
-                (build.completed - build.built).total_seconds(),
+        # build_duration comes from Jenkins, but we likely do not have this build in
+        # Jenkins anymore. Instead we estimate based on the BuildRecord.  But only for
+        # completed builds.
+        if record.built and record.completed:
+            timestamp, duration = (
+                record.built.timestamp() * 1000,
+                (record.completed - record.built).total_seconds(),
             )
-            if build.built and build.completed
-            else (0, 0)
-        )
-        jenkins_metadata = JenkinsMetadata(int(duration), int(timestamp))
+        else:
+            timestamp, duration = (0, 0)
 
-        return self.gbp_metadata(jenkins_metadata, packages)
+        return self.gbp_metadata(
+            JenkinsMetadata(int(duration), int(timestamp)), packages
+        )
