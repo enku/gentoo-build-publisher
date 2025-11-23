@@ -16,8 +16,6 @@ when a build is deleted (BuildPublisher.delete(build)) then it makes sure that t
 Storage and Record are removed.
 """
 
-from __future__ import annotations
-
 import logging
 import math
 import re
