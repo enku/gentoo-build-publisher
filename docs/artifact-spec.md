@@ -25,6 +25,10 @@ content type **must** exist in the artifact.  They are:
 * `var-lib-portage` is the copy of the `/var/lib/portage` directory use by the
   container to build the artifact. Most importantly this typically contains
   the `world` file.
+* `aux` is for auxiliary data. This can be use for plugins. If plugins use this
+  then they should store their content under`aux/<plugin>/`.  Also if `gbp
+  check` discovers that this directory does not exist on the Storage for a
+  given build, it is created by the check. This is for backward compatibility.
 
 ## Reference
 

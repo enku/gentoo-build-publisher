@@ -59,6 +59,7 @@ class Content(Enum):
     BINPKGS = "binpkgs"
     ETC_PORTAGE = "etc-portage"
     VAR_LIB_PORTAGE = "var-lib-portage"
+    AUX = "aux"
 
 
 @dataclass(frozen=True, kw_only=True)

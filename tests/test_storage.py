@@ -173,6 +173,11 @@ class StorageDownloadArtifactTestCase(TestCase):
             self.has_content(fixtures.build, Content.VAR_LIB_PORTAGE, fixtures.storage)
         )
 
+    def test_extract_artifact_creates_aux_dir(self, fixtures: Fixtures) -> None:
+        self.download_and_extract(fixtures.build, fixtures.storage, fixtures.jenkins)
+
+        self.assertTrue(self.has_content(fixtures.build, Content.AUX, fixtures.storage))
+
     def test_extract_artifact_should_remove_dst_if_it_already_exists(
         self, fixtures: Fixtures
     ) -> None:

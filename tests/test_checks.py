@@ -33,6 +33,25 @@ class BuildContentTests(TestCase):
             console.stderr, f"^Path missing for {re.escape(str(bad_build))}:"
         )
 
+    def test_build_content_without_aux(self, fixtures: Fixtures) -> None:
+        good_build = BuildFactory()
+        publisher = fixtures.publisher
+        publisher.pull(good_build)
+
+        bad_build = build_with_missing_content(Content.AUX, publisher)
+
+        console = fixtures.console
+        result = checks.build_content(console)
+
+        self.assertEqual(result, (0, 1))
+
+        storage = publisher.storage
+        path = storage.get_path(bad_build, Content.AUX)
+        expected = f"Path missing for {bad_build}: {path}. Creating\n"
+        self.assertEqual(console.stderr, expected)
+
+        self.assertTrue(publisher.storage.get_path(bad_build, Content.AUX).is_dir())
+
 
 @given(testkit.console, testkit.publisher)
 class MissingGBPJsonTests(TestCase):

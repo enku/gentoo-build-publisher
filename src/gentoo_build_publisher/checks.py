@@ -31,7 +31,13 @@ def build_content(console: Console) -> CheckResult:
             publisher.storage.get_path(record, content) for content in Content
         ]:
             if not path.exists():
-                missing.append(path)
+                aux = publisher.storage.get_path(record, Content.AUX)
+                if path == aux and record.completed:
+                    warnings += 1
+                    console.err.print(f"Path missing for {record}: {path}. Creating")
+                    path.mkdir(parents=True)
+                else:
+                    missing.append(path)
 
         if missing:
             console.err.print(f"Path missing for {record}: {missing}")

@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import product
-from typing import Generator, Self
+from typing import Generator, Mapping, Self
 
 import factory
 
@@ -226,7 +226,9 @@ class ArtifactFactory:
 
         build_info.package_info.append((package, PackageStatus.REMOVED))
 
-    def get_artifact(self, build: Build) -> io.BytesIO:
+    def get_artifact(
+        self, build: Build, aux: Mapping[str, bytes] | None = None
+    ) -> io.BytesIO:
         """Return a file-like object representing a CI/CD artifact"""
         tar_file = io.BytesIO()
         packages = self.get_packages_for_build(build)
@@ -258,14 +260,19 @@ class ArtifactFactory:
                         tar_info.type = tarfile.DIRTYPE
                         tar_info.mode = 0o0755
                         tarchive.addfile(tar_info)
-                elif item is Content.ETC_PORTAGE:
-                    build_info = self.build_info(build)
-                    profile = build_info.profile
-                    tar_info = tarfile.TarInfo(f"{item.value}/make.profile")
-                    tar_info.type = tarfile.SYMTYPE
-                    tar_info.linkname = f"../../var/db/repos/gentoo/profiles/{profile}"
-                    tar_info.mode = 0o0777
-                    tarchive.addfile(tar_info)
+
+            build_info = self.build_info(build)
+            profile = build_info.profile
+            tar_info = tarfile.TarInfo(f"{Content.ETC_PORTAGE.value}/make.profile")
+            tar_info.type = tarfile.SYMTYPE
+            tar_info.linkname = f"../../var/db/repos/gentoo/profiles/{profile}"
+            tar_info.mode = 0o0777
+            tarchive.addfile(tar_info)
+
+            for filename, data in (aux or {}).items():
+                tar_info = tarfile.TarInfo(f"{Content.AUX.value}/{filename}")
+                tar_info.size = len(data)
+                tarchive.addfile(tar_info, io.BytesIO(data))
 
         tar_file.seek(0)
         self.timestamp = self.timer * 1000
