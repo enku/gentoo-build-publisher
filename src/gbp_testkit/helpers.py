@@ -13,7 +13,7 @@ from unittest import mock
 import gbpcli
 import rich.console
 from ariadne import graphql_sync
-from django.test.client import Client
+from django.test.client import RequestFactory
 from gbpcli.config import AuthDict, Config
 from gbpcli.gbp import GBP
 from gbpcli.theme import get_theme_from_string
@@ -261,18 +261,18 @@ def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:
     return gbp
 
 
-def graphql(client: Client, query: str, variables: dict[str, Any] | None = None) -> Any:
-    """Execute GraphQL query on the Django test client.
+def graphql(_: Any, query: str, variables: dict[str, Any] | None = None) -> Any:
+    """Execute GraphQL query
 
-    Return the parsed JSON response
+    The first argument is unused and is there for backwards compatibility.
+
+    Return the JSON response.
     """
-    response = client.post(
-        "/graphql",
-        {"query": query, "variables": variables},
-        content_type="application/json",
-    )
+    rf = RequestFactory()
+    request = rf.post("/graphql", headers={"Content-Type": "application/json"})
+    data = {"query": query, "variables": variables}
 
-    return response.json()
+    return graphql_sync(schema, data, context_value={"request": request})[1]
 
 
 def create_file(
