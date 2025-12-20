@@ -2,27 +2,28 @@
 import argparse
 import datetime as dt
 import io
+import json as jsonlib
 import os
 import shlex
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Sequence
 from unittest import mock
 
 import gbpcli
 import rich.console
+from ariadne import graphql_sync
 from django.test.client import Client
 from gbpcli.config import AuthDict, Config
 from gbpcli.gbp import GBP
 from gbpcli.theme import get_theme_from_string
 from gbpcli.types import Console
-from requests import PreparedRequest, Response, Session
-from requests.adapters import BaseAdapter
-from requests.structures import CaseInsensitiveDict
+from requests import Response, Session
 from yarl import URL
 
 from gentoo_build_publisher import publisher
 from gentoo_build_publisher.cli import apikey
+from gentoo_build_publisher.graphql import schema
 from gentoo_build_publisher.jenkins import (
     Jenkins,
     JenkinsConfig,
@@ -168,42 +169,6 @@ class MockJenkinsSession(Session):
         return ProjectPath("/".join(url_path.split("/job/")))
 
 
-class DjangoToRequestsAdapter(BaseAdapter):
-    """Requests Adapter to call Django views"""
-
-    def send(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        request: PreparedRequest,
-        stream: bool = False,
-        timeout: None | float | tuple[float, float] | tuple[float, None] = None,
-        verify: bool | str = True,
-        cert: None | bytes | str | tuple[bytes | str, bytes | str] = None,
-        proxies: Mapping[str, str] | None = None,
-    ) -> Response:
-        assert isinstance(request.method, str)
-        django_response = Client().generic(
-            request.method,
-            request.path_url,
-            data=request.body,
-            content_type=request.headers["Content-Type"],
-            headers=request.headers,
-        )
-
-        requests_response = Response()
-        requests_response.raw = io.BytesIO(django_response.content)
-        requests_response.raw.seek(0)
-        requests_response.status_code = django_response.status_code
-        requests_response.headers = CaseInsensitiveDict(django_response.headers)
-        requests_response.encoding = django_response.get("Content-Type", None)
-        requests_response.url = str(request.url)
-        requests_response.request = request
-
-        return requests_response
-
-    def close(self) -> None:
-        return
-
-
 class Tree:
     """Simple tree structure"""
 
@@ -271,12 +236,27 @@ def make_gbpcli(gbp: GBP, console: Console) -> Callable[[str], int]:
     return gbpcli_
 
 
+def mock_gbp_session_post(url: str, *, json: dict[str, Any] | None = None) -> Response:
+    """Mock GBP Query session post"""
+    assert json
+    success, data = graphql_sync(schema, json)
+    encoding = "UTF-8"
+
+    content = jsonlib.dumps(data).encode(encoding)
+    requests_response = Response()
+    requests_response.raw = io.BytesIO(content)
+    requests_response.raw.seek(0)
+    requests_response.status_code = 200 if success else 500
+    requests_response.encoding = encoding
+    requests_response.url = url
+
+    return requests_response
+
+
 def test_gbp(url: str, auth: AuthDict | None = None) -> GBP:
     """Return a gbp instance capable of calling the /graphql view"""
     gbp = GBP(url, auth=auth)
-    gbp.query._session.mount(  # pylint: disable=protected-access
-        url, DjangoToRequestsAdapter()
-    )
+    gbp.query._session.post = mock_gbp_session_post  # pylint: disable=protected-access
 
     return gbp
 
