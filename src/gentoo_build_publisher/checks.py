@@ -52,7 +52,6 @@ def build_content(console: Console) -> CheckResult:
 def orphans(console: Console) -> CheckResult:
     """Check orphans (builds with no records)"""
     errors = 0
-    warnings = 0
 
     for content in Content:
         directory = publisher.storage.root / content.value
@@ -70,13 +69,12 @@ def orphans(console: Console) -> CheckResult:
                 console.err.print(f"Broken tag: {path}")
                 errors += 1
 
-    return errors, warnings
+    return errors, 0
 
 
 def inconsistent_tags(console: Console) -> CheckResult:
     """Check for tags that have inconsistent targets"""
     errors = 0
-    warnings = 0
 
     tags: dict[str, set[str]] = {}
 
@@ -97,12 +95,11 @@ def inconsistent_tags(console: Console) -> CheckResult:
             console.err.print(f'Tag "{tag}" has multiple targets: {targets}')
             errors += 1
 
-    return errors, warnings
+    return errors, 0
 
 
 def dirty_temp(console: Console) -> CheckResult:
     """Warn if the temp dir is not empty"""
-    errors = 0
     warnings = 0
     storage = publisher.storage
     tmp = storage.temp
@@ -111,7 +108,7 @@ def dirty_temp(console: Console) -> CheckResult:
         warnings += 1
         console.err.print(f"Warning: {tmp} is not empty.")
 
-    return errors, warnings
+    return 0, warnings
 
 
 def corrupt_gbp_json(console: Console) -> CheckResult:
