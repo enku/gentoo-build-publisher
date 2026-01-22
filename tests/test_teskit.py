@@ -5,6 +5,7 @@ import datetime as dt
 import sys
 import tarfile
 from unittest import TestCase, mock
+from zoneinfo import ZoneInfo
 
 from unittest_fixtures import Fixtures, fixture, given, where
 
@@ -16,7 +17,7 @@ from gbp_testkit.factories import (
     CICDPackage,
     PackageStatus,
 )
-from gbp_testkit.helpers import MockJenkinsSession, Tree
+from gbp_testkit.helpers import MockJenkinsSession, Tree, ts
 from gentoo_build_publisher.types import Content
 
 
@@ -372,3 +373,16 @@ class PatchTests(TestCase):
 
     def test_attributes(self, fixtures: Fixtures) -> None:
         self.assertEqual(fixtures.foo.bar, "baz")
+
+
+class TSTests(TestCase):
+    def test_without_timezone(self) -> None:
+        timestamp = ts("2026-01-21 20:05:55")
+
+        self.assertEqual(timestamp, dt.datetime(2026, 1, 21, 20, 5, 55, tzinfo=dt.UTC))
+
+    def test_with_timezone(self) -> None:
+        ct = ZoneInfo("America/Chicago")
+        timestamp = ts("2026-01-21 20:05:55", ct)
+
+        self.assertEqual(timestamp, dt.datetime(2026, 1, 21, 20, 5, 55, tzinfo=ct))

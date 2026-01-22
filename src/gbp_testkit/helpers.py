@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Callable, Iterable, Sequence
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import gbpcli
 import rich.console
@@ -316,3 +317,10 @@ def parse_args(cmdline: str) -> argparse.Namespace:
 def print_command(cmdline: str, console: Console) -> None:
     """Pretty print the cmdline to console"""
     console.out.print(f"[green]$ [/green]{cmdline}")
+
+
+def ts(ts_string: str, tzinfo: dt.timezone | ZoneInfo = dt.UTC) -> dt.datetime:
+    """Convert the ts_string to a TZ-aware datetime"""
+    datetime = dt.datetime
+
+    return datetime.strptime(ts_string, "%Y-%m-%d %T").replace(tzinfo=tzinfo)
