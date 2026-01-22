@@ -323,4 +323,4 @@ def ts(ts_string: str, tzinfo: dt.timezone | ZoneInfo = dt.UTC) -> dt.datetime:
     """Convert the ts_string to a TZ-aware datetime"""
     datetime = dt.datetime
 
-    return datetime.strptime(ts_string, "%Y-%m-%d %T").replace(tzinfo=tzinfo)
+    return datetime.strptime(ts_string, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tzinfo)
