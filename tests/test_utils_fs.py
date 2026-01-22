@@ -1,5 +1,4 @@
 # pylint: disable=missing-docstring
-import datetime as dt
 import os
 import shutil
 
@@ -8,11 +7,11 @@ from unittest_fixtures import Fixtures, given
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import BuildFactory
-from gbp_testkit.helpers import create_file
+from gbp_testkit.helpers import create_file, ts
 from gentoo_build_publisher.types import Content
 from gentoo_build_publisher.utils import fs
 
-TIMESTAMP = dt.datetime(2021, 10, 30, 7, 10, 39)
+TIMESTAMP = ts("2021-10-30 07:10:39")
 
 
 @given(testkit.tmpdir)
@@ -71,7 +70,7 @@ class QuickCheckTestCase(TestCase):
         self.assertIs(result, False)
 
     def test_should_return_false_when_mtimes_differ(self, fixtures: Fixtures) -> None:
-        timestamp2 = dt.datetime(2021, 10, 30, 7, 10, 40)
+        timestamp2 = ts("2021-10-30 07:10:40")
         other = str(create_file(fixtures.tmpdir / "bar", b"test", timestamp2))
 
         result = fs.quick_check(fixtures.file, other)

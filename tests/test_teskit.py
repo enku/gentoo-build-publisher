@@ -35,7 +35,7 @@ def mock_jenkins_session(_: Fixtures) -> MockJenkinsSession:
 class ArtifactFactoryTestCase(TestCase):
     def test_timestamp(self, fixtures: Fixtures) -> None:
         with mock.patch("gbp_testkit.helpers.dt.datetime") as mock_datetime:
-            mock_datetime.utcnow.return_value = now = dt.datetime(2022, 9, 17, 18, 9)
+            mock_datetime.utcnow.return_value = now = ts("2022-09-17 18:09:00")
             builder = ArtifactFactory()
 
         self.assertEqual(builder.timestamp, int(now.timestamp()))

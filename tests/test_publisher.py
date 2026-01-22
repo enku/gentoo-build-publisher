@@ -11,7 +11,7 @@ from yarl import URL
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit.factories import BuildFactory, BuildRecordFactory
-from gbp_testkit.helpers import BUILD_LOGS
+from gbp_testkit.helpers import BUILD_LOGS, ts
 from gentoo_build_publisher.build_publisher import BuildPublisher
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.records.memory import RecordDB
@@ -126,12 +126,11 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
         self.assertFalse(publisher.pulled(build))
 
     def test_build_timestamps(self, fixtures: Fixtures) -> None:
-        datetime = dt.datetime
         localtimezone = "gentoo_build_publisher.utils.time.LOCAL_TIMEZONE"
         publisher = fixtures.publisher
 
         with mock.patch(localtimezone, new=ZoneInfo("America/New_York")):
-            submitted = datetime(2024, 1, 19, 11, 5, 49, tzinfo=dt.UTC)
+            submitted = ts("2024-01-19 11:05:49")
             now = "gentoo_build_publisher.utils.time.now"
             with mock.patch(now, return_value=submitted):
                 publisher.jenkins.artifact_builder.timer = (
@@ -142,9 +141,9 @@ class BuildPublisherTestCase(TestCase):  # pylint: disable=too-many-public-metho
                 record = publisher.record(build)
 
         ct = ZoneInfo("America/Chicago")
-        self.assertEqual(record.built, datetime(2024, 1, 19, 5, 3, 24, tzinfo=ct))
-        self.assertEqual(record.submitted, datetime(2024, 1, 19, 5, 5, 49, tzinfo=ct))
-        self.assertEqual(record.completed, datetime(2024, 1, 19, 5, 5, 49, tzinfo=ct))
+        self.assertEqual(record.built, ts("2024-01-19 05:03:24", ct))
+        self.assertEqual(record.submitted, ts("2024-01-19 05:05:49", ct))
+        self.assertEqual(record.completed, ts("2024-01-19 05:05:49", ct))
 
     def test_pull_with_note(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher

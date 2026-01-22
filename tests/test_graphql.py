@@ -9,22 +9,20 @@ from unittest_fixtures import Fixtures, fixture, given, params, where
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
 from gbp_testkit.factories import PACKAGE_INDEX, BuildFactory, BuildRecordFactory
-from gbp_testkit.helpers import BUILD_LOGS, graphql
+from gbp_testkit.helpers import BUILD_LOGS, graphql, ts
 from gentoo_build_publisher import plugins
 from gentoo_build_publisher.cache import clear as cache_clear
 from gentoo_build_publisher.graphql import scalars
 from gentoo_build_publisher.jenkins import ProjectPath
 from gentoo_build_publisher.records import BuildRecord
 from gentoo_build_publisher.types import Build, Content, EbuildRepo, MachineJob, Repo
-from gentoo_build_publisher.utils import get_version, time
+from gentoo_build_publisher.utils import get_version
 from gentoo_build_publisher.worker import tasks
 
 SEARCH_PARAMS = {"enum": ("NOTES", "LOGS"), "field": ("note", "logs")}
 WORKER = "gentoo_build_publisher.graphql.mutations.worker"
 DATE = dt.date(2025, 10, 8)
-TIMESTAMP = dt.datetime(
-    2025, 7, 14, 15, 45, 30, tzinfo=dt.timezone(dt.timedelta(hours=5, minutes=30))
-)
+TIMESTAMP = ts("2025-07-14 15:45:30", dt.timezone(dt.timedelta(hours=5, minutes=30)))
 
 
 def assert_data(
@@ -39,7 +37,7 @@ def assert_data(
 
 @given(testkit.tmpdir, testkit.publisher, testkit.client, utctime=testkit.patch)
 @where(utctime__target="gentoo_build_publisher.build_publisher.utctime")
-@where(utctime__return_value=time.utctime(dt.datetime(2022, 3, 1, 6, 28, 44)))
+@where(utctime__return_value=ts("2022-03-01 06:28:44"))
 class BuildQueryTestCase(TestCase):
     """Tests for the build query"""
 
@@ -240,7 +238,7 @@ class BuildsQueryTestCase(TestCase):
     maxDiff = None
 
     def test(self, fixtures: Fixtures) -> None:
-        now = dt.datetime(2021, 9, 30, 20, 17, tzinfo=dt.UTC)
+        now = ts("2021-09-30 20:17:00")
         builds = BuildFactory.create_batch(3)
         publisher = fixtures.publisher
 
@@ -312,9 +310,9 @@ def latest(fixtures: Fixtures) -> Build:
     publisher = fixtures.publisher
     publisher.repo.build_records.save(
         BuildRecordFactory.build(
-            built=dt.datetime(2021, 4, 25, 18, 0, tzinfo=dt.UTC),
-            submitted=dt.datetime(2021, 4, 25, 18, 10, tzinfo=dt.UTC),
-            completed=dt.datetime(2021, 4, 28, 17, 13, tzinfo=dt.UTC),
+            built=ts("2021-04-25 18:00:00"),
+            submitted=ts("2021-04-25 18:10:00"),
+            completed=ts("2021-04-28 17:13:00"),
         )
     )
     latest_build: Build
@@ -326,9 +324,7 @@ def latest(fixtures: Fixtures) -> Build:
         )
     )
     publisher.repo.build_records.save(
-        BuildRecordFactory.build(
-            submitted=dt.datetime(2022, 2, 25, 6, 50, tzinfo=dt.UTC)
-        )
+        BuildRecordFactory.build(submitted=ts("2022-02-25 06:50:00"))
     )
     return latest_build
 

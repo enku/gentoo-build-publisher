@@ -8,17 +8,18 @@ from zoneinfo import ZoneInfo
 from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
+from gbp_testkit.helpers import ts
 from gentoo_build_publisher.utils import time
 
 CT = ZoneInfo("America/Chicago")
-NOW = dt.datetime(2024, 1, 9, 21, 5, 5, tzinfo=CT)
-YESTERDAY = dt.datetime(2024, 1, 8, 9, 0, 0, tzinfo=CT)
+NOW = ts("2024-01-09 21:05:05", tzinfo=CT)
+YESTERDAY = ts("2024-01-08 09:00:00", tzinfo=CT)
 THREE_HOURS = dt.timedelta(hours=3)
 
 
 @given(now=testkit.patch)
 @where(now__target="gentoo_build_publisher.utils.time.now")
-@where(now__return_value=dt.datetime(2022, 9, 17, 17, 36, tzinfo=dt.UTC))
+@where(now__return_value=ts("2022-09-17 17:36:00"))
 class UtcTime(TestCase):
     """Tests for time.utctime"""
 
@@ -37,8 +38,8 @@ class UtcTime(TestCase):
 
 class LapsedTestCase(TestCase):
     def test(self) -> None:
-        start = dt.datetime(2021, 11, 7, 9, 27, 0)
-        end = dt.datetime(2021, 11, 7, 10, 28, 1)
+        start = ts("2021-11-07 09:27:00")
+        end = ts("2021-11-07 10:28:01")
 
         lapsed = time.lapsed(start, end)
 

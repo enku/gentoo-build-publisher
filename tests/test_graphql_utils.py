@@ -1,7 +1,6 @@
 """Tests for graphql.utils"""
 
 # pylint: disable=missing-docstring,unused-argument
-import datetime as dt
 from typing import Any
 from unittest import mock
 
@@ -10,7 +9,7 @@ from unittest_fixtures import Fixtures, given
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
-from gbp_testkit.helpers import graphql
+from gbp_testkit.helpers import graphql, ts
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.graphql import resolvers, type_defs
 from gentoo_build_publisher.graphql.utils import (
@@ -66,9 +65,7 @@ class RequireAPIKeyTestCase(TestCase):
     def test_good_apikey(self, fixtures: Fixtures) -> None:
         name = "test"
         api_key = ApiKey(
-            name=name,
-            key=apikey.create_api_key(),
-            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+            name=name, key=apikey.create_api_key(), created=ts("2024-04-27 20:17:00")
         )
         publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
@@ -85,9 +82,7 @@ class RequireAPIKeyTestCase(TestCase):
     def test_good_key_updates_records_last_use(self, fixtures: Fixtures) -> None:
         name = "test"
         api_key = ApiKey(
-            name=name,
-            key=apikey.create_api_key(),
-            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+            name=name, key=apikey.create_api_key(), created=ts("2024-04-27 20:17:00")
         )
         publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
@@ -123,9 +118,7 @@ class RequireAPIKeyTestCase(TestCase):
     def test_bad_apikey(self, fixtures: Fixtures) -> None:
         name = "test"
         api_key = ApiKey(
-            name=name,
-            key=apikey.create_api_key(),
-            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+            name=name, key=apikey.create_api_key(), created=ts("2024-04-27 20:17:00")
         )
         publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)
@@ -162,9 +155,7 @@ class RequireAPIKeyTestCase(TestCase):
     def test_other_error(self, fixtures: Fixtures) -> None:
         name = "test"
         api_key = ApiKey(
-            name=name,
-            key=apikey.create_api_key(),
-            created=dt.datetime(2024, 4, 27, 20, 17, tzinfo=dt.UTC),
+            name=name, key=apikey.create_api_key(), created=ts("2024-04-27 20:17:00")
         )
         publisher = fixtures.publisher
         publisher.repo.api_keys.save(api_key)

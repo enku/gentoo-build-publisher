@@ -2,7 +2,6 @@
 
 # pylint: disable=missing-class-docstring,missing-function-docstring
 
-import datetime as dt
 from argparse import ArgumentParser, Namespace
 from dataclasses import replace
 
@@ -11,7 +10,7 @@ from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
-from gbp_testkit.helpers import LOCAL_TIMEZONE
+from gbp_testkit.helpers import LOCAL_TIMEZONE, ts
 from gentoo_build_publisher import publisher, utils
 from gentoo_build_publisher.cli import apikey
 from gentoo_build_publisher.django.gentoo_build_publisher import models
@@ -118,7 +117,7 @@ class GBPCreateTests(DjangoTestCase):
 class GBPListTests(DjangoTestCase):
     def test(self, fixtures: Fixtures) -> None:
         console = fixtures.console
-        timestamp = dt.datetime(2024, 2, 22, 22, 0, tzinfo=dt.UTC)
+        timestamp = ts("2024-02-22 22:00:00")
         for name in ["this", "that", "the", "other"]:
             api_key = ApiKey(name=name, key=apikey.create_api_key(), created=timestamp)
             publisher.repo.api_keys.save(api_key)

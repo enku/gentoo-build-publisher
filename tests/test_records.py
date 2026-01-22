@@ -8,6 +8,7 @@ import unittest_fixtures as uf
 from django.test import TestCase
 
 from gbp_testkit.factories import BuildRecordFactory
+from gbp_testkit.helpers import ts
 from gentoo_build_publisher.records import (
     ApiKeyDB,
     BuildRecord,
@@ -42,7 +43,7 @@ def build_records_fixture(_: Fixtures, backend: str = "memory") -> RecordDB:
 class RecordDBTestCase(TestCase):
     def test_save(self, fixtures: Fixtures) -> None:
         records = fixtures.records
-        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
+        timestamp = ts("2022-09-04 9:22:00")
 
         build_record = records.save(
             BuildRecord("lighthouse", "8924", completed=timestamp)
@@ -53,7 +54,7 @@ class RecordDBTestCase(TestCase):
 
     def test_save_with_given_fields_updates_fields(self, fixtures: Fixtures) -> None:
         records = fixtures.records
-        timestamp = dt.datetime(2022, 9, 4, 9, 22, 0, 0, dt.UTC)
+        timestamp = ts("2022-09-04 09:22:00")
 
         build_record = BuildRecord("lighthouse", "8924", completed=timestamp)
         build_record = records.save(build_record, logs="Build succeeded!", keep=True)
@@ -249,7 +250,7 @@ class RecordDBTestCase(TestCase):
 
     def test_count(self, fixtures: Fixtures) -> None:
         records = fixtures.records
-        today = dt.datetime(2022, 9, 4, 9, 22, 0, tzinfo=dt.UTC)
+        today = ts("2022-09-04 09:22:00")
 
         for i in reversed(range(4)):
             day = today - dt.timedelta(days=i)

@@ -9,7 +9,7 @@ from django.template import Context, Template, TemplateSyntaxError
 from unittest_fixtures import Fixtures, given, where
 
 from gbp_testkit import fixtures as testkit
-from gbp_testkit.helpers import LOCAL_TIMEZONE
+from gbp_testkit.helpers import LOCAL_TIMEZONE, ts
 from gentoo_build_publisher.django.gentoo_build_publisher.templatetags.gbp import (
     split_numberize,
 )
@@ -219,7 +219,7 @@ class MachineLinkTests(TemplateTagTests):
 
 
 @given(now=testkit.patch)
-@where(now__target=NOW, now__return_value=dt.datetime(2024, 1, 11, 20, 54))
+@where(now__target=NOW, now__return_value=ts("2024-01-11 20:54:00"))
 @given(localtimezone=testkit.patch)
 @where(localtimezone__target="gentoo_build_publisher.utils.time.LOCAL_TIMEZONE")
 @where(localtimezone__new=LOCAL_TIMEZONE)

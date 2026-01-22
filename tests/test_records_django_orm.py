@@ -1,7 +1,6 @@
 """Tests for the Django ORM RecordDB implementation"""
 
 # pylint: disable=missing-docstring
-import datetime as dt
 from dataclasses import replace
 
 from unittest_fixtures import Fixtures, given, where
@@ -9,6 +8,7 @@ from unittest_fixtures import Fixtures, given, where
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase as TestCase
 from gbp_testkit.factories import BuildModelFactory, BuildRecordFactory
+from gbp_testkit.helpers import ts
 from gentoo_build_publisher.django.gentoo_build_publisher.models import (
     BuildLog,
     BuildModel,
@@ -23,41 +23,29 @@ from gentoo_build_publisher.types import Build
 @given(testkit.build_model, testkit.records_db, testkit.record)
 @where(
     records_db__backend="django",
-    build_model__submitted=dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC),
-    build_model__completed=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
-    build_model__built=dt.datetime(2022, 2, 20, 15, 58, tzinfo=dt.UTC),
+    build_model__submitted=ts("2022-02-20 15:47:00"),
+    build_model__completed=ts("2022-02-20 15:58:00"),
+    build_model__built=ts("2022-02-20 15:58:00"),
 )
 class RecordDBTestCase(TestCase):
     def test_submitted_set(self, fixtures: Fixtures) -> None:
-        record = replace(
-            fixtures.record, submitted=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC)
-        )
+        record = replace(fixtures.record, submitted=ts("2022-02-20 16:47:00"))
         fixtures.records_db.save(record)
 
         fixtures.build_model.refresh_from_db()
 
-        self.assertEqual(
-            fixtures.build_model.submitted,
-            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
-        )
+        self.assertEqual(fixtures.build_model.submitted, ts("2022-02-20 16:47:00"))
 
     def test_completed_get(self, fixtures: Fixtures) -> None:
-        self.assertEqual(
-            fixtures.record.submitted, dt.datetime(2022, 2, 20, 15, 47, tzinfo=dt.UTC)
-        )
+        self.assertEqual(fixtures.record.submitted, ts("2022-02-20 15:47:00"))
 
     def test_completed_set(self, fixtures: Fixtures) -> None:
-        record = replace(
-            fixtures.record, completed=dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC)
-        )
+        record = replace(fixtures.record, completed=ts("2022-02-20 16:47:00"))
         fixtures.records_db.save(record)
 
         fixtures.build_model.refresh_from_db()
 
-        self.assertEqual(
-            fixtures.build_model.completed,
-            dt.datetime(2022, 2, 20, 16, 47, tzinfo=dt.UTC),
-        )
+        self.assertEqual(fixtures.build_model.completed, ts("2022-02-20 16:47:00"))
 
     def test_save_note(self, fixtures: Fixtures) -> None:
         record = replace(fixtures.record, note="This is a test")
@@ -198,9 +186,7 @@ class RecordDBTestCase(TestCase):
         # You really can't/shouldn't have a build that's built date is set but it isn't
         # completed as BuildPublisher._update_build_metadata updates both fields
         # simultaneously, but...
-        next_build = BuildModelFactory(
-            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC)
-        )
+        next_build = BuildModelFactory(built=ts("2022-02-21 15:58:00"))
 
         self.assertEqual(next_build.machine, fixtures.build_model.machine)
 
@@ -212,8 +198,7 @@ class RecordDBTestCase(TestCase):
 
     def test_next_when_completed(self, fixtures: Fixtures) -> None:
         next_build = BuildModelFactory(
-            completed=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC),
-            built=dt.datetime(2022, 2, 21, 15, 58, tzinfo=dt.UTC),
+            completed=ts("2022-02-21 15:58:00"), built=ts("2022-02-21 15:58:00")
         )
 
         self.assertEqual(next_build.machine, fixtures.build_model.machine)

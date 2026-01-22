@@ -9,6 +9,7 @@ from django.test import TestCase as DjangoTestCase
 from unittest_fixtures import FixtureContext, Fixtures, fixture, given, where
 
 import gbp_testkit.fixtures as testkit
+from gbp_testkit.helpers import ts
 
 
 @fixture(testkit.tmpdir)
@@ -185,12 +186,10 @@ class ClockTestsNow(TestCase):
 
 
 @given(testkit.clock)
-@where(clock=dt.datetime(2038, 1, 19, 3, 14, 7, tzinfo=dt.UTC))
+@where(clock=ts("2038-01-19 03:14:07"))
 class ClockTestsNowPassedParam(TestCase):
     def test(self, fixtures: Fixtures) -> None:
-        self.assertEqual(
-            fixtures.clock, dt.datetime(2038, 1, 19, 3, 14, 7, tzinfo=dt.UTC)
-        )
+        self.assertEqual(fixtures.clock, ts("2038-01-19 03:14:07"))
 
 
 @given(testkit.client)

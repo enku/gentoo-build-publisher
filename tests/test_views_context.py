@@ -16,12 +16,13 @@ from gbp_testkit.factories import (
     BuildRecordFactory,
     package_factory,
 )
+from gbp_testkit.helpers import ts
 from gentoo_build_publisher.django.gentoo_build_publisher.views import context as ctx
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     color_range_from_settings,
     gradient_colors,
 )
-from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime, utctime
+from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, localtime
 
 
 @given(testkit.publisher, localtimezone=testkit.patch)
@@ -98,7 +99,7 @@ class CreateDashboardContextTests(TestCase):
 
     def test_builds_over_time_and_build_recently(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
-        now = dt.datetime(2024, 1, 17, 4, 51, tzinfo=dt.UTC)
+        now = ts("2024-01-17 04:51:00")
         for machine in ["babette", "lighthouse"]:
             for day in range(2):
                 for _ in range(3):
@@ -122,7 +123,7 @@ def pf_fixture(fixtures: Fixtures) -> Generator[str, None, None]:
     pf = package_factory()
     ab: ArtifactFactory = publisher.jenkins.artifact_builder
     ab.initial_packages = []
-    ab.timer = int(localtime(dt.datetime(2024, 1, 16)).timestamp())
+    ab.timer = int(localtime(ts("2024-01-16 00:00:00")).timestamp())
 
     return pf
 
@@ -180,9 +181,9 @@ class CreateMachineContextTests(TestCase):
     def test_packages_built_today_when_build_built_is_none(
         self, fixtures: Fixtures
     ) -> None:
-        built = utctime(dt.datetime(2021, 4, 25, 7, 50, 7))
-        submitted = utctime(dt.datetime(2021, 4, 25, 7, 56, 2))
-        completed = utctime(dt.datetime(2021, 4, 25, 7, 56, 36))
+        built = ts("2021-04-25 07:50:07")
+        submitted = ts("2021-04-25 07:56:02")
+        completed = ts("2021-04-25 07:56:36")
         build = BuildFactory()
         publisher = fixtures.publisher
 
@@ -199,7 +200,7 @@ class CreateMachineContextTests(TestCase):
             submitted=submitted,
             completed=completed,
         )
-        now = localtime(dt.datetime(2024, 1, 19, 7, 38))
+        now = ts("2024-01-19 07:38:00")
         input_context = self.input_context(now=now, machine=build.machine)
         context = ctx.Machine.create(**input_context)
 
