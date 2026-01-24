@@ -319,7 +319,7 @@ def print_command(cmdline: str, console: Console) -> None:
     console.out.print(f"[green]$ [/green]{cmdline}")
 
 
-def ts(ts_string: str, tzinfo: dt.timezone | ZoneInfo = dt.UTC) -> dt.datetime:
+def ts(ts_string: str, tzinfo: dt.timezone | ZoneInfo | None = dt.UTC) -> dt.datetime:
     """Convert the ts_string to a TZ-aware datetime"""
     datetime = dt.datetime
 
