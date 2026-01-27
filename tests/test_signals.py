@@ -20,9 +20,7 @@ dispatcher = signals.dispatcher
 @params(event=signals.CORE_EVENTS)
 class DispatcherTests(TestCase):
     def test_registers_core_events(self, fixtures: Fixtures) -> None:
-        event = fixtures.event
-
-        dispatcher.get_dispatcher_event(event)
+        dispatcher.get_dispatcher_event(fixtures.event)
 
 
 class BindNotExistsTest(TestCase):
