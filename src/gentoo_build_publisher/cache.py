@@ -24,7 +24,7 @@ class GBPSiteCache:
     def set(self, key: str, value: Any) -> None:
         """Assign the given cache key the given value"""
         if key.startswith("_"):
-            raise ValueError('Values must not being with "_"')
+            raise ValueError('Values must not begin with "_"')
         if CACHE_DELIM in key:
             raise ValueError(f"Values must not contain {CACHE_DELIM!r}")
 
