@@ -21,24 +21,26 @@ TAG_INFO = ObjectType("TagInfo")
 
 
 @QUERY.field("machines")
-def _(_obj: Any, _info: Info, names: list[str] | None = None) -> list[MachineInfo]:
+def machines(
+    _obj: Any, _info: Info, names: list[str] | None = None
+) -> list[MachineInfo]:
     return publisher.machines(names=names)
 
 
 @QUERY.field("build")
-def _(_obj: Any, _info: Info, id: str) -> Build | None:
-    build = Build.from_id(id)
+def build(_obj: Any, _info: Info, id: str) -> Build | None:
+    build_ = Build.from_id(id)
 
-    return None if not publisher.repo.build_records.exists(build) else build
+    return None if not publisher.repo.build_records.exists(build_) else build_
 
 
 @QUERY.field("latest")
-def _(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
+def latest(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
     return publisher.latest_build(machine, completed=True)
 
 
 @QUERY.field("builds")
-def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
+def builds(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     return [
         record
         for record in publisher.repo.build_records.for_machine(machine)
@@ -47,7 +49,7 @@ def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
 
 
 @QUERY.field("diff")
-def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
+def diff(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     left_build = Build.from_id(left)
 
     if not publisher.repo.build_records.exists(left_build):
@@ -64,24 +66,26 @@ def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
 
 
 @QUERY.field("search")
-def _(_obj: Any, _info: Info, machine: str, field: str, key: str) -> list[BuildRecord]:
+def search(
+    _obj: Any, _info: Info, machine: str, field: str, key: str
+) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
 
     return publisher.search(machine, search_field, key)
 
 
 @QUERY.field("searchNotes")
-def _(_obj: Any, _info: Info, machine: str, key: str) -> list[BuildRecord]:
+def search_notes(_obj: Any, _info: Info, machine: str, key: str) -> list[BuildRecord]:
     return publisher.search(machine, "note", key)
 
 
 @QUERY.field("version")
-def _(_obj: Any, _info: Info) -> str:
+def version(_obj: Any, _info: Info) -> str:
     return utils.get_version()
 
 
 @QUERY.field("working")
-def _(_obj: Any, _info: Info) -> list[BuildRecord]:
+def working(_obj: Any, _info: Info) -> list[BuildRecord]:
     return [
         record
         for machine in publisher.repo.build_records.list_machines()
@@ -91,20 +95,20 @@ def _(_obj: Any, _info: Info) -> list[BuildRecord]:
 
 
 @QUERY.field("resolveBuildTag")
-def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
+def resolve_build_tag(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
     return publisher.resolve_tag(f"{machine}{TAG_SYM}{tag}")
 
 
 @QUERY.field("plugins")
-def _(_obj: Any, _info: Info) -> list[plugins.Plugin]:
+def get_plugins(_obj: Any, _info: Info) -> list[plugins.Plugin]:
     return plugins.get_plugins()
 
 
 @QUERY.field("stats")
-def _(_obj: Any, _info: Info) -> Stats:
+def stats(_obj: Any, _info: Info) -> Stats:
     return Stats.with_cache()
 
 
 @TAG_INFO.field("build")
-def _(context: dict[str, Any], _info: Info) -> Build | None:
+def tag_build(context: dict[str, Any], _info: Info) -> Build | None:
     return publisher.resolve_tag(f"{context['machine']}{TAG_SYM}{context['tag']}")

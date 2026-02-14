@@ -20,7 +20,7 @@ view = utils.view
 
 @view("", name="dashboard")
 @render("gentoo_build_publisher/dashboard/main.html")
-def _(request: HttpRequest) -> ctx.Dashboard:
+def dashboard(request: HttpRequest) -> ctx.Dashboard:
     """Dashboard view"""
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
 
@@ -29,7 +29,7 @@ def _(request: HttpRequest) -> ctx.Dashboard:
 
 @view("machines/<str:machine>/", name="gbp-machines")
 @render("gentoo_build_publisher/machine/main.html")
-def _(request: HttpRequest, machine: str) -> ctx.Machine:
+def machines(request: HttpRequest, machine: str) -> ctx.Machine:
     """Response for the machines page"""
     days = utils.get_query_value_from_request(request, "chart_days", int, 7)
 
@@ -41,7 +41,7 @@ def _(request: HttpRequest, machine: str) -> ctx.Machine:
 
 @view("machines/<str:machine>/builds/@/")
 @view("machines/<str:machine>/builds/@<str:tag>/")
-def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+def builds(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
     """Build detail by @tag"""
     build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
 
@@ -50,7 +50,8 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 
 @view("machines/<str:machine>/builds/<str:build_id>/", name="gbp-builds")
 @render("gentoo_build_publisher/build/main.html")
-def _(request: HttpRequest, machine: str, build_id: str) -> ctx.BuildView:
+def build_view(request: HttpRequest, machine: str, build_id: str) -> ctx.BuildView:
+    """Build detail view"""
     build = utils.get_build_record_or_404(machine, build_id)
 
     return ctx.BuildView.create(build=build)
@@ -58,7 +59,7 @@ def _(request: HttpRequest, machine: str, build_id: str) -> ctx.BuildView:
 
 @view("machines/<str:machine>/builds/@/logs.txt")
 @view("machines/<str:machine>/builds/@<str:tag>/logs.txt")
-def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+def logs_from_tag(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
     """Build logs by @tag"""
     build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
 
@@ -66,7 +67,7 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 
 
 @view("machines/<str:machine>/builds/<str:build_id>/logs.txt", name="gbp-logs")
-def _(request: HttpRequest, machine: str, build_id: str) -> HttpResponse:
+def logs(request: HttpRequest, machine: str, build_id: str) -> HttpResponse:
     """View to return the logs of a given build record"""
     build = utils.get_build_record_or_404(machine, build_id)
 
@@ -75,7 +76,9 @@ def _(request: HttpRequest, machine: str, build_id: str) -> HttpResponse:
 
 @view("machines/<str:machine>/builds/@/logs/")
 @view("machines/<str:machine>/builds/@<str:tag>/logs/")
-def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
+def fancy_logs_from_tag(
+    request: HttpRequest, machine: str, tag: str = ""
+) -> HttpResponse:
     """logs page by @tag"""
     build = utils.parse_tag_or_raise_404(f"{machine}@{tag}")[0]
 
@@ -84,7 +87,7 @@ def _(request: HttpRequest, machine: str, tag: str = "") -> HttpResponse:
 
 @view("machines/<str:machine>/builds/<str:build_id>/logs/", name="gbp-logs-fancy")
 @render("gentoo_build_publisher/build/logs.html")
-def _(request: HttpRequest, machine: str, build_id: str) -> ctx.Logs:
+def fancy_logs(request: HttpRequest, machine: str, build_id: str) -> ctx.Logs:
     """Fancy logs page"""
     build = utils.get_build_record_or_404(machine, build_id)
 
@@ -93,7 +96,8 @@ def _(request: HttpRequest, machine: str, build_id: str) -> ctx.Logs:
 
 @view("about/", name="gbp-about")
 @render("gentoo_build_publisher/about/main.html")
-def _(request: HttpRequest) -> ctx.About:
+def about(request: HttpRequest) -> ctx.About:
+    """About page view"""
     return ctx.About.create()
 
 
@@ -102,7 +106,7 @@ def _(request: HttpRequest) -> ctx.About:
     "<str:c>/<str:p>/<str:pv>-<int:b>",
     name="gbp-binpkg",
 )
-def _(  # pylint: disable=too-many-arguments
+def binpkg(  # pylint: disable=too-many-arguments
     request: HttpRequest,
     *,
     machine: str,
@@ -134,7 +138,7 @@ def _(  # pylint: disable=too-many-arguments
 
 @view("machines/<str:machine>/repos.conf")
 @render("gentoo_build_publisher/repos.conf", content_type="text/plain")
-def _(request: HttpRequest, machine: str) -> ctx.ReposDotConf:
+def repos_dot_conf(request: HttpRequest, machine: str) -> ctx.ReposDotConf:
     """Create a repos.conf entry for the given machine"""
     build, _, dirname = utils.parse_tag_or_raise_404(machine)
     hostname = request.headers.get("Host", "localhost").partition(":")[0]
@@ -145,7 +149,7 @@ def _(request: HttpRequest, machine: str) -> ctx.ReposDotConf:
 
 @view("machines/<str:machine>/binrepos.conf")
 @render("gentoo_build_publisher/binrepos.conf", content_type="text/plain")
-def _(request: HttpRequest, machine: str) -> ctx.BinReposDotConf:
+def binrepos_dot_conf(request: HttpRequest, machine: str) -> ctx.BinReposDotConf:
     """Create a binrepos.conf entry for the given machine"""
     dirname = utils.parse_tag_or_raise_404(machine)[2]
     uri = request.build_absolute_uri(f"/binpkgs/{dirname}/")
@@ -155,7 +159,8 @@ def _(request: HttpRequest, machine: str) -> ctx.BinReposDotConf:
 
 @view("graphql", name="graphql")
 @csrf_exempt
-def _(request: HttpRequest) -> HttpResponse:
+def graphql(request: HttpRequest) -> HttpResponse:
+    """GraphQL endpoint"""
     environ = utils.request_to_wsgi_environ(request)
     status = "400 Bad Request"
     headers: list[tuple[str, str]] = []

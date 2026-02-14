@@ -19,5 +19,5 @@ class PackageCount(TypedDict):
 
 
 @BUILD_PUBLISHER_STATS.field("machineInfo")
-def _(stats: Stats, _info: Info) -> list[MachineInfoDataClass]:
+def machine_info(stats: Stats, _info: Info) -> list[MachineInfoDataClass]:
     return list(stats.machine_info.values())

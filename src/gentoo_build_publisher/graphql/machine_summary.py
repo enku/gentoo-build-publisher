@@ -22,22 +22,22 @@ class DaysPackages(TypedDict):
 
 
 @MACHINE_SUMMARY.field("buildCount")
-def _(machine_info: MachineInfo, _info: Info) -> int:
+def build_count(machine_info: MachineInfo, _info: Info) -> int:
     return machine_info.build_count
 
 
 @MACHINE_SUMMARY.field("latestBuild")
-def _(machine_info: MachineInfo, _info: Info) -> Build | None:
+def latest_build(machine_info: MachineInfo, _info: Info) -> Build | None:
     return machine_info.latest_build
 
 
 @MACHINE_SUMMARY.field("publishedBuild")
-def _(machine_info: MachineInfo, _info: Info) -> Build | None:
+def published_build(machine_info: MachineInfo, _info: Info) -> Build | None:
     return machine_info.published_build
 
 
 @MACHINE_SUMMARY.field("packageCount")
-def _(machine_info: MachineInfo, _info: Info) -> int:
+def package_count(machine_info: MachineInfo, _info: Info) -> int:
     machine = machine_info.machine
     stats = Stats.with_cache()
 
@@ -45,19 +45,19 @@ def _(machine_info: MachineInfo, _info: Info) -> int:
 
 
 @MACHINE_SUMMARY.field("packagesByDay")
-def _(machine_info: MachineInfo, _info: Info) -> list[DaysPackages]:
+def packages_by_day(machine_info: MachineInfo, _info: Info) -> list[DaysPackages]:
     machine = machine_info.machine
     stats = Stats.with_cache()
-    packages_by_day = stats.packages_by_day[machine]
+    packages_by_day_ = stats.packages_by_day[machine]
 
     return [
         {"date": date, "packages": sorted(packages, key=lambda p: p.cpv)}
-        for date, packages in packages_by_day.items()
+        for date, packages in packages_by_day_.items()
     ]
 
 
 @MACHINE_SUMMARY.field("totalPackageSize")
-def _(machine_info: MachineInfo, _info: Info) -> str:
+def total_package_size(machine_info: MachineInfo, _info: Info) -> str:
     machine = machine_info.machine
     stats = Stats.with_cache()
 
@@ -65,7 +65,7 @@ def _(machine_info: MachineInfo, _info: Info) -> str:
 
 
 @MACHINE_SUMMARY.field("tagInfo")
-def _(machine_info: MachineInfo, _info: Info) -> list[dict[str, Any]]:
+def tag_info(machine_info: MachineInfo, _info: Info) -> list[dict[str, Any]]:
     machine = machine_info.machine
     tags = machine_info.tags
 
