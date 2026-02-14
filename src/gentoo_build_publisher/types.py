@@ -95,7 +95,7 @@ class Package:
         return f"{self.cpv}-{self.build_id}"
 
     def __post_init__(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,cyclic-import
         from gentoo_build_publisher.records import BuildRecord
 
         if isinstance(self.build, BuildRecord):
