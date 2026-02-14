@@ -14,30 +14,30 @@ from gentoo_build_publisher.types import TAG_SYM, Build
 type Info = GraphQLResolveInfo
 type Object = dict[str, Any]
 
-Query = ObjectType("Query")
-TagInfoType = ObjectType("TagInfo")
+QUERY = ObjectType("Query")
+TAG_INFO = ObjectType("TagInfo")
 
 # pylint: disable=redefined-builtin,missing-function-docstring
 
 
-@Query.field("machines")
+@QUERY.field("machines")
 def _(_obj: Any, _info: Info, names: list[str] | None = None) -> list[MachineInfo]:
     return publisher.machines(names=names)
 
 
-@Query.field("build")
+@QUERY.field("build")
 def _(_obj: Any, _info: Info, id: str) -> Build | None:
     build = Build.from_id(id)
 
     return None if not publisher.repo.build_records.exists(build) else build
 
 
-@Query.field("latest")
+@QUERY.field("latest")
 def _(_obj: Any, _info: Info, machine: str) -> BuildRecord | None:
     return publisher.latest_build(machine, completed=True)
 
 
-@Query.field("builds")
+@QUERY.field("builds")
 def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     return [
         record
@@ -46,7 +46,7 @@ def _(_obj: Any, _info: Info, machine: str) -> list[BuildRecord]:
     ]
 
 
-@Query.field("diff")
+@QUERY.field("diff")
 def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     left_build = Build.from_id(left)
 
@@ -63,24 +63,24 @@ def _(_obj: Any, _info: Info, left: str, right: str) -> Object | None:
     return {"left": left_build, "right": right_build, "items": list(items)}
 
 
-@Query.field("search")
+@QUERY.field("search")
 def _(_obj: Any, _info: Info, machine: str, field: str, key: str) -> list[BuildRecord]:
     search_field = {"NOTES": "note", "LOGS": "logs"}[field]
 
     return publisher.search(machine, search_field, key)
 
 
-@Query.field("searchNotes")
+@QUERY.field("searchNotes")
 def _(_obj: Any, _info: Info, machine: str, key: str) -> list[BuildRecord]:
     return publisher.search(machine, "note", key)
 
 
-@Query.field("version")
+@QUERY.field("version")
 def _(_obj: Any, _info: Info) -> str:
     return utils.get_version()
 
 
-@Query.field("working")
+@QUERY.field("working")
 def _(_obj: Any, _info: Info) -> list[BuildRecord]:
     return [
         record
@@ -90,21 +90,21 @@ def _(_obj: Any, _info: Info) -> list[BuildRecord]:
     ]
 
 
-@Query.field("resolveBuildTag")
+@QUERY.field("resolveBuildTag")
 def _(_obj: Any, _info: Info, machine: str, tag: str) -> Build | None:
     return publisher.resolve_tag(f"{machine}{TAG_SYM}{tag}")
 
 
-@Query.field("plugins")
+@QUERY.field("plugins")
 def _(_obj: Any, _info: Info) -> list[plugins.Plugin]:
     return plugins.get_plugins()
 
 
-@Query.field("stats")
+@QUERY.field("stats")
 def _(_obj: Any, _info: Info) -> Stats:
     return Stats.with_cache()
 
 
-@TagInfoType.field("build")
+@TAG_INFO.field("build")
 def _(context: dict[str, Any], _info: Info) -> Build | None:
     return publisher.resolve_tag(f"{context['machine']}{TAG_SYM}{context['tag']}")

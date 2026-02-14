@@ -6,28 +6,28 @@ import ariadne
 
 from gentoo_build_publisher.types import ChangeState
 
-from .build import BuildType, PackageType
-from .machine_summary import MachineSummary
-from .mutations import Mutation
-from .queries import Query, TagInfoType
+from .build import BUILD, PACKAGE
+from .machine_summary import MACHINE_SUMMARY
+from .mutations import MUTATION
+from .queries import QUERY, TAG_INFO
 from .scalars import date_scalar, datetime_scalar
-from .stats import BuildPublisherStats
+from .stats import BUILD_PUBLISHER_STATS
 from .utils import load_schema
 
-ChangeStateEnum = ariadne.EnumType("ChangeStateEnum", ChangeState)
+CHANGE_STATE_ENUM = ariadne.EnumType("ChangeStateEnum", ChangeState)
 
 type_defs = ariadne.gql(
     resources.read_text("gentoo_build_publisher.graphql", "schema.graphql")
 )
 resolvers = [
-    BuildPublisherStats,
-    BuildType,
-    ChangeStateEnum,
-    MachineSummary,
-    Mutation,
-    PackageType,
-    Query,
-    TagInfoType,
+    BUILD_PUBLISHER_STATS,
+    BUILD,
+    CHANGE_STATE_ENUM,
+    MACHINE_SUMMARY,
+    MUTATION,
+    PACKAGE,
+    QUERY,
+    TAG_INFO,
     date_scalar,
     datetime_scalar,
 ]

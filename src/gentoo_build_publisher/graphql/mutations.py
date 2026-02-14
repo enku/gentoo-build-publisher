@@ -18,7 +18,7 @@ from .utils import Error, maybe_require_apikey
 type Info = GraphQLResolveInfo
 type Object = dict[str, Any]
 
-Mutation = ObjectType("Mutation")
+MUTATION = ObjectType("Mutation")
 
 
 class BuildParameterInput(TypedDict):
@@ -28,7 +28,7 @@ class BuildParameterInput(TypedDict):
     value: str
 
 
-@Mutation.field("pull")
+@MUTATION.field("pull")
 @maybe_require_apikey
 def _(
     _obj: Any,
@@ -45,7 +45,7 @@ def _(
     return MachineInfo(build.machine)
 
 
-@Mutation.field("scheduleBuild")
+@MUTATION.field("scheduleBuild")
 @convert_kwargs_to_snake_case
 @maybe_require_apikey
 def _(
@@ -61,7 +61,7 @@ def _(
     return publisher.schedule_build(job, **{p["name"]: p["value"] for p in params})
 
 
-@Mutation.field("keepBuild")
+@MUTATION.field("keepBuild")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
@@ -72,7 +72,7 @@ def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     return publisher.save(publisher.record(build), keep=True)
 
 
-@Mutation.field("releaseBuild")
+@MUTATION.field("releaseBuild")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     build = Build.from_id(id)
@@ -83,7 +83,7 @@ def _(_obj: Any, _info: Info, id: str) -> BuildRecord | None:
     return publisher.save(publisher.record(build), keep=False)
 
 
-@Mutation.field("createNote")
+@MUTATION.field("createNote")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, id: str, note: str | None = None) -> BuildRecord | None:
     build = Build.from_id(id)
@@ -94,7 +94,7 @@ def _(_obj: Any, _info: Info, id: str, note: str | None = None) -> BuildRecord |
     return publisher.save(publisher.record(build), note=note)
 
 
-@Mutation.field("createBuildTag")
+@MUTATION.field("createBuildTag")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     build = Build.from_id(id)
@@ -104,7 +104,7 @@ def _(_obj: Any, _info: Info, id: str, tag: str) -> Build:
     return build
 
 
-@Mutation.field("removeBuildTag")
+@MUTATION.field("removeBuildTag")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, machine: str, tag: str) -> MachineInfo:
     publisher.untag(machine, tag)
@@ -112,7 +112,7 @@ def _(_obj: Any, _info: Info, machine: str, tag: str) -> MachineInfo:
     return MachineInfo(machine)
 
 
-@Mutation.field("createRepo")
+@MUTATION.field("createRepo")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, name: str, repo: str, branch: str) -> Error | None:
     jenkins = publisher.jenkins
@@ -127,7 +127,7 @@ def _(_obj: Any, _info: Info, name: str, repo: str, branch: str) -> Error | None
     return None
 
 
-@Mutation.field("createMachine")
+@MUTATION.field("createMachine")
 @convert_kwargs_to_snake_case
 @maybe_require_apikey
 def _(
@@ -148,7 +148,7 @@ def _(
     return None
 
 
-@Mutation.field("publish")
+@MUTATION.field("publish")
 @maybe_require_apikey
 def _(_obj: Any, _info: Info, id: str) -> MachineInfo:
     build = Build.from_id(id)

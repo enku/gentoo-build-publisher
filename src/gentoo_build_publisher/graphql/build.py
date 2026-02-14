@@ -14,36 +14,36 @@ from gentoo_build_publisher.utils import string
 
 type Info = GraphQLResolveInfo
 
-BuildType = ObjectType("Build")
-PackageType = ObjectType("Package")
+BUILD = ObjectType("Build")
+PACKAGE = ObjectType("Package")
 
 
-@BuildType.field("built")
+@BUILD.field("built")
 def _(build: Build, _info: Info) -> dt.datetime | None:
     return publisher.record(build).built
 
 
-@BuildType.field("completed")
+@BUILD.field("completed")
 def _(build: Build, _info: Info) -> dt.datetime | None:
     return publisher.record(build).completed
 
 
-@BuildType.field("keep")
+@BUILD.field("keep")
 def _(build: Build, _info: Info) -> bool:
     return publisher.record(build).keep
 
 
-@BuildType.field("logs")
+@BUILD.field("logs")
 def _(build: Build, _info: Info) -> str | None:
     return publisher.record(build).logs
 
 
-@BuildType.field("notes")
+@BUILD.field("notes")
 def _(build: Build, _info: Info) -> str | None:
     return publisher.record(build).note
 
 
-@BuildType.field("packages")
+@BUILD.field("packages")
 @convert_kwargs_to_snake_case
 def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
     if not publisher.pulled(build):
@@ -59,41 +59,41 @@ def _(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
     return [package.cpv for package in packages]
 
 
-@BuildType.field("packagesBuilt")
+@BUILD.field("packagesBuilt")
 def _(build: Build, _info: Info) -> list[Package] | None:
     gbp_metadata = publisher.build_metadata(build)
 
     return gbp_metadata.packages.built
 
 
-@BuildType.field("published")
+@BUILD.field("published")
 def _(build: Build, _info: Info) -> bool:
     return publisher.published(build)
 
 
-@BuildType.field("pulled")
+@BUILD.field("pulled")
 def _(build: Build, _info: Info) -> bool:
     return publisher.pulled(build)
 
 
-@BuildType.field("submitted")
+@BUILD.field("submitted")
 def _(build: Build, _info: Info) -> dt.datetime:
     return publisher.record(build).submitted or dt.datetime.now(tz=dt.UTC)
 
 
-@BuildType.field("tags")
+@BUILD.field("tags")
 def _(build: Build, _info: Info) -> list[str]:
     return publisher.tags(build)
 
 
-@BuildType.field("packageDetail")
+@BUILD.field("packageDetail")
 def _(build: Build, _info: Info) -> list[Package]:
     build_record = publisher.record(build)
 
     return publisher.get_packages(build_record)
 
 
-@BuildType.field("profile")
+@BUILD.field("profile")
 def _(build: Build, _info: Info) -> str | None:
     try:
         return publisher.portage_profile(build)
@@ -101,7 +101,7 @@ def _(build: Build, _info: Info) -> str | None:
         return None
 
 
-@PackageType.field("url")
+@PACKAGE.field("url")
 def _(package: Package, _info: Info) -> str:
     # circular-import workaround
     # pylint: disable=import-outside-toplevel

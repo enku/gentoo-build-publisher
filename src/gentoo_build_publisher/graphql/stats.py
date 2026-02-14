@@ -10,7 +10,7 @@ from graphql import GraphQLResolveInfo
 from gentoo_build_publisher.stats import MachineInfoDataClass, Stats
 
 type Info = GraphQLResolveInfo
-BuildPublisherStats = ObjectType("BuildPublisherStats")
+BUILD_PUBLISHER_STATS = ObjectType("BuildPublisherStats")
 
 
 class PackageCount(TypedDict):
@@ -18,6 +18,6 @@ class PackageCount(TypedDict):
     count: int
 
 
-@BuildPublisherStats.field("machineInfo")
+@BUILD_PUBLISHER_STATS.field("machineInfo")
 def _(stats: Stats, _info: Info) -> list[MachineInfoDataClass]:
     return list(stats.machine_info.values())
