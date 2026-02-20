@@ -4,7 +4,7 @@
 
 import datetime as dt
 
-from ariadne import ObjectType, convert_kwargs_to_snake_case
+from ariadne import ObjectType
 from django.urls import reverse
 from graphql import GraphQLResolveInfo
 
@@ -44,7 +44,6 @@ def notes(build: Build, _info: Info) -> str | None:
 
 
 @BUILD.field("packages")
-@convert_kwargs_to_snake_case
 def packages(build: Build, _info: Info, build_id: bool = False) -> list[str] | None:
     if not publisher.pulled(build):
         return None

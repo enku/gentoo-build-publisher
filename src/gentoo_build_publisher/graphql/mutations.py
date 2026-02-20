@@ -4,7 +4,7 @@
 
 from typing import Any, TypedDict
 
-from ariadne import ObjectType, convert_kwargs_to_snake_case
+from ariadne import ObjectType
 from graphql import GraphQLResolveInfo
 
 from gentoo_build_publisher import publisher, worker
@@ -46,7 +46,6 @@ def pull(
 
 
 @MUTATION.field("scheduleBuild")
-@convert_kwargs_to_snake_case
 @maybe_require_apikey
 def schedule_build(
     _obj: Any,
@@ -132,7 +131,6 @@ def create_repo(
 
 
 @MUTATION.field("createMachine")
-@convert_kwargs_to_snake_case
 @maybe_require_apikey
 def create_machine(
     _obj: Any, _info: Info, name: str, repo: str, branch: str, ebuild_repos: list[str]

@@ -35,5 +35,5 @@ resolvers = [
 
 MERGED_TYPE_DEFS, MERGED_RESOLVERS = load_schema()
 schema = ariadne.make_executable_schema(
-    MERGED_TYPE_DEFS, *MERGED_RESOLVERS, ariadne.snake_case_fallback_resolvers
+    MERGED_TYPE_DEFS, *MERGED_RESOLVERS, convert_names_case=True
 )
