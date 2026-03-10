@@ -19,16 +19,6 @@ from gentoo_build_publisher.utils.time import localtime
 NOW = "gentoo_build_publisher.utils.time.now"
 
 
-class TemplateTagTests(TestCase):
-    library = "gbp"
-    template = "override me!"
-
-    def render(self, template: str | None = None, **kwargs: Any) -> str:
-        template = self.template if template is None else template
-        context = Context(kwargs)
-        return Template(f"{{% load {self.library} %}}{template}").render(context)
-
-
 class SplitNumberizeTests(TestCase):
 
     def test_should_return_whole_number_when_precision_0(self) -> None:
@@ -71,20 +61,22 @@ class SplitNumberizeTests(TestCase):
         self.assertEqual(result, ("1", "k"))
 
 
-class NumberizeTestCase(TemplateTagTests):
+class NumberizeTestCase(TestCase):
     template = "{{ number|numberize:precision }}"
 
     def test_should_return_whole_number_when_precision_0(self) -> None:
-        result = self.render(number=96_858_412, precision=0, delim=None)
+        result = render(self.template, number=96_858_412, precision=0, delim=None)
 
         self.assertEqual(result, "97M")
 
     def test_invalid_value(self) -> None:
         with self.assertRaises(TemplateSyntaxError):
-            self.render(number="this is not a number", precision=2, delim=None)
+            render(
+                self.template, number="this is not a number", precision=2, delim=None
+            )
 
 
-class MetricTests(TemplateTagTests):
+class MetricTests(TestCase):
     template = "{% metric build_count name %}"
 
     def test(self) -> None:
@@ -94,7 +86,7 @@ class MetricTests(TemplateTagTests):
   <h2 class="label">Builds</h2>
 </div>
 """
-        result = self.render(build_count=452, name="Builds")
+        result = render(self.template, build_count=452, name="Builds")
         self.assertEqual(result, expected)
 
     def test_large_number(self) -> None:
@@ -104,7 +96,7 @@ class MetricTests(TemplateTagTests):
   <h2 class="label">Packages</h2>
 </div>
 """
-        result = self.render(build_count=212351, name="Packages")
+        result = render(self.template, build_count=212351, name="Packages")
         self.assertEqual(result, expected)
 
 
@@ -112,24 +104,25 @@ class CircleTests(MetricTests):
     template = "{% circle build_count name %}"
 
 
-class ChartTests(TemplateTagTests):
-    template = "{% chart dom_id title cols=cols width=width height=height %}"
+class ChartTests(TestCase):
 
     def test(self) -> None:
+        template = "{% chart dom_id title cols=cols width=width height=height %}"
+
         expected = """\
 <div class="col-md-8">
-  <h4 class="d-flex justify-content-between align-items-center mb-3">Test Test</h4>
+  <h4 class="d-flex justify-content-between align-items-center mb-3">Test</h4>
   <canvas id="testChart" width="100" height="150"></canvas>
 </div>
 """
-        result = self.render(
-            dom_id="testChart", title="Test Test", cols=8, width=100, height=150
+        result = render(
+            template, dom_id="testChart", title="Test", cols=8, width=100, height=150
         )
         self.assertEqual(result, expected)
 
 
 @given(testkit.build_record, testkit.publisher)
-class BuildRowTests(TemplateTagTests):
+class BuildRowTests(TestCase):
     template = "{% build_row build build_packages %}"
 
     def test(self, fixtures: Fixtures) -> None:
@@ -148,11 +141,11 @@ class BuildRowTests(TemplateTagTests):
 """
         packages = ["x11-libs/libdrm-2.4.118", "x11-misc/xkeyboard-config-2.40-r1"]
         build_packages = {str(build): packages}
-        result = self.render(build=build, build_packages=build_packages)
+        result = render(self.template, build=build, build_packages=build_packages)
         self.assertEqual(result, expected)
 
 
-class PackageRowTests(TemplateTagTests):
+class PackageRowTests(TestCase):
     template = "{% package_row package machines %}"
 
     def test(self) -> None:
@@ -166,7 +159,7 @@ class PackageRowTests(TemplateTagTests):
 """
         package = "x11-libs/libdrm-2.4.118"
         machines = ["babette", "polaris"]
-        result = self.render(package=package, machines=machines)
+        result = render(self.template, package=package, machines=machines)
         self.assertEqual(result, expected)
 
     def test_single_machine(self) -> None:
@@ -180,18 +173,18 @@ class PackageRowTests(TemplateTagTests):
 """
         package = "x11-libs/libdrm-2.4.118"
         machines = ["babette"]
-        result = self.render(package=package, machines=machines)
+        result = render(self.template, package=package, machines=machines)
         self.assertEqual(result, expected)
 
 
-class RoundRectTests(TemplateTagTests):
+class RoundRectTests(TestCase):
     template = "{% roundrect text title %}"
 
     def test(self) -> None:
         expected = """
 <div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
 """
-        result = self.render(text="lighthouse", title="")
+        result = render(self.template, text="lighthouse", title="")
         self.assertEqual(result, expected)
 
     def test_with_title(self) -> None:
@@ -199,7 +192,7 @@ class RoundRectTests(TemplateTagTests):
 <div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><title>This is a test</title><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="50px" letter-spacing="8">lighthouse</text></svg></div>
 """
 
-        result = self.render(text="lighthouse", title="This is a test")
+        result = render(self.template, text="lighthouse", title="This is a test")
         self.assertEqual(result, expected)
 
     def test_with_scale(self) -> None:
@@ -207,15 +200,15 @@ class RoundRectTests(TemplateTagTests):
         expected = """
 <div class="col" align="center"><svg class="bd-placeholder-img rounded" width="100%" height="70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img"><rect class="roundrec" width="100%" height="100%"/><text x="50%" y="50%" fill="#fff" dy=".3em" font-size="25px" letter-spacing="4">lighthouse</text></svg></div>
 """
-        result = self.render(template=template, text="lighthouse", title="", scale=0.5)
+        result = render(template=template, text="lighthouse", title="", scale=0.5)
 
         self.assertEqual(result, expected)
 
 
-class MachineLinkTests(TemplateTagTests):
+class MachineLinkTests(TestCase):
     def test_renders_link(self) -> None:
         expected = '<a class="machine-link" href="/machines/lighthouse/">lighthouse</a>'
-        self.assertEqual(self.render("{{ 'lighthouse'|machine_link }}"), expected)
+        self.assertEqual(render("{{ 'lighthouse'|machine_link }}"), expected)
 
 
 @given(now=testkit.patch)
@@ -223,32 +216,32 @@ class MachineLinkTests(TemplateTagTests):
 @given(localtimezone=testkit.patch)
 @where(localtimezone__target="gentoo_build_publisher.utils.time.LOCAL_TIMEZONE")
 @where(localtimezone__new=LOCAL_TIMEZONE)
-class DisplayTimeTests(TemplateTagTests):
+class DisplayTimeTests(TestCase):
     # pylint: disable=unused-argument
     template = "{{ timestamp|display_time }}"
 
     def test_same_day(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 11, 8, 54))
 
-        self.assertEqual(self.render(timestamp=timestamp), "07:54:00")
+        self.assertEqual(render(self.template, timestamp=timestamp), "07:54:00")
 
     def test_previous_day(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 10, 8, 54))
 
-        self.assertEqual(self.render(timestamp=timestamp), "Jan 10 07:54")
+        self.assertEqual(render(self.template, timestamp=timestamp), "Jan 10 07:54")
 
     def test_previous_week(self, fixtures: Fixtures) -> None:
         timestamp = localtime(dt.datetime(2024, 1, 4, 8, 54))
 
-        self.assertEqual(self.render(timestamp=timestamp), "Jan 4")
+        self.assertEqual(render(self.template, timestamp=timestamp), "Jan 4")
 
     def test_none(self, fixtures: Fixtures) -> None:
         # old builds have no built record
-        self.assertEqual(self.render(timestamp=None), "")
+        self.assertEqual(render(self.template, timestamp=None), "")
 
 
 @given(testkit.build_record, testkit.publisher)
-class BuildLinkTests(TemplateTagTests):
+class BuildLinkTests(TestCase):
     def test_renders_link(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
         machine = build.machine
@@ -259,7 +252,7 @@ class BuildLinkTests(TemplateTagTests):
             f'<span class="build_id">{id}</span>'
             "</a>"
         )
-        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+        self.assertEqual(render("{{ build|build_link }}", build=build), expected)
 
     def test_with_build_note(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
@@ -273,7 +266,7 @@ class BuildLinkTests(TemplateTagTests):
             f'<span class="build_id">{id}</span>'
             "</a> 🗒"
         )
-        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+        self.assertEqual(render("{{ build|build_link }}", build=build), expected)
 
     def test_with_tags(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
@@ -291,7 +284,7 @@ class BuildLinkTests(TemplateTagTests):
             "</a>"
             ' <span class="tags">@bar @foo</span>'
         )
-        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+        self.assertEqual(render("{{ build|build_link }}", build=build), expected)
 
     def test_published(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
@@ -307,20 +300,20 @@ class BuildLinkTests(TemplateTagTests):
             f'<span class="build_id published">{id}</span>'
             "</a>"
         )
-        self.assertEqual(self.render("{{ build|build_link }}", build=build), expected)
+        self.assertEqual(render("{{ build|build_link }}", build=build), expected)
 
 
 @given(testkit.build)
-class BuildWithSpaceTests(TemplateTagTests):
+class BuildWithSpaceTests(TestCase):
     def test(self, fixtures: Fixtures) -> None:
         self.assertEqual(
-            self.render("{{ build|build_with_space }}", build=fixtures.build),
+            render("{{ build|build_with_space }}", build=fixtures.build),
             f"babette {fixtures.build.build_id}",
         )
 
 
 @given(testkit.build_record, testkit.publisher)
-class MachineBuildRowTests(TemplateTagTests):
+class MachineBuildRowTests(TestCase):
     template = "{% machine_build_row build %}"
 
     def test(self, fixtures: Fixtures) -> None:
@@ -333,7 +326,9 @@ class MachineBuildRowTests(TemplateTagTests):
 <li class="list-group-item d-flex justify-content-between lh-condensed">
   <div>
     <h6 class="my-0"><a class="build-link" href="/machines/{b.machine}/builds/{b.build_id}/"><span class="build_id">{b.build_id}</span></a></h6>"""
-        self.assertTrue(self.render(build=fixtures.build_record).startswith(expected))
+        self.assertTrue(
+            render(self.template, build=fixtures.build_record).startswith(expected)
+        )
 
     def test_missing_gbp_dot_json(self, fixtures: Fixtures) -> None:
         # Older (2021-ish) builds don't have a gbp.json file
@@ -345,18 +340,18 @@ class MachineBuildRowTests(TemplateTagTests):
         gbp_json.unlink()
 
         # We just want to ensure that this does not error out (LookupError).
-        self.render(build=fixtures.build_record)
+        render(self.template, build=fixtures.build_record)
 
 
 @given(testkit.build_record, testkit.publisher)
-class BuildIDTests(TemplateTagTests):
+class BuildIDTests(TestCase):
     template = "{{ build|build_id }}"
 
     def test_not_published(self, fixtures: Fixtures) -> None:
         build = fixtures.build_record
 
         expected = f'<span class="build_id">{build.build_id}</span>'
-        self.assertEqual(expected, self.render(build=build))
+        self.assertEqual(expected, render(self.template, build=build))
 
     def test_published(self, fixtures: Fixtures) -> None:
         publisher = fixtures.publisher
@@ -365,17 +360,22 @@ class BuildIDTests(TemplateTagTests):
         publisher.publish(build)
 
         expected = f'<span class="build_id published">{build.build_id}</span>'
-        self.assertEqual(expected, self.render(build=build))
+        self.assertEqual(expected, render(self.template, build=build))
 
 
-class FooterLinkTests(TemplateTagTests):
+class FooterLinkTests(TestCase):
     template = "{% footer_link title url %}"
 
     def test(self) -> None:
-        result = self.render(title="Google", url="https://www.google.com/")
+        result = render(self.template, title="Google", url="https://www.google.com/")
         expected = """\
 <div class="col text-center">
   <a href="https://www.google.com/">Google</a>
 </div>
 """
         self.assertEqual(result, expected)
+
+
+def render(template: str, *, library: str = "gbp", **kwargs: Any) -> str:
+    context = Context(kwargs)
+    return Template(f"{{% load {library} %}}{template}").render(context)
