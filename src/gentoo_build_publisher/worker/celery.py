@@ -35,14 +35,14 @@ class CeleryWorker:
     @classmethod
     def work(cls, settings: Settings) -> None:
         """Run the Celery worker"""
-        worker = Worker(  # type: ignore[call-arg]
+        worker = Worker(
             app=celery_app,
             concurrency=settings.WORKER_CELERY_CONCURRENCY,
             events=settings.WORKER_CELERY_EVENTS,
             hostname=settings.WORKER_CELERY_HOSTNAME or None,
             loglevel=settings.WORKER_CELERY_LOGLEVEL,
         )
-        worker.start()  # type: ignore[attr-defined]
+        worker.start()
 
 
 @celery_app.task
