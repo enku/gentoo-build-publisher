@@ -23,6 +23,7 @@ def background_update_stats_cache(**_kwargs: Any) -> None:
 def init() -> None:
     """Bind signal handlers with the dispatcher"""
     dispatcher.bind(
+        note=background_update_stats_cache,
         postdelete=background_update_stats_cache,
         postpull=background_update_stats_cache,
         published=background_update_stats_cache,

@@ -202,7 +202,7 @@ class PyDispatcherAdapterTests(TestCase):
 
 
 @given(clear_cache=lambda _: clear_cache())
-@params(event=["postdelete", "postpull", "published", "tagged", "untagged"])
+@params(event=["postdelete", "postpull", "published", "tagged", "untagged", "note"])
 @params(
     kwargs=[
         (("build", BUILD),),
@@ -210,6 +210,7 @@ class PyDispatcherAdapterTests(TestCase):
         (("build", BUILD),),
         (("build", BUILD), ("tag", "foo")),
         (("build", BUILD), ("tag", "foo")),
+        (("build", BUILD), ("action", None)),
     ]
 )
 @given(testkit.build)
