@@ -731,6 +731,24 @@ class DispatcherTestCase(TestCase):
 
         self.assertFalse(called)
 
+    def test_note(self, fixtures: Fixtures) -> None:
+        build = BuildFactory()
+        publisher = fixtures.publisher
+        publisher.pull(build)
+        record = publisher.record(build)
+        called = False
+
+        def note_handler(build: Build, action: str) -> None:
+            nonlocal called
+
+            called = True
+
+        dispatcher.bind(note=note_handler)
+
+        publisher.save(record, note="foo")
+
+        self.assertTrue(called)
+
 
 @given(testkit.publisher)
 class ScheduleBuildTestCase(TestCase):

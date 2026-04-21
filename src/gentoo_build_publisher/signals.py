@@ -10,6 +10,7 @@ P = ParamSpec("P")
 BlinkerHandler: TypeAlias = Callable[Concatenate[Any, P], Any]
 
 CORE_EVENTS = [
+    "note",
     "postdelete",
     "postpull",
     "predelete",

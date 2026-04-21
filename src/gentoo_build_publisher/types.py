@@ -109,6 +109,20 @@ class ChangeState(Enum):
     CHANGED = 0
     ADDED = 1
 
+    @classmethod
+    def get(cls, old: Any, new: Any) -> Self | None:
+        """Compare old with new and return the ChangeState
+
+        If both are equal return None.
+        """
+        if old is None and new is not None:
+            return cls.ADDED
+        if old is not None and new is None:
+            return cls.REMOVED
+        if old != new:
+            return cls.CHANGED
+        return None
+
 
 @dataclass(frozen=True)
 class Change:

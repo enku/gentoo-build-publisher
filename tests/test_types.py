@@ -3,7 +3,9 @@
 # pylint: disable=missing-docstring
 from unittest import TestCase
 
-from gentoo_build_publisher.types import Build, InvalidBuild
+from unittest_fixtures import Fixtures, params
+
+from gentoo_build_publisher.types import Build, ChangeState, InvalidBuild
 
 
 class BuildTestCase(TestCase):
@@ -26,3 +28,17 @@ class BuildTestCase(TestCase):
         build = Build("babette", "16")
 
         self.assertEqual("Build('babette.16')", repr(build))
+
+
+@params(
+    old=(None, "xx", None, "xx", "xx"),
+    new=(None, "xx", "xx", None, "xy"),
+    want=(None, None, ChangeState.ADDED, ChangeState.REMOVED, ChangeState.CHANGED),
+)
+class ChangeStateTests(TestCase):
+    """Tests for the ChangeState Enum"""
+
+    def test_test(self, fixtures: Fixtures) -> None:
+        change_state = ChangeState.get(fixtures.old, fixtures.new)
+
+        self.assertEqual(change_state, fixtures.want)

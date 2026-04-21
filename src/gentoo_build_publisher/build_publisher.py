@@ -79,7 +79,13 @@ class BuildPublisher:  # pylint: disable=too-many-public-methods
 
     def save(self, record: BuildRecord, **fields: Any) -> BuildRecord:
         """Save the build or record to the records repository"""
-        return self.repo.build_records.save(record, **fields)
+        updated = self.repo.build_records.save(record, **fields)
+
+        if "note" in fields:
+            if state := ChangeState.get(record.note, updated.note):
+                dispatcher.emit("note", build=updated, action=state)
+
+        return updated
 
     def publish(self, build: Build) -> None:
         """Publish the build"""
