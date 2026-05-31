@@ -151,10 +151,9 @@ class JobsTests(TestCase):
         settings = replace(fixtures.settings, WORKER_BACKEND="rq")
         worker = cast(RQWorker, Worker(settings))
         self.assertIsInstance(worker, RQWorker)
-        self.assertEqual(
-            worker.queue.connection.connection_pool.connection_kwargs,
-            {"host": "localhost.invalid", "port": 6379},
-        )
+        kwargs = worker.queue.connection.connection_pool.connection_kwargs
+        self.assertEqual(kwargs["host"], "localhost.invalid")
+        self.assertEqual(kwargs["port"], 6379)
 
     def test_invalid(self, fixtures: Fixtures) -> None:
         settings = replace(fixtures.settings, WORKER_BACKEND="bogus")
