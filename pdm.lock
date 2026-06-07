@@ -763,13 +763,13 @@ files = [
 
 [[package]]
 name = "distlib"
-version = "0.4.0"
+version = "0.4.1"
 summary = "Distribution utilities"
 groups = ["dev"]
 marker = "python_version >= \"3.10\""
 files = [
-    {file = "distlib-0.4.0-py2.py3-none-any.whl", hash = "sha256:9659f7d87e46584a30b5780e43ac7a2143098441670ff0a49d5f9034c54a6c16"},
-    {file = "distlib-0.4.0.tar.gz", hash = "sha256:feec40075be03a04501a973d81f633735b4b69f98b05450592310c0f401a4e0d"},
+    {file = "distlib-0.4.1-py2.py3-none-any.whl", hash = "sha256:9c2c552c68cbadc619f2d0ed3a69e27c351a3f4c9baa9ffb7df9e9cdc3d19a97"},
+    {file = "distlib-0.4.1.tar.gz", hash = "sha256:c3804d0d2d4b5fcd44036eb860cb6660485fcdf5c2aba53dc324d805837ea65b"},
 ]
 
 [[package]]
@@ -783,7 +783,7 @@ files = [
 
 [[package]]
 name = "django"
-version = "6.0.5"
+version = "6.0.6"
 requires_python = ">=3.12"
 summary = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 groups = ["default", "dev"]
@@ -793,8 +793,8 @@ dependencies = [
     "tzdata; sys_platform == \"win32\"",
 ]
 files = [
-    {file = "django-6.0.5-py3-none-any.whl", hash = "sha256:9d58a7cb49244e74c8e161d5e403a46d6209f1009ba40f5a66d6aa0d0786a8f0"},
-    {file = "django-6.0.5.tar.gz", hash = "sha256:bc6d6872e98a2864c836e42edd644b362db311147dd5aa8d5b82ba7a032f5269"},
+    {file = "django-6.0.6-py3-none-any.whl", hash = "sha256:25148b1194c47c2e685e5f5e9c5d59c78b075dfd282cb9618861ba6c1708f4d2"},
+    {file = "django-6.0.6.tar.gz", hash = "sha256:ad03916ba59523d781ae5c3f631960c23d69a9d9c43cecda52fc23b47e953713"},
 ]
 
 [[package]]
@@ -846,7 +846,7 @@ files = [
 
 [[package]]
 name = "faker"
-version = "40.19.1"
+version = "40.21.0"
 requires_python = ">=3.10"
 summary = "Faker is a Python package that generates fake data for you."
 groups = ["dev", "test"]
@@ -854,8 +854,8 @@ dependencies = [
     "tzdata; platform_system == \"Windows\"",
 ]
 files = [
-    {file = "faker-40.19.1-py3-none-any.whl", hash = "sha256:265259b37c013838baaae34940207288170df385d6c5281413fce56a3504d580"},
-    {file = "faker-40.19.1.tar.gz", hash = "sha256:76fa71fd3bf320db25e5504eb356f9a76b8a95cd6098524d006f446035b6b89d"},
+    {file = "faker-40.21.0-py3-none-any.whl", hash = "sha256:cb6601b2ae8e128895dc96814d271eab6b930a2d2d7932c6f9ff26785c24ee18"},
+    {file = "faker-40.21.0.tar.gz", hash = "sha256:2fdee1b650a723a54432db9c6dfe17cfa29d1adc8bd60520444a07698524ba4d"},
 ]
 
 [[package]]
@@ -878,14 +878,14 @@ files = [
 
 [[package]]
 name = "filelock"
-version = "3.29.0"
+version = "3.29.1"
 requires_python = ">=3.10"
 summary = "A platform independent file lock."
 groups = ["dev"]
 marker = "python_version >= \"3.10\""
 files = [
-    {file = "filelock-3.29.0-py3-none-any.whl", hash = "sha256:96f5f6344709aa1572bbf631c640e4ebeeb519e08da902c39a001882f30ac258"},
-    {file = "filelock-3.29.0.tar.gz", hash = "sha256:69974355e960702e789734cb4871f884ea6fe50bd8404051a3530bc07809cf90"},
+    {file = "filelock-3.29.1-py3-none-any.whl", hash = "sha256:85199dfd706869641b72b2e8955d5416a4b2b7dc4b0e8e6d97b4cc1299a6983b"},
+    {file = "filelock-3.29.1.tar.gz", hash = "sha256:d97e6b1b9757569626c58caa07dc4beb1613f4a2938b1e8cc81afca398906c9e"},
 ]
 
 [[package]]
@@ -910,7 +910,7 @@ files = [
 
 [[package]]
 name = "graphql-core"
-version = "3.2.8"
+version = "3.2.11"
 requires_python = "<4,>=3.7"
 summary = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
 groups = ["default"]
@@ -918,8 +918,8 @@ dependencies = [
     "typing-extensions<5,>=4.7; python_version < \"3.10\"",
 ]
 files = [
-    {file = "graphql_core-3.2.8-py3-none-any.whl", hash = "sha256:cbee07bee1b3ed5e531723685369039f32ff815ef60166686e0162f540f1520c"},
-    {file = "graphql_core-3.2.8.tar.gz", hash = "sha256:015457da5d996c924ddf57a43f4e959b0b94fb695b85ed4c29446e508ed65cf3"},
+    {file = "graphql_core-3.2.11-py3-none-any.whl", hash = "sha256:0b3e35ff41e9adba53021ab0cef475eb18f57c7f53f0f2ca55567fbf3c537ea0"},
+    {file = "graphql_core-3.2.11.tar.gz", hash = "sha256:e7e156d10beb127cab5c89ff0da71416fc73d27c484a4757d3b2d35633774802"},
 ]
 
 [[package]]
@@ -935,13 +935,13 @@ files = [
 
 [[package]]
 name = "idna"
-version = "3.17"
+version = "3.18"
 requires_python = ">=3.9"
 summary = "Internationalized Domain Names in Applications (IDNA)"
 groups = ["default"]
 files = [
-    {file = "idna-3.17-py3-none-any.whl", hash = "sha256:466e48829084efe2548012b855df21540b96f2e20e51bd124c851536556a592c"},
-    {file = "idna-3.17.tar.gz", hash = "sha256:5eb0cb53bc467c12eadcf6de83163ad8527cec9416f44b9b61b19caedad2b87f"},
+    {file = "idna-3.18-py3-none-any.whl", hash = "sha256:7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2"},
+    {file = "idna-3.18.tar.gz", hash = "sha256:ffb385a7e039654cef1ab9ef32c6fafe283c0c0467bba1d9029738ce4a14a848"},
 ]
 
 [[package]]
@@ -1711,7 +1711,7 @@ files = [
 
 [[package]]
 name = "rq"
-version = "2.9.0"
+version = "2.9.1"
 requires_python = ">=3.10"
 summary = "RQ is a simple, lightweight, library for creating background jobs, and processing them."
 groups = ["redis"]
@@ -1721,8 +1721,8 @@ dependencies = [
     "redis!=6,>=3.5",
 ]
 files = [
-    {file = "rq-2.9.0-py3-none-any.whl", hash = "sha256:665b9ad34e36ea15913e60d2a32e1775fef1e9aff907bcae297d6f70dccffed2"},
-    {file = "rq-2.9.0.tar.gz", hash = "sha256:db5dfc1e1fe80ef977fd557d4305107dcf99a80b33d381c9a06e8a2bb11730e5"},
+    {file = "rq-2.9.1-py3-none-any.whl", hash = "sha256:092624e1bc3b3ca9d2ce7ff4049bd7667f772f84695c9dc66a7a662f67f1939a"},
+    {file = "rq-2.9.1.tar.gz", hash = "sha256:2ae30c452bd1e8e26b4a213340d4b6e3957cae23176a92f9132c661d73d0c179"},
 ]
 
 [[package]]
@@ -1759,7 +1759,7 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "1.2.0"
+version = "1.2.1"
 requires_python = ">=3.10"
 summary = "The little ASGI library that shines."
 groups = ["default"]
@@ -1768,8 +1768,8 @@ dependencies = [
     "typing-extensions>=4.10.0; python_version < \"3.13\"",
 ]
 files = [
-    {file = "starlette-1.2.0-py3-none-any.whl", hash = "sha256:36e0c76ac59157e75dc4b3bdeafba97fb04eaf1878045f15dbef666a6f092ed7"},
-    {file = "starlette-1.2.0.tar.gz", hash = "sha256:3c5a6b23fff42492914e93890bb80cbfea72dbf37de268eec06185d62a4ca553"},
+    {file = "starlette-1.2.1-py3-none-any.whl", hash = "sha256:4de0082d08c8f6764a85a54cf1120d6939507a19905c7768acad2a9f875d2b89"},
+    {file = "starlette-1.2.1.tar.gz", hash = "sha256:9b9b5ebb992e67d6093741e63c2f59e4f6fff986f81163c087867bd7b924b3f6"},
 ]
 
 [[package]]
@@ -1832,21 +1832,21 @@ files = [
 
 [[package]]
 name = "typos"
-version = "1.47.0"
+version = "1.47.2"
 requires_python = ">=3.8"
 summary = "Source Code Spelling Correction"
 groups = ["dev"]
 files = [
-    {file = "typos-1.47.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c4104785d237fd2256023ba4339e404ed2db58888af703eb0726a1441a8e85d7"},
-    {file = "typos-1.47.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:cb95b6fde16fe5bab11788bc14d3d9ec49dcbeec9517378e2fca9e283e6b7822"},
-    {file = "typos-1.47.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:653eba984d2cc55eb47d50771761bb7e0d6e52771c2489fd76b1f86fbed49a2a"},
-    {file = "typos-1.47.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:be447ce8400154e4ae515cc9ecef99532cee6b29271ba3adbe3487304cd2c3c2"},
-    {file = "typos-1.47.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9856752e08face132c7d08de875567675f2c54e3e04096d6ebad09c6430e16f0"},
-    {file = "typos-1.47.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:438b8579e440ff88baf51cb577b2eb4514d065509ba41a10981e1ea9048a519b"},
-    {file = "typos-1.47.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:19cfe53c33ac7d0c5f029fb97939b082139b63fbbb88350ab7e6df28be31629e"},
-    {file = "typos-1.47.0-py3-none-win32.whl", hash = "sha256:2de87acff0b6857ce693059a6291227eec999284e16a87162178c847236bafca"},
-    {file = "typos-1.47.0-py3-none-win_amd64.whl", hash = "sha256:05c1547e3dbbb6fe8a861b56cb98e9922cd5d20170ee2e7e649faa1605dfdb49"},
-    {file = "typos-1.47.0.tar.gz", hash = "sha256:f00d98b8338abd6016f968fb7a3911c911010c17c333c2e102e8893b1c97db8f"},
+    {file = "typos-1.47.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:87df3040f9d34afd9b19a9437045fbb8838a0435eb00f047e4bac48d92f2fc44"},
+    {file = "typos-1.47.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:287e2718a058c561baf5f55ec6b466d9270546bcb1951a2c120e594c574b9597"},
+    {file = "typos-1.47.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3e4ef6632b280ce237caaec38d80dd3c2d956e28aa6925f80d4e915335b94a36"},
+    {file = "typos-1.47.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:cd7b310019943e26552809bd17f9f202b45eb0c9694f437f1708ab0868248ced"},
+    {file = "typos-1.47.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f525edf9b67d3ede552bb70bd4171f23e5e8edec3187189dfe8d1676df630b44"},
+    {file = "typos-1.47.2-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:6c36a97ab3dd8c8924cd9b907a32e9aac504fc779d0c3b05e19204ca93385c37"},
+    {file = "typos-1.47.2-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:4eb36a44daed1d719ce417d2a6dd7a323d814ccdc647d9bb20d17ac2bed9e38c"},
+    {file = "typos-1.47.2-py3-none-win32.whl", hash = "sha256:d0c01034bc029d8883406f3e2bed46dfa9b090ce6ad4a99e580070ae51307cfa"},
+    {file = "typos-1.47.2-py3-none-win_amd64.whl", hash = "sha256:749bbba363067bfc0e54ccc6e7580750e17f5ef093c91fedf6c2eb27d32efee6"},
+    {file = "typos-1.47.2.tar.gz", hash = "sha256:d303e8c495ea870f750d8b37f2d3c3fe2441b00cf18ca5d7e0b52eca1938c7b7"},
 ]
 
 [[package]]
@@ -1910,7 +1910,7 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "21.4.1"
+version = "21.4.2"
 requires_python = ">=3.8"
 summary = "Virtual Python Environment builder"
 groups = ["dev"]
@@ -1925,19 +1925,19 @@ dependencies = [
     "typing-extensions>=4.13.2; python_version < \"3.11\"",
 ]
 files = [
-    {file = "virtualenv-21.4.1-py3-none-any.whl", hash = "sha256:caf4ff72d1b4039057f41d8e8466e859513d67c0400d9c6b62c02c9d1ebc3e12"},
-    {file = "virtualenv-21.4.1.tar.gz", hash = "sha256:2ca543c713b72840ceffd94e9bdedfbd09a661defa1f7f69e5429ad4059442e2"},
+    {file = "virtualenv-21.4.2-py3-none-any.whl", hash = "sha256:854210ca524a1a4d0d744734f4acbc721c3ffe163b85bbf5d56d14d5ae2f0fae"},
+    {file = "virtualenv-21.4.2.tar.gz", hash = "sha256:38e6ee0a555615c0ea9da2ac7e9998fe8dc3b911dd33ad8eaad2020957653b0c"},
 ]
 
 [[package]]
 name = "wcwidth"
-version = "0.7.0"
+version = "0.8.0"
 requires_python = ">=3.8"
 summary = "Measures the displayed width of unicode strings in a terminal"
 groups = ["default"]
 files = [
-    {file = "wcwidth-0.7.0-py3-none-any.whl", hash = "sha256:5d69154c429a82910e241c738cd0e2976fac8a2dd47a1a805f4afed1c0f136f2"},
-    {file = "wcwidth-0.7.0.tar.gz", hash = "sha256:90e3a7ea092341c44b99562e75d09e4d5160fe7a3974c6fb842a101a95e7eed0"},
+    {file = "wcwidth-0.8.0-py3-none-any.whl", hash = "sha256:8c75e6099cefd197c4bcc67a486f70b5dbc68f997c05f34a811d853910450d64"},
+    {file = "wcwidth-0.8.0.tar.gz", hash = "sha256:68a882ff6d14e3d14e0cae590b96a0551be64ce4905408112a8254434a1bdf69"},
 ]
 
 [[package]]
