@@ -48,6 +48,7 @@ addrepo = "gentoo_build_publisher.cli.addrepo"
 apikey = "gentoo_build_publisher.cli.apikey"
 check = "gentoo_build_publisher.cli.check"
 delete = "gentoo_build_publisher.cli.delete"
+stats = "gentoo_build_publisher.cli.stats"
 worker = "gentoo_build_publisher.cli.worker"
 
 [project.entry-points."gentoo_build_publisher.worker_interface"]
