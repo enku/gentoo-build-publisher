@@ -29,6 +29,8 @@ from gentoo_build_publisher.worker.sync import SyncWorker
 Fixtures = uf.Fixtures
 FC = uf.FixtureContext
 
+FAKE_REDIS = fakeredis.FakeRedis()
+
 
 @uf.fixture()
 def worker_fixture(_: Fixtures, name: str = "sync") -> FC[WorkerInterface]:
@@ -40,7 +42,8 @@ def worker_fixture(_: Fixtures, name: str = "sync") -> FC[WorkerInterface]:
         STORAGE_PATH=Path("/dev/null"),
     )
     redis_path = "gentoo_build_publisher.worker.rq.Redis.from_url"
-    with mock.patch(redis_path, return_value=fakeredis.FakeRedis()):
+    with mock.patch(redis_path, return_value=FAKE_REDIS):
+        FAKE_REDIS.flushall()
         yield Worker(settings)
 
 
