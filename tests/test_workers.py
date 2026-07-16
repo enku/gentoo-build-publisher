@@ -30,6 +30,9 @@ Fixtures = uf.Fixtures
 FC = uf.FixtureContext
 
 FAKE_REDIS = fakeredis.FakeRedis()
+REDIS_PATH = "gentoo_build_publisher.worker.rq.Redis.from_url"
+
+FAKE_REDIS.ping()
 
 
 @uf.fixture()
@@ -43,7 +46,6 @@ def worker_fixture(_: Fixtures, name: str = "sync") -> FC[WorkerInterface]:
     )
     redis_path = "gentoo_build_publisher.worker.rq.Redis.from_url"
     with mock.patch(redis_path, return_value=FAKE_REDIS):
-        FAKE_REDIS.flushall()
         yield Worker(settings)
 
 
