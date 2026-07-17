@@ -14,6 +14,7 @@ from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     get_build_record_or_404,
     get_query_value_from_request,
     get_url_for_package,
+    gradient_colors,
     view,
 )
 from gentoo_build_publisher.utils import Color
@@ -170,6 +171,27 @@ class ColorRangeFromSettingsTests(TestCase):
                 Color(red=255, green=255, blue=255),
                 Color(0, 0, 255),
             ),
+        )
+
+
+class GradientColors(TestCase):
+    def test_two_colors(self) -> None:
+        colors = gradient_colors(Color(0, 0, 255), Color(255, 255, 255), 10)
+
+        self.assertEqual(
+            colors,
+            [
+                "#0000ff",
+                "#1c1cff",
+                "#3838ff",
+                "#5555ff",
+                "#7171ff",
+                "#8d8dff",
+                "#aaaaff",
+                "#c6c6ff",
+                "#e2e2ff",
+                "#ffffff",
+            ],
         )
 
 
