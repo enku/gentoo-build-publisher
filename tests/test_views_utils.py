@@ -157,6 +157,21 @@ class ColorRangeFromSettingsTests(TestCase):
             (Color(red=255, green=0, blue=0), Color(red=0, green=255, blue=255)),
         )
 
+    def test_multi_color(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLOR_START"] = ((255, 0, 0), (255, 255, 255), (0, 0, 255))
+
+        color_range = color_range_from_settings()
+
+        self.assertEqual(
+            color_range,
+            (
+                Color(red=255, green=0, blue=0),
+                Color(red=255, green=255, blue=255),
+                Color(0, 0, 255),
+            ),
+        )
+
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
     return HttpResponse("Hi!")
