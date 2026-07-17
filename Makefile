@@ -81,7 +81,7 @@ lint: pylint mypy eslint typos
 
 .fmt: $(python_src)
 	pdm run python -m isort --line-width=88 $?
-	pdm run python -m black $?
+	pdm run python -m black --target-version=py312 $?
 	touch $@
 
 .PHONY: fmt
