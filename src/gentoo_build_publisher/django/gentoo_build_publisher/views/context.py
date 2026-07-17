@@ -31,7 +31,7 @@ from .utils import (
     color_range_from_settings,
     days_strings,
     get_chart_days,
-    gradient_colors,
+    get_primary_colors,
 )
 
 MAX_DISPLAYED_PKGS = 12
@@ -64,7 +64,6 @@ class Dashboard:
         now = now or timezone.localtime()
         stats = Stats.with_cache()
         chart_days = get_chart_days(now, days)
-        color1, color2 = color_range_from_settings()[:2]
 
         recent_packages: dict[str, set[str]] = {}
         for machine in stats.machines:
@@ -102,7 +101,9 @@ class Dashboard:
                 for machine in stats.machines
                 if (lp := stats.latest_published[machine])
             ),
-            gradient_colors=gradient_colors(color1, color2, len(stats.machines)),
+            gradient_colors=get_primary_colors(
+                color_range_from_settings(), len(stats.machines)
+            ),
             builds_per_machine=[
                 stats.machine_info[machine].build_count for machine in stats.machines
             ],
@@ -148,7 +149,6 @@ class Machine:  # pylint: disable=too-many-instance-attributes
         now = now or timezone.localtime()
         stats = Stats.with_cache()
         chart_days = get_chart_days(now, days)
-        color1, color2 = color_range_from_settings()[:2]
 
         if (machine_info := stats.machine_info.get(machine)) is None:
             raise MachineNotFoundError(machine)
@@ -167,7 +167,7 @@ class Machine:  # pylint: disable=too-many-instance-attributes
             builds_over_time=[
                 [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
             ],
-            gradient_colors=gradient_colors(color1, color2, 10),
+            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
             latest_build=latest_build,
             machine=machine,
             machines=[machine],
@@ -195,12 +195,11 @@ class BuildView:
     def create(cls, *, build: BuildRecord) -> Self:
         """Create a template context given the input variables"""
         packages_built = publisher.build_metadata(build).packages.built
-        color1, color2 = color_range_from_settings()[:2]
 
         return cls(
             build=build,
             build_id=build.build_id,
-            gradient_colors=gradient_colors(color1, color2, 10),
+            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
             machine=build.machine,
             packages_built=packages_built,
             total_package_size=sum(p.size for p in packages_built),
@@ -219,9 +218,10 @@ class Logs:
     @classmethod
     def create(cls, *, build: BuildRecord) -> Self:
         """Create a template context given the input variables"""
-        color1, color2 = color_range_from_settings()[:2]
-
-        return cls(build=build, gradient_colors=gradient_colors(color1, color2, 10))
+        return cls(
+            build=build,
+            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
+        )
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -234,10 +234,8 @@ class About:
     @classmethod
     def create(cls) -> Self:
         """Create a template context given the input variables"""
-        color1, color2 = color_range_from_settings()[:2]
-
         return cls(
-            gradient_colors=gradient_colors(color1, color2, 2),
+            gradient_colors=get_primary_colors(color_range_from_settings(), 2),
             plugins=plugins.get_plugins(),
         )
 
