@@ -9,12 +9,14 @@ import gbp_testkit.fixtures as testkit
 from gbp_testkit import DjangoTestCase, TestCase
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     ViewFinder,
+    color_range_from_settings,
     experimental,
     get_build_record_or_404,
     get_query_value_from_request,
     get_url_for_package,
     view,
 )
+from gentoo_build_publisher.utils import Color
 
 from .lib import create_builds_and_packages
 
@@ -135,6 +137,25 @@ class ViewFinderTests(TestCase):
         self.assertEqual(urlpattern.name, "bar")
         self.assertEqual(urlpattern.callback, bar_view)
         self.assertEqual(str(urlpattern.pattern), "/bar")
+
+
+@given(settings=testkit.patch)
+@where(
+    settings__target="gentoo_build_publisher.django.gentoo_build_publisher.views.utils.GBP_SETTINGS"
+)
+@where(settings__new={})
+class ColorRangeFromSettingsTests(TestCase):
+    def test_gradient(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLOR_START"] = (255, 0, 0)
+        settings["COLOR_END"] = (0, 255, 255)
+
+        color_range = color_range_from_settings()
+
+        self.assertEqual(
+            color_range,
+            (Color(red=255, green=0, blue=0), Color(red=0, green=255, blue=255)),
+        )
 
 
 def dummy_view(request: HttpRequest) -> HttpResponse:
