@@ -12,6 +12,7 @@ from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     color_range_from_settings,
     experimental,
     get_build_record_or_404,
+    get_primary_colors,
     get_query_value_from_request,
     get_url_for_package,
     gradient_colors,
@@ -193,6 +194,51 @@ class GradientColors(TestCase):
                 "#ffffff",
             ],
         )
+
+
+class GetPrimaryColorsTests(TestCase):
+    def test_with_two_color_gradient(self) -> None:
+        colors = get_primary_colors([Color(0, 0, 255), Color(255, 255, 255)], 10)
+
+        self.assertEqual(
+            colors,
+            [
+                "#0000ff",
+                "#1c1cff",
+                "#3838ff",
+                "#5555ff",
+                "#7171ff",
+                "#8d8dff",
+                "#aaaaff",
+                "#c6c6ff",
+                "#e2e2ff",
+                "#ffffff",
+            ],
+        )
+
+    def test_multi_color(self) -> None:
+        colors = get_primary_colors(
+            [Color(255, 0, 0), Color(255, 255, 255), Color(0, 0, 255)], 3
+        )
+
+        self.assertEqual(colors, ["#ff0000", "#ffffff", "#0000ff"])
+
+    def test_size_is_greater_than_given_colors(self) -> None:
+        colors = get_primary_colors(
+            [Color(255, 0, 0), Color(255, 255, 255), Color(0, 0, 255)], 5
+        )
+
+        self.assertEqual(
+            colors,
+            ["#ff0000"] + gradient_colors(Color(255, 255, 255), Color(0, 0, 255), 4),
+        )
+
+    def test_size_is_less_than_given_colors(self) -> None:
+        colors = get_primary_colors(
+            [Color(255, 0, 0), Color(255, 255, 255), Color(0, 0, 255)], 2
+        )
+
+        self.assertEqual(colors, ["#ff0000", "#ffffff"])
 
 
 def dummy_view(request: HttpRequest) -> HttpResponse:

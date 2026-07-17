@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass, fields, is_dataclass
 from functools import wraps
-from typing import Any, Callable, Mapping, Protocol
+from typing import Any, Callable, Iterable, Mapping, Protocol
 
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
@@ -105,6 +105,23 @@ def days_strings(start: dt.datetime, days: int) -> list[str]:
     """Return list of datetimes from start as strings"""
     fmt = "%A" if days <= 7 else "%x"
     return [datetime.strftime(fmt) for datetime in get_chart_days(start, days)]
+
+
+def get_primary_colors(colors: Iterable[Color], size: int) -> list[str]:
+    """Given the colors, return a list of size color strings"""
+    colors = list(colors)
+    num_colors = len(colors)
+
+    if num_colors == 2:
+        return gradient_colors(colors[0], colors[1], size)
+
+    if size > num_colors:
+        *colors, start, stop = colors
+        return [str(i) for i in colors] + gradient_colors(
+            start, stop, size - len(colors)
+        )
+
+    return [str(i) for i in colors][:size]
 
 
 def gradient_colors(start: Color, stop: Color, size: int) -> list[str]:
