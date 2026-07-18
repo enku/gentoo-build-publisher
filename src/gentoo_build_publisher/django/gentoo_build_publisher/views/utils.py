@@ -221,6 +221,13 @@ def color_range_from_settings2() -> tuple[Color, ...]:
 
     This is the multi-color implementation of color_range_from_settings()
     """
+    # COLORS is the newer, preferred setting
+    colors: tuple[Color, ...] = GBP_SETTINGS.get("COLORS", ())
+
+    if colors:
+        return tuple(Color(*i) for i in colors)
+
+    # Otherwise fall back to COLOR_START and COLOR_END settings
     start = GBP_SETTINGS.get("COLOR_START", (80, 69, 117))
     end = GBP_SETTINGS.get("COLOR_END", (221, 218, 236))
 

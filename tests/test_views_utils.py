@@ -171,6 +171,15 @@ class ColorRangeFromSettingsTests(TestCase):
             color_range, (Color(red=255, green=0, blue=0), Color(0, 0, 255))
         )
 
+    def test_colors_setting(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLORS"] = ((255, 0, 0), (255, 255, 255), (0, 0, 255))
+        settings["COLOR_START"] = ((0, 0, 255), (255, 255, 255), (255, 0, 0))
+
+        color_range = color_range_from_settings()
+
+        self.assertEqual(color_range, (Color(255, 0, 0), Color(0, 0, 255)))
+
 
 @given(settings=testkit.patch)
 @where(
@@ -200,6 +209,17 @@ class ColorRangeFromSettings2Tests(TestCase):
         self.assertEqual(
             color_range,
             (Color(red=255, green=0, blue=0), Color(255, 255, 255), Color(0, 0, 255)),
+        )
+
+    def test_colors_setting(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLORS"] = ((255, 0, 0), (255, 255, 255), (0, 0, 255))
+        settings["COLOR_START"] = ((0, 0, 255), (255, 255, 255), (255, 0, 0))
+
+        color_range = color_range_from_settings2()
+
+        self.assertEqual(
+            color_range, (Color(255, 0, 0), Color(255, 255, 255), Color(0, 0, 255))
         )
 
 
