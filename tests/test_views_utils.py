@@ -146,7 +146,7 @@ class ViewFinderTests(TestCase):
 @where(
     settings__target="gentoo_build_publisher.django.gentoo_build_publisher.views.utils.GBP_SETTINGS"
 )
-@where(settings__new={})
+@where(settings__new_callable=dict)
 class ColorRangeFromSettingsTests(TestCase):
     def test_gradient(self, fixtures: Fixtures) -> None:
         settings = fixtures.settings
@@ -176,7 +176,7 @@ class ColorRangeFromSettingsTests(TestCase):
 @where(
     settings__target="gentoo_build_publisher.django.gentoo_build_publisher.views.utils.GBP_SETTINGS"
 )
-@where(settings__new={})
+@where(settings__new_callable=dict)
 class ColorRangeFromSettings2Tests(TestCase):
     def test_gradient(self, fixtures: Fixtures) -> None:
         settings = fixtures.settings
