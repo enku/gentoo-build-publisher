@@ -10,6 +10,7 @@ from gbp_testkit import DjangoTestCase, TestCase
 from gentoo_build_publisher.django.gentoo_build_publisher.views.utils import (
     ViewFinder,
     color_range_from_settings,
+    color_range_from_settings2,
     experimental,
     get_build_record_or_404,
     get_primary_colors,
@@ -162,16 +163,43 @@ class ColorRangeFromSettingsTests(TestCase):
     def test_multi_color(self, fixtures: Fixtures) -> None:
         settings = fixtures.settings
         settings["COLOR_START"] = ((255, 0, 0), (255, 255, 255), (0, 0, 255))
+        settings["COLOR_END"] = (128, 128, 128)  # ignored
 
         color_range = color_range_from_settings()
 
         self.assertEqual(
+            color_range, (Color(red=255, green=0, blue=0), Color(0, 0, 255))
+        )
+
+
+@given(settings=testkit.patch)
+@where(
+    settings__target="gentoo_build_publisher.django.gentoo_build_publisher.views.utils.GBP_SETTINGS"
+)
+@where(settings__new={})
+class ColorRangeFromSettings2Tests(TestCase):
+    def test_gradient(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLOR_START"] = (255, 0, 0)
+        settings["COLOR_END"] = (0, 255, 255)
+
+        color_range = color_range_from_settings2()
+
+        self.assertEqual(
             color_range,
-            (
-                Color(red=255, green=0, blue=0),
-                Color(red=255, green=255, blue=255),
-                Color(0, 0, 255),
-            ),
+            (Color(red=255, green=0, blue=0), Color(red=0, green=255, blue=255)),
+        )
+
+    def test_multi_color(self, fixtures: Fixtures) -> None:
+        settings = fixtures.settings
+        settings["COLOR_START"] = ((255, 0, 0), (255, 255, 255), (0, 0, 255))
+        settings["COLOR_END"] = (128, 128, 128)  # ignored
+
+        color_range = color_range_from_settings2()
+
+        self.assertEqual(
+            color_range,
+            (Color(red=255, green=0, blue=0), Color(255, 255, 255), Color(0, 0, 255)),
         )
 
 

@@ -209,8 +209,18 @@ def get_url_for_package(build: Build, package: Package, request: HttpRequest) ->
     return request.build_absolute_uri(f"/binpkgs/{build}/{package.path}")
 
 
-def color_range_from_settings() -> tuple[Color, ...]:
-    """Return a color tuple for gradients and such based on Django settings"""
+def color_range_from_settings() -> tuple[Color, Color]:
+    """Return a color tuple for gradients based on Django settings"""
+    colors = color_range_from_settings2()
+
+    return colors[0], colors[-1]
+
+
+def color_range_from_settings2() -> tuple[Color, ...]:
+    """Return a color tuple for gradients and such based on Django settings
+
+    This is the multi-color implementation of color_range_from_settings()
+    """
     start = GBP_SETTINGS.get("COLOR_START", (80, 69, 117))
     end = GBP_SETTINGS.get("COLOR_END", (221, 218, 236))
 

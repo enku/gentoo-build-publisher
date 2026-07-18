@@ -28,7 +28,7 @@ from gentoo_build_publisher.utils.time import SECONDS_PER_DAY, lapsed
 
 from .utils import (
     Gradient,
-    color_range_from_settings,
+    color_range_from_settings2,
     days_strings,
     get_chart_days,
     get_primary_colors,
@@ -102,7 +102,7 @@ class Dashboard:
                 if (lp := stats.latest_published[machine])
             ),
             gradient_colors=get_primary_colors(
-                color_range_from_settings(), len(stats.machines)
+                color_range_from_settings2(), len(stats.machines)
             ),
             builds_per_machine=[
                 stats.machine_info[machine].build_count for machine in stats.machines
@@ -167,7 +167,7 @@ class Machine:  # pylint: disable=too-many-instance-attributes
             builds_over_time=[
                 [stats.builds_by_day[machine].get(day, 0) for day in chart_days]
             ],
-            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
+            gradient_colors=get_primary_colors(color_range_from_settings2(), 10),
             latest_build=latest_build,
             machine=machine,
             machines=[machine],
@@ -199,7 +199,7 @@ class BuildView:
         return cls(
             build=build,
             build_id=build.build_id,
-            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
+            gradient_colors=get_primary_colors(color_range_from_settings2(), 10),
             machine=build.machine,
             packages_built=packages_built,
             total_package_size=sum(p.size for p in packages_built),
@@ -220,7 +220,7 @@ class Logs:
         """Create a template context given the input variables"""
         return cls(
             build=build,
-            gradient_colors=get_primary_colors(color_range_from_settings(), 10),
+            gradient_colors=get_primary_colors(color_range_from_settings2(), 10),
         )
 
 
@@ -235,7 +235,7 @@ class About:
     def create(cls) -> Self:
         """Create a template context given the input variables"""
         return cls(
-            gradient_colors=get_primary_colors(color_range_from_settings(), 2),
+            gradient_colors=get_primary_colors(color_range_from_settings2(), 2),
             plugins=plugins.get_plugins(),
         )
 
