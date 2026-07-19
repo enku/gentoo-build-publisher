@@ -37,6 +37,8 @@ class Storage:
 
     The directory tree basically looks like the following.
     .
+    ├── aux
+    │   └── lighthouse.19
     ├── binpkgs
     │   └── lighthouse.19
     ├── etc-portage
@@ -49,12 +51,14 @@ class Storage:
     └── var-lib-portage
         └── lighthouse.19
 
-    Each of the directories binpkgs, etc-portage, repos, and var-lib-portage hold each
-    kind of Content stored in a (Jenkins) build artifact.  So in the above example, if a
-    build "lighthouse.19" was pulled, there exists a ./binpkgs/lighthouse.19 directory
-    containing the build's binary packages, a ./repos/lighthouse.19 directory containing
-    the ebuild repos used for that build, etc. The tmp/ directory, as the name implies,
-    is for temporary storage.
+    Each of the directories aux, binpkgs, etc-portage, repos, and var-lib-portage hold
+    each kind of Content stored in a (Jenkins) build artifact.  So in the above example,
+    if a build "lighthouse.19" was pulled, there exists a ./binpkgs/lighthouse.19
+    directory containing the build's binary packages, a ./repos/lighthouse.19 directory
+    containing the ebuild repos used for that build, etc. The tmp/ directory, as the
+    name implies, is for temporary storage.
+
+    The aux directory is for auxiliary data that can be used by plugins.
 
     When a build is published, for example "lighthouse.19", then for each of its
     respective directories in Content there exists a symbolic link with just the name of
