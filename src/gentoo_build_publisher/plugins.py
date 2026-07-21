@@ -38,6 +38,7 @@ class Plugin:
     urls: str | None
     priority: int = 10
     checks: PluginCheckDef | None = None
+    link: str | None = None
 
     def __hash__(self) -> int:
         return hash(self.app)
@@ -77,6 +78,9 @@ class PluginDef(TypedDict):
 
     priority: NotRequired[int]
 
+    link: NotRequired[str]
+    """Link to the plugin's homepage"""
+
 
 def get_plugins() -> list[Plugin]:
     """Return the list of registered plugins"""
@@ -102,4 +106,5 @@ def ep2plugin(ep: EntryPoint) -> Plugin:
         urls=data.get("urls"),
         checks=data.get("checks"),
         priority=data.get("priority", 10),
+        link=data.get("link"),
     )

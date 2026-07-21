@@ -52,3 +52,12 @@ class GetPluginsTests(TestCase):
 
         plugin = Plugin(name="test", app=None, graphql=None, urls=None)
         self.assertEqual([plugin], result)
+
+    def test_link(self, fixtures: Fixtures) -> None:
+        ep = make_entry_point("foo", {"name": "foo", "link": "https://gbp.invalid/"})
+        entry_points = fixtures.entry_points.return_value
+        entry_points.select.return_value.__iter__.return_value = iter([ep])
+
+        [plugin] = plugins.get_plugins()
+
+        self.assertEqual(plugin.link, "https://gbp.invalid/")
