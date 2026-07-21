@@ -95,6 +95,7 @@ type Plugin {
   name: String!
   version: String!
   description: String!
+  link: String
 }
 
 type PackageCount {

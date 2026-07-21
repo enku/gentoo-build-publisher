@@ -1471,7 +1471,7 @@ class CreateMachineTestCase(TestCase):
 
 @given(testkit.client)
 class PluginsTestCase(TestCase):
-    query = """query { plugins { name version description }}"""
+    query = """query { plugins { name version description link }}"""
 
     def test(self, fixtures: Fixtures) -> None:
         installed_plugins = plugins.get_plugins()
@@ -1480,7 +1480,12 @@ class PluginsTestCase(TestCase):
         result = graphql(fixtures.client, self.query)
 
         expected = [
-            {"name": p.name, "version": p.version, "description": p.description}
+            {
+                "name": p.name,
+                "version": p.version,
+                "description": p.description,
+                "link": p.link,
+            }
             for p in installed_plugins
         ]
         assert_data(self, result, {"plugins": expected})
