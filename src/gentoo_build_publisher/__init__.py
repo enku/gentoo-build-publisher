@@ -66,6 +66,7 @@ plugin = {
         "corrupt_gbp_json": "gentoo_build_publisher.checks:corrupt_gbp_json",
     },
     "priority": 0,
+    "link": "https://github.com/enku/gentoo-build-publisher",
 }
 
 
