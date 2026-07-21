@@ -12,7 +12,7 @@
     <tbody>
       {% for plugin in plugins %}
       <tr>
-        <th scope="row">{{ plugin.name }}</th>
+        <th scope="row">{% if plugin.link %}<a href="{{ plugin.link }}">{{ plugin.name }}</a>{% else %}{{ plugin.name }}{% endif %}</th>
         <td>{{ plugin.version }}</td>
         <td>{{ plugin.description }}</td>
       </tr>
