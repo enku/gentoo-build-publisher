@@ -3,7 +3,7 @@
 # pylint: disable=missing-docstring
 from argparse import ArgumentParser
 
-from unittest_fixtures import Fixtures, fixture, given, where
+from unittest_fixtures import Fixtures, given, where
 
 import gbp_testkit.fixtures as testkit
 from gbp_testkit import TestCase
@@ -12,13 +12,7 @@ from gentoo_build_publisher.cli import delete
 from gentoo_build_publisher.types import Build
 
 
-@fixture(testkit.builds)
-def build_fixture(fixtures: Fixtures) -> Build:
-    builds: list[Build] = fixtures.builds
-    return builds[0]
-
-
-@given(testkit.gbpcli, testkit.pulled_builds, build_fixture)
+@given(testkit.gbpcli, testkit.pulled_builds, build=lambda f: f.builds[0])
 @where(builds__per_day=5)
 class GBPChkTestCase(TestCase):
     def test_deletes_build(self, fixtures: Fixtures) -> None:
