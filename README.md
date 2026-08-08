@@ -36,6 +36,8 @@ management, and binary package server (binhost) for complete and atomic
 builds.  Successful builds performed by Jenkins are served by GBP where client
 machines sync from.
 
+> *"Gentoo" and the Gentoo logo are trademarks of the Gentoo Foundation. This
+> project is not affiliated with or endorsed by the Gentoo Foundation.*
 
 ## Procedure
 
