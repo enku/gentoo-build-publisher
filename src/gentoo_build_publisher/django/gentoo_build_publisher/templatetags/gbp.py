@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from django import template
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from gentoo_build_publisher import publisher
@@ -180,7 +181,11 @@ def machine_build_row(build: Build) -> dict[str, Any]:
 def machine_link(machine: str) -> str:
     """Render machine link (anchor tag)"""
     path = reverse("gbp-machines", args=(machine,))
-    return mark_safe(f'<a class="machine-link" href="{path}">{machine}</a>')
+    return format_html(
+        '<a class="machine-link" href="{path}">{machine}</a>',
+        path=path,
+        machine=machine,
+    )
 
 
 @register.filter(is_safe=True)
@@ -232,9 +237,13 @@ def package_link(cpv: str) -> str:
     pgo = "https://packages.gentoo.org"
     split = string.split_pkg(cpv)
 
-    return mark_safe(
+    return format_html(
         '<a target="_blank" class="package-link external-link" '
-        f'href="{pgo}/packages/{split[0]}/{split[1]}">{cpv}</a>'
+        'href="{pgo}/packages/{cat}/{pkg}">{cpv}</a>',
+        pgo=pgo,
+        cat=split[0],
+        pkg=split[1],
+        cpv=cpv,
     )
 
 
@@ -247,9 +256,11 @@ def card_item(left: Any, right: Any, pill: bool = False) -> dict[str, Any]:
 @register.filter(is_safe=True)
 def build_id(build: BuildRecord) -> str:
     """Simply renders the build's build_id"""
-    cls = "build_id published" if publisher.published(build) else "build_id"
-
-    return mark_safe(f'<span class="{cls}">{build.build_id}</span>')
+    return format_html(
+        '<span class="{cls}">{build_id}</span>',
+        cls=f'build_id{" published" if publisher.published(build) else ""}',
+        build_id=build.build_id,
+    )
 
 
 @register.inclusion_tag("gentoo_build_publisher/navlink.html")
